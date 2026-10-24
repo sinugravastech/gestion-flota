@@ -5549,7 +5549,7 @@ Object.assign(Acciones, {
 
 /* ==========================================================================
    §P  PREOPERACIONALES — la inspección diaria que cada conductor envía desde
-       el celular, sin usuario (preoperacional/index.html). No van en Datos ni
+       el celular, sin usuario (el formulario de §F, «?preoperacional»). No van en Datos ni
        en la sincronización: son muchos y aquí no se editan; se traen de la
        nube cuando se miran. El kilometraje de cada uno sí llega solo a
        Cambios de aceite, como lectura.
@@ -5577,10 +5577,12 @@ const Preop = {
   unidades() { return ORDEN.flatMap(t => Datos.unidades.filter(u => u.tipo === t && this.aplica(u))); },
   /* Ante la duda (si no se supo el acceso) no se esconde nada: las reglas de la nube igual protegen */
   puede(a) { return Cuenta.admin || Cuenta.acciones.includes(a) || !Cuenta.rol; },
+  /* El formulario de los conductores es esta misma página con «?preoperacional» (§F) */
   enlace() {
-    const url = new URL('preoperacional/', location.href);
+    const url = new URL(location.href);
     url.hash = '';
-    url.search = new URLSearchParams(location.search).get('nube') === 'local' ? '?nube=local' : '';
+    url.pathname = url.pathname.replace(/index\.html$/, '');
+    url.search = '?preoperacional' + (new URLSearchParams(location.search).get('nube') === 'local' ? '&nube=local' : '');
     return url.href;
   },
   tituloSec: s => String(s.titulo || '').replace(/^\s*\d+\s*[.)-]\s*/, ''),
@@ -5713,7 +5715,7 @@ const Preop = {
         : UI.empty('truck', 'No hay vehículos que lo llenen', 'Se escogen en «Editar formulario».'),
       { flush: faltan.length > 0, sub: faltan.length ? faltan.length + ' de ' + us.length : '' });
     const url = this.enlace();
-    const enlace = UI.card('Formulario para los conductores', '<div class="enlace">' + Icon('externo', '', 14) + esc(url.replace(/^https?:\/\//, '').replace(/\/(\?|$)/, '$1')) + '</div>' +
+    const enlace = UI.card('Formulario para los conductores', '<div class="enlace">' + Icon('externo', '', 14) + esc(url.replace(/^https?:\/\//, '')) + '</div>' +
       '<div class="flex g8 mt12" style="flex-wrap:wrap"><button class="btn btn-primary btn-sm" data-act="copiarEnlacePreop">' + Icon('copiar', '', 13) + 'Copiar enlace</button>' +
         '<a class="btn btn-sm" href="' + attr(url) + '" target="_blank" rel="noopener">' + Icon('externo', '', 13) + 'Abrir</a></div>' +
       '<p class="txt-3 fs12 mt12" style="line-height:1.5">Se abre en el celular sin usuario ni contraseña. Las placas y los conductores salen de lo que esté registrado aquí.</p>');
@@ -6168,6 +6170,1143 @@ Object.assign(Acciones, {
   },
   preopGuardar(el) { Preop.guardar(el); }
 });
+
+/* ==========================================================================
+   §F  EL FORMULARIO DEL CONDUCTOR — el preoperacional que cada conductor
+       llena en el celular, sin usuario. Vive en este mismo archivo y se
+       abre con «?preoperacional» (flota.sinugravas.com/?preoperacional):
+       entonces no arranca la plataforma, solo se pinta el formulario, con
+       sus propios estilos, igual al de siempre. Va dentro de una función
+       para que sus nombres no choquen con los de la plataforma.
+   ========================================================================== */
+const PreopPublico = (() => {
+  const CSS = `
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --border: #d0d5dd;
+  --text: #101828;
+  --muted: #667085;
+  --accent: #1d4ed8;
+  --accent-light: #eff6ff;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --orange: #ea580c;
+  --orange-bg: #fff7ed;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --header-h: 64px;
+}
+body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; padding-bottom: 90px; }
+.app-header { position: sticky; top: 0; z-index: 50; background: #fff; border-bottom: 1px solid var(--border); height: var(--header-h); display: flex; align-items: center; padding: 0 20px; gap: 14px; }
+.logo { width: 40px; height: 40px; border-radius: 10px; background: var(--accent); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+.header-text h1 { font-size: 15px; font-weight: 700; }
+.header-text p { font-size: 12px; color: var(--muted); }
+.progress-wrap { position: sticky; top: var(--header-h); z-index: 49; background: #fff; border-bottom: 1px solid var(--border); padding: 8px 20px 10px; }
+.progress-label { font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+.progress-track { background: #e5e7eb; border-radius: 99px; height: 6px; }
+.progress-fill { height: 6px; border-radius: 99px; background: var(--accent); transition: width .3s; width: 0%; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+.card-head { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.card-num { width: 26px; height: 26px; background: var(--accent); color: #fff; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.card-title { font-size: 14px; font-weight: 600; }
+.card-body { padding: 20px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+@media(max-width:540px) { .grid2,.grid3 { grid-template-columns: 1fr; } }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.field input, .field select, .field textarea { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text); background: #fff; width: 100%; transition: border-color .15s; -webkit-appearance: none; appearance: none; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,78,216,.1); }
+.field textarea { resize: vertical; min-height: 80px; }
+.field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; }
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+.section-label { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .6px; padding: 12px 0 6px; border-bottom: 1px solid var(--border); margin-bottom: 2px; }
+.chk-row { display: flex; align-items: center; padding: 9px 0; border-bottom: 1px solid #f3f4f6; gap: 10px; }
+.chk-row:last-child { border-bottom: none; }
+.chk-num { font-size: 11px; color: var(--muted); min-width: 32px; flex-shrink: 0; }
+.chk-label { flex: 1; font-size: 13px; line-height: 1.3; }
+.brm { display: flex; gap: 5px; flex-shrink: 0; }
+.brm button { width: 44px; height: 44px; border-radius: 8px; border: 2px solid var(--border); background: transparent; font-size: 12px; font-weight: 700; font-family: inherit; color: var(--muted); cursor: pointer; transition: all .12s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
+.brm button:active { transform: scale(.9); }
+.b-act { background: var(--green-bg) !important; border-color: var(--green) !important; color: var(--green) !important; }
+.r-act { background: var(--orange-bg) !important; border-color: var(--orange) !important; color: var(--orange) !important; }
+.m-act { background: var(--red-bg) !important; border-color: var(--red) !important; color: var(--red) !important; }
+.na-act { background: #ede9fe !important; border-color: #7c3aed !important; color: #7c3aed !important; }
+.firma-box { border: 2px dashed var(--border); border-radius: 10px; overflow: hidden; background: #fafafa; position: relative; cursor: crosshair; }
+.firma-box canvas { display: block; width: 100%; height: 140px; touch-action: none; }
+.firma-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: var(--muted); font-size: 13px; text-align: center; pointer-events: none; transition: opacity .2s; line-height: 1.6; }
+.clear-btn { background: none; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--muted); padding: 5px 12px; cursor: pointer; margin-top: 7px; font-family: inherit; transition: all .15s; }
+.clear-btn:hover { border-color: var(--red); color: var(--red); }
+.submit-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border); padding: 12px 20px; z-index: 60; }
+.submit-btn { width: 100%; max-width: 760px; display: block; margin: 0 auto; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; font-family: inherit; padding: 15px 20px; cursor: pointer; transition: background .15s, transform .1s; }
+.submit-btn:hover { background: #1e40af; }
+.submit-btn:active { transform: scale(.98); }
+.submit-btn:disabled { background: #93c5fd; cursor: not-allowed; transform: none; }
+#toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; font-size: 14px; font-weight: 600; padding: 12px 22px; border-radius: 30px; z-index: 999; opacity: 0; transition: opacity .25s; max-width: 90vw; text-align: center; pointer-events: none; }
+#toast.err { background: var(--red); }
+#toast.show { opacity: 1; }
+
+/* ---- Lo nuevo: cargar, sin señal, enviado y avisos antes de enviar ---- */
+[hidden] { display: none !important; }
+.estado { padding: 34px 20px; text-align: center; color: var(--muted); font-size: 14px; }
+.estado b { display: block; color: var(--text); font-size: 15px; margin-bottom: 4px; }
+.giro { width: 28px; height: 28px; border: 3px solid #dbeafe; border-top-color: var(--accent); border-radius: 50%; margin: 0 auto 12px; animation: giro .8s linear infinite; }
+@keyframes giro { to { transform: rotate(360deg); } }
+.pend { display: flex; align-items: center; gap: 12px; background: var(--orange-bg); border: 1px solid #fed7aa; color: #9a3412; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 13px; line-height: 1.45; }
+.pend-ic { font-size: 20px; flex-shrink: 0; }
+.pend b { color: #7c2d12; }
+.pend button { margin-left: auto; flex-shrink: 0; background: #fff; border: 1px solid #fdba74; color: #9a3412; border-radius: 8px; padding: 8px 12px; font: inherit; font-weight: 600; font-size: 12px; cursor: pointer; }
+.pend button:disabled { opacity: .6; cursor: default; }
+.nota { font-size: 12px; color: var(--muted); }
+.listo { text-align: center; padding: 30px 20px 26px; }
+.listo-ic { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; background: var(--green-bg); color: var(--green); border: 2px solid #bbf7d0; }
+.listo-ic.esp { background: var(--orange-bg); color: var(--orange); border-color: #fed7aa; }
+.listo h2 { font-size: 18px; margin-bottom: 4px; }
+.listo > p { color: var(--muted); font-size: 14px; max-width: 460px; margin: 0 auto; }
+.listo dl { display: grid; grid-template-columns: auto 1fr; gap: 7px 16px; text-align: left; max-width: 400px; margin: 20px auto 0; font-size: 13px; border-top: 1px solid var(--border); padding-top: 16px; }
+.listo dt { color: var(--muted); }
+.listo dd { font-weight: 600; overflow-wrap: anywhere; }
+.listo .nota { margin-top: 14px; }
+.listo-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+.bt { border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit; padding: 12px 18px; cursor: pointer; border: 1.5px solid var(--border); background: #fff; color: var(--text); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.bt.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
+.dlg-bd { position: fixed; inset: 0; z-index: 200; background: rgba(16,24,40,.5); display: flex; align-items: flex-end; justify-content: center; padding: 16px; }
+@media(min-width:541px) { .dlg-bd { align-items: center; } }
+.dlg { background: #fff; border-radius: 14px; width: 100%; max-width: 460px; padding: 20px; box-shadow: 0 20px 40px rgba(16,24,40,.25); max-height: calc(100vh - 32px); overflow-y: auto; }
+.dlg h3 { font-size: 16px; margin-bottom: 10px; }
+.dlg ul { padding-left: 20px; display: grid; gap: 8px; font-size: 14px; }
+.dlg p { font-size: 14px; }
+.dlg-btns { display: flex; gap: 10px; margin-top: 20px; }
+.dlg-btns .bt { flex: 1; }
+`;
+
+  const HTML = `
+<div class="app-header">
+  <div class="logo">SG</div>
+  <div class="header-text" style="flex:1">
+    <h1>Inspección Preoperacional de Vehículos</h1>
+    <p id="formatoTxt">SINÚGRAVAS S.A.S &nbsp;·&nbsp; SST-FRT-022 Versión 001</p>
+  </div>
+</div>
+
+<div class="progress-wrap" id="progreso">
+  <div class="progress-label" id="progressLabel">0 de 0 ítems marcados</div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<div id="toast"></div>
+
+<div class="wrap">
+
+  <div class="pend" id="pendientes" hidden>
+    <span class="pend-ic">📤</span>
+    <div id="pendTxt"></div>
+    <button type="button" id="pendBtn">Reintentar</button>
+  </div>
+
+  <div class="card" id="cargando">
+    <div class="estado"><div class="giro"></div>Cargando el formulario…</div>
+  </div>
+
+  <div class="card" id="cargaError" hidden>
+    <div class="estado">
+      <b>No se pudo cargar el formulario</b>
+      <span id="cargaErrorTxt">Revise la señal o los datos del celular e intente otra vez.</span>
+      <div class="listo-btns"><button class="bt pri" type="button" id="reintentarCarga">Intentar otra vez</button></div>
+    </div>
+  </div>
+
+  <div id="formulario" hidden>
+  <div class="card">
+    <div class="card-head"><div class="card-num">1</div><div class="card-title">Datos del Vehículo y Conductor</div></div>
+    <div class="card-body">
+      <div class="grid2">
+        <div class="field"><label for="placa">Placa del Vehículo *</label><select id="placa"></select></div>
+        <div class="field"><label for="tipoVeh">Tipo de Vehículo *</label><select id="tipoVeh"></select></div>
+        <div class="field"><label for="fecha">Fecha de Inspección *</label><input id="fecha" type="date"></div>
+        <div class="field"><label for="km">Kilometraje</label><input id="km" type="number" inputmode="decimal" min="0" step="any" placeholder="ej. 125000" autocomplete="off"></div>
+      </div>
+      <div class="divider"></div>
+      <div class="grid2">
+        <div class="field"><label for="docId">Documento de Identidad *</label><select id="docId"></select></div>
+        <div class="field"><label for="nombre">Nombre y Apellidos *</label><select id="nombre"></select></div>
+        <div class="field"><label for="licencia">Licencia de Conducción</label><select id="licencia"></select></div>
+        <div class="field"><label for="catLic">Categoría</label><select id="catLic"></select></div>
+        <div class="field"><label for="vigLic">Vigencia Licencia</label><input id="vigLic" type="date"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-num">2</div><div class="card-title">II. Verificación de Elementos &nbsp;<small style="font-weight:400;color:var(--muted)">B=Bueno · R=Regular · M=Malo · N/A=No Aplica</small></div></div>
+    <div class="card-body" id="checklistBody"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-num">3</div><div class="card-title">III. Seguimiento y Observaciones</div></div>
+    <div class="card-body">
+      <div class="field"><label for="supervisor">Nombre del Supervisor</label><input id="supervisor" type="text" value="" readonly style="background:#f3f4f6;color:#667085;cursor:not-allowed"></div>
+      <div class="divider" id="obsDivider"></div>
+      <div class="field"><label for="obs">Observaciones</label><textarea id="obs" placeholder="Escriba novedades, anomalías o comentarios..."></textarea></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-num">4</div><div class="card-title">Firma del Conductor</div></div>
+    <div class="card-body">
+      <div class="field">
+        <label>Firma del Conductor</label>
+        <div class="firma-box"><canvas id="canvasC"></canvas><div class="firma-hint" id="hintC">✏️ Firme aquí<br><small>con dedo o mouse</small></div></div>
+        <button class="clear-btn" id="clearC" type="button">🗑 Borrar firma</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div class="card" id="listo" hidden>
+    <div class="listo">
+      <div class="listo-ic" id="listoIc">✓</div>
+      <h2 id="listoTit">Preoperacional enviado</h2>
+      <p id="listoTxt"></p>
+      <dl id="listoDatos"></dl>
+      <p class="nota" id="listoNota" hidden></p>
+      <div class="listo-btns">
+        <a class="bt" id="listoPdf" hidden>📄 Descargar PDF</a>
+        <button class="bt pri" id="listoOtro" type="button">Llenar otro</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="submit-bar" id="barra" hidden>
+  <button class="submit-btn" id="submitBtn" type="button">Enviar</button>
+</div>
+`;
+
+
+  /* La conexión es la de la plataforma (NUBE, en §N), con la llave pública:
+     con ella este formulario solo puede leer el formulario, enviar
+     preoperacionales y subir el PDF y la firma de lo que acaba de enviar. */
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const miles = n => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const Local = {
+    leer(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } },
+    poner(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  };
+
+  /* Fechas. La hora del servidor se muestra en hora de Colombia (UTC−5, sin
+     horario de verano) */
+  const Fecha = {
+    iso: d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'),
+    hoy() { return this.iso(new Date()); },
+    sumar(iso, n) { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return this.iso(d); },
+    dmy: iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) : '',
+    colombia(ts) {
+      const d = new Date(new Date(ts).getTime() - 5 * 3600000);
+      if (isNaN(d)) return '';
+      const h = d.getUTCHours();
+      return String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0') + '/' + d.getUTCFullYear() + ' ' +
+        (h % 12 || 12) + ':' + String(d.getUTCMinutes()).padStart(2, '0') + ':' + String(d.getUTCSeconds()).padStart(2, '0') +
+        (h < 12 ? ' a. m.' : ' p. m.');
+    },
+    /* La hora del celular con su zona horaria, para la evidencia */
+    conZona(d) {
+      const z = -d.getTimezoneOffset(), a = Math.abs(z), dos = n => String(n).padStart(2, '0');
+      return this.iso(d) + 'T' + dos(d.getHours()) + ':' + dos(d.getMinutes()) + ':' + dos(d.getSeconds()) +
+        (z >= 0 ? '+' : '-') + dos(Math.floor(a / 60)) + ':' + dos(a % 60);
+    }
+  };
+
+  /* --------------------------------------------------------------------------
+     Pedidos a la nube, con tiempo límite. Un error de red dice «red: true»:
+     eso se reintenta solo; lo demás se muestra.
+     -------------------------------------------------------------------------- */
+  const Nube = {
+    async pedir(ruta, opciones, ms) {
+      const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+      const reloj = ctl ? setTimeout(() => ctl.abort(), ms || 20000) : null;
+      const o = Object.assign({}, opciones);
+      o.headers = Object.assign({ apikey: NUBE.llave, Authorization: 'Bearer ' + NUBE.llave }, o.headers);
+      if (ctl) o.signal = ctl.signal;
+      try {
+        const r = await fetch(NUBE.url + ruta, o);
+        return { estado: r.status, ok: r.ok, texto: await r.text() };
+      } catch (e) {
+        throw Object.assign(new Error('Sin conexión'), { red: true });
+      } finally {
+        if (reloj) clearTimeout(reloj);
+      }
+    },
+    async rpc(nombre, args, ms) {
+      const r = await this.pedir('/rest/v1/rpc/' + nombre, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(args || {}) }, ms);
+      let j = null;
+      try { j = r.texto ? JSON.parse(r.texto) : null; } catch (e) { /* no era JSON */ }
+      if (!r.ok) {
+        throw Object.assign(new Error((j && (j.message || j.msg)) || 'El servidor respondió ' + r.estado),
+          { estado: r.estado, red: r.estado >= 500 || r.estado === 408 || r.estado === 429 });
+      }
+      return j;
+    },
+    /* Sube un archivo una sola vez. Si ya estaba (porque es un reintento), sirve igual */
+    async subir(ruta, datos, tipo) {
+      const r = await this.pedir('/storage/v1/object/' + NUBE.deposito + '/' + ruta,
+        { method: 'POST', headers: { 'Content-Type': tipo }, body: datos }, 120000);
+      if (r.ok) return true;
+      let j = {};
+      try { j = JSON.parse(r.texto) || {}; } catch (e) { /* nada */ }
+      if (r.estado === 409 || String(j.statusCode) === '409' || /duplicate|already exists/i.test((j.error || '') + ' ' + (j.message || ''))) return true;
+      throw Object.assign(new Error(j.message || 'El depósito respondió ' + r.estado), { estado: r.estado, red: r.estado >= 500 });
+    }
+  };
+
+  /* ==========================================================================
+     Lo que viene del sistema: el formato, las unidades y los conductores
+     ========================================================================== */
+  const D = { formato: null, unidades: [], conductores: [] };
+  const ST = {};
+  const TIPOS = { carga: 'Vehículo de carga', remolque: 'Remolque', maquinaria: 'Maquinaria', canoa: 'Canoa' };
+  const CATEGORIAS = ['A1', 'A2', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'];
+  const CAMPOS = {
+    kilometraje: { el: 'km', nombre: 'Kilometraje' },
+    licencia: { el: 'licencia', nombre: 'Licencia de Conducción' },
+    categoria: { el: 'catLic', nombre: 'Categoría' },
+    vigencia: { el: 'vigLic', nombre: 'Vigencia Licencia' },
+    observaciones: { el: 'obs', nombre: 'Observaciones' }
+  };
+  const campo = k => Object.assign({ mostrar: true, obligatorio: false }, ((D.formato || {}).campos || {})[k]);
+  const unidad = id => D.unidades.find(u => u.id === id);
+  const conductor = id => D.conductores.find(c => c.id === id);
+  const claseDe = u => u.clase || TIPOS[u.tipo] || 'Vehículo';
+  /* En el sistema, un conductor sin cédula queda con «—» */
+  const cedulaDe = c => (c && c.cedula && c.cedula !== '—' ? c.cedula : '');
+  /* El número de cada sección sale de su orden; si el título trae uno, se quita */
+  const tituloDe = s => String(s.titulo || '').replace(/^\s*\d+\s*[.)-]\s*/, '');
+  const textoDe = sel => sel.selectedIndex > 0 ? sel.options[sel.selectedIndex].text : '';
+  let tocado = false;
+
+  function opciones(sel, primera, lista) {
+    sel.innerHTML = '<option value="">' + esc(primera) + '</option>' +
+      lista.map(o => '<option value="' + esc(o.v) + '">' + esc(o.t) + '</option>').join('');
+  }
+
+  function pintarFormulario() {
+    const f = D.formato;
+    $('formatoTxt').innerHTML = 'SINÚGRAVAS S.A.S &nbsp;·&nbsp; ' + esc(f.codigo) + ' Versión ' + esc(f.version);
+    opciones($('placa'), D.unidades.length ? 'Seleccionar placa...' : 'No hay vehículos registrados',
+      D.unidades.map(u => ({ v: u.id, t: u.placa })));
+    opciones($('tipoVeh'), 'Seleccionar...', [...new Set(D.unidades.map(claseDe))].map(c => ({ v: c, t: c })));
+    const cs = D.conductores, sin = cs.length ? '' : 'No hay conductores registrados';
+    opciones($('docId'), sin || 'Seleccionar...', cs.map(c => ({ v: c.id, t: cedulaDe(c) || 'Sin cédula · ' + c.nombre })));
+    opciones($('nombre'), sin || 'Seleccionar conductor...', cs.map(c => ({ v: c.id, t: c.nombre })));
+    opciones($('licencia'), 'Seleccionar...', cs.filter(cedulaDe).map(c => ({ v: c.id, t: cedulaDe(c) })));
+    opciones($('catLic'), 'Seleccionar...', CATEGORIAS.map(k => ({ v: k, t: k })));
+
+    /* Los campos del encabezado que se muestran y los obligatorios, como se
+       dejaron en el sistema */
+    Object.keys(CAMPOS).forEach(k => {
+      const c = campo(k), el = $(CAMPOS[k].el), caja = el.closest('.field');
+      caja.hidden = !c.mostrar;
+      caja.querySelector('label').textContent = CAMPOS[k].nombre + (c.obligatorio ? ' *' : '');
+    });
+    $('obsDivider').hidden = !campo('observaciones').mostrar;
+
+    const hoy = Fecha.hoy();
+    $('fecha').min = Fecha.sumar(hoy, -60);
+    $('fecha').max = Fecha.sumar(hoy, 1);
+    $('fecha').value = hoy;
+    $('supervisor').value = f.supervisor || '';
+    pintarLista();
+  }
+
+  function pintarLista() {
+    const c = $('checklistBody');
+    c.innerHTML = '';
+    Object.keys(ST).forEach(k => { delete ST[k]; });
+    (D.formato.secciones || []).forEach((s, i) => {
+      const d = document.createElement('div');
+      d.className = 'section-label';
+      d.textContent = (i + 1) + '. ' + tituloDe(s);
+      c.appendChild(d);
+      (s.items || []).forEach((item, j) => {
+        ST[item.id] = null;
+        const row = document.createElement('div');
+        row.className = 'chk-row';
+        row.innerHTML = '<span class="chk-num">' + (i + 1) + '.' + (j + 1) + '</span><span class="chk-label">' + esc(item.texto) + '</span>' +
+          '<div class="brm">' + ['B', 'R', 'M', 'N/A'].map(v => '<button type="button" data-i="' + esc(item.id) + '" data-v="' + v + '">' + v + '</button>').join('') + '</div>';
+        c.appendChild(row);
+      });
+    });
+    updateProg();
+  }
+
+  const ACTIVO = { B: 'b-act', R: 'r-act', M: 'm-act', 'N/A': 'na-act' };
+  function setBRM(boton) {
+    const id = boton.dataset.i, val = boton.dataset.v;
+    boton.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('b-act', 'r-act', 'm-act', 'na-act'));
+    ST[id] = ST[id] === val ? null : val;
+    if (ST[id]) boton.classList.add(ACTIVO[val]);
+    tocado = true;
+    updateProg();
+  }
+
+  function updateProg() {
+    const total = Object.keys(ST).length;
+    const done = Object.values(ST).filter(Boolean).length;
+    const pct = total ? Math.round(done / total * 100) : 0;
+    $('progressFill').style.width = pct + '%';
+    $('progressLabel').textContent = done + ' de ' + total + ' ítems marcados (' + pct + '%)';
+  }
+
+  /* Al escoger la cédula o el nombre se llena todo lo del conductor */
+  function elegirConductor(id) {
+    const c = conductor(id);
+    $('docId').value = c ? id : '';
+    $('nombre').value = c ? id : '';
+    $('licencia').value = cedulaDe(c) ? id : '';
+    const cat = c && c.categoria ? String(c.categoria).toUpperCase() : '';
+    if (cat && ![...$('catLic').options].some(o => o.value === cat)) $('catLic').add(new Option(cat, cat));
+    $('catLic').value = cat;
+    $('vigLic').value = c && c.licencia_vence ? c.licencia_vence : '';
+  }
+
+  /* ==========================================================================
+     FIRMA. Se guarda cada trazo: si el celular cambia de tamaño (al bajar por
+     la página aparece y se esconde la barra del navegador), la firma no se
+     borra. Sale como JPEG, que pesa poco, con el mismo fondo del recuadro de
+     la firma en el PDF.
+     ========================================================================== */
+  const Firma = {
+    trazos: [], actual: null, ancho: 0, alto: 140,
+    iniciar() {
+      const cv = this.cv = $('canvasC');
+      this.medir();
+      cv.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        try { cv.setPointerCapture(e.pointerId); } catch (x) { /* nada */ }
+        this.actual = [this.punto(e)];
+        this.trazos.push(this.actual);
+        $('hintC').style.opacity = '0';
+        tocado = true;
+        this.dibujar();
+      });
+      cv.addEventListener('pointermove', e => {
+        if (!this.actual) return;
+        e.preventDefault();
+        const varios = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+        (varios.length ? varios : [e]).forEach(x => this.actual.push(this.punto(x)));
+        this.dibujar();
+      });
+      const fin = () => { this.actual = null; };
+      cv.addEventListener('pointerup', fin);
+      cv.addEventListener('pointercancel', fin);
+      let t;
+      window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => this.medir(), 150); });
+    },
+    punto(e) {
+      const r = this.cv.getBoundingClientRect();
+      return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
+    },
+    /* Solo se rehace si cambió el ancho */
+    medir() {
+      const w = this.cv.parentElement.clientWidth;
+      if (!w || w === this.ancho) return;
+      const dpr = window.devicePixelRatio || 1;
+      this.ancho = w;
+      this.cv.width = Math.round(w * dpr);
+      this.cv.height = Math.round(this.alto * dpr);
+      this.cv.style.width = w + 'px';
+      this.cv.style.height = this.alto + 'px';
+      this.dibujar();
+    },
+    trazar(ctx, w, h, grosor) {
+      ctx.strokeStyle = '#1d4ed8';
+      ctx.lineWidth = grosor;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      this.trazos.forEach(tr => {
+        ctx.beginPath();
+        tr.forEach((p, i) => { if (i) ctx.lineTo(p[0] * w, p[1] * h); else ctx.moveTo(p[0] * w, p[1] * h); });
+        if (tr.length === 1) ctx.lineTo(tr[0][0] * w + 0.1, tr[0][1] * h);
+        ctx.stroke();
+      });
+    },
+    dibujar() {
+      if (!this.ancho) return;
+      const ctx = this.cv.getContext('2d'), k = this.cv.width / this.ancho;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, this.cv.width, this.cv.height);
+      ctx.setTransform(k, 0, 0, k, 0, 0);
+      this.trazar(ctx, this.ancho, this.alto, 2.5);
+    },
+    hay() { return this.trazos.length > 0; },
+    borrar() {
+      this.trazos = [];
+      this.actual = null;
+      this.dibujar();
+      $('hintC').style.opacity = '1';
+    },
+    jpeg() {
+      if (!this.hay() || !this.ancho) return null;
+      const w = Math.round(this.ancho * 2), h = this.alto * 2, c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#f9fafb';
+      ctx.fillRect(0, 0, w, h);
+      this.trazar(ctx, w, h, 5);
+      return { url: c.toDataURL('image/jpeg', 0.85), ancho: w, alto: h };
+    }
+  };
+
+  /* ==========================================================================
+     Evidencia: la ubicación (si el conductor da el permiso) y el celular. La
+     hora y la IP las pone el servidor.
+     ========================================================================== */
+  const Ubicacion = {
+    ultima: null,
+    pedir(ms) {
+      return new Promise(listo => {
+        if (!navigator.geolocation) { listo(this.ultima); return; }
+        let hecho = false;
+        const fin = v => { if (!hecho) { hecho = true; listo(v); } };
+        setTimeout(() => fin(this.ultima), ms);
+        navigator.geolocation.getCurrentPosition(p => {
+          this.ultima = { lat: +p.coords.latitude.toFixed(6), lng: +p.coords.longitude.toFixed(6), precision: Math.round(p.coords.accuracy), t: Date.now() };
+          fin(this.ultima);
+        }, () => fin(this.ultima), { enableHighAccuracy: true, timeout: ms, maximumAge: 120000 });
+      });
+    },
+    /* Si ya dio el permiso antes, la toma desde que abre la página, sin preguntar */
+    async calentar() {
+      try {
+        const s = await navigator.permissions.query({ name: 'geolocation' });
+        if (s.state === 'granted') this.pedir(20000);
+      } catch (e) { /* el navegador no lo sabe decir */ }
+    },
+    obtener(ms) {
+      if (this.ultima && Date.now() - this.ultima.t < 5 * 60000) return Promise.resolve(this.ultima);
+      return this.pedir(ms);
+    }
+  };
+
+  async function celular() {
+    const ua = navigator.userAgent;
+    let modelo = '', so = '';
+    try {
+      const uad = navigator.userAgentData;
+      if (uad && uad.getHighEntropyValues) {
+        const h = await Promise.race([uad.getHighEntropyValues(['model', 'platformVersion']), new Promise(r => setTimeout(() => r({}), 1500))]);
+        modelo = h.model || '';
+        if (uad.platform === 'Android' && h.platformVersion) so = 'Android ' + h.platformVersion.split('.')[0];
+      }
+    } catch (e) { /* sin detalles */ }
+    if (!so) {
+      const m = ua.match(/Android [\d.]+|iPhone OS [\d_]+|CPU OS [\d_]+|Windows NT [\d.]+|Mac OS X [\d_.]+|Linux/);
+      so = m ? m[0].replace(/^(iPhone OS|CPU OS)/, 'iOS').replace(/_/g, '.').replace('Windows NT 10.0', 'Windows 10/11') : '';
+    }
+    const nav = (ua.match(/SamsungBrowser\/\d+|EdgA?\/\d+|OPR\/\d+|Firefox\/\d+|CriOS\/\d+|Chrome\/\d+|Version\/[\d.]+ (Mobile\/\S+ )?Safari/) || [''])[0]
+      .replace(/^Version\/([\d.]+).*/, 'Safari $1').replace('CriOS', 'Chrome').replace(/^EdgA?/, 'Edge').replace('OPR', 'Opera').replace('/', ' ');
+    return [modelo, so, nav].filter(Boolean).join(' · ').slice(0, 120) || 'Desconocido';
+  }
+
+  function nuevoId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    const b = crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  }
+
+  /* ==========================================================================
+     EL PDF: el mismo de siempre (jsPDF), con los ítems del formato de ese día
+     y, al pie, la hora en que lo recibió el sistema y la IP. Se arma igual cada
+     vez, así un reintento produce el mismo archivo.
+     ========================================================================== */
+  const Pdf = {
+    promesa: null,
+    cargar() {
+      if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+      if (!this.promesa) {
+        this.promesa = new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          s.onload = () => resolve(window.jspdf.jsPDF);
+          s.onerror = () => {
+            this.promesa = null;
+            s.remove();
+            reject(Object.assign(new Error('No se pudo cargar el generador del PDF'), { red: true }));
+          };
+          document.head.appendChild(s);
+        });
+      }
+      return this.promesa;
+    },
+    /* jsPDF escribe solo Latin-1: lo demás se cambia por lo más parecido */
+    txt: s => String(s == null ? '' : s).normalize('NFC').replace(/\r/g, '')
+      .replace(/[‘’‚′]/g, "'").replace(/[“”„″]/g, '"')
+      .replace(/[‐-―−]/g, '-').replace(/…/g, '...').replace(/[    ]/g, ' ')
+      .replace(/[•●]/g, '-').replace(/[^\n\x20-\x7E\xA0-\xFF]/g, ''),
+
+    async generar(e) {
+      const JsPDF = await this.cargar();
+      const v = e.vista, R = e.p.respuestas || {}, T = this.txt;
+      const doc = new JsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
+      try {
+        doc.setCreationDate(new Date(e.recibido));
+        doc.setFileId(e.id.replace(/-/g, '').toUpperCase());
+      } catch (x) { /* versión sin esas funciones */ }
+      const pw = 210, ml = 12, mr = 12, usable = pw - ml - mr;
+      let y = 10;
+      const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const diaSem = v.fecha ? dias[new Date(v.fecha + 'T12:00:00').getDay()] : '';
+      const codigo = T(v.codigo + ' v' + v.version);
+
+      const fc = (r, g, b) => doc.setFillColor(r, g, b);
+      const dc = (r, g, b) => doc.setDrawColor(r, g, b);
+      const tc = (r, g, b) => doc.setTextColor(r, g, b);
+      const bold = sz => { doc.setFont('helvetica', 'bold'); doc.setFontSize(sz); };
+      const normal = sz => { doc.setFont('helvetica', 'normal'); doc.setFontSize(sz); };
+
+      function drawPageHeader() {
+        fc(15, 27, 45); doc.rect(0, 0, pw, 14, 'F');
+        fc(29, 78, 216); doc.rect(0, 13, pw, 1.5, 'F');
+        bold(9); tc(240, 244, 248);
+        doc.text('SINUGRAVAS S.A.S - INSPECCION PREOPERACIONAL DE VEHICULOS', pw / 2, 9, { align: 'center' });
+        normal(6.5); tc(102, 112, 130);
+        doc.text(codigo, pw - mr, 12.5, { align: 'right' });
+        y = 18;
+      }
+      function pageCheck(h) {
+        if (y + h > 282) { doc.addPage(); y = 10; drawPageHeader(); }
+      }
+      drawPageHeader();
+
+      function cell(lbl, val, x, w, ry) {
+        fc(239, 246, 255); dc(209, 213, 221);
+        doc.rect(x, ry, w, 8, 'FD');
+        bold(6); tc(29, 78, 216);
+        doc.text(T(lbl.toUpperCase()), x + 2, ry + 3.2);
+        normal(8); tc(15, 27, 45);
+        doc.text(T(val || '-'), x + 2, ry + 7, { maxWidth: w - 4 });
+      }
+      const hw = usable / 2, qw = usable / 4, tw = usable / 3;
+      cell('Placa', v.placa, ml, hw, y); cell('Tipo de vehiculo', v.tipo, ml + hw, hw, y); y += 10;
+      cell('Conductor', v.nombre, ml, hw, y); cell('Doc. Identidad', v.documento, ml + hw, qw, y);
+      cell('Fecha', v.fecha, ml + hw + qw, qw, y); y += 10;
+      cell('Licencia', v.licencia, ml, tw, y); cell('Categoria', v.categoria, ml + tw, tw, y);
+      cell('Vigencia', v.vigencia, ml + tw * 2, tw, y); y += 10;
+      cell('Kilometraje', v.km ? v.km + ' km' : '-', ml, tw, y);
+      cell('Dia de la semana', diaSem, ml + tw, tw, y);
+      cell('Supervisor', v.supervisor, ml + tw * 2, tw, y); y += 12;
+
+      function secTitle(t) {
+        pageCheck(8);
+        fc(29, 78, 216); doc.rect(ml, y, usable, 7, 'F');
+        bold(8); tc(240, 244, 248);
+        doc.text(t, ml + 3, y + 5); y += 9;
+      }
+
+      // VERIFICACIÓN
+      secTitle('I. VERIFICACION DE ELEMENTOS  B=Bueno  R=Regular  M=Malo  N/A=No Aplica');
+      const nw = 28, lw = usable - 28 - 24, bw = 6;
+      fc(239, 246, 255); dc(209, 213, 221);
+      doc.rect(ml, y, nw, 6, 'FD');
+      doc.rect(ml + nw, y, lw, 6, 'FD');
+      doc.rect(ml + nw + lw, y, bw, 6, 'FD');
+      doc.rect(ml + nw + lw + bw, y, bw, 6, 'FD');
+      doc.rect(ml + nw + lw + bw * 2, y, bw, 6, 'FD');
+      doc.rect(ml + nw + lw + bw * 3, y, bw + 2, 6, 'FD');
+      bold(6.5); tc(102, 112, 130);
+      doc.text('N', ml + 2, y + 4.2); doc.text('Elemento', ml + nw + 2, y + 4.2);
+      tc(22, 163, 74); doc.text('B', ml + nw + lw + bw * 0 + bw / 2, y + 4.2, { align: 'center' });
+      tc(234, 88, 12); doc.text('R', ml + nw + lw + bw * 1 + bw / 2, y + 4.2, { align: 'center' });
+      tc(220, 38, 38); doc.text('M', ml + nw + lw + bw * 2 + bw / 2, y + 4.2, { align: 'center' });
+      tc(124, 58, 237); doc.text('N/A', ml + nw + lw + bw * 3 + (bw + 2) / 2, y + 4.2, { align: 'center' });
+      y += 6;
+
+      let rowIdx = 0;
+      (v.secciones || []).forEach((s, i) => {
+        pageCheck(6 + 5.5);   // el título no queda solo al final de la página
+        fc(239, 246, 255); doc.rect(ml, y, usable, 6, 'F');
+        fc(29, 78, 216); doc.rect(ml, y, 2.5, 6, 'F');
+        dc(209, 213, 221); doc.rect(ml, y, usable, 6, 'S');
+        bold(7); tc(29, 78, 216);
+        doc.text(T((i + 1) + '. ' + tituloDe(s)), ml + 5, y + 4.2); y += 6;
+
+        (s.items || []).forEach((item, j) => {
+          normal(7);
+          const lineas = doc.splitTextToSize(T(item.texto), lw - 4);
+          const h = 5.5 + (lineas.length - 1) * 3;
+          pageCheck(h);
+          const val = R[item.id];
+          if (rowIdx % 2 === 0) fc(249, 250, 251); else fc(255, 255, 255);
+          dc(209, 213, 221);
+          doc.rect(ml, y, nw, h, 'FD');
+          doc.rect(ml + nw, y, lw, h, 'FD');
+          doc.rect(ml + nw + lw, y, bw, h, 'FD');
+          doc.rect(ml + nw + lw + bw, y, bw, h, 'FD');
+          doc.rect(ml + nw + lw + bw * 2, y, bw, h, 'FD');
+          doc.rect(ml + nw + lw + bw * 3, y, bw + 2, h, 'FD');
+          normal(6); tc(102, 112, 130);
+          doc.text((i + 1) + '.' + (j + 1), ml + 2, y + 3.8);
+          normal(7); tc(15, 27, 45);
+          doc.text(lineas, ml + nw + 2, y + 3.8);
+          const marca = (col, ancho, t, sz) => { bold(sz); tc(255, 255, 255); doc.text(t, ml + nw + lw + bw * col + ancho / 2, y + 3.8, { align: 'center' }); };
+          if (val === 'B') { fc(22, 163, 74); doc.rect(ml + nw + lw, y, bw, h, 'F'); marca(0, bw, 'B', 7); }
+          if (val === 'R') { fc(234, 88, 12); doc.rect(ml + nw + lw + bw, y, bw, h, 'F'); marca(1, bw, 'R', 7); }
+          if (val === 'M') { fc(220, 38, 38); doc.rect(ml + nw + lw + bw * 2, y, bw, h, 'F'); marca(2, bw, 'M', 7); }
+          if (val === 'N/A') { fc(124, 58, 237); doc.rect(ml + nw + lw + bw * 3, y, bw + 2, h, 'F'); marca(3, bw + 2, 'N/A', 6); }
+          y += h; rowIdx++;
+        });
+      });
+      y += 5;
+
+      // OBSERVACIONES
+      normal(8);
+      const obs = v.observaciones ? doc.splitTextToSize(T(v.observaciones), usable - 6) : [];
+      const altoObs = Math.max(20, obs.length * 3.6 + 6);
+      pageCheck(Math.min(altoObs, 60) + 9);
+      secTitle('II. OBSERVACIONES');
+      fc(249, 250, 251); dc(209, 213, 221);
+      doc.rect(ml, y, usable, altoObs, 'FD');
+      if (obs.length) { normal(8); tc(15, 27, 45); doc.text(obs, ml + 3, y + 5); }
+      y += altoObs + 4;
+
+      // FIRMAS
+      pageCheck(50);
+      secTitle('IV. FIRMAS');
+      const sw = usable / 2 - 4, fx = ml;
+      fc(249, 250, 251); dc(209, 213, 221);
+      doc.rect(fx, y, sw, 40, 'FD');
+      bold(7); tc(102, 112, 130);
+      doc.text('CONDUCTOR', fx + 3, y + 4.5);
+      if (e.firma) {
+        /* La firma entera, sin estirarla */
+        const maxW = sw - 6, maxH = 26, k = Math.min(maxW / e.firma.ancho, maxH / e.firma.alto);
+        const w = e.firma.ancho * k, h = e.firma.alto * k;
+        try { doc.addImage(e.firma.url, 'JPEG', fx + 3 + (maxW - w) / 2, y + 6 + (maxH - h) / 2, w, h); } catch (x) { /* sin firma */ }
+      }
+      fc(209, 213, 221); doc.rect(fx, y + 34, sw, 0.5, 'F');
+      normal(8); tc(15, 27, 45);
+      doc.text(T(v.nombre || ''), fx + 3, y + 39);
+      y += 44;
+
+      // PIE: la hora en que lo recibió el sistema y desde qué IP
+      const total = doc.getNumberOfPages();
+      const pie = T(codigo + ' - Recibido en el sistema: ' + Fecha.colombia(e.recibido) + (e.ip ? ' - IP ' + e.ip : '') + ' - Envio ' + e.id.slice(0, 8));
+      for (let p = 1; p <= total; p++) {
+        doc.setPage(p);
+        fc(15, 27, 45); doc.rect(0, 289, pw, 8, 'F');
+        normal(6.5); tc(102, 112, 130);
+        doc.text(pie, ml, 294);
+        doc.text('Pagina ' + p + ' de ' + total, pw - mr, 294, { align: 'right' });
+      }
+      return new Uint8Array(doc.output('arraybuffer'));
+    },
+    nombre: e => 'INSPECCION_' + e.vista.placa + '_' + e.vista.fecha + '.pdf'
+  };
+
+  const aBase64 = bytes => {
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  };
+  const deBase64 = b64 => { const s = atob(b64), b = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; };
+  async function sha256(bytes) {
+    const h = await crypto.subtle.digest('SHA-256', bytes);
+    return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+
+  /* ==========================================================================
+     LA COLA del celular. Cada envío pasa por tres pasos y se guarda en el
+     celular después de cada uno, así nada se pierde si se va la señal:
+       enviar → el sistema lo recibe (con hora del servidor e IP)
+       pdf    → se arma el PDF con esa hora
+       subir  → suben la firma y el PDF, y el sistema los confirma
+     ========================================================================== */
+  const PDFS = new Map();   // los PDF ya armados, para descargarlos sin volver a armarlos
+  const Cola = {
+    CLAVE: 'preop.pendientes',
+    lista: [],
+    corriendo: null,
+    otraVez: false,
+    cargar() { this.lista = (Local.leer(this.CLAVE, []) || []).filter(e => e && e.id && e.p && e.vista); },
+    guardar() { return Local.poner(this.CLAVE, this.lista); },
+    agregar(e) { this.lista.push(e); this.guardar(); Avisos.pintar(); },
+    quitar(id) { this.lista = this.lista.filter(e => e.id !== id); this.guardar(); },
+
+    /* Una sola pasada a la vez. Si piden otra mientras tanto, se hace al final
+       y quien la pidió espera hasta ahí */
+    procesar() {
+      if (this.corriendo) { this.otraVez = true; return this.corriendo; }
+      this.corriendo = (async () => {
+        do {
+          this.otraVez = false;
+          Avisos.pintar();
+          await this.pasada();
+        } while (this.otraVez);
+      })().finally(() => { this.corriendo = null; Avisos.pintar(); });
+      return this.corriendo;
+    },
+    async pasada() {
+      for (const e of this.lista.slice()) {
+        try {
+          e.error = '';
+          await this.uno(e);
+        } catch (err) {
+          e.error = err.red ? 'sin señal' : err.message;
+          e.intentos = (e.intentos || 0) + 1;
+          /* Pasados tres días, el sistema ya no deja subir los archivos */
+          if (e.etapa !== 'enviar' && Date.now() - e.creado > 3 * 86400000) { this.quitar(e.id); continue; }
+          this.guardar();
+        }
+      }
+    },
+
+    async uno(e) {
+      if (e.etapa === 'enviar') {
+        const p = Object.assign({ id: e.id }, e.p);
+        if (e.intentos) p.evidencia = Object.assign({}, p.evidencia, { sin_senal: 'true' });
+        const r = await Nube.rpc('preop_enviar', { p }, 30000);
+        if (!r || !r.ok) {
+          this.quitar(e.id);
+          Pantalla.rechazado(e, (r && r.motivo) || 'El sistema no lo recibió.');
+          return;
+        }
+        e.recibido = r.recibido;
+        e.ip = r.ip || '';
+        e.etapa = 'pdf';
+        this.guardar();
+        Pantalla.avanzo(e);
+      }
+      if (e.etapa === 'pdf') {
+        const bytes = await Pdf.generar(e);
+        PDFS.set(e.id, bytes);
+        e.hash = await sha256(bytes);
+        e.pdf = aBase64(bytes);
+        e.etapa = 'subir';
+        this.guardar();
+        Pantalla.avanzo(e);
+      }
+      if (e.etapa === 'subir') {
+        let fallo = null;
+        try {
+          if (e.firma && !e.firmaArriba) {
+            await Nube.subir('preoperacional/' + e.id + '/firma.jpg', deBase64(e.firma.url.split(',')[1]), 'image/jpeg');
+            e.firmaArriba = true;
+            this.guardar();
+          }
+          await Nube.subir('preoperacional/' + e.id + '/inspeccion.pdf', deBase64(e.pdf), 'application/pdf');
+        } catch (err) {
+          if (err.red) throw err;
+          fallo = err;   // quizá ya se había confirmado antes: se pregunta abajo
+        }
+        const r = await Nube.rpc('preop_archivos', { p_id: e.id, p_pdf_hash: e.hash }, 30000);
+        if (!r || !r.ok) throw fallo || new Error((r && r.motivo) || 'No se confirmaron los archivos');
+        e.etapa = 'listo';
+        this.quitar(e.id);
+        Pantalla.avanzo(e);
+      }
+    }
+  };
+
+  /* El aviso de arriba cuando hay envíos que no han terminado */
+  const Avisos = {
+    pintar() {
+      const l = Cola.lista, caja = $('pendientes');
+      caja.hidden = !l.length;
+      if (!l.length) return;
+      const quien = l.map(e => esc(e.vista.placa) + ' del ' + Fecha.dmy(e.vista.fecha)).join(', ');
+      const solo = l.every(e => e.etapa !== 'enviar');
+      $('pendTxt').innerHTML = '<b>' + (l.length === 1 ? 'Un preoperacional' : l.length + ' preoperacionales') + ' sin terminar de enviar</b> (' + quien + '). ' +
+        (solo ? 'Ya llegó al sistema; falta subir el PDF. ' : 'Quedó guardado en este celular. ') +
+        'Se envía solo apenas haya señal: con esta página abierta, o la próxima vez que la abra.';
+      $('pendBtn').disabled = !!Cola.corriendo;
+      $('pendBtn').textContent = Cola.corriendo ? 'Enviando…' : 'Reintentar';
+    }
+  };
+
+  /* ==========================================================================
+     Pantallas: el formulario, «enviado» y «guardado en el celular»
+     ========================================================================== */
+  const Pantalla = {
+    actual: 'cargando',
+    envio: null,   // el envío que se muestra en «enviado»
+    ver(cual) {
+      this.actual = cual;
+      $('cargando').hidden = cual !== 'cargando';
+      $('cargaError').hidden = cual !== 'error';
+      $('formulario').hidden = cual !== 'form';
+      $('barra').hidden = cual !== 'form';
+      $('progreso').hidden = cual !== 'form';
+      $('listo').hidden = cual !== 'listo';
+    },
+    resultado(e) {
+      const n = { B: 0, R: 0, M: 0, 'N/A': 0 }, R = e.p.respuestas || {};
+      Object.keys(R).forEach(k => { n[R[k]] = (n[R[k]] || 0) + 1; });
+      const total = (e.vista.secciones || []).reduce((s, x) => s + (x.items || []).length, 0);
+      const sin = total - n.B - n.R - n.M - n['N/A'];
+      return n.B + ' bueno · ' + n.R + ' regular · ' + n.M + ' malo · ' + n['N/A'] + ' no aplica' + (sin > 0 ? ' · ' + sin + ' sin marcar' : '');
+    },
+    mostrar(e) {
+      this.envio = e;
+      const llego = e.etapa !== 'enviar';
+      $('listoIc').className = 'listo-ic' + (llego ? '' : ' esp');
+      $('listoIc').textContent = llego ? '✓' : '📤';
+      $('listoTit').textContent = llego ? 'Preoperacional enviado' : 'Quedó guardado en el celular';
+      $('listoTxt').textContent = llego ? 'Quedó registrado en el Sistema de Gestión de Flota.'
+        : (e.error && e.error !== 'sin señal' ? 'El sistema no lo recibió todavía (' + e.error + '). '
+          : 'No hay señal en este momento. ') + 'Se envía solo apenas se pueda: con esta página abierta, o la próxima vez que la abra.';
+      const v = e.vista, filas = [['Vehículo', v.placa + ' · ' + v.tipo], ['Fecha', Fecha.dmy(v.fecha)], ['Conductor', v.nombre],
+        ['Resultado', this.resultado(e)]];
+      if (v.km) filas.push(['Kilometraje', miles(v.km) + ' km']);
+      if (llego) filas.push(['Recibido', Fecha.colombia(e.recibido)]);
+      $('listoDatos').innerHTML = filas.map(f => '<dt>' + esc(f[0]) + '</dt><dd>' + esc(f[1]) + '</dd>').join('');
+      const falta = llego && e.etapa !== 'listo';
+      $('listoNota').hidden = !falta;
+      $('listoNota').textContent = falta ? 'El PDF termina de subir al sistema apenas haya señal.' : '';
+      const bytes = PDFS.get(e.id) || (e.pdf ? deBase64(e.pdf) : null), a = $('listoPdf');
+      if (a.href && a.href.startsWith('blob:')) URL.revokeObjectURL(a.href);
+      a.hidden = !bytes;
+      if (bytes) {
+        a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+        a.download = Pdf.nombre(e);
+      } else a.removeAttribute('href');
+      this.ver('listo');
+    },
+    /* Un envío avanzó: si es el que está en pantalla, se actualiza; si no, un aviso */
+    avanzo(e) {
+      if (this.actual === 'listo' && this.envio && this.envio.id === e.id) { this.mostrar(e); return; }
+      if (e.etapa === 'listo' && e.id !== enviandoId) showToast('✅ Se envió el preoperacional de ' + e.vista.placa + ' del ' + Fecha.dmy(e.vista.fecha));
+    },
+    rechazado(e, motivo) {
+      if (e.id === enviandoId) { motivoRechazo = motivo; return; }
+      if (this.actual === 'listo' && this.envio && this.envio.id === e.id) this.ver('form');
+      aviso('No se pudo enviar el preoperacional de ' + e.vista.placa + ' del ' + Fecha.dmy(e.vista.fecha), motivo);
+    }
+  };
+
+  // TOAST
+  function showToast(msg, type) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.className = 'show' + (type === 'err' ? ' err' : '');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.className = ''; }, 5000);
+  }
+
+  function dialogo(titulo, cuerpo, botones) {
+    return new Promise(listo => {
+      const bd = document.createElement('div');
+      bd.className = 'dlg-bd';
+      bd.innerHTML = '<div class="dlg" role="dialog" aria-modal="true"><h3>' + esc(titulo) + '</h3>' + cuerpo + '<div class="dlg-btns">' +
+        botones.map((b, i) => '<button type="button" class="bt' + (i === botones.length - 1 ? ' pri' : '') + '" data-r="' + i + '">' + esc(b) + '</button>').join('') +
+        '</div></div>';
+      bd.addEventListener('click', ev => {
+        const b = ev.target.closest('[data-r]');
+        if (!b && ev.target !== bd) return;
+        bd.remove();
+        listo(b ? +b.dataset.r : -1);
+      });
+      document.body.appendChild(bd);
+      bd.querySelector('.bt.pri').focus();
+    });
+  }
+  const aviso = (titulo, texto) => dialogo(titulo, '<p>' + esc(texto) + '</p>', ['Entendido']);
+
+  // VALIDAR
+  function validar() {
+    const req = [['placa', 'Placa'], ['tipoVeh', 'Tipo de Vehículo'], ['fecha', 'Fecha'], ['docId', 'Documento Identidad'], ['nombre', 'Nombre del Conductor']];
+    Object.keys(CAMPOS).forEach(k => { const c = campo(k); if (c.mostrar && c.obligatorio) req.push([CAMPOS[k].el, CAMPOS[k].nombre]); });
+    for (const [id, nom] of req) {
+      const el = $(id);
+      if (!String(el.value).trim() && !(el.validity && el.validity.badInput)) {
+        showToast('⚠️ Campo requerido: ' + nom, 'err');
+        el.focus();
+        return false;
+      }
+    }
+    const km = $('km');
+    if (campo('kilometraje').mostrar && ((km.validity && km.validity.badInput) || (km.value.trim() && !/^\d{1,12}(\.\d{1,2})?$/.test(km.value.trim())))) {
+      showToast('⚠️ El kilometraje no es válido: escríbalo solo con números', 'err');
+      km.focus();
+      return false;
+    }
+    const f = $('fecha').value, hoy = Fecha.hoy();
+    if (f > Fecha.sumar(hoy, 1) || f < Fecha.sumar(hoy, -60)) {
+      showToast('⚠️ La fecha de inspección no es válida', 'err');
+      $('fecha').focus();
+      return false;
+    }
+    return true;
+  }
+
+  /* Lo que puede ser un error. Se avisa, pero el conductor decide si envía */
+  function avisos() {
+    const l = [];
+    const total = Object.keys(ST).length, faltan = Object.values(ST).filter(v => !v).length;
+    if (faltan) l.push(faltan === total ? 'No ha marcado ningún ítem de la verificación.' : 'Faltan ' + faltan + ' de ' + total + ' ítems por marcar.');
+    if (!Firma.hay()) l.push('No ha firmado.');
+    const u = unidad($('placa').value), km = $('km').value.trim();
+    if (u && u.km != null && km !== '' && campo('kilometraje').mostrar) {
+      const nuevo = Number(km), ultimo = Number(u.km), cuando = u.km_fecha ? ' el ' + Fecha.dmy(u.km_fecha) : '';
+      if (nuevo < ultimo) l.push('El kilometraje (' + miles(nuevo) + ') es menor que el último registrado para ' + u.placa + ': ' + miles(ultimo) + ' km' + cuando + '.');
+      else if (nuevo - ultimo > 5000) l.push('El kilometraje (' + miles(nuevo) + ') está ' + miles(nuevo - ultimo) + ' km por encima del último registrado para ' + u.placa + ' (' + miles(ultimo) + ' km' + cuando + ').');
+    }
+    const vig = $('vigLic').value, f = $('fecha').value;
+    if (vig && f && vig < f && campo('vigencia').mostrar) l.push('La licencia de conducción aparece vencida desde el ' + Fecha.dmy(vig) + '.');
+    if (f && f !== Fecha.hoy()) l.push('La fecha de la inspección (' + Fecha.dmy(f) + ') no es la de hoy.');
+    return l;
+  }
+
+  // ENVIAR
+  let enviandoId = null, motivoRechazo = null;
+  async function enviar() {
+    if (enviandoId || !validar()) return;
+    const av = avisos();
+    if (av.length && await dialogo('Antes de enviar, revise', '<ul>' + av.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>', ['Revisar', 'Enviar así']) !== 1) return;
+    const btn = $('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Enviando...';
+    enviandoId = nuevoId();
+    motivoRechazo = null;
+    try {
+      const [ubic, cel] = await Promise.all([Ubicacion.obtener(8000), celular()]);
+      const u = unidad($('placa').value), c = conductor($('nombre').value), f = D.formato;
+      const ver = k => campo(k).mostrar;
+      const respuestas = {};
+      Object.keys(ST).forEach(k => { if (ST[k]) respuestas[k] = ST[k]; });
+      const datos = {
+        fecha: $('fecha').value,
+        kilometraje: ver('kilometraje') ? $('km').value.trim() : '',
+        tipo_vehiculo: $('tipoVeh').value,
+        licencia: ver('licencia') ? textoDe($('licencia')) : '',
+        categoria: ver('categoria') ? $('catLic').value : '',
+        vigencia_licencia: ver('vigencia') ? $('vigLic').value : '',
+        observaciones: ver('observaciones') ? $('obs').value.trim() : ''
+      };
+      const e = {
+        id: enviandoId, etapa: 'enviar', intentos: 0, creado: Date.now(),
+        p: Object.assign({ unidad_id: u.id, conductor_id: c.id, respuestas }, datos, {
+          evidencia: { celular: cel, hora: Fecha.conZona(new Date()), ubicacion: ubic ? { lat: ubic.lat, lng: ubic.lng, precision: ubic.precision } : undefined }
+        }),
+        vista: { placa: u.placa, tipo: datos.tipo_vehiculo, fecha: datos.fecha, km: datos.kilometraje, documento: cedulaDe(c), nombre: c.nombre,
+          licencia: datos.licencia, categoria: datos.categoria, vigencia: datos.vigencia_licencia, observaciones: datos.observaciones,
+          supervisor: f.supervisor || '', codigo: f.codigo, version: f.version, secciones: f.secciones },
+        firma: Firma.jpeg()
+      };
+      Cola.agregar(e);
+      await Cola.procesar();
+      if (motivoRechazo) {
+        showToast('❌ ' + motivoRechazo, 'err');
+      } else {
+        tocado = false;
+        Pantalla.mostrar(e);
+        window.scrollTo(0, 0);
+      }
+    } catch (err) {
+      showToast('❌ Error: ' + err.message, 'err');
+    } finally {
+      enviandoId = null;
+      btn.disabled = false;
+      btn.textContent = 'Enviar';
+    }
+  }
+
+  function limpiar() {
+    ['placa', 'tipoVeh', 'km', 'docId', 'nombre', 'licencia', 'catLic', 'vigLic', 'obs'].forEach(id => { $(id).value = ''; });
+    $('fecha').value = Fecha.hoy();
+    document.querySelectorAll('.brm button').forEach(b => b.classList.remove('b-act', 'r-act', 'm-act', 'na-act'));
+    Object.keys(ST).forEach(k => { ST[k] = null; });
+    updateProg();
+    Firma.borrar();
+    tocado = false;
+  }
+
+  /* ==========================================================================
+     ARRANQUE: trae el formulario del sistema (si no hay señal, usa el último
+     que quedó en el celular) y sigue con lo que haya pendiente
+     ========================================================================== */
+  async function cargarDatos() {
+    Pantalla.ver('cargando');
+    let d = null, guardado = false, error = null;
+    try {
+      d = await Nube.rpc('preop_datos', {}, 15000);
+      if (d && d.formato) Local.poner('preop.datos', d);
+    } catch (e) {
+      error = e;
+      d = Local.leer('preop.datos', null);
+      guardado = true;
+    }
+    if (!d || !d.formato) {
+      $('cargaErrorTxt').textContent = error && !error.red ? 'El sistema respondió: ' + error.message
+        : d ? 'El formulario todavía no está configurado en el sistema.' : 'Revise la señal o los datos del celular e intente otra vez.';
+      Pantalla.ver('error');
+      return false;
+    }
+    D.formato = d.formato;
+    D.unidades = d.unidades || [];
+    D.conductores = d.conductores || [];
+    pintarFormulario();
+    Pantalla.ver('form');
+    Firma.medir();
+    if (guardado) showToast('Sin señal: se cargó el formulario guardado en este celular', 'err');
+    return true;
+  }
+
+  return {
+    activo: () => new URLSearchParams(location.search).has('preoperacional'),
+    iniciar() {
+      document.title = 'Inspección Preoperacional — SINÚGRAVAS';
+      const vp = document.querySelector('meta[name="viewport"]');
+      if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      /* Solo se ve el formulario: los estilos de la plataforma se quitan y van los suyos */
+      document.querySelectorAll('style').forEach(s => s.remove());
+      const estilo = document.createElement('style');
+      estilo.textContent = CSS;
+      document.head.appendChild(estilo);
+      document.documentElement.removeAttribute('data-theme');
+      document.body.innerHTML = HTML;
+      $('checklistBody').addEventListener('click', ev => { const b = ev.target.closest('button[data-i]'); if (b) setBRM(b); });
+      $('placa').addEventListener('change', ev => { const u = unidad(ev.target.value); $('tipoVeh').value = u ? claseDe(u) : ''; });
+      $('docId').addEventListener('change', ev => elegirConductor(ev.target.value));
+      $('nombre').addEventListener('change', ev => elegirConductor(ev.target.value));
+      $('formulario').addEventListener('input', () => { tocado = true; });
+      $('clearC').addEventListener('click', () => Firma.borrar());
+      $('submitBtn').addEventListener('click', enviar);
+      $('pendBtn').addEventListener('click', () => Cola.procesar());
+      $('reintentarCarga').addEventListener('click', async () => { if (await cargarDatos()) Cola.procesar(); });
+      $('listoOtro').addEventListener('click', () => {
+        limpiar();
+        Pantalla.envio = null;
+        Pantalla.ver('form');
+        Firma.medir();
+        window.scrollTo(0, 0);
+      });
+      window.addEventListener('online', () => Cola.procesar());
+      document.addEventListener('visibilitychange', () => { if (!document.hidden && Cola.lista.length) Cola.procesar(); });
+      setInterval(() => { if (Cola.lista.length) Cola.procesar(); }, 30000);
+      window.addEventListener('beforeunload', ev => {
+        if (tocado && Pantalla.actual === 'form') { ev.preventDefault(); ev.returnValue = ''; }
+      });
+
+      Firma.iniciar();
+      Cola.cargar();
+      Avisos.pintar();
+      Pdf.cargar().catch(() => { /* se intenta de nuevo al armar el PDF */ });
+      Ubicacion.calentar();
+      cargarDatos().then(() => Cola.procesar());
+    }
+  };
+})();
 
 /* ==========================================================================
    §N  LA NUBE — Supabase: la sesión, las tablas del esquema «flota» y el
@@ -7190,12 +8329,15 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); const q = $('#gq'); if (q) q.focus(); }
   if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('uc')) e.target.click();
 });
-window.addEventListener('hashchange', () => Router.pintar());
+/* Solo con la plataforma ya pintada: en la pantalla de entrada o en el formulario del conductor no hay vista */
+window.addEventListener('hashchange', () => { if ($('#vista')) Router.pintar(); });
 
 document.documentElement.setAttribute('data-theme', Prefs.get('tema') === 'dark' ? 'dark' : 'light');
 /* Primero se recorta la «S» del logo, que la barra lateral usa al pintarse;
    luego se pide la sesión, se mira el acceso y se traen los datos de la nube */
-MARCA.preparar().then(() => Arranque.iniciar());
+/* «?preoperacional» es el formulario de los conductores (§F); si no, la plataforma */
+if (PreopPublico.activo()) PreopPublico.iniciar();
+else MARCA.preparar().then(() => Arranque.iniciar());
 </script>
 </body>
 </html>
