@@ -997,6 +997,54 @@ html.sb-mini .sb-salir{display:none}
   .pr-marco td{padding:0}
   .pr-esp{height:12mm}
 }
+
+/* ==========================================================================
+   Preoperacionales: la lista del día, cada envío, el editor del formulario y
+   la pestaña de la ficha
+   ========================================================================== */
+.kpis4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
+@media(max-width:1100px){.kpis4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ev{display:inline-flex;gap:6px;color:var(--text-3)}
+.ev svg{width:15px;height:15px}
+.ev .si{color:var(--ok-500)}
+.enlace{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--surface-2);font-family:var(--mono);font-size:12px;word-break:break-all}
+.enlace svg{flex:0 0 auto;color:var(--text-3)}
+.nov{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px}
+.nov:last-child{border-bottom:0}
+.nov .n{color:var(--text-3);font-size:11px;min-width:30px;font-variant-numeric:tabular-nums}
+.nov .t{flex:1;min-width:0}
+.cuenta{display:flex;height:8px;border-radius:5px;overflow:hidden;background:var(--surface-3);margin:6px 0 8px}
+.cuenta i{display:block;height:100%}
+.leyenda-p{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--text-2)}
+.leyenda-p span{display:inline-flex;align-items:center;gap:5px}
+.leyenda-p i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.firma-p{border:1px solid var(--border);border-radius:var(--radius);background:#f9fafb;height:120px;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;padding:6px}
+.firma-p img{max-width:100%;max-height:106px;display:block}
+.preop-todos summary{list-style:none;cursor:pointer;display:inline-block}
+.preop-todos summary::-webkit-details-marker{display:none}
+.preop-todos[open] summary{margin-bottom:4px}
+.preop-sec{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);padding:12px 0 2px}
+.preop-mes{padding:12px 16px 4px}
+.mrow-r.flex{gap:6px}
+.sec-ed{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;background:var(--surface)}
+.sec-ed-h{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface-2);border-bottom:1px solid var(--border);
+  border-radius:var(--radius) var(--radius) 0 0}
+.sec-ed-h .inp{font-weight:650}
+.sec-ed.cerrada .sec-ed-h{border-bottom:0;border-radius:var(--radius)}
+.sec-ed .num{flex:0 0 auto;min-width:30px;color:var(--text-3);font-size:11.5px;font-variant-numeric:tabular-nums}
+.sec-ed-h .num{min-width:0;font-weight:650}
+.it-ed{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--border)}
+.it-ed .inp{height:30px}
+.it-ed .btn{flex:0 0 auto}
+.agregar{padding:8px 12px}
+.campo-ed{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px}
+.campo-ed:last-child{border-bottom:0}
+.campo-ed label,#preopEd .field .flex label{display:inline-flex;align-items:center;gap:6px;color:var(--text-2);cursor:pointer;font-size:12.5px}
+.siempre{color:var(--text-3);font-size:11.5px;grid-column:2 / span 2;text-align:right}
+.barra-guardar{position:sticky;bottom:0;display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;padding:12px 0;
+  background:linear-gradient(transparent,var(--bg) 35%)}
 </style>
 </head>
 <body>
@@ -1850,7 +1898,11 @@ const Icon = (() => {
     checkSquare: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
     send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>',
     pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
-    lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'
+    lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    copiar: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    movil: '<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>',
+    arriba: '<path d="M18 15l-6-6-6 6"/>',
+    abajo: '<path d="M6 9l6 6 6-6"/>'
   };
   return function (name, cls, size) {
     const s = size || 24;
@@ -2168,9 +2220,12 @@ const Actividad = {
         det: [c.valor ? Money.format(c.valor) : '', c.fecha ? 'del ' + Fecha.corta(c.fecha) : '', 'revisión de ' + mes].filter(Boolean).join(' · '), adjuntos: adj(c.archivo, c.archivoId) });
       else if (c.estado === 'sin') ev.push({ fecha: c.revisado || this.diaRevision(HOY), hora: c.hora, ts: c.ts, tipo: 'revision', titulo: 'Revisión de comparendos de ' + mes + ': sin comparendos' });
       (u.compHist || []).forEach((h, i) => {
-        const m = Fecha.mesAtras(i + 1), con = h.estado === 'con';
-        ev.push({ fecha: this.diaRevision(m), tipo: con ? 'comparendo' : 'revision',
-          titulo: 'Revisión de comparendos de ' + Fecha.mes(m, true).toLowerCase() + (con ? ': con comparendo' : ': sin comparendos'), det: con ? h.infraccion || '' : '' });
+        /* Un mes que no se revisó no deja nada en la historia */
+        if (!h || h.estado === 'pend' || h.estado === 'na') return;
+        const m = Comparendos.fechaDe(h, i + 1), con = h.estado === 'con';
+        ev.push({ fecha: h.revisado || h.registrado || this.diaRevision(m), hora: h.hora, ts: h.ts, tipo: con ? 'comparendo' : 'revision',
+          titulo: 'Revisión de comparendos de ' + Fecha.mes(m, true).toLowerCase() + (con ? ': con comparendo' : ': sin comparendos'),
+          det: con ? [h.infraccion, h.valor ? Money.format(h.valor) : ''].filter(Boolean).join(' · ') : '', adjuntos: con ? adj(h.archivo, h.archivoId) : [] });
       });
     }
     Datos.ocs.filter(o => o.unidad === u.id).forEach(o => ev.push({
@@ -2183,6 +2238,44 @@ const Actividad = {
       det: [d.falta && d.falta.length ? 'Falta: ' + d.falta.join(', ') : 'Completa', d.obs].filter(Boolean).join(' · ') }));
     return ev.map(e => Object.assign({ quien: 'Juan', det: '', adjuntos: [] }, e))
       .sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.hora || '').localeCompare(a.hora || '') || (b.ts || 0) - (a.ts || 0));
+  }
+};
+
+/* La revisión de comparendos es de cada mes. La del mes en curso está en
+   u.comp y las de los meses anteriores en u.compHist, la primera la del mes
+   pasado. Cada una lleva su mes («2026-10»). Al entrar en un mes nuevo, la
+   revisión anterior pasa sola al historial y la unidad queda «Sin revisar»;
+   los meses en que nadie abrió la plataforma quedan como no revisados. */
+const Comparendos = {
+  mes: d => { d = d || HOY; return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); },
+  /* La revisión vacía de una unidad para un mes */
+  nueva(u, mes) { return { estado: Config.comparendos.includes(u.tipo) ? 'pend' : 'na', mes: mes || this.mes() }; },
+  /* De qué mes es una revisión que no lo dice: del día en que se revisó o se
+     registró y, si no tiene, del mes en curso */
+  mesDe(c) { return c.mes || (c.revisado || c.registrado || '').slice(0, 7) || this.mes(); },
+  /* El primer día del mes de una revisión del historial, para mostrarla.
+     Las viejas sin mes se ubican por su puesto: la primera es la del mes
+     pasado. */
+  fechaDe(h, puesto) { return h && h.mes ? Fecha.parse(h.mes + '-01') : Fecha.mesAtras(puesto); },
+  /* Pone al día todas las unidades: la revisión que ya no es del mes en curso
+     pasa al historial. «actual» es para probarlo con otro mes. Devuelve
+     cuántas unidades pasaron de mes. */
+  alDia(actual) {
+    actual = actual || this.mes();
+    let n = 0;
+    Datos.unidades.forEach(u => {
+      if (!u.comp) u.comp = this.nueva(u, actual);
+      const m = this.mesDe(u.comp);
+      if (!u.comp.mes) u.comp.mes = m;
+      if (m >= actual) return;
+      const [ay, am] = actual.split('-').map(Number), [my, mm] = m.split('-').map(Number);
+      const entre = [];
+      for (let i = 1; i < (ay - my) * 12 + (am - mm); i++) entre.push(this.nueva(u, this.mes(new Date(ay, am - 1 - i, 1))));
+      u.compHist = entre.concat([u.comp], u.compHist || []);
+      u.comp = this.nueva(u, actual);
+      n++;
+    });
+    return n;
   }
 };
 
@@ -3017,6 +3110,7 @@ const NAV = [
   { id: 'documentos', icono: 'shield', txt: 'Documentos', badge: 'docs', alerta: true },
   { id: 'mantenimientos', icono: 'tool', txt: 'Mantenimientos', badge: 'taller', alerta: true },
   { id: 'aceite', icono: 'gota', txt: 'Cambios de aceite', badge: 'aceite', alerta: true },
+  { id: 'preoperacionales', icono: 'checkSquare', txt: 'Preoperacionales' },
   { id: 'inspecciones', icono: 'clipboard', txt: 'Inspecciones', badge: 'insp', alerta: true },
   { id: 'comparendos', icono: 'ticket', txt: 'Comparendos', badge: 'comp', alerta: true },
   { id: 'compras', icono: 'cart', txt: 'Órdenes de compra', badge: 'oc', alerta: true },
@@ -3024,7 +3118,6 @@ const NAV = [
   { id: 'conductores', icono: 'personas', txt: 'Conductores', badge: 'conductores' },
   { id: 'proveedores', icono: 'briefcase', txt: 'Proveedores', badge: 'proveedores' },
   { sec: 'Próximamente' },
-  { id: 'pronto/preoperacional', icono: 'checkSquare', txt: 'Preoperacional', soon: true },
   { id: 'pronto/combustible', icono: 'fuel', txt: 'Combustible y ralentí', soon: true },
   { id: 'pronto/llantas', icono: 'disc', txt: 'Llantas y GPS', soon: true },
   { sec: 'Sistema' },
@@ -3426,8 +3519,9 @@ const Vistas = {
     else if (u.comp.estado === 'con') { compV = 'Con comparendo'; compS = u.comp.infraccion; compK = 'bad'; }
     else { compV = 'Sin revisar'; compS = 'Se revisa a comienzo de mes'; compK = 'warn'; }
     const conLicencia = (Config.req[u.tipo] || []).includes('tarjeta');
-    const tabs = [['info', 'Información'], ['actividad', 'Actividad', Actividad.de(u).length], ['docs', 'Documentos', alertas], ['mant', 'Mantenimientos', mants.length],
-      ['insp', 'Inspecciones'], ['comp', 'Comparendos y accidentes'], ['oc', 'Compras', ocs.length]];
+    const tabs = [['info', 'Información'], ['actividad', 'Actividad', Actividad.de(u).length], ['docs', 'Documentos', alertas], ['mant', 'Mantenimientos', mants.length]]
+      .concat(Preop.aplica(u) ? [['preop', 'Preoperacionales']] : [])
+      .concat([['insp', 'Inspecciones'], ['comp', 'Comparendos y accidentes'], ['oc', 'Compras', ocs.length]]);
     const html =
       '<div class="crumbs"><a data-ir="flota">Flota</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
       '<section class="uh">' +
@@ -3580,7 +3674,7 @@ const Vistas = {
     if (!Config.comparendos.includes(u.tipo)) {
       comp = UI.card('Comparendos', UI.empty('ticket', 'No aplica', 'Las canoas no tienen placa, así que no se revisan en comparendos. Si eso cambia, se ajusta en Configuración.'));
     } else {
-      const filas = [[Fecha.mes(), u.comp]].concat((u.compHist || []).map((h, i) => [Fecha.mes(Fecha.mesAtras(i + 1)), h]));
+      const filas = [[Fecha.mes(), u.comp]].concat((u.compHist || []).map((h, i) => [Fecha.mes(Comparendos.fechaDe(h, i + 1)), h]));
       comp = UI.card('Revisión mensual de comparendos', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Mes</th><th>Resultado</th><th>Detalle</th><th>Soporte</th></tr></thead><tbody>' +
         filas.map(f => {
           const c = f[1];
@@ -3665,9 +3759,6 @@ const Vistas = {
   /* --------------------------------------------------------- Próximamente */
   pronto(id) {
     const P = {
-      preoperacional: { icono: 'checkSquare', t: 'Preoperacional',
-        p: 'Ya existe: es el link que cada conductor llena todos los días antes de usar la unidad, conectado a OneDrive. Más adelante se trae aquí para que quede en la hoja de cada unidad.',
-        lista: ['El registro diario de cada conductor', 'Lo que hoy guarda el link en OneDrive, en la hoja de cada unidad'] },
       combustible: { icono: 'fuel', t: 'Combustible y ralentí',
         p: 'Llega cuando el ingeniero pase la información de esos procesos. Es lo que la gerencia quiere ver para tomar decisiones.',
         lista: ['Consumo de combustible por unidad', 'Tiempo en ralentí', 'Lo que defina el ingeniero'] },
@@ -3827,6 +3918,7 @@ const Ventanas = {
         cuerpo: '<div class="visor real">' + (pdf ? '<iframe class="visor-pdf" src="' + attr(v.url) + '" title="' + attr(nombre) + '"></iframe>'
           : '<img class="visor-img" src="' + attr(v.url) + '" alt="' + attr(nombre) + '">') + '</div>',
         pie: '<a class="btn" href="' + attr(v.url) + '" download="' + attr(nombre) + '">' + Icon('download', '', 14) + 'Descargar</a>' +
+          (pdf ? '<button class="btn" data-act="imprimirVisor">' + Icon('print', '', 14) + 'Imprimir</button>' : '') +
           '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
       });
       return;
@@ -4277,7 +4369,7 @@ const Acciones = {
       id: 'n' + Date.now(), tipo, clase: v('nuClase'), placa,
       marca: tipo === 'canoa' ? '' : v('nuMarca'), linea: v('nuLinea'), alias: tipo === 'canoa' ? (v('nuMarca') || placa) : '',
       modelo: v('nuModelo'), color: v('nuColor'), conductor: v('nuCond') || null, foto: null,
-      ficha: {}, docs: {}, otros: [], insp: null, comp: { estado: tipo === 'canoa' ? 'na' : 'pend' }, compHist: []
+      ficha: {}, docs: {}, otros: [], insp: null, comp: { estado: tipo === 'canoa' ? 'na' : 'pend', mes: Comparendos.mes() }, compHist: []
     };
     Datos.unidades.push(u);
     if (m._foto) Guardadas.poner(u, 'foto', m._foto);
@@ -4361,19 +4453,23 @@ const Formatos = {
   },
 
   /* El informe del mes para el área del primer piso */
-  informeComparendos() {
-    const us = Q.conComparendos();
-    const n = e => us.filter(u => u.comp.estado === e).length;
-    const mes = Fecha.mes();
+  /* El informe del mes en curso o, con «atras», el de un mes anterior, armado
+     con lo que quedó en el historial de cada unidad */
+  informeComparendos(atras) {
+    atras = +atras || 0;
+    const us = Q.conComparendos(), ref = atras ? Fecha.mesAtras(atras) : HOY, clave = Comparendos.mes(ref);
+    const rev = u => (atras ? (u.compHist || []).find((h, i) => (h && h.mes ? h.mes === clave : i === atras - 1)) : u.comp) || { estado: 'pend' };
+    const n = e => us.filter(u => rev(u).estado === e).length;
+    const mes = Fecha.mes(ref);
     const det = c => c.estado === 'con' ? [c.infraccion, c.valor ? Money.format(c.valor) : '', c.fecha ? Fecha.corta(c.fecha) : ''].filter(Boolean).join(' · ') : '';
     return this.cabecera('Informe mensual de comparendos', 'Para el área del primer piso · ' + mes,
-        'IC-' + HOY.getFullYear() + '-' + String(HOY.getMonth() + 1).padStart(2, '0'), 'Informe') +
+        'IC-' + ref.getFullYear() + '-' + String(ref.getMonth() + 1).padStart(2, '0'), 'Informe') +
       this.sec('Resumen', this.campos([['Mes revisado', mes], ['Unidades revisadas', (us.length - n('pend')) + ' de ' + us.length],
         ['Con comparendo', String(n('con'))], ['Sin comparendos', String(n('sin'))], ['Sin revisar', String(n('pend'))], ['Revisó', 'Juan · Responsable de flota']])) +
       '<table class="dp-tbl"><thead><tr><th class="c" style="width:8mm">#</th><th>Unidad</th><th>Tipo</th><th>Resultado</th><th>Detalle</th></tr></thead><tbody>' +
         us.map((u, i) => '<tr><td class="c">' + (i + 1) + '</td><td><b>' + esc(UI.placaTxt(u)) + '</b> · ' + esc(u.clase) + '</td><td>' + esc(TIPOS[u.tipo].nombre) + '</td>' +
-          '<td>' + (u.comp.estado === 'con' ? '<b>Con comparendo</b>' : u.comp.estado === 'sin' ? 'Sin comparendos' : 'Sin revisar') + '</td>' +
-          '<td>' + esc(det(u.comp)) + '</td></tr>').join('') +
+          '<td>' + (rev(u).estado === 'con' ? '<b>Con comparendo</b>' : rev(u).estado === 'sin' ? 'Sin comparendos' : 'Sin revisar') + '</td>' +
+          '<td>' + esc(det(rev(u))) + '</td></tr>').join('') +
       '</tbody></table>' +
       '<div class="dp-obs"><b>Observaciones</b>' + esc((n('pend') ? 'Quedan ' + n('pend') + ' unidad(es) sin revisar. ' : '') + 'Las canoas no se incluyen porque no tienen placa.') + '</div>' +
       this.firmas([['Responsable de flota', 'Elaboró'], ['Área del primer piso', 'Recibió']]) +
@@ -4501,8 +4597,8 @@ Object.assign(Vistas, {
   },
 
   /* ------------------------------------------------------ Cambios de aceite
-     Camiones por kilometraje y maquinaria por horómetro. Las lecturas llegarán
-     de los preoperacionales; mientras tanto también se escriben a mano. */
+     Camiones por kilometraje y maquinaria por horómetro. Las lecturas llegan
+     solas de los preoperacionales; también se pueden escribir a mano. */
   aceite() {
     const f = UIState.aceite, todas = Aceite.todas();
     const n = k => todas.filter(e => e.k === k).length;
@@ -4555,7 +4651,7 @@ Object.assign(Vistas, {
         barras('carga', 'Camiones · kilómetros que faltan', 'El más urgente arriba') +
         barras('maquinaria', 'Maquinaria · horas que faltan', 'Por horómetro') +
       '</div>' +
-      '<div class="alert a-info mb16">' + Icon('info') + '<div><b>La lectura de cada día llegará de los preoperacionales.</b> Mientras tanto se escribe con «Registrar lectura». ' +
+      '<div class="alert a-info mb16">' + Icon('info') + '<div><b>La lectura de cada día llega sola del preoperacional que envía el conductor.</b> También se puede escribir con «Registrar lectura». ' +
         'Al registrar un cambio de aceite, su kilometraje u horómetro es el nuevo punto de partida. La fecha estimada sale del promedio por día del último mes.</div></div>' +
       '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroAceite" data-v="' + s[0] + '">' + s[1] +
         '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div></div>' +
@@ -4799,8 +4895,8 @@ Object.assign(Ventanas, {
     proponer();
   },
 
-  /* Una lectura del kilometraje o del horómetro, escrita a mano mientras
-     llegan los preoperacionales */
+  /* Una lectura del kilometraje o del horómetro escrita a mano (la de cada
+     día llega sola del preoperacional) */
   lectura(o) {
     o = o || {};
     const u0 = (o.u && Q.unidad(o.u)) || Datos.unidades.find(Aceite.aplica);
@@ -5227,7 +5323,7 @@ Object.assign(Acciones, {
   marcarComp(el) {
     const u = Q.unidad(el.dataset.u), v = el.dataset.v;
     if (v === 'con') { Ventanas.comparendo(u); return; }
-    u.comp = v === 'sin' ? { estado: 'sin', revisado: hoyISO, hora: ahora(), ts: marca() } : { estado: v };
+    u.comp = v === 'sin' ? { estado: 'sin', revisado: hoyISO, hora: ahora(), ts: marca(), mes: Comparendos.mes() } : { estado: v, mes: Comparendos.mes() };
     Router.pintar(true);
   },
   async guardarComparendo(el) {
@@ -5236,7 +5332,7 @@ Object.assign(Acciones, {
     const a = m._archivo ? await Archivos.conBoton(el, () => Archivos.preparar(m._archivo)) : null;
     const archivo = a ? a.nombre : '';
     u.comp = { estado: 'con', infraccion: $('#ccI', m).value.trim() || 'Comparendo', fecha: $('#ccF', m).value, valor: +$('#ccV', m).value || 0, archivo,
-      archivoId: a ? a.id : undefined, registrado: hoyISO, hora: ahora(), ts: marca() };
+      archivoId: a ? a.id : undefined, registrado: hoyISO, hora: ahora(), ts: marca(), mes: Comparendos.mes() };
     Modal.cerrar(m);
     Toast.show('Comparendo registrado en <b>' + esc(UI.placaTxt(u)) + '</b>.' + (a ? '<br>' + esc(Archivos.resumen(a)) : ''));
     /* Si venía de «Otros documentos», la ficha pasa a la pestaña donde quedó */
@@ -5270,7 +5366,11 @@ Object.assign(Acciones, {
     Toast.show('Informe de ' + esc(Fecha.mes().toLowerCase()) + ' marcado como enviado al primer piso.');
     Router.pintar(true);
   },
-  verInformeAnterior(el) { Ventanas.visor('Informe de comparendos de ' + Fecha.mes(Fecha.mesAtras(+el.dataset.mes)).toLowerCase() + '.pdf'); },
+  /* El informe de un mes anterior, con lo que quedó revisado ese mes */
+  verInformeAnterior(el) {
+    const n = +el.dataset.mes;
+    Ventanas.vistaPrevia('Informe de comparendos de ' + Fecha.mes(Fecha.mesAtras(n)).toLowerCase(), Formatos.informeComparendos(n));
+  },
 
   nuevaOC(el) { Ventanas.oc({ u: el.dataset.u }); },
   vistaOC(el) { Ventanas.vistaPrevia('Orden de compra', Formatos.oc(Leer.oc(el.closest('.modal-bd')))); },
@@ -5441,10 +5541,632 @@ Object.assign(Acciones, {
   cfgComp(el) {
     const tp = el.dataset.tp;
     Config.comparendos = el.checked ? Config.comparendos.concat([tp]) : Config.comparendos.filter(x => x !== tp);
-    Datos.unidades.filter(u => u.tipo === tp).forEach(u => { if (el.checked && u.comp.estado === 'na') u.comp = { estado: 'pend' }; });
+    Datos.unidades.filter(u => u.tipo === tp).forEach(u => { if (el.checked && u.comp.estado === 'na') u.comp = { estado: 'pend', mes: Comparendos.mes() }; });
     Shell.nav('configuracion');
     Toast.show(TIPOS[tp].plural + (el.checked ? ' ahora se revisan' : ' ya no se revisan') + ' en comparendos.');
   }
+});
+
+/* ==========================================================================
+   §P  PREOPERACIONALES — la inspección diaria que cada conductor envía desde
+       el celular, sin usuario (preoperacional/index.html). No van en Datos ni
+       en la sincronización: son muchos y aquí no se editan; se traen de la
+       nube cuando se miran. El kilometraje de cada uno sí llega solo a
+       Cambios de aceite, como lectura.
+       El PDF y la firma de cada uno se bajan por su ruta, sin anotarlos entre
+       los archivos de Datos: así la limpieza del depósito nunca los borra.
+   ========================================================================== */
+const Preop = {
+  COLUMNAS: 'id,unidad_id,conductor_id,placa,tipo_vehiculo,fecha,kilometraje,conductor_nombre,documento,licencia,categoria,vigencia_licencia,' +
+    'supervisor,observaciones,respuestas,buenos,regulares,malos,no_aplica,sin_marcar,firma_ruta,pdf_ruta,pdf_hash,archivos_listos,evidencia,recibido',
+  /* El encabezado del formulario. Los que no tienen clave salen siempre y son obligatorios. */
+  CAMPOS: [['', 'Placa del vehículo'], ['', 'Tipo de vehículo'], ['', 'Fecha de inspección'], ['kilometraje', 'Kilometraje'],
+    ['', 'Documento de identidad'], ['', 'Nombre y apellidos'], ['licencia', 'Licencia de conducción'], ['categoria', 'Categoría'],
+    ['vigencia', 'Vigencia licencia'], ['observaciones', 'Observaciones']],
+  formato: null,     // el formulario que llenan los conductores, como está en la nube
+  errorFormato: null,
+  cache: {},         // lo traído: clave → { filas, t (cuándo), error }
+  trayendo: {},
+  completos: {},     // los envíos abiertos, completos (con su formato), por id
+  filtro: { periodo: '7', unidad: '' },
+  borrador: null,    // el formulario mientras se edita
+  abiertas: null,    // las secciones abiertas en el editor
+
+  tipos() { return (this.formato && this.formato.tipos) || ['carga', 'remolque']; },
+  aplica(u) { return Boolean(u) && this.tipos().includes(u.tipo); },
+  unidades() { return ORDEN.flatMap(t => Datos.unidades.filter(u => u.tipo === t && this.aplica(u))); },
+  /* Ante la duda (si no se supo el acceso) no se esconde nada: las reglas de la nube igual protegen */
+  puede(a) { return Cuenta.admin || Cuenta.acciones.includes(a) || !Cuenta.rol; },
+  enlace() {
+    const url = new URL('preoperacional/', location.href);
+    url.hash = '';
+    url.search = new URLSearchParams(location.search).get('nube') === 'local' ? '?nube=local' : '';
+    return url.href;
+  },
+  tituloSec: s => String(s.titulo || '').replace(/^\s*\d+\s*[.)-]\s*/, ''),
+
+  /* ---------------- Traer de la nube ---------------- */
+  async leer(filtro) {
+    const todas = [];
+    for (let desde = 0; ; desde += 1000) {
+      const lote = await Nube.pedir('preoperacionales?select=' + this.COLUMNAS + '&' + filtro + '&order=recibido.desc&limit=1000&offset=' + desde);
+      todas.push.apply(todas, lote || []);
+      if (!lote || lote.length < 1000) return todas;
+    }
+  },
+  async traerFormato() {
+    const r = await Nube.pedir('preop_formato?select=*&id=eq.vehiculos');
+    this.formato = (r && r[0]) || null;
+    this.errorFormato = null;
+    return this.formato;
+  },
+  /* Lo que se mira sale de la memoria. Si no está, o ya tiene más de un
+     minuto, se trae otra vez y al llegar se vuelve a pintar. */
+  datos(clave, filtro) {
+    const c = this.cache[clave];
+    if ((!c || Date.now() - c.t > 60000) && !this.trayendo[clave]) {
+      this.trayendo[clave] = Promise.all([this.leer(filtro), this.traerFormato()])
+        .then(r => { this.cache[clave] = { filas: r[0], t: Date.now() }; })
+        .catch(e => { this.cache[clave] = Object.assign({ filas: [] }, c, { t: Date.now(), error: e }); })
+        .finally(() => { delete this.trayendo[clave]; this.repintar(clave); });
+    }
+    return c || null;
+  },
+  pedirFormato() {
+    if (this.formato || this.trayendo.formato) return;
+    this.trayendo.formato = this.traerFormato()
+      .catch(e => { this.errorFormato = e; })
+      .finally(() => {
+        delete this.trayendo.formato;
+        const r = Router.actual();
+        if ($('#vista') && r.vista === 'preoperacionales' && r.id === 'formulario') Router.pintar(true);
+      });
+  },
+  repintar(clave) {
+    const r = Router.actual();
+    if (!$('#vista')) return;   // todavía en la pantalla de entrada
+    if (r.vista === 'preoperacionales' && !r.id && clave === 'lista') Router.pintar(true);
+    else if (r.vista === 'unidad' && UIState.tab === 'preop' && clave === 'unidad:' + r.id && $('#tabBody')) $('#tabBody').innerHTML = Vistas.tab_preop(Q.unidad(r.id));
+  },
+  olvidar() { this.cache = {}; this.completos = {}; },
+  buscar(id) {
+    if (this.completos[id]) return this.completos[id];
+    for (const c of Object.values(this.cache)) {
+      const p = (c.filas || []).find(x => x.id === id);
+      if (p) return p;
+    }
+    return null;
+  },
+
+  /* ---------------- Cómo se muestra ---------------- */
+  dia(f, larga) { return f === hoyISO ? 'Hoy' : f === Fecha.rel(-1) ? 'Ayer' : larga ? Fecha.larga(f) : Fecha.corta(f); },
+  hora(ts, seg) {
+    return ts ? new Date(ts).toLocaleTimeString('es-CO', seg ? { hour: 'numeric', minute: '2-digit', second: '2-digit' } : { hour: 'numeric', minute: '2-digit' }) : '';
+  },
+  km: v => (v == null ? '—' : Math.round(v).toLocaleString('es-CO') + ' km'),
+  novedades: p => (p.regulares || 0) + (p.malos || 0),
+  resultado(p) {
+    const n = this.novedades(p);
+    return n ? UI.pill(p.malos ? 'bad' : 'warn', n + (n === 1 ? ' novedad' : ' novedades')) : UI.pill('ok', 'Sin novedades');
+  },
+  /* El celular: lo que mandó la página o, si no, lo que dice el navegador */
+  celular(e) {
+    if (e.celular) return e.celular;
+    const ua = e.navegador || '';
+    if (!ua) return '';
+    const so = /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iPhone' : /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'Mac' : '';
+    const nav = /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /EdgA?\//.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome'
+      : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '';
+    return [nav, so].filter(Boolean).join(' en ');
+  },
+  evidencia(p) {
+    const e = p.evidencia || {}, cel = this.celular(e), u = e.ubicacion;
+    const ic = (si, nombre, t) => '<span class="' + (si ? 'si' : '') + '" title="' + attr(t) + '">' + Icon(nombre, '', 15) + '</span>';
+    return '<span class="ev">' + ic(true, 'clock', 'Hora del servidor: ' + this.hora(p.recibido, true)) +
+      ic(cel, 'movil', cel ? 'Celular: ' + cel + (e.ip ? ' · IP ' + e.ip : '') : 'Sin datos del celular') +
+      ic(u, 'pin', u ? 'Con ubicación' + (u.precision ? ' (± ' + u.precision + ' m)' : '') : 'Sin ubicación') + '</span>';
+  },
+  botonesPdf(p) {
+    if (!p.archivos_listos) return '<span class="txt-3 fs11 nowrap" title="El celular lo sube apenas tenga señal">PDF en camino</span>';
+    return '<button class="btn btn-sm btn-ghost btn-icon btn-file" data-act="pdfPreop" data-p="' + attr(p.id) + '" title="Ver el PDF" aria-label="Ver el PDF">' +
+      Icon('pdf', '', 16) + '</button><button class="btn btn-sm btn-ghost btn-icon" data-act="imprimirPreop" data-p="' + attr(p.id) + '" title="Imprimir el PDF" ' +
+      'aria-label="Imprimir el PDF">' + Icon('print', '', 15) + '</button>';
+  },
+  cargando: t => '<div class="flex aic g8 txt-2" style="justify-content:center;padding:40px 16px"><span class="spin"></span>' + esc(t) + '</div>',
+  alertaError(e, act) {
+    const falta = e && (e.status === 404 || /PGRST205|42P01/.test(e.codigo || ''));
+    return '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (falta ? 'La nube todavía no está lista para los preoperacionales.' : 'No se pudieron traer los preoperacionales.') +
+      '</b> ' + esc(falta ? 'Falta el paso 007 en Supabase.' : (e && e.message) || '') +
+      (act ? ' <span class="link" data-act="' + act + '">Intentar otra vez</span>' : '') + '</div></div>';
+  },
+
+  /* ---------------- La lista del día ---------------- */
+  vistaLista() {
+    const titulo = 'Preoperacionales', sub = 'Inspección diaria desde el celular';
+    const head = UI.head('Preoperacionales', 'La inspección diaria que los conductores envían desde el celular',
+      '<button class="btn" data-ir="preoperacionales/formulario">' + Icon('edit', '', 14) + 'Editar formulario</button>');
+    /* Una sola consulta sirve para los tres períodos y para la semana */
+    const desde = [Fecha.rel(-6), hoyISO.slice(0, 8) + '01'].sort()[0];
+    const c = this.datos('lista', 'fecha=gte.' + desde);
+    if (!c) return { titulo, sub, html: head + UI.card('Envíos', this.cargando('Trayendo los preoperacionales…')) };
+    if (c.error && !c.filas.length) return { titulo, sub, html: head + this.alertaError(c.error, 'preopRecargar') };
+    const filas = c.filas, us = this.unidades(), f = this.filtro;
+    const hoy = filas.filter(p => p.fecha === hoyISO), conHoy = new Set(hoy.map(p => p.unidad_id));
+    const faltan = us.filter(u => !conHoy.has(u.id));
+    const semana = filas.filter(p => p.fecha >= Fecha.rel(-6));
+    const novSemana = semana.reduce((s, p) => s + this.novedades(p), 0);
+    const ult = filas.find(p => p.kilometraje != null), uu = ult && Q.unidad(ult.unidad_id);
+    const kpis = '<div class="kpis4">' +
+      UI.kpi({ label: 'Enviados hoy', valor: us.filter(u => conHoy.has(u.id)).length + '<small> de ' + us.length + '</small>', icono: 'checkSquare',
+        color: 'var(--ok-500)', meta: 'Vehículos que lo deben enviar' }) +
+      UI.kpi({ label: 'Con novedades hoy', valor: hoy.filter(p => this.novedades(p)).length, icono: 'warn', color: 'var(--warn-500)', meta: 'Ítems en Regular o Malo' }) +
+      UI.kpi({ label: 'Último kilometraje', valor: ult ? esc(Math.round(ult.kilometraje).toLocaleString('es-CO')) : '—', icono: 'medidor',
+        meta: ult ? esc((uu ? UI.placaTxt(uu) : ult.placa) + ' · ' + this.dia(ult.fecha).toLowerCase() + ' ' + this.hora(ult.recibido)) + ' · pasa a Cambios de aceite'
+          : 'Llega con el próximo preoperacional' }) +
+      UI.kpi({ label: 'Novedades esta semana', valor: novSemana, icono: 'clipboard', color: 'var(--dang-500)',
+        meta: 'En ' + semana.filter(p => this.novedades(p)).length + ' preoperacional(es)' }) + '</div>';
+    const pendientes = UI.card('Sin preoperacional hoy', faltan.length
+      ? '<div class="mlist">' + faltan.map(u => '<div class="mrow" data-act="irUnidad" data-u="' + attr(u.id) + '" data-tab="preop">' + UI.thumb(u) +
+          '<div class="mrow-t"><b class="mono">' + esc(UI.placaTxt(u)) + '</b><span>' + esc([u.clase, UI.nombre(u)].filter(Boolean).join(' · ')) + '</span></div>' +
+          '<div class="mrow-r">' + UI.pill('warn', 'Falta hoy') + '</div></div>').join('') + '</div>'
+      : us.length ? '<div class="empty" style="padding:18px 12px">' + Icon('check') + '<h4>Todos lo enviaron</h4><p>Aquí sale cada vehículo que todavía no lo ha enviado hoy.</p></div>'
+        : UI.empty('truck', 'No hay vehículos que lo llenen', 'Se escogen en «Editar formulario».'),
+      { flush: faltan.length > 0, sub: faltan.length ? faltan.length + ' de ' + us.length : '' });
+    const url = this.enlace();
+    const enlace = UI.card('Formulario para los conductores', '<div class="enlace">' + Icon('externo', '', 14) + esc(url.replace(/^https?:\/\//, '').replace(/\/(\?|$)/, '$1')) + '</div>' +
+      '<div class="flex g8 mt12" style="flex-wrap:wrap"><button class="btn btn-primary btn-sm" data-act="copiarEnlacePreop">' + Icon('copiar', '', 13) + 'Copiar enlace</button>' +
+        '<a class="btn btn-sm" href="' + attr(url) + '" target="_blank" rel="noopener">' + Icon('externo', '', 13) + 'Abrir</a></div>' +
+      '<p class="txt-3 fs12 mt12" style="line-height:1.5">Se abre en el celular sin usuario ni contraseña. Las placas y los conductores salen de lo que esté registrado aquí.</p>');
+    const lim = f.periodo === 'hoy' ? hoyISO : f.periodo === 'mes' ? hoyISO.slice(0, 8) + '01' : Fecha.rel(-6);
+    const lista = filas.filter(p => p.fecha >= lim && (!f.unidad || p.unidad_id === f.unidad));
+    const toolbar = '<div class="toolbar"><div class="seg">' + [['hoy', 'Hoy'], ['7', 'Últimos 7 días'], ['mes', 'Este mes']].map(p =>
+        '<button class="' + (f.periodo === p[0] ? 'on' : '') + '" data-act="filtroPreop" data-v="' + p[0] + '">' + p[1] + '</button>').join('') + '</div>' +
+      '<select class="inp inp-sm" id="preopU" style="width:auto"><option value="">Todos los vehículos</option>' +
+        us.map(u => '<option value="' + attr(u.id) + '"' + (f.unidad === u.id ? ' selected' : '') + '>' + esc(UI.placaTxt(u)) + '</option>').join('') + '</select>' +
+      '<span class="tb-sp"></span><span class="txt-3 fs12">' + lista.length + (lista.length === 1 ? ' preoperacional' : ' preoperacionales') + '</span></div>';
+    const tabla = lista.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Vehículo</th><th>Conductor</th><th class="num">Kilometraje</th>' +
+        '<th>Resultado</th><th>Evidencia</th><th></th></tr></thead><tbody>' + lista.map(p => {
+          const u = Q.unidad(p.unidad_id);
+          return '<tr class="row-click" data-act="verPreop" data-p="' + attr(p.id) + '"><td class="nowrap"><b>' + esc(this.dia(p.fecha)) + '</b><div class="txt-3 fs11">' +
+            esc(this.hora(p.recibido)) + '</div></td><td>' + (u ? UI.unidadCelda(u) : '<b class="mono">' + esc(p.placa) + '</b>') + '</td>' +
+            '<td>' + esc(p.conductor_nombre) + '</td><td class="num nowrap">' + esc(this.km(p.kilometraje)) + '</td><td>' + this.resultado(p) + '</td>' +
+            '<td>' + this.evidencia(p) + '</td><td class="tr nowrap">' + this.botonesPdf(p) + '</td></tr>';
+        }).join('') + '</tbody></table></div>'
+      : UI.empty('checkSquare', 'Sin preoperacionales', f.periodo === 'hoy' ? 'Hoy todavía no ha llegado ninguno.' : 'No llegó ninguno en este período.');
+    const html = head + (c.error ? this.alertaError(c.error, 'preopRecargar') : '') + kpis +
+      '<div class="grid g2 mb16">' + pendientes + enlace + '</div>' + toolbar +
+      UI.card('Envíos', tabla, { flush: true, sub: lista.length ? 'Clic en uno para verlo completo' : '' });
+    return {
+      titulo, sub, html,
+      despues: () => { $('#preopU').addEventListener('change', e => { this.filtro.unidad = e.target.value; Router.pintar(true); }); }
+    };
+  },
+
+  /* ---------------- Un envío, completo ---------------- */
+  titulo(p) { const u = Q.unidad(p.unidad_id); return 'Preoperacional de ' + (u ? UI.placaTxt(u) : p.placa) + ' · ' + Fecha.larga(p.fecha); },
+  sub(p) {
+    return 'Enviado desde el celular a las ' + this.hora(p.recibido) + ((p.evidencia || {}).sin_senal ? ' · se llenó sin señal y llegó después' : '');
+  },
+  async ver(id) {
+    const base = this.buscar(id);
+    const m = Modal.abrir({
+      titulo: base ? this.titulo(base) : 'Preoperacional', sub: base ? esc(this.sub(base)) : 'Trayendo…', ancho: 'xwide', sinFoco: true,
+      cuerpo: this.cargando('Trayendo el preoperacional…'), pie: '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
+    });
+    let p = this.completos[id];
+    if (!p) {
+      try {
+        p = ((await Nube.pedir('preoperacionales?select=*&id=eq.' + encodeURIComponent(id))) || [])[0];
+      } catch (e) {
+        if (document.body.contains(m)) $('.modal-b', m).innerHTML = '<div class="alert a-err">' + Icon('warn') + '<div><b>No se pudo traer.</b> ' + esc(e.message) + '</div></div>';
+        return;
+      }
+      if (p) this.completos[id] = p;
+    }
+    if (!document.body.contains(m)) return;
+    if (!p) { $('.modal-b', m).innerHTML = UI.empty('checkSquare', 'Ya no está', 'Este preoperacional se eliminó.'); return; }
+    $('.modal-h h3', m).textContent = this.titulo(p);
+    $('.mh-sub', m).textContent = this.sub(p);
+    $('.modal-b', m).innerHTML = this.cuerpo(p);
+    $('.modal-f', m).innerHTML = this.pie(p);
+    this.ponerFirma(p, m);
+  },
+  cuerpo(p) {
+    const secs = (p.formato || {}).secciones || [], R = p.respuestas || {}, e = p.evidencia || {}, u = Q.unidad(p.unidad_id);
+    const b = p.buenos || 0, r = p.regulares || 0, mal = p.malos || 0, na = p.no_aplica || 0, sin = p.sin_marcar || 0, total = b + r + mal + na + sin;
+    const pct = n => (total ? n / total * 100 : 0).toFixed(2) + '%';
+    const marca = v => v === 'B' ? UI.pill('ok', 'Bueno') : v === 'R' ? UI.pill('warn', 'Regular') : v === 'M' ? UI.pill('bad', 'Malo')
+      : v === 'N/A' ? UI.pill('violet', 'No aplica') : UI.pill('nr', 'Sin marcar');
+    const fila = (n, t, v) => '<div class="nov"><span class="n">' + n + '</span><span class="t">' + esc(t) + '</span>' + marca(v) + '</div>';
+    const nov = [];
+    secs.forEach((s, i) => (s.items || []).forEach((it, j) => { if (R[it.id] === 'R' || R[it.id] === 'M') nov.push(fila((i + 1) + '.' + (j + 1), it.texto, R[it.id])); }));
+    const dl = pares => '<dl class="dl">' + pares.map(x => '<dt>' + esc(x[0]) + '</dt><dd>' + x[1] + '</dd>').join('') + '</dl>';
+    const ubic = e.ubicacion;
+    const hash = p.pdf_hash ? '<span class="mono">' + esc(p.pdf_hash.slice(0, 4) + ' ' + p.pdf_hash.slice(4, 8) + ' … ' + p.pdf_hash.slice(-4)) + '</span> · ' +
+      '<span class="link" data-act="comprobarPreop" data-p="' + attr(p.id) + '">comprobar que no se cambió</span>' : esc('El PDF todavía no llega');
+    /* La fecha de una hora del servidor, en la hora de aquí (la nube la da en UTC) */
+    const diaDe = ts => Fecha.iso(new Date(ts));
+    const enCel = e.hora_celular ? new Date(e.hora_celular) : null;
+    const izq = UI.card('Datos', dl([
+        ['Vehículo', esc((u ? UI.placaTxt(u) : p.placa) + (p.tipo_vehiculo ? ' · ' + p.tipo_vehiculo : ''))],
+        ['Fecha', esc(Fecha.larga(p.fecha))], ['Kilometraje', esc(this.km(p.kilometraje))],
+        ['Conductor', esc(p.conductor_nombre)], ['Documento', esc(p.documento || '—')],
+        ['Licencia', esc([p.licencia, p.categoria, p.vigencia_licencia ? 'vence el ' + Fecha.larga(p.vigencia_licencia) : ''].filter(Boolean).join(' · ') || '—')],
+        ['Supervisor', esc(p.supervisor || '—')]]), { cls: 'mb16' }) +
+      UI.card('Firma del conductor', '<div class="firma-p"><span class="spin"></span></div>', { cls: 'mb16' }) +
+      UI.card('Evidencia', dl([
+        ['Recibido', esc(Fecha.larga(diaDe(p.recibido)) + ', ' + this.hora(p.recibido, true) + ' (hora del servidor)')],
+        ['En el celular', esc(enCel && !isNaN(enCel) ? (diaDe(enCel) !== diaDe(p.recibido) ? Fecha.corta(diaDe(enCel)) + ', ' : '') +
+          this.hora(e.hora_celular, true) + (e.sin_senal ? ' · se llenó sin señal' : '') : '—')],
+        ['IP', esc(e.ip || '—')],
+        ['Celular', esc(this.celular(e) || '—')],
+        ['Ubicación', ubic ? esc(ubic.lat + ', ' + ubic.lng + (ubic.precision ? ' (± ' + ubic.precision + ' m)' : '')) + ' · <a class="link" href="https://www.google.com/maps?q=' +
+          encodeURIComponent(ubic.lat + ',' + ubic.lng) + '" target="_blank" rel="noopener">ver en el mapa</a>' : esc('Sin ubicación: el celular no dio el permiso')],
+        ['Código del PDF', hash]]));
+    const der = UI.card('Resultado', '<div class="cuenta"><i style="width:' + pct(b) + ';background:var(--ok-500)"></i><i style="width:' + pct(r) +
+        ';background:var(--warn-500)"></i><i style="width:' + pct(mal) + ';background:var(--dang-500)"></i><i style="width:' + pct(na) + ';background:var(--violet-500)"></i></div>' +
+        '<div class="leyenda-p"><span><i style="background:var(--ok-500)"></i>' + b + ' Bueno</span><span><i style="background:var(--warn-500)"></i>' + r + ' Regular</span>' +
+          '<span><i style="background:var(--dang-500)"></i>' + mal + ' Malo</span><span><i style="background:var(--violet-500)"></i>' + na + ' No aplica</span>' +
+          (sin ? '<span><i style="background:var(--surface-3);border:1px solid var(--border-strong)"></i>' + sin + ' Sin marcar</span>' : '') + '</div>' +
+        '<div class="mt16" style="font-weight:650;font-size:12.5px;margin-bottom:4px">Novedades</div>' +
+        (nov.length ? nov.join('') : '<p class="txt-3 fs12">Ninguna: nada quedó en Regular ni en Malo.</p>') +
+        (secs.length ? '<details class="preop-todos mt12"><summary class="link">Ver los ' + total + ' ítems</summary>' + secs.map((s, i) =>
+          '<div class="preop-sec">' + (i + 1) + '. ' + esc(this.tituloSec(s)) + '</div>' + (s.items || []).map((it, j) => fila((i + 1) + '.' + (j + 1), it.texto, R[it.id])).join('')).join('') +
+          '</details>' : ''), { cls: 'mb16' }) +
+      UI.card('Observaciones', p.observaciones ? '<p class="txt-2" style="font-size:13px;line-height:1.55;white-space:pre-wrap">' + esc(p.observaciones) + '</p>'
+        : '<p class="txt-3 fs12">Sin observaciones.</p>');
+    return '<div class="grid g2"><div>' + izq + '</div><div>' + der + '</div></div>';
+  },
+  pie(p) {
+    return (this.puede('eliminar') ? '<button class="btn btn-ghost btn-del mf-left" data-act="eliminarPreop" data-p="' + attr(p.id) + '">' + Icon('trash', '', 14) + 'Eliminar</button>' : '') +
+      (p.archivos_listos ? '<button class="btn" data-act="pdfPreop" data-p="' + attr(p.id) + '">' + Icon('pdf', '', 14) + 'Ver PDF</button>' +
+        '<button class="btn" data-act="imprimirPreop" data-p="' + attr(p.id) + '">' + Icon('print', '', 14) + 'Imprimir</button>'
+        : '<span class="txt-3 fs12' + (this.puede('eliminar') ? '' : ' mf-left') + '">El PDF todavía no llega: el celular lo sube apenas tenga señal.</span>') +
+      '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>';
+  },
+  async ponerFirma(p, m) {
+    const caja = $('.firma-p', m);
+    if (!caja) return;
+    if (!p.firma_ruta) { caja.innerHTML = '<span class="txt-3 fs12">' + (p.archivos_listos ? 'Se envió sin firma' : 'La firma todavía no llega') + '</span>'; return; }
+    const clave = 'preopFirma:' + p.id;
+    if (!Archivos.vistos.get(clave)) {
+      const blob = await Nube.bajarRuta(p.firma_ruta);
+      if (!blob) { caja.innerHTML = '<span class="txt-3 fs12">No se pudo traer la firma</span>'; return; }
+      Archivos.registrar(clave, blob, 'firma.jpg');
+    }
+    caja.innerHTML = '<img src="' + attr(Archivos.vistos.get(clave).url) + '" alt="Firma de ' + attr(p.conductor_nombre) + '">';
+  },
+
+  /* ---------------- El PDF: verlo, imprimirlo y comprobarlo ---------------- */
+  async pdf(id, imprimir) {
+    const p = this.buscar(id);
+    if (!p) return;
+    if (!p.archivos_listos) { Toast.show('El PDF todavía no llega: el celular lo sube apenas tenga señal.', 'warn'); return; }
+    const clave = 'preop:' + id, nombre = 'INSPECCION_' + p.placa + '_' + p.fecha + '.pdf';
+    if (!Archivos.vistos.get(clave)) {
+      const m = Modal.abrir({
+        titulo: nombre, sub: 'Abriendo el archivo…', ancho: 'wide', sinFoco: true,
+        cuerpo: this.cargando('Bajando el PDF de la nube…'), pie: '<button class="btn" data-act="cerrarModal">Cerrar</button>'
+      });
+      const blob = await Nube.bajarRuta(p.pdf_ruta);
+      if (!document.body.contains(m)) return;
+      Modal.cerrar(m);
+      if (!blob) { Toast.show('No se pudo abrir el PDF. Revise el internet e intente otra vez.', 'err'); return; }
+      Archivos.registrar(clave, blob.type === 'application/pdf' ? blob : new Blob([blob], { type: 'application/pdf' }), nombre);
+    }
+    Ventanas.visor(nombre, clave);
+    if (imprimir) {
+      const f = $$('#modals iframe.visor-pdf').pop();
+      if (f) f.addEventListener('load', () => setTimeout(() => Acciones.imprimirVisor(f), 400), { once: true });
+    }
+  },
+  /* Baja el PDF y saca su código: si es el mismo que quedó al enviarlo, el
+     PDF no se ha cambiado */
+  async comprobar(id, el) {
+    const p = this.completos[id] || this.buscar(id);
+    if (!p || !p.pdf_hash || el.dataset.ocupado) return;
+    el.dataset.ocupado = '1';
+    el.textContent = 'comprobando…';
+    let igual = null;
+    try {
+      const blob = await Nube.bajarRuta(p.pdf_ruta);
+      if (blob) {
+        const h = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+        igual = Array.from(new Uint8Array(h)).map(x => x.toString(16).padStart(2, '0')).join('') === p.pdf_hash;
+      }
+    } catch (e) { igual = null; }
+    delete el.dataset.ocupado;
+    el.textContent = 'comprobar que no se cambió';
+    if (igual === null) Toast.show('No se pudo bajar el PDF para comprobarlo. Revise el internet e intente otra vez.', 'err');
+    else if (igual) Toast.show('El PDF está tal cual lo envió el conductor: su código coincide.');
+    else Toast.show('El PDF no coincide con el código que quedó al enviarlo: se cambió después.', 'err');
+  },
+
+  /* ---------------- La pestaña de la ficha ---------------- */
+  tabFicha(u) {
+    if (!this.aplica(u)) {
+      return UI.card('Preoperacionales', UI.empty('checkSquare', 'Esta unidad no llena el preoperacional',
+        'Lo llenan ' + esc(this.tipos().map(t => TIPOS[t].plural.toLowerCase()).join(' y ')) + '. Se cambia en Preoperacionales → Editar formulario.'));
+    }
+    const c = this.datos('unidad:' + u.id, 'unidad_id=eq.' + encodeURIComponent(u.id));
+    const act = '<button class="btn btn-sm" data-ir="preoperacionales">' + Icon('checkSquare', '', 12) + 'Ver los del día</button>';
+    if (!c) return UI.card('Preoperacionales', this.cargando('Trayendo los preoperacionales…'), { act });
+    if (c.error && !c.filas.length) return this.alertaError(c.error, 'preopRecargar');
+    const filas = c.filas, deHoy = filas.filter(p => p.fecha === hoyISO);
+    const aviso = deHoy.length
+      ? '<div class="alert a-ok mb16">' + Icon('check') + '<div><b>Hoy ya envió el preoperacional</b> a las ' + esc(this.hora(deHoy[deHoy.length - 1].recibido)) +
+          ' (' + esc(deHoy[deHoy.length - 1].conductor_nombre) + ')' + (deHoy.some(p => this.novedades(p)) ? ', con novedades.' : ', sin novedades.') + '</div></div>'
+      : '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>Hoy todavía no ha enviado el preoperacional.</b> El conductor lo llena en el celular, en el enlace de Preoperacionales.</div></div>';
+    const meses = [];
+    filas.forEach(p => {
+      const k = p.fecha.slice(0, 7);
+      let g = meses.find(x => x.k === k);
+      if (!g) meses.push(g = { k, filas: [] });
+      g.filas.push(p);
+    });
+    const fila = p => '<div class="mrow" data-act="verPreop" data-p="' + attr(p.id) + '"><span class="tarea-ic" style="flex:0 0 30px;width:30px;height:30px">' +
+      Icon('checkSquare', '', 14) + '</span><div class="mrow-t"><b>' + esc(this.dia(p.fecha, true) + ' · ' + this.hora(p.recibido)) + '</b>' +
+      '<span>' + esc(p.conductor_nombre + ' · ' + this.km(p.kilometraje)) + '</span></div><div class="mrow-r flex aic">' + this.resultado(p) + this.botonesPdf(p) + '</div></div>';
+    return (c.error ? this.alertaError(c.error, 'preopRecargar') : '') + aviso +
+      UI.card('Preoperacionales', filas.length ? meses.map(g => '<div class="act-mes preop-mes">' + esc(Fecha.mes(Fecha.parse(g.k + '-01'))) + '</div>' +
+          '<div class="mlist">' + g.filas.map(fila).join('') + '</div>').join('')
+        : UI.empty('checkSquare', 'Todavía no hay preoperacionales', 'Aquí sale cada uno que envíe el conductor, con su PDF.'),
+        { flush: filas.length > 0, sub: filas.length ? filas.length + (filas.length === 1 ? ' enviado' : ' enviados') : '', act });
+  },
+
+  /* ---------------- El editor del formulario ---------------- */
+  copiar(f) {
+    return JSON.parse(JSON.stringify({ codigo: f.codigo, version: f.version, fecha_creacion: f.fecha_creacion, supervisor: f.supervisor,
+      tipos: f.tipos, campos: f.campos, secciones: f.secciones }));
+  },
+  sucio() { return Boolean(this.borrador && this.formato && estable(this.borrador) !== estable(this.copiar(this.formato))); },
+  campo(k) { return Object.assign({ mostrar: true, obligatorio: false }, ((this.borrador || {}).campos || {})[k]); },
+  sec(id) { return this.borrador.secciones.find(s => s.id === id); },
+  nuevoId: pref => pref + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+  vistaEditor() {
+    const titulo = 'Formulario preoperacional', sub = 'Ítems, campos y datos del formato';
+    const arriba = '<div class="crumbs"><a data-ir="preoperacionales">Preoperacionales</a>' + Icon('chevR', '', 12) + '<span>Formulario</span></div>' +
+      UI.head('Formulario preoperacional', 'Lo que cambie aquí queda en línea en el formulario de los conductores apenas guarde. ' +
+        'Los preoperacionales ya enviados no cambian: cada uno guarda el formulario como estaba ese día.');
+    if (!this.formato) {
+      if (this.errorFormato) return { titulo, sub, html: arriba + this.alertaError(this.errorFormato, 'preopReintentar') };
+      this.pedirFormato();
+      return { titulo, sub, html: arriba + UI.card('Formulario', this.cargando('Trayendo el formulario…')) };
+    }
+    const b = this.borrador || (this.borrador = this.copiar(this.formato));
+    if (!this.abiertas) this.abiertas = new Set(b.secciones.slice(0, 2).map(s => s.id));
+    const puede = this.puede('configurar'), dis = puede ? '' : ' disabled';
+    const ck = (on, t, data) => '<label><input type="checkbox"' + (on ? ' checked' : '') + dis + ' ' + data + '>' + esc(t) + '</label>';
+    const txt = (k, et, ph) => '<div class="field"><label>' + esc(et) + '</label><input class="inp" data-pe="' + k + '" value="' + attr(b[k] || '') + '"' +
+      (ph ? ' placeholder="' + attr(ph) + '"' : '') + dis + '></div>';
+    const datos = UI.card('Datos del formato', '<div class="grid g2">' + txt('codigo', 'Código') + txt('version', 'Versión') +
+        txt('fecha_creacion', 'Fecha de creación') + txt('supervisor', 'Supervisor', 'Nombre del supervisor') + '</div>' +
+      '<div class="field mb0"><label>Lo llenan</label><div class="flex g12 mt4" style="flex-wrap:wrap">' +
+        ORDEN.map(t => ck(b.tipos.includes(t), TIPOS[t].plural, 'data-pe-tipo="' + t + '"')).join('') + '</div></div>', { cls: 'mb16' });
+    const campos = UI.card('Campos del encabezado', this.CAMPOS.map(c => {
+      const k = c[0], v = k ? this.campo(k) : null;
+      return '<div class="campo-ed"><span>' + esc(c[1]) + '</span>' + (k
+        ? ck(v.mostrar, 'Mostrar', 'data-pe-campo="' + k + '" data-pe-que="mostrar"') + ck(v.obligatorio, 'Obligatorio', 'data-pe-campo="' + k + '" data-pe-que="obligatorio"')
+        : '<span class="siempre">Siempre, obligatorio</span>') + '</div>';
+    }).join(''), { sub: 'Quitar un campo es quitarle «Mostrar»' });
+    const boton = (act, ic, t, extra, s, i) => '<button class="btn btn-sm btn-ghost btn-icon' + (act === 'preopQuitarItem' || act === 'preopQuitarSec' ? ' btn-del' : '') +
+      '" data-act="' + act + '" data-s="' + attr(s) + '"' + (i ? ' data-i="' + attr(i) + '"' : '') + (extra || '') + ' title="' + t + '" aria-label="' + t + '"' + dis + '>' +
+      Icon(ic, '', 13) + '</button>';
+    const total = b.secciones.reduce((n, s) => n + s.items.length, 0);
+    const secciones = b.secciones.map((s, i) => {
+      const abierta = this.abiertas.has(s.id);
+      return '<div class="sec-ed' + (abierta ? '' : ' cerrada') + '"><div class="sec-ed-h">' +
+          '<button class="btn btn-sm btn-ghost btn-icon" data-act="preopAbrir" data-s="' + attr(s.id) + '" title="' + (abierta ? 'Cerrar' : 'Abrir') + ' la sección" aria-label="' +
+            (abierta ? 'Cerrar' : 'Abrir') + ' la sección">' + Icon(abierta ? 'chevD' : 'chevR', '', 14) + '</button>' +
+          '<span class="num">' + (i + 1) + '.</span><input class="inp" data-pe-sec="' + attr(s.id) + '" value="' + attr(this.tituloSec(s)) + '" placeholder="Título de la sección"' + dis + '>' +
+          '<span class="txt-3 fs12 nowrap">' + s.items.length + (s.items.length === 1 ? ' ítem' : ' ítems') + '</span>' +
+          boton('preopQuitarSec', 'trash', 'Quitar la sección', '', s.id) + '</div>' +
+        (abierta ? s.items.map((it, j) => '<div class="it-ed"><span class="num">' + (i + 1) + '.' + (j + 1) + '</span>' +
+            '<input class="inp" data-pe-item="' + attr(it.id) + '" data-s="' + attr(s.id) + '" value="' + attr(it.texto) + '" placeholder="Texto del ítem"' + dis + '>' +
+            boton('preopMover', 'arriba', 'Subir', ' data-d="-1"' + (j === 0 ? ' disabled' : ''), s.id, it.id) +
+            boton('preopMover', 'abajo', 'Bajar', ' data-d="1"' + (j === s.items.length - 1 ? ' disabled' : ''), s.id, it.id) +
+            boton('preopQuitarItem', 'x', 'Quitar el ítem', '', s.id, it.id) + '</div>').join('') +
+          (puede ? '<div class="agregar"><span class="link" data-act="preopAgregarItem" data-s="' + attr(s.id) + '">' + Icon('plus', '', 12) + ' Agregar ítem</span></div>' : '') : '') +
+        '</div>';
+    }).join('');
+    const items = UI.card('Ítems de verificación', '<p class="txt-3 fs12" style="margin-bottom:12px">' + b.secciones.length + ' secciones · ' + total +
+        ' ítems · cada uno se califica B, R, M o N/A</p>' + secciones +
+      (puede ? '<button class="btn btn-sm" data-act="preopAgregarSec">' + Icon('plus', '', 12) + 'Agregar sección</button>' : ''));
+    const sucio = this.sucio();
+    const barra = '<div class="barra-guardar"><span id="peSucio" style="display:' + (sucio ? 'inline-flex' : 'none') + ';align-items:center;gap:8px;margin-right:auto">' +
+        '<span class="txt-3 fs12">Hay cambios sin guardar</span><button class="btn btn-ghost" data-act="preopDescartar">Descartar cambios</button></span>' +
+      '<a class="btn" href="' + attr(this.enlace()) + '" target="_blank" rel="noopener">' + Icon('externo', '', 14) + 'Ver el formulario</a>' +
+      (puede ? '<button class="btn btn-primary" data-act="preopGuardar">' + Icon('save', '', 14) + 'Guardar cambios</button>' : '') + '</div>';
+    const html = arriba + (puede ? '' : '<div class="alert a-info mb16">' + Icon('info') + '<div>Su cuenta puede ver el formulario, pero no cambiarlo.</div></div>') +
+      '<div id="preopEd"><div class="grid g23"><div>' + datos + campos + '</div><div>' + items + '</div></div>' + barra + '</div>';
+    return {
+      titulo, sub, html,
+      despues: () => {
+        const raiz = $('#preopEd');
+        raiz.addEventListener('input', e => this.escribir(e.target));
+        raiz.addEventListener('change', e => this.escribir(e.target));
+      }
+    };
+  },
+  /* Lo que se escribe o se marca queda de una vez en el borrador */
+  escribir(t) {
+    const b = this.borrador, d = t.dataset;
+    if (!b) return;
+    if (d.pe) b[d.pe] = t.value;
+    else if (d.peTipo) b.tipos = t.checked ? ORDEN.filter(x => x === d.peTipo || b.tipos.includes(x)) : b.tipos.filter(x => x !== d.peTipo);
+    else if (d.peCampo) {
+      const c = b.campos[d.peCampo] = Object.assign({ mostrar: true, obligatorio: false }, b.campos[d.peCampo]);
+      c[d.peQue] = t.checked;
+      /* Obligatorio quiere decir que se muestra; sin mostrarse no puede ser obligatorio */
+      if (d.peQue === 'mostrar' && !t.checked) c.obligatorio = false;
+      if (d.peQue === 'obligatorio' && t.checked) c.mostrar = true;
+      t.closest('.campo-ed').querySelectorAll('input').forEach(x => { x.checked = Boolean(c[x.dataset.peQue]); });
+    } else if (d.peSec) {
+      const s = this.sec(d.peSec);
+      if (s) s.titulo = t.value;
+    } else if (d.peItem) {
+      const s = this.sec(d.s), it = s && s.items.find(x => x.id === d.peItem);
+      if (it) it.texto = t.value;
+    } else return;
+    const e = $('#peSucio');
+    if (e) e.style.display = this.sucio() ? 'inline-flex' : 'none';
+  },
+  async guardar(el) {
+    const b = this.borrador;
+    if (!b || el.disabled) return;
+    if (!this.sucio()) { Toast.show('No hay cambios para guardar.'); return; }
+    const f = JSON.parse(JSON.stringify(b));
+    ['codigo', 'version', 'fecha_creacion', 'supervisor'].forEach(k => { f[k] = String(f[k] || '').trim(); });
+    f.secciones.forEach(s => { s.titulo = this.tituloSec(s).trim(); s.items.forEach(it => { it.texto = String(it.texto || '').trim(); }); });
+    const mal = f.secciones.filter(s => !s.titulo || !s.items.length || s.items.some(it => !it.texto));
+    if (!f.codigo || !f.version) { Toast.show('Escriba el código y la versión del formato.', 'err'); return; }
+    if (!f.tipos.length) { Toast.show('Marque al menos un tipo de unidad que llene el formulario.', 'err'); return; }
+    if (!f.secciones.length) { Toast.show('El formulario necesita al menos una sección con ítems.', 'err'); return; }
+    if (mal.length) {
+      mal.forEach(s => this.abiertas.add(s.id));
+      Router.pintar(true);
+      Toast.show('Hay secciones sin título o sin ítems, o ítems sin texto. Escríbalos o quítelos antes de guardar.', 'err');
+      return;
+    }
+    const antes = el.innerHTML;
+    el.disabled = true;
+    el.innerHTML = '<span class="spin"></span>Guardando…';
+    try {
+      await Nube.guardarFilas('preop_formato', [Object.assign({ id: 'vehiculos' }, f)], 'id');
+      await this.traerFormato();
+      this.borrador = null;
+      this.olvidar();
+      Toast.show('Guardado. El formulario de los conductores ya quedó así.');
+      Router.pintar(true);
+    } catch (e) {
+      el.disabled = false;
+      el.innerHTML = antes;
+      Toast.show('No se pudo guardar: ' + esc(e.message), 'err');
+    }
+  }
+};
+
+Object.assign(Vistas, {
+  /* «preoperacionales» es la lista del día; «preoperacionales/formulario», el editor */
+  preoperacionales(id) { return id === 'formulario' ? Preop.vistaEditor() : Preop.vistaLista(); },
+  tab_preop(u) { return Preop.tabFicha(u); }
+});
+
+Object.assign(Acciones, {
+  verPreop(el) { Preop.ver(el.dataset.p); },
+  pdfPreop(el) { Preop.pdf(el.dataset.p, false); },
+  imprimirPreop(el) { Preop.pdf(el.dataset.p, true); },
+  comprobarPreop(el) { Preop.comprobar(el.dataset.p, el); },
+  filtroPreop(el) { Preop.filtro.periodo = el.dataset.v; Router.pintar(true); },
+  preopRecargar() { Preop.olvidar(); Router.pintar(true); },
+  preopReintentar() { Preop.errorFormato = null; Router.pintar(true); },
+  async copiarEnlacePreop() {
+    const url = Preop.enlace();
+    try {
+      await navigator.clipboard.writeText(url);
+      Toast.show('Enlace copiado: <b>' + esc(url) + '</b>. Péguelo en el chat de los conductores.');
+    } catch (e) {
+      Toast.show('No se pudo copiar solo. El enlace es: <b>' + esc(url) + '</b>', 'warn');
+    }
+  },
+  /* Imprime el PDF que se está viendo. Si el navegador no deja, se abre aparte para imprimirlo desde ahí. */
+  imprimirVisor(el) {
+    const f = el.tagName === 'IFRAME' ? el : el.closest('.modal').querySelector('iframe.visor-pdf');
+    if (!f) return;
+    try {
+      f.contentWindow.focus();
+      f.contentWindow.print();
+    } catch (e) {
+      window.open(f.src, '_blank');
+    }
+  },
+  eliminarPreop(el) {
+    const p = Preop.buscar(el.dataset.p);
+    if (!p) return;
+    Modal.abrir({
+      titulo: 'Eliminar este preoperacional', sub: esc(Preop.titulo(p)), sinFoco: true,
+      cuerpo: '<div class="alert a-err">' + Icon('warn') + '<div><b>Se borra con su PDF, su firma y su lectura de kilometraje en Cambios de aceite.</b> ' +
+        'No se puede deshacer. Sirve para quitar uno de prueba o uno enviado por error.</div></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-danger" data-act="confirmarEliminarPreop" data-p="' + attr(p.id) + '">' +
+        Icon('trash', '', 14) + 'Eliminar</button>'
+    });
+  },
+  async confirmarEliminarPreop(el) {
+    const id = el.dataset.p;
+    if (el.disabled) return;
+    el.disabled = true;
+    try {
+      await Nube.borrarFilas('preoperacionales', [id]);
+    } catch (e) {
+      el.disabled = false;
+      Toast.show('No se pudo eliminar: ' + esc(e.message), 'err');
+      return;
+    }
+    /* Los archivos se quitan en la cola del depósito, que reintenta sola. La
+       lectura ya la borró la nube; aquí se quita de una vez. */
+    ['inspeccion.pdf', 'firma.jpg'].forEach(n => Nube.quitar('preoperacional:' + id + ':' + n));
+    Datos.lecturas = (Datos.lecturas || []).filter(l => l.id !== 'preop-' + id);
+    Modal.cerrarTodo();
+    Preop.olvidar();
+    Toast.show('Se eliminó el preoperacional.');
+    Router.pintar(true);
+  },
+  preopAbrir(el) {
+    const s = el.dataset.s;
+    if (Preop.abiertas.has(s)) Preop.abiertas.delete(s); else Preop.abiertas.add(s);
+    Router.pintar(true);
+  },
+  preopMover(el) {
+    const s = Preop.sec(el.dataset.s), i = s ? s.items.findIndex(x => x.id === el.dataset.i) : -1, j = i + (+el.dataset.d);
+    if (i < 0 || j < 0 || j >= s.items.length) return;
+    s.items.splice(j, 0, s.items.splice(i, 1)[0]);
+    Router.pintar(true);
+  },
+  preopQuitarItem(el) {
+    const s = Preop.sec(el.dataset.s);
+    if (!s) return;
+    s.items = s.items.filter(x => x.id !== el.dataset.i);
+    Router.pintar(true);
+  },
+  preopAgregarItem(el) {
+    const s = Preop.sec(el.dataset.s), id = Preop.nuevoId('i');
+    if (!s) return;
+    s.items.push({ id, texto: '' });
+    Preop.abiertas.add(s.id);
+    Router.pintar(true);
+    const inp = $('[data-pe-item="' + id + '"]');
+    if (inp) inp.focus();
+  },
+  preopAgregarSec() {
+    const id = Preop.nuevoId('s');
+    Preop.borrador.secciones.push({ id, titulo: '', items: [{ id: Preop.nuevoId('i'), texto: '' }] });
+    Preop.abiertas.add(id);
+    Router.pintar(true);
+    const inp = $('[data-pe-sec="' + id + '"]');
+    if (inp) { inp.focus(); inp.scrollIntoView({ block: 'center' }); }
+  },
+  preopQuitarSec(el) {
+    const s = Preop.sec(el.dataset.s);
+    if (!s) return;
+    if (!s.items.length) { Acciones.confirmarQuitarSec(el); return; }
+    Modal.abrir({
+      titulo: 'Quitar la sección', sub: esc(Preop.tituloSec(s) || 'Sin título'), sinFoco: true,
+      cuerpo: '<p class="txt-2">Se quita con sus ' + s.items.length + ' ítems. Los preoperacionales ya enviados no cambian, y nada se guarda hasta que pulse «Guardar cambios».</p>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-danger" data-act="confirmarQuitarSec" data-s="' + attr(s.id) + '">' +
+        Icon('trash', '', 14) + 'Quitar la sección</button>'
+    });
+  },
+  confirmarQuitarSec(el) {
+    Preop.borrador.secciones = Preop.borrador.secciones.filter(s => s.id !== el.dataset.s);
+    Modal.cerrarTodo();
+    Router.pintar(true);
+  },
+  preopDescartar() {
+    Preop.borrador = null;
+    Preop.abiertas = null;
+    Router.pintar(true);
+  },
+  preopGuardar(el) { Preop.guardar(el); }
 });
 
 /* ==========================================================================
@@ -5735,6 +6457,23 @@ const Nube = {
       const sig = this._turnos.shift();
       if (sig) sig();
     }
+  },
+  /* Baja un archivo por su ruta en el depósito, sin anotarlo entre los
+     conocidos: los de los preoperacionales no son de Datos y la limpieza no
+     los debe tocar. Devuelve null si no se pudo. */
+  async bajarRuta(ruta) {
+    const tk = await this.token();
+    if (!tk || !ruta) return null;
+    const url = NUBE.url + '/storage/v1/object/' + NUBE.deposito + '/' + String(ruta).split('/').map(encodeURIComponent).join('/');
+    for (let intento = 1; intento <= 3; intento++) {
+      try {
+        const r = await this._fetch(url, { headers: { apikey: NUBE.llave, Authorization: 'Bearer ' + tk } }, 60000);
+        return r.ok ? await r.blob() : null;
+      } catch (e) {
+        if (intento < 3) await new Promise(ok => setTimeout(ok, 700 * intento));
+      }
+    }
+    return null;
   }
 };
 
@@ -6128,9 +6867,14 @@ const Sincro = {
   pendiente() { return Boolean(Nube.pendientes() || this.ocupado || this.error || (this.activo && this.cambios().n)); },
   /* Al volver a la pestaña: si en otro equipo se cambió algo, se trae. Si aquí
      hay algo sin subir, primero se sube. */
+  /* ¿Ya es otro día que cuando se abrió la plataforma? */
+  diaViejo: () => Fecha.iso(new Date()) !== hoyISO,
   async revisar() {
     if (!this.activo || this.ocupado || this._revisando || Modal.abierto()) return;
     if (this.cambios().n) return this.ciclo(true);
+    /* Si quedó abierta de un día para otro, se recarga para que las fechas (y
+       el mes de los comparendos) queden al día. Ya no hay nada sin guardar. */
+    if (this.diaViejo() && !Nube.pendientes()) { location.reload(); return; }
     /* Como mucho cada 15 segundos, aunque se vaya y se vuelva seguido */
     if (Date.now() - (this._revisado || 0) < 15000) return;
     this._revisado = Date.now();
@@ -6145,6 +6889,7 @@ const Sincro = {
       Mapa.poner(r);
       Nube.conocerDeDatos();
       this._fijarTodo();
+      Comparendos.alDia();
       Router.pintar(true);
       Guardadas.aplicar().then(n => { if (n) Router.pintar(true); });
     } catch (e) {
@@ -6156,6 +6901,8 @@ const Sincro = {
     setInterval(() => this.ciclo(), 1500);
     /* Por si algo cambió sin un clic de por medio */
     setInterval(() => { this.sucio = true; }, 15000);
+    /* Abierta toda la noche sin tocarla: al cambiar el día se recarga sola */
+    setInterval(() => { if (this.diaViejo() && !this.pendiente() && !Modal.abierto()) location.reload(); }, 10 * 60000);
     ['click', 'change', 'input', 'drop', 'keyup'].forEach(ev => document.addEventListener(ev, () => { this.sucio = true; }, true));
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') this.ciclo(true); else this.revisar(); });
     window.addEventListener('focus', () => this.revisar());
@@ -6328,6 +7075,9 @@ const Arranque = {
         if ((await Sesion.sinAcceso(acc)) === 'otra') await Sesion.pedir();
       }
       await Sincro.cargar(Sesion.cargando());
+      /* Si empezó un mes nuevo, la revisión de comparendos pasa al historial
+         (y la sincronización lo sube) */
+      Comparendos.alDia();
     } catch (e) {
       console.error(e);
       Sesion.fallo(e);
