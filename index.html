@@ -1038,9 +1038,23 @@ html.sb-mini .sb-salir{display:none}
 .plano .halo{pointer-events:none}
 .plano .halo .forma{fill:none;stroke:rgba(42,82,173,.3);stroke-width:13;vector-effect:non-scaling-stroke}
 .plano .halo .det{display:none}
-.plano .etq{pointer-events:none}
-.plano .etq rect,.plano .etq path{fill:var(--brand-600)}
-.plano .etq text{fill:#fff;font-family:var(--font);font-size:18px;font-weight:700}
+/* El nombre de la parte escogida, pequeño, sobre el dibujo. Va en HTML para
+   que la letra no crezca con el dibujo. */
+.pl-dib{position:relative}
+.pl-etq{position:absolute;z-index:2;transform:translate(-50%,calc(-100% - 11px));pointer-events:none;white-space:nowrap;
+  padding:3px 9px;border-radius:6px;background:var(--surface);border:1px solid var(--brand-200);box-shadow:0 2px 6px rgba(13,19,25,.1);
+  font-size:11.5px;line-height:1.45;color:var(--text-3)}
+.pl-etq b{font-weight:650;color:var(--brand-700)}
+.pl-etq::after{content:'';position:absolute;left:50%;bottom:-4.5px;width:7px;height:7px;margin-left:-3.5px;background:var(--surface);
+  border-right:1px solid var(--brand-200);border-bottom:1px solid var(--brand-200);transform:rotate(45deg)}
+.pl-etq.der{transform:translate(calc(-100% + 14px),calc(-100% - 11px))}
+.pl-etq.izq{transform:translate(-14px,calc(-100% - 11px))}
+.pl-etq.der::after{left:auto;right:10px;margin-left:0}
+.pl-etq.izq::after{left:10px;margin-left:0}
+.pl-etq.abajo{transform:translate(-50%,13px)}
+.pl-etq.der.abajo{transform:translate(calc(-100% + 14px),13px)}
+.pl-etq.izq.abajo{transform:translate(-14px,13px)}
+.pl-etq.abajo::after{bottom:auto;top:-4.5px;transform:rotate(225deg)}
 .plano .alerta{pointer-events:none}
 .plano .alerta circle{fill:var(--dang-500);stroke:#fff;stroke-width:2}
 .plano .alerta text{fill:#fff;font-size:13px;font-weight:800;font-family:var(--font)}
@@ -1052,7 +1066,9 @@ html[data-theme="dark"] .plano .zona.h3 .forma{fill:#b8652f}
 html[data-theme="dark"] .plano .zona.h4 .forma{fill:#c9483a}
 html[data-theme="dark"] .plano .zona.sel .forma{stroke:var(--brand-300)}
 html[data-theme="dark"] .plano .halo .forma{stroke:rgba(134,161,224,.35)}
-html[data-theme="dark"] .plano .etq rect,html[data-theme="dark"] .plano .etq path{fill:var(--brand-500)}
+html[data-theme="dark"] .pl-etq,html[data-theme="dark"] .pl-etq::after{border-color:rgba(134,161,224,.45)}
+html[data-theme="dark"] .pl-etq{box-shadow:0 2px 8px rgba(0,0,0,.35)}
+html[data-theme="dark"] .pl-etq b{color:var(--brand-300)}
 html[data-theme="dark"] .plano .alerta circle{stroke:var(--surface)}
 .plano-caja{background:radial-gradient(130% 100% at 15% 0%,var(--ph-a),var(--ph-b));border-radius:var(--radius);padding:18px 12px 6px}
 .plano-caja.claro{background:var(--surface-2);border:1px solid var(--border)}
@@ -1231,7 +1247,7 @@ html[data-theme="dark"] .reg-sel .zchip.on{background:var(--accent-soft);color:v
   .solo-cel{display:inline}
   .plano .zona,.zchip,.llantas-v .llanta,.uc-plano{-webkit-tap-highlight-color:transparent}
   /* El nombre arriba de la parte escogida quedaría diminuto: ya lo dicen el botón de abajo y la parte marcada */
-  .plano .etq{display:none}
+  .pl-etq{display:none}
   /* Los indicadores, más pequeños */
   .mant-kpis{gap:8px;margin-bottom:12px}
   .mant-kpis-h{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -4001,8 +4017,7 @@ const Plano = {
   /* ---------------- El dibujo ---------------- */
   /* o: nivel y alertas por zona, sel (las zonas escogidas), mini (para ver,
      sin tocar), act/u (lo que hace el clic en una parte), halo (alrededor de
-     lo escogido), foco (las demás, un poco apagadas) y etiqueta (el nombre
-     arriba de lo escogido) */
+     lo escogido) y foco (las demás, un poco apagadas) */
   svg(k, o) {
     o = o || {};
     const d = PLANOS[k], n = o.nivel || {}, sel = o.sel || [], al = o.alertas || {}, vis = o.partes || this.visibles(k);
@@ -4015,18 +4030,19 @@ const Plano = {
     };
     const marca = z => '<g class="alerta"><circle cx="' + d.marcas[z][0] + '" cy="' + d.marcas[z][1] + '" r="10"/><text x="' + d.marcas[z][0] +
       '" y="' + (d.marcas[z][1] + 4.5) + '" text-anchor="middle">!</text></g>';
-    const etq = o.etiqueta && sel.length && d.marcas[sel[0]] ? this.etiqueta(d.marcas[sel[0]], o.etiqueta) : '';
     return '<svg class="plano' + (o.mini ? ' mini' : '') + (o.foco && sel.length ? ' con-foco' : '') + '" viewBox="' + d.vb + '" role="img" aria-label="' +
         attr('Plano: ' + d.nombre) + '">' + '<path class="suelo" d="' + d.suelo + '"/>' + d.zonas.map(g).join('') +
-      Object.keys(al).filter(z => al[z] && d.marcas[z]).map(marca).join('') + etq + '</svg>';
+      Object.keys(al).filter(z => al[z] && d.marcas[z]).map(marca).join('') + '</svg>';
   },
-  /* El nombre de lo escogido, en una etiqueta arriba de la parte (abajo, si arriba no cabe) */
-  etiqueta([x, y], txt) {
-    const w = Math.round(30 + txt.length * 10.6), x0 = Math.min(Math.max(x - w / 2, 24), 884 - w), arriba = y - 58 >= 42, y0 = arriba ? y - 58 : y + 16;
-    const punta = arriba ? 'M' + (x - 8) + ' ' + (y0 + 34) + 'L' + x + ' ' + (y - 12) + 'L' + (x + 8) + ' ' + (y0 + 34) + 'Z'
-      : 'M' + (x - 8) + ' ' + (y0 + 2) + 'L' + x + ' ' + (y + 12) + 'L' + (x + 8) + ' ' + (y0 + 2) + 'Z';
-    return '<g class="etq"><path d="' + punta + '"/><rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="36" rx="18"/>' +
-      '<text x="' + (x0 + w / 2) + '" y="' + (y0 + 24.5) + '" text-anchor="middle">' + esc(txt) + '</text></g>';
+  /* El nombre de la parte escogida, en una etiqueta pequeña sobre el dibujo
+     (en HTML, para que la letra no crezca con él): arriba de la parte, abajo
+     si arriba no cabe, y corrida hacia adentro cerca de los bordes */
+  etiqueta(k, z, nombre, resto) {
+    const d = PLANOS[k], m = d.marcas[z];
+    if (!m) return '';
+    const [vx, vy, vw, vh] = d.vb.split(' ').map(Number), x = (m[0] - vx) / vw * 100, y = (m[1] - vy) / vh * 100;
+    return '<div class="pl-etq' + (x > 82 ? ' der' : x < 18 ? ' izq' : '') + (y < 22 ? ' abajo' : '') + '" style="left:' + x.toFixed(2) + '%;top:' +
+      y.toFixed(2) + '%"><b>' + esc(nombre) + '</b> · ' + esc(resto) + '</div>';
   },
   /* El de las tarjetas: el color de los arreglos de los últimos 12 meses y las novedades */
   mini(u) {
@@ -4118,7 +4134,7 @@ const Plano = {
       vis.slice().sort((a, b) => ((pp[b.k] || {}).n || 0) - ((pp[a.k] || {}).n || 0))[0] || null;
     /* Arriba de la parte escogida: su nombre con sus arreglos (o su gasto) */
     const xs = sel && pp[sel.k], maxG = Math.max.apply(null, Object.values(pp).map(x => x.gasto).concat([0]));
-    const etq = !sel ? '' : sel.n + ' · ' + (st.modo === 'gasto' ? (xs && xs.gasto ? this.pesos(xs.gasto) : 'sin gasto')
+    const etq = !sel || !sel.zona ? '' : this.etiqueta(k, sel.zona, sel.n, st.modo === 'gasto' ? (xs && xs.gasto ? this.pesos(xs.gasto) : 'sin gasto')
       : xs ? xs.n + (xs.n === 1 ? ' arreglo' : ' arreglos') : 'sin arreglos');
     const gasto = lista.reduce((s, m) => s + this.costo(m), 0), prev = lista.filter(m => m.tipo === 'preventivo').length;
     const top = campo => vis.filter(p => pp[p.k] && pp[p.k][campo] > 0).sort((a, b) => pp[b.k][campo] - pp[a.k][campo])[0];
@@ -4133,8 +4149,8 @@ const Plano = {
     const dibujo = UI.card('Plano del vehículo',
       '<div class="pl-bar"><span class="lbl">Color según</span>' + seg('planoModo', st.modo, [['arreglos', 'Arreglos'], ['gasto', 'Gasto']]) +
         '<span class="lbl">Período</span>' + seg('planoPeriodo', st.periodo, this.PERIODOS) + '</div>' +
-      '<div class="plano-caja claro">' + this.svg(k, { nivel: this.aZonas(k, nivP), alertas: this.aZonas(k, alP), sel: sel && sel.zona ? [sel.zona] : [], act: 'planoParte',
-        halo: true, foco: true, etiqueta: etq }) + '</div>' +
+      '<div class="plano-caja claro"><div class="pl-dib">' + this.svg(k, { nivel: this.aZonas(k, nivP), alertas: this.aZonas(k, alP),
+        sel: sel && sel.zona ? [sel.zona] : [], act: 'planoParte', halo: true, foco: true }) + etq + '</div></div>' +
       this.leyenda(st.modo, maxG) + this.chips(k, { pp, nivel: nivP, alertas: alP, sel: sel ? sel.k : null, act: 'planoParte' }) +
       Novedades.aviso() +
       (sinParte.length ? '<div class="pl-nota">' + Icon('info', '', 13) + '<span>' + (sinParte.length === 1 ? '1 arreglo del período no tiene' : sinParte.length + ' arreglos del período no tienen') +
