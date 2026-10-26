@@ -855,42 +855,56 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .doc-page *{box-sizing:border-box}
 /* Los fondos de los encabezados también salen al imprimir */
 .doc-page{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.dp-head{display:flex;align-items:stretch;border:1.2px solid #000}
-.dp-logo{width:44mm;flex:0 0 44mm;border-right:1.2px solid #000;display:flex;align-items:center;justify-content:center;padding:2mm}
-.dp-logo .lg-txt{font-weight:800;font-size:12.5pt;text-align:center;letter-spacing:.5px;line-height:1.1}
+/* Todos los documentos con la identidad de SINUGRAVAS, como la hoja de vida
+   y el preoperacional: bordes en azul oscuro, títulos de sección en azul
+   claro, la banda azul con la línea naranja del logo y el pie del sistema */
+.dp-head{display:flex;align-items:stretch;border:1.2px solid #193680}
+.dp-logo{width:44mm;flex:0 0 44mm;border-right:1.2px solid #193680;display:flex;align-items:center;justify-content:center;padding:2mm}
+.dp-logo .lg-txt{font-weight:800;font-size:12.5pt;text-align:center;letter-spacing:.5px;line-height:1.1;color:#132966}
 .dp-logo .lg-txt small{display:block;font-size:6.5pt;font-weight:600;letter-spacing:1px;margin-top:1mm}
 .dp-logo img{display:block;max-width:100%;max-height:14mm;width:auto;height:auto}
 .dp-hc{flex:1;padding:2.5mm 3mm;text-align:center;display:flex;flex-direction:column;justify-content:center}
-.dp-hc h1{font-size:10.5pt;font-weight:800;text-transform:uppercase;line-height:1.25;margin:0 0 1mm}
-.dp-hc .dp-meta{font-size:7.5pt;color:#222}
-.dp-num{width:40mm;border-left:1.2px solid #000;padding:2.5mm;display:flex;flex-direction:column;justify-content:center;gap:1.5mm}
-.dp-num div{font-size:7.5pt}
-.dp-num b{display:block;font-size:10.5pt;font-family:Consolas,monospace;letter-spacing:.5px}
-.dp-sec{border:1.2px solid #000;border-top:none}
-.dp-sec-t{background:#e6e6e6;padding:1.2mm 3mm;font-size:8pt;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #000}
+.dp-hc h1{font-size:11pt;font-weight:800;text-transform:uppercase;line-height:1.25;margin:0 0 1mm;color:#132966}
+.dp-hc .dp-meta{font-size:7.5pt;color:#4e5d6b}
+.dp-num{width:40mm;border-left:1.2px solid #193680;padding:2.5mm;display:flex;flex-direction:column;justify-content:center;gap:1.5mm}
+.dp-num div{font-size:7.5pt;color:#4e5d6b}
+.dp-num b{display:block;font-size:10.5pt;font-family:Consolas,monospace;letter-spacing:.5px;color:#132966}
+.dp-banda{display:flex;justify-content:space-between;align-items:center;gap:4mm;margin-top:2mm;padding:2mm 3mm;background:#20449a;color:#fff;
+  font-size:8.6pt;font-weight:800;letter-spacing:.3px;text-transform:uppercase;border-bottom:1.1mm solid #e8830e}
+.dp-banda span{font-size:7.5pt;font-weight:700;white-space:nowrap}
+.dp-sec{border:1.2px solid #193680;margin-top:2.6mm}
+.dp-sec-t{background:#d5def5;color:#132966;padding:1.2mm 3mm;font-size:8pt;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:.6px solid #193680}
 .dp-fields{display:grid;grid-template-columns:repeat(2,1fr)}
-.dp-f{display:flex;border-bottom:.6px solid #999;min-height:6.5mm;align-items:stretch}
-.dp-f:nth-child(odd){border-right:.6px solid #999}
-.dp-f label{width:32mm;flex:0 0 32mm;background:#f7f7f7;padding:1.2mm 2mm;font-size:7pt;font-weight:700;
-  text-transform:uppercase;border-right:.6px solid #999;display:flex;align-items:center;letter-spacing:.2px}
+.dp-f{display:flex;border-bottom:.6px solid #c3cfe9;min-height:6.5mm;align-items:stretch}
+.dp-f:nth-child(odd){border-right:.6px solid #c3cfe9}
+/* La última fila va pegada al marco, sin doble línea */
+.dp-f:nth-last-child(-n+2){border-bottom:0}
+.dp-f label{width:32mm;flex:0 0 32mm;background:#edf1fb;color:#193680;padding:1.2mm 2mm;font-size:7pt;font-weight:700;
+  text-transform:uppercase;border-right:.6px solid #c3cfe9;display:flex;align-items:center;letter-spacing:.2px}
 .dp-f span{padding:1.2mm 2mm;font-size:8.5pt;display:flex;align-items:center;flex:1;min-width:0;word-break:break-word}
-.dp-tbl{width:100%;border-collapse:collapse;border:1.2px solid #000;border-top:none}
-.dp-tbl th{background:#e6e6e6;border:.6px solid #666;padding:1.5mm 2mm;font-size:7.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.2px;text-align:left}
-.dp-tbl td{border:.6px solid #999;padding:1.4mm 2mm;font-size:8.5pt;vertical-align:top}
+.dp-tbl{width:100%;border-collapse:collapse;border:1.2px solid #193680;margin-top:2.6mm}
+.dp-tbl th{background:#edf1fb;color:#193680;border:.6px solid #c3cfe9;padding:1.5mm 2mm;font-size:7.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.2px;text-align:left}
+.dp-tbl td{border:.6px solid #c3cfe9;padding:1.4mm 2mm;font-size:8.5pt;vertical-align:top}
 .dp-tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .dp-tbl td.c,.dp-tbl th.c{text-align:center}
-.dp-tbl tr.tot td{background:#e6e6e6;font-weight:800}
-.dp-obs{border:1.2px solid #000;border-top:none;padding:2mm 3mm;font-size:8.5pt;min-height:12mm}
-.dp-obs b{font-size:7.5pt;text-transform:uppercase;display:block;margin-bottom:1mm}
-.dp-fotos{display:grid;grid-template-columns:repeat(2,1fr);gap:3mm;padding:3mm;border:1.2px solid #000;border-top:none}
-.dp-foto{border:.6px solid #999;break-inside:avoid}
+.dp-tbl tr.tot td{background:#d5def5;color:#132966;font-weight:800}
+.dp-obs{border:1.2px solid #193680;margin-top:2.6mm;padding:2mm 3mm;font-size:8.5pt;min-height:12mm}
+.dp-obs b{font-size:7.5pt;text-transform:uppercase;display:block;margin-bottom:1mm;color:#193680}
+/* El registro fotográfico se puede partir entre hojas: sin recuadro propio,
+   el título y cada foto llevan el suyo (como en la hoja de vida) */
+.dp-sec.dp-libre{border:0}
+.dp-libre > .dp-sec-t{border:1.2px solid #193680}
+.dp-fotos{display:grid;grid-template-columns:repeat(2,1fr);gap:3mm;padding:3mm 0 0}
+.dp-foto{border:.6px solid #c3cfe9;break-inside:avoid}
 .dp-foto img{width:100%;height:58mm;object-fit:cover;display:block}
-.dp-foto figcaption{font-size:8pt;padding:1.2mm 2mm;border-top:.6px solid #999;background:#f7f7f7}
+.dp-foto figcaption{font-size:8pt;padding:1.2mm 2mm;border-top:.6px solid #c3cfe9;background:#edf1fb;color:#193680}
+.dp-vacio{border:1.2px solid #193680;border-top:0;padding:3mm;font-size:8.5pt;color:#4e5d6b}
 .dp-sign{margin-top:16mm;display:flex;gap:14mm;justify-content:space-between}
-.dp-sign div{flex:1;text-align:center;font-size:8pt}
-.dp-sign .ln{border-top:1px solid #000;margin-bottom:1.5mm}
-.dp-sign b{display:block;font-size:8.5pt}
-.dp-foot{margin-top:8mm;border-top:.6px solid #999;padding-top:2mm;font-size:6.5pt;color:#555;display:flex;justify-content:space-between;gap:8px}
+.dp-sign div{flex:1;text-align:center;font-size:8pt;color:#4e5d6b}
+.dp-sign .ln{border-top:1px solid #1b2430;margin-bottom:1.5mm}
+.dp-sign b{display:block;font-size:8.5pt;color:#1b2430}
+.dp-foot{margin-top:8mm;border-top:.8px solid #c3cfe9;padding-top:2mm;font-size:6.5pt;color:#6b7c8c;display:flex;justify-content:space-between;gap:8px}
+.dp-foot b{color:#132966}
 /* Hoja de vida con el formato SST-FRT-026 del ingeniero anterior, con los
    azules de la plataforma (la opción que escogió Juan): franja azul rey y
    títulos y casillas en azules claros */
@@ -900,7 +914,8 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .sst-cod{border-left:1.2px solid #193680;display:flex;flex-direction:column}
 .sst-cod div{flex:1;display:flex;align-items:center;justify-content:center;border-bottom:.6px solid #193680;font-size:8pt;font-weight:700;padding:.8mm 1mm}
 .sst-cod div:last-child{border-bottom:0;font-weight:600}
-.sst-banda{background:#20449a;color:#fff;text-align:center;font-size:11pt;font-weight:800;padding:2mm;margin-top:2mm;text-transform:uppercase;letter-spacing:.3px}
+.sst-banda{background:#20449a;color:#fff;text-align:center;font-size:11pt;font-weight:800;padding:2mm;margin-top:2mm;text-transform:uppercase;letter-spacing:.3px;
+  border-bottom:1.1mm solid #e8830e}
 .sst-sec{border:1.2px solid #193680;margin-top:2mm;break-inside:avoid}
 .sst-sec-t{background:#d5def5;color:#132966;text-align:center;font-size:8.5pt;font-weight:800;padding:1.2mm;text-transform:uppercase;border-bottom:.6px solid #193680}
 /* Las líneas entre casillas son el espacio de la rejilla; la última casilla
@@ -914,7 +929,7 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .sst-dot + .sst-sub{border-top:.6px solid #c3cfe9}
 .sst-ck{display:inline-flex;align-items:center;gap:1.5mm}
 .sst-ck i{width:3.2mm;height:3.2mm;border:.6px solid #20449a;color:#20449a;display:inline-grid;place-items:center;font-style:normal;font-size:7pt;font-weight:800;line-height:1}
-.sst-sec .dp-tbl{border:0}
+.sst-sec .dp-tbl{border:0;margin:0}
 .sst-sec .dp-tbl th{background:#edf1fb;color:#193680}
 .sst-sec .dp-tbl th,.sst-sec .dp-tbl td{border-color:#c3cfe9}
 /* Registro fotográfico: dos fotos por fila, enteras y con lo que muestran */
@@ -1014,6 +1029,7 @@ html.sb-mini .sb-salir{display:none}
 .nov:last-child{border-bottom:0}
 .nov .n{color:var(--text-3);font-size:11px;min-width:30px;font-variant-numeric:tabular-nums}
 .nov .t{flex:1;min-width:0}
+.nov .t small{display:block;color:var(--text-3);font-size:11.5px;margin-top:1px}
 .cuenta{display:flex;height:8px;border-radius:5px;overflow:hidden;background:var(--surface-3);margin:6px 0 8px}
 .cuenta i{display:block;height:100%}
 .leyenda-p{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--text-2)}
@@ -1045,6 +1061,41 @@ html.sb-mini .sb-salir{display:none}
 .siempre{color:var(--text-3);font-size:11.5px;grid-column:2 / span 2;text-align:right}
 .barra-guardar{position:sticky;bottom:0;display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;padding:12px 0;
   background:linear-gradient(transparent,var(--bg) 35%)}
+.pe-avisos{margin:6px 0 0;padding-left:18px;display:grid;gap:4px}
+/* Respuestas de cada ítem y colores, en el editor */
+.op-cab,.op-ed{display:grid;grid-template-columns:36px 64px minmax(0,1fr) 150px auto;gap:8px;align-items:center}
+.op-cab{padding:0 0 6px;font-size:11px;font-weight:650;color:var(--text-3)}
+.op-ed{padding:6px 0;border-bottom:1px solid var(--border)}
+.op-ed .inp{height:30px}
+.op-ed .op-boton{text-align:center;font-weight:700}
+.op-acc{display:inline-flex;gap:2px}
+.op-ed input[type=color],.color-ed input[type=color]{width:36px;height:30px;padding:2px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  background:var(--surface);cursor:pointer}
+.op-prev{margin-top:12px;padding:10px 12px;border:1px dashed var(--border-strong);border-radius:var(--radius);display:grid;gap:8px}
+.brm-prev{display:flex;gap:6px;flex-wrap:wrap}
+.brm-b{min-width:42px;height:42px;padding:0 8px;border-radius:8px;border:2px solid;display:inline-grid;place-items:center;font-size:12px;font-weight:700}
+.color-ed{display:grid;grid-template-columns:minmax(0,1fr) 36px 96px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.color-ed b{display:block;font-size:12.5px;font-weight:650}
+.color-ed span{display:block;font-size:11.5px;color:var(--text-3)}
+.color-ed .inp-hex{height:30px;font-family:var(--mono);font-size:12px}
+.col-prev{margin-top:12px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+/* La muestra de los colores es papel y celular: siempre en blanco, también en modo oscuro */
+.cp-hoja{background:#fff;color:#1b2430;padding:10px 12px 12px}
+.cp-cap{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#6b7c8c;margin-bottom:5px}
+.cp-sst{display:grid;grid-template-columns:76px minmax(0,1fr) 74px;border:1.2px solid var(--o);font-size:9px}
+.cp-sst>div{padding:5px;display:grid;place-items:center;text-align:center;min-width:0}
+.cp-sst>div+div{border-left:1.2px solid var(--o)}
+.cp-sst img{max-width:100%;max-height:22px;display:block}
+.cp-tt{font-weight:800;font-size:9.5px;color:var(--k)}
+.cp-cod{font-size:8.5px;font-weight:700;color:var(--k)}
+.cp-banda{background:var(--p);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:5px 7px;margin-top:4px;border-bottom:3px solid var(--a)}
+.cp-sec{border:1.2px solid var(--o);margin-top:5px;background:var(--cl);color:var(--k);font-size:9px;font-weight:800;letter-spacing:.04em;padding:3px 7px}
+.cp-cel{margin-top:12px;border:1px solid #dde4ea;border-radius:10px;overflow:hidden}
+.cp-form{display:flex;align-items:center;gap:9px;padding:8px 10px}
+.cp-emb{width:26px;height:26px;border-radius:7px;border:1px solid #dde4ea;display:block;flex:0 0 auto}
+.cp-tit{flex:1;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--k)}
+.cp-btn{background:var(--p);color:#fff;font-size:12px;font-weight:700;padding:6px 13px;border-radius:7px}
+.cp-linea{height:3px;background:linear-gradient(90deg,var(--p) 0 78%,var(--a) 78% 100%)}
 </style>
 </head>
 <body>
@@ -4419,35 +4470,40 @@ const Opc = {
    guardan como PDF desde la ventana de impresión del navegador.
    -------------------------------------------------------------------------- */
 const Formatos = {
-  cabecera(titulo, meta, numero, numLbl) {
+  /* El encabezado y, debajo, la banda azul con la línea naranja: a la
+     izquierda de qué se trata y a la derecha el número del documento */
+  cabecera(titulo, meta, numero, numLbl, banda) {
     return '<div class="dp-head"><div class="dp-logo">' +
       (MARCA.ok ? '<img src="' + MARCA.logo + '" alt="SINUGRAVAS S.A.S.">' : '<div class="lg-txt">SINUGRAVAS<small>SISTEMA DE GESTIÓN DE FLOTA</small></div>') + '</div>' +
       '<div class="dp-hc"><h1>' + esc(titulo) + '</h1><div class="dp-meta">' + esc(meta) + '</div></div>' +
-      '<div class="dp-num"><div>' + esc(numLbl || 'Número') + '<b>' + esc(numero) + '</b></div><div>Fecha<b>' + hoyISO.split('-').reverse().join('/') + '</b></div></div></div>';
+      '<div class="dp-num"><div>' + esc(numLbl || 'Número') + '<b>' + esc(numero) + '</b></div><div>Fecha<b>' + hoyISO.split('-').reverse().join('/') + '</b></div></div></div>' +
+      (banda ? '<div class="dp-banda">' + esc(banda[0]) + '<span>' + esc(banda[1]) + '</span></div>' : '');
   },
   campos(pares) {
     return '<div class="dp-fields">' + pares.map(p => '<div class="dp-f"><label>' + esc(p[0]) + '</label><span>' + esc(p[1]) + '</span></div>').join('') + '</div>';
   },
-  sec(t, html) { return '<div class="dp-sec"><div class="dp-sec-t">' + esc(t) + '</div>' + html + '</div>'; },
+  sec(t, html, cls) { return '<div class="dp-sec' + (cls ? ' ' + cls : '') + '"><div class="dp-sec-t">' + esc(t) + '</div>' + html + '</div>'; },
   firmas(lista) {
     return '<div class="dp-sign">' + lista.map(f => '<div' + (lista.length === 1 ? ' style="max-width:75mm"' : '') + '><div class="ln"></div><b>' + esc(f[0]) + '</b>' + esc(f[1]) + '</div>').join('') + '</div>';
   },
-  pie(txt) { return '<div class="dp-foot"><span>' + esc(txt) + '</span><span>Sistema de Gestión de Flota</span></div>'; },
+  pie(txt) {
+    return '<div class="dp-foot"><span><b>' + esc(txt) + '</b></span><span>Generado por el Sistema de Gestión de Flota de SINUGRAVAS S.A.S. · flota.sinugravas.com</span></div>';
+  },
 
   /* El historial de una visita al taller, con una foto por cambio */
   correctivo(d) {
     const u = d.unidad, p = d.prov, c = Q.conductor(u.conductor), conPlaca = u.tipo === 'carga' || u.tipo === 'remolque';
-    return this.cabecera('Historial de mantenimiento correctivo', 'Visita al taller con el registro fotográfico de cada cambio', d.numero) +
+    return this.cabecera('Historial de mantenimiento correctivo', 'Visita al taller con el registro fotográfico de cada cambio', d.numero, null,
+        [[UI.placaTxt(u), u.clase, d.entrada ? 'entró el ' + Fecha.larga(d.entrada) : ''].filter(Boolean).join(' · '), 'Correctivo N.º ' + d.numero]) +
       this.sec('Unidad', this.campos([[conPlaca ? 'Placa' : 'Código', UI.placaTxt(u)], ['Tipo', TIPOS[u.tipo].nombre + ' · ' + u.clase],
         ['Marca y línea', UI.nombre(u) || '—'], ['Conductor', c ? c.nombre : 'Sin asignar']])) +
       this.sec('Taller', this.campos([['Taller o proveedor', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'],
         ['Entró', Fecha.larga(d.entrada)], ['Salió', d.salida ? Fecha.larga(d.salida) : 'Sigue en el taller']])) +
       '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo || 'Sin descripción todavía.') + '</div>' +
-      '<div class="dp-sec"><div class="dp-sec-t">Registro fotográfico · ' + d.fotos.length + ' foto(s)</div></div>' +
-      (d.fotos.length ? '<div class="dp-fotos">' + d.fotos.map((f, i) => '<figure class="dp-foto" style="margin:0">' +
+      this.sec('Registro fotográfico · ' + d.fotos.length + ' foto(s)', d.fotos.length ? '<div class="dp-fotos">' + d.fotos.map((f, i) => '<figure class="dp-foto" style="margin:0">' +
           (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<div class="ph" style="height:58mm">' + ILUS[ilusDe(u)] + '</div>') +
           '<figcaption>' + (i + 1) + '. ' + esc(f.txt || 'Sin descripción') + '</figcaption></figure>').join('') + '</div>'
-        : '<div class="dp-obs">Todavía no hay fotos.</div>') +
+        : '<div class="dp-vacio">Todavía no hay fotos.</div>', 'dp-libre') +
       this.firmas([['Responsable de flota', 'Recibe la unidad'], ['Conductor', 'Entrega y recibe'], ['Taller', 'Hizo el trabajo']]) +
       this.pie('Mantenimiento correctivo ' + d.numero);
   },
@@ -4462,8 +4518,9 @@ const Formatos = {
     const n = e => us.filter(u => rev(u).estado === e).length;
     const mes = Fecha.mes(ref);
     const det = c => c.estado === 'con' ? [c.infraccion, c.valor ? Money.format(c.valor) : '', c.fecha ? Fecha.corta(c.fecha) : ''].filter(Boolean).join(' · ') : '';
-    return this.cabecera('Informe mensual de comparendos', 'Para el área del primer piso · ' + mes,
-        'IC-' + ref.getFullYear() + '-' + String(ref.getMonth() + 1).padStart(2, '0'), 'Informe') +
+    const num = 'IC-' + ref.getFullYear() + '-' + String(ref.getMonth() + 1).padStart(2, '0');
+    return this.cabecera('Informe mensual de comparendos', 'Para el área del primer piso · ' + mes, num, 'Informe',
+        [mes + ' · ' + us.length + (us.length === 1 ? ' unidad' : ' unidades'), 'Informe N.º ' + num]) +
       this.sec('Resumen', this.campos([['Mes revisado', mes], ['Unidades revisadas', (us.length - n('pend')) + ' de ' + us.length],
         ['Con comparendo', String(n('con'))], ['Sin comparendos', String(n('sin'))], ['Sin revisar', String(n('pend'))], ['Revisó', 'Juan · Responsable de flota']])) +
       '<table class="dp-tbl"><thead><tr><th class="c" style="width:8mm">#</th><th>Unidad</th><th>Tipo</th><th>Resultado</th><th>Detalle</th></tr></thead><tbody>' +
@@ -4479,7 +4536,8 @@ const Formatos = {
   /* Orden de compra: provisional hasta tener el formato en Excel de la empresa */
   oc(o) {
     const p = Q.proveedor(o.prov), u = Q.unidad(o.unidad), tot = UI.totalOC(o);
-    return this.cabecera('Orden de compra', 'Compra o servicio a crédito · para el área de facturación', o.numero, 'Orden N.º') +
+    return this.cabecera('Orden de compra', 'Compra o servicio a crédito · para el área de facturación', o.numero, 'Orden N.º',
+        [[p ? p.nombre : 'Sin proveedor', u ? UI.placaTxt(u) : ''].filter(Boolean).join(' · '), 'Orden N.º ' + o.numero]) +
       this.sec('Proveedor', this.campos([['Proveedor', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'],
         ['Servicio', p ? p.servicio : '—'], ['Contacto', p && p.contacto ? p.contacto : 'Por completar']])) +
       this.sec('Orden', this.campos([['Fecha', Fecha.larga(o.fecha)], ['Plazo de pago', o.plazo + ' días'],
@@ -5559,10 +5617,22 @@ Object.assign(Acciones, {
 const Preop = {
   COLUMNAS: 'id,unidad_id,conductor_id,placa,tipo_vehiculo,fecha,kilometraje,conductor_nombre,documento,licencia,categoria,vigencia_licencia,' +
     'supervisor,observaciones,respuestas,buenos,regulares,malos,no_aplica,sin_marcar,firma_ruta,pdf_ruta,pdf_hash,archivos_listos,evidencia,recibido',
-  /* El encabezado del formulario. Los que no tienen clave salen siempre y son obligatorios. */
-  CAMPOS: [['', 'Placa del vehículo'], ['', 'Tipo de vehículo'], ['', 'Fecha de inspección'], ['kilometraje', 'Kilometraje'],
-    ['', 'Documento de identidad'], ['', 'Nombre y apellidos'], ['licencia', 'Licencia de conducción'], ['categoria', 'Categoría'],
-    ['vigencia', 'Vigencia licencia'], ['observaciones', 'Observaciones']],
+  /* El encabezado del formulario: todos se muestran o no, y son obligatorios
+     o no, según el formato. Los marcados con true, si el formato no dice
+     nada, salen y son obligatorios (como siempre fueron). */
+  CAMPOS: [['placa', 'Placa del vehículo', true], ['tipo', 'Tipo de vehículo', true], ['fecha', 'Fecha de inspección', true],
+    ['kilometraje', 'Kilometraje'], ['documento', 'Documento de identidad', true], ['nombre', 'Nombre y apellidos', true],
+    ['licencia', 'Licencia de conducción'], ['categoria', 'Categoría'], ['vigencia', 'Vigencia licencia'], ['observaciones', 'Observaciones']],
+  /* Las respuestas y los colores de siempre (los mismos del formulario, §F) */
+  OPCIONES: [
+    { id: 'B', boton: 'B', nombre: 'Bueno', color: '#16a34a', cuenta: 'bien' },
+    { id: 'R', boton: 'R', nombre: 'Regular', color: '#ea580c', cuenta: 'novedad' },
+    { id: 'M', boton: 'M', nombre: 'Malo', color: '#dc2626', cuenta: 'grave' },
+    { id: 'N/A', boton: 'N/A', nombre: 'No aplica', color: '#7c3aed', cuenta: 'no_aplica' }
+  ],
+  COLORES: { principal: '#20449a', oscuro: '#193680', acento: '#e8830e' },
+  /* Cómo cuenta cada respuesta en el sistema */
+  CUENTA: { bien: 'Está bien', novedad: 'Es novedad', grave: 'Es novedad grave', no_aplica: 'No aplica' },
   formato: null,     // el formulario que llenan los conductores, como está en la nube
   errorFormato: null,
   cache: {},         // lo traído: clave → { filas, t (cuándo), error }
@@ -5701,9 +5771,9 @@ const Preop = {
     const kpis = '<div class="kpis4">' +
       UI.kpi({ label: 'Enviados hoy', valor: us.filter(u => conHoy.has(u.id)).length + '<small> de ' + us.length + '</small>', icono: 'checkSquare',
         color: 'var(--ok-500)', meta: 'Vehículos que lo deben enviar' }) +
-      UI.kpi({ label: 'Con novedades hoy', valor: hoy.filter(p => this.novedades(p)).length, icono: 'warn', color: 'var(--warn-500)', meta: 'Ítems en Regular o Malo' }) +
+      UI.kpi({ label: 'Con novedades hoy', valor: hoy.filter(p => this.novedades(p)).length, icono: 'warn', color: 'var(--warn-500)', meta: 'Con alguna respuesta que es novedad' }) +
       UI.kpi({ label: 'Último kilometraje', valor: ult ? esc(Math.round(ult.kilometraje).toLocaleString('es-CO')) : '—', icono: 'medidor',
-        meta: ult ? esc((uu ? UI.placaTxt(uu) : ult.placa) + ' · ' + this.dia(ult.fecha).toLowerCase() + ' ' + this.hora(ult.recibido)) + ' · pasa a Cambios de aceite'
+        meta: ult ? esc((uu ? UI.placaTxt(uu) : ult.placa || 'Sin placa') + ' · ' + this.dia(ult.fecha).toLowerCase() + ' ' + this.hora(ult.recibido)) + ' · pasa a Cambios de aceite'
           : 'Llega con el próximo preoperacional' }) +
       UI.kpi({ label: 'Novedades esta semana', valor: novSemana, icono: 'clipboard', color: 'var(--dang-500)',
         meta: 'En ' + semana.filter(p => this.novedades(p)).length + ' preoperacional(es)' }) + '</div>';
@@ -5730,8 +5800,8 @@ const Preop = {
         '<th>Resultado</th><th>Evidencia</th><th></th></tr></thead><tbody>' + lista.map(p => {
           const u = Q.unidad(p.unidad_id);
           return '<tr class="row-click" data-act="verPreop" data-p="' + attr(p.id) + '"><td class="nowrap"><b>' + esc(this.dia(p.fecha)) + '</b><div class="txt-3 fs11">' +
-            esc(this.hora(p.recibido)) + '</div></td><td>' + (u ? UI.unidadCelda(u) : '<b class="mono">' + esc(p.placa) + '</b>') + '</td>' +
-            '<td>' + esc(p.conductor_nombre) + '</td><td class="num nowrap">' + esc(this.km(p.kilometraje)) + '</td><td>' + this.resultado(p) + '</td>' +
+            esc(this.hora(p.recibido)) + '</div></td><td>' + (u ? UI.unidadCelda(u) : '<b class="mono">' + esc(p.placa || '—') + '</b>') + '</td>' +
+            '<td>' + esc(p.conductor_nombre || '—') + '</td><td class="num nowrap">' + esc(this.km(p.kilometraje)) + '</td><td>' + this.resultado(p) + '</td>' +
             '<td>' + this.evidencia(p) + '</td><td class="tr nowrap">' + this.botonesPdf(p) + '</td></tr>';
         }).join('') + '</tbody></table></div>'
       : UI.empty('checkSquare', 'Sin preoperacionales', f.periodo === 'hoy' ? 'Hoy todavía no ha llegado ninguno.' : 'No llegó ninguno en este período.');
@@ -5745,7 +5815,10 @@ const Preop = {
   },
 
   /* ---------------- Un envío, completo ---------------- */
-  titulo(p) { const u = Q.unidad(p.unidad_id); return 'Preoperacional de ' + (u ? UI.placaTxt(u) : p.placa) + ' · ' + Fecha.larga(p.fecha); },
+  titulo(p) {
+    const u = Q.unidad(p.unidad_id), placa = u ? UI.placaTxt(u) : p.placa;
+    return 'Preoperacional' + (placa ? ' de ' + placa : ' sin placa') + ' · ' + Fecha.larga(p.fecha);
+  },
   sub(p) {
     return 'Enviado desde el celular a las ' + this.hora(p.recibido) + ((p.evidencia || {}).sin_senal ? ' · se llenó sin señal y llegó después' : '');
   },
@@ -5775,13 +5848,23 @@ const Preop = {
   },
   cuerpo(p) {
     const secs = (p.formato || {}).secciones || [], R = p.respuestas || {}, e = p.evidencia || {}, u = Q.unidad(p.unidad_id);
-    const b = p.buenos || 0, r = p.regulares || 0, mal = p.malos || 0, na = p.no_aplica || 0, sin = p.sin_marcar || 0, total = b + r + mal + na + sin;
-    const pct = n => (total ? n / total * 100 : 0).toFixed(2) + '%';
-    const marca = v => v === 'B' ? UI.pill('ok', 'Bueno') : v === 'R' ? UI.pill('warn', 'Regular') : v === 'M' ? UI.pill('bad', 'Malo')
-      : v === 'N/A' ? UI.pill('violet', 'No aplica') : UI.pill('nr', 'Sin marcar');
-    const fila = (n, t, v) => '<div class="nov"><span class="n">' + n + '</span><span class="t">' + esc(t) + '</span>' + marca(v) + '</div>';
+    /* Las respuestas del formato con que se llenó: lo que dice cada una, su
+       color y cómo cuenta */
+    const ops = Array.isArray((p.formato || {}).opciones) && p.formato.opciones.length ? p.formato.opciones : this.OPCIONES;
+    const porId = {}, n = {};
+    ops.forEach(o => { porId[o.id] = o; });
+    Object.keys(R).forEach(k => { n[R[k]] = (n[R[k]] || 0) + 1; });
+    const CLASE = { bien: 'ok', novedad: 'warn', grave: 'bad', no_aplica: 'violet' };
+    const sin = p.sin_marcar || 0, total = (p.buenos || 0) + (p.regulares || 0) + (p.malos || 0) + (p.no_aplica || 0) + sin;
+    const pct = x => (total ? x / total * 100 : 0).toFixed(2) + '%';
+    const marca = v => (porId[v] ? UI.pill(CLASE[porId[v].cuenta] || 'nr', porId[v].nombre) : UI.pill('nr', 'Sin marcar'));
+    /* Debajo de cada novedad, lo que el conductor escribió que se ve */
+    const N = p.notas || {};
+    const fila = (num, it, v) => '<div class="nov"><span class="n">' + num + '</span><span class="t">' + esc(it.texto) +
+      (N[it.id] ? '<small>' + esc(N[it.id]) + '</small>' : '') + '</span>' + marca(v) + '</div>';
+    const esNovedad = v => porId[v] && (porId[v].cuenta === 'novedad' || porId[v].cuenta === 'grave');
     const nov = [];
-    secs.forEach((s, i) => (s.items || []).forEach((it, j) => { if (R[it.id] === 'R' || R[it.id] === 'M') nov.push(fila((i + 1) + '.' + (j + 1), it.texto, R[it.id])); }));
+    secs.forEach((s, i) => (s.items || []).forEach((it, j) => { if (esNovedad(R[it.id])) nov.push(fila((i + 1) + '.' + (j + 1), it, R[it.id])); }));
     const dl = pares => '<dl class="dl">' + pares.map(x => '<dt>' + esc(x[0]) + '</dt><dd>' + x[1] + '</dd>').join('') + '</dl>';
     const ubic = e.ubicacion;
     const hash = p.pdf_hash ? '<span class="mono">' + esc(p.pdf_hash.slice(0, 4) + ' ' + p.pdf_hash.slice(4, 8) + ' … ' + p.pdf_hash.slice(-4)) + '</span> · ' +
@@ -5790,9 +5873,9 @@ const Preop = {
     const diaDe = ts => Fecha.iso(new Date(ts));
     const enCel = e.hora_celular ? new Date(e.hora_celular) : null;
     const izq = UI.card('Datos', dl([
-        ['Vehículo', esc((u ? UI.placaTxt(u) : p.placa) + (p.tipo_vehiculo ? ' · ' + p.tipo_vehiculo : ''))],
+        ['Vehículo', esc([u ? UI.placaTxt(u) : p.placa, p.tipo_vehiculo].filter(Boolean).join(' · ') || '—')],
         ['Fecha', esc(Fecha.larga(p.fecha))], ['Kilometraje', esc(this.km(p.kilometraje))],
-        ['Conductor', esc(p.conductor_nombre)], ['Documento', esc(p.documento || '—')],
+        ['Conductor', esc(p.conductor_nombre || '—')], ['Documento', esc(p.documento || '—')],
         ['Licencia', esc([p.licencia, p.categoria, p.vigencia_licencia ? 'vence el ' + Fecha.larga(p.vigencia_licencia) : ''].filter(Boolean).join(' · ') || '—')],
         ['Supervisor', esc(p.supervisor || '—')]]), { cls: 'mb16' }) +
       UI.card('Firma del conductor', '<div class="firma-p"><span class="spin"></span></div>', { cls: 'mb16' }) +
@@ -5805,15 +5888,13 @@ const Preop = {
         ['Ubicación', ubic ? esc(ubic.lat + ', ' + ubic.lng + (ubic.precision ? ' (± ' + ubic.precision + ' m)' : '')) + ' · <a class="link" href="https://www.google.com/maps?q=' +
           encodeURIComponent(ubic.lat + ',' + ubic.lng) + '" target="_blank" rel="noopener">ver en el mapa</a>' : esc('Sin ubicación: el celular no dio el permiso')],
         ['Código del PDF', hash]]));
-    const der = UI.card('Resultado', '<div class="cuenta"><i style="width:' + pct(b) + ';background:var(--ok-500)"></i><i style="width:' + pct(r) +
-        ';background:var(--warn-500)"></i><i style="width:' + pct(mal) + ';background:var(--dang-500)"></i><i style="width:' + pct(na) + ';background:var(--violet-500)"></i></div>' +
-        '<div class="leyenda-p"><span><i style="background:var(--ok-500)"></i>' + b + ' Bueno</span><span><i style="background:var(--warn-500)"></i>' + r + ' Regular</span>' +
-          '<span><i style="background:var(--dang-500)"></i>' + mal + ' Malo</span><span><i style="background:var(--violet-500)"></i>' + na + ' No aplica</span>' +
+    const der = UI.card('Resultado', '<div class="cuenta">' + ops.map(o => '<i style="width:' + pct(n[o.id] || 0) + ';background:' + attr(o.color) + '"></i>').join('') + '</div>' +
+        '<div class="leyenda-p">' + ops.map(o => '<span><i style="background:' + attr(o.color) + '"></i>' + (n[o.id] || 0) + ' ' + esc(o.nombre) + '</span>').join('') +
           (sin ? '<span><i style="background:var(--surface-3);border:1px solid var(--border-strong)"></i>' + sin + ' Sin marcar</span>' : '') + '</div>' +
         '<div class="mt16" style="font-weight:650;font-size:12.5px;margin-bottom:4px">Novedades</div>' +
-        (nov.length ? nov.join('') : '<p class="txt-3 fs12">Ninguna: nada quedó en Regular ni en Malo.</p>') +
+        (nov.length ? nov.join('') : '<p class="txt-3 fs12">Ninguna: ninguna respuesta quedó como novedad.</p>') +
         (secs.length ? '<details class="preop-todos mt12"><summary class="link">Ver los ' + total + ' ítems</summary>' + secs.map((s, i) =>
-          '<div class="preop-sec">' + (i + 1) + '. ' + esc(this.tituloSec(s)) + '</div>' + (s.items || []).map((it, j) => fila((i + 1) + '.' + (j + 1), it.texto, R[it.id])).join('')).join('') +
+          '<div class="preop-sec">' + (i + 1) + '. ' + esc(this.tituloSec(s)) + '</div>' + (s.items || []).map((it, j) => fila((i + 1) + '.' + (j + 1), it, R[it.id])).join('')).join('') +
           '</details>' : ''), { cls: 'mb16' }) +
       UI.card('Observaciones', p.observaciones ? '<p class="txt-2" style="font-size:13px;line-height:1.55;white-space:pre-wrap">' + esc(p.observaciones) + '</p>'
         : '<p class="txt-3 fs12">Sin observaciones.</p>');
@@ -5844,7 +5925,7 @@ const Preop = {
     const p = this.buscar(id);
     if (!p) return;
     if (!p.archivos_listos) { Toast.show('El PDF todavía no llega: el celular lo sube apenas tenga señal.', 'warn'); return; }
-    const clave = 'preop:' + id, nombre = 'INSPECCION_' + p.placa + '_' + p.fecha + '.pdf';
+    const clave = 'preop:' + id, nombre = 'INSPECCION_' + (p.placa || 'SIN-PLACA') + '_' + p.fecha + '.pdf';
     if (!Archivos.vistos.get(clave)) {
       const m = Modal.abrir({
         titulo: nombre, sub: 'Abriendo el archivo…', ancho: 'wide', sinFoco: true,
@@ -5908,7 +5989,7 @@ const Preop = {
     });
     const fila = p => '<div class="mrow" data-act="verPreop" data-p="' + attr(p.id) + '"><span class="tarea-ic" style="flex:0 0 30px;width:30px;height:30px">' +
       Icon('checkSquare', '', 14) + '</span><div class="mrow-t"><b>' + esc(this.dia(p.fecha, true) + ' · ' + this.hora(p.recibido)) + '</b>' +
-      '<span>' + esc(p.conductor_nombre + ' · ' + this.km(p.kilometraje)) + '</span></div><div class="mrow-r flex aic">' + this.resultado(p) + this.botonesPdf(p) + '</div></div>';
+      '<span>' + esc((p.conductor_nombre || 'Sin conductor') + ' · ' + this.km(p.kilometraje)) + '</span></div><div class="mrow-r flex aic">' + this.resultado(p) + this.botonesPdf(p) + '</div></div>';
     return (c.error ? this.alertaError(c.error, 'preopRecargar') : '') + aviso +
       UI.card('Preoperacionales', filas.length ? meses.map(g => '<div class="act-mes preop-mes">' + esc(Fecha.mes(Fecha.parse(g.k + '-01'))) + '</div>' +
           '<div class="mlist">' + g.filas.map(fila).join('') + '</div>').join('')
@@ -5917,14 +5998,95 @@ const Preop = {
   },
 
   /* ---------------- El editor del formulario ---------------- */
+  /* El borrador: una copia de lo que se puede cambiar, con lo que el formato
+     no traiga puesto como es hoy (campos, respuestas y colores) */
   copiar(f) {
+    const campos = {};
+    this.CAMPOS.forEach(c => { campos[c[0]] = Object.assign({ mostrar: true, obligatorio: Boolean(c[2]) }, (f.campos || {})[c[0]]); });
     return JSON.parse(JSON.stringify({ codigo: f.codigo, version: f.version, fecha_creacion: f.fecha_creacion, supervisor: f.supervisor,
-      tipos: f.tipos, campos: f.campos, secciones: f.secciones }));
+      tipos: f.tipos, campos, secciones: f.secciones,
+      opciones: Array.isArray(f.opciones) && f.opciones.length ? f.opciones : this.OPCIONES,
+      colores: Object.assign({}, this.COLORES, f.colores) }));
   },
   sucio() { return Boolean(this.borrador && this.formato && estable(this.borrador) !== estable(this.copiar(this.formato))); },
-  campo(k) { return Object.assign({ mostrar: true, obligatorio: false }, ((this.borrador || {}).campos || {})[k]); },
+  campo(k) { return ((this.borrador || {}).campos || {})[k] || { mostrar: true, obligatorio: false }; },
   sec(id) { return this.borrador.secciones.find(s => s.id === id); },
+  opc(id) { return this.borrador.opciones.find(o => o.id === id); },
   nuevoId: pref => pref + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+  rgba(hex, a) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '')), n = m ? parseInt(m[1], 16) : 0x64748b;
+    return 'rgba(' + [n >> 16, (n >> 8) & 255, n & 255].join(',') + ',' + a + ')';
+  },
+  /* Los tonos que salen de los colores del formato, igual que en el
+     formulario y en el PDF (§F): más oscuro, o con otra luz (0 negro,
+     1 blanco) conservando el tono */
+  rgb(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim()), n = m ? parseInt(m[1], 16) : 0x20449a;
+    return [n >> 16, (n >> 8) & 255, n & 255];
+  },
+  hex: c => '#' + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join(''),
+  oscurecer(hex, k) { return this.hex(this.rgb(hex).map(v => v * (1 - k))); },
+  tinte(hex, luz, sat) {
+    const [r, g, b] = this.rgb(hex).map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, l0 = (mx + mn) / 2;
+    const tono = !d ? 0 : mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    const s = (d ? d / (1 - Math.abs(2 * l0 - 1)) : 0) * (sat == null ? 1 : sat);
+    const c = (1 - Math.abs(2 * luz - 1)) * s, x = c * (1 - Math.abs(tono % 2 - 1)), m = luz - c / 2;
+    const t = [[c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x]][Math.floor(tono) % 6];
+    return this.hex(t.map(v => (v + m) * 255));
+  },
+  /* Qué tanto se lee la letra blanca sobre un color: lo ideal es 4,5 o más;
+     con menos de 3 ya cuesta leerla */
+  contraste(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ''));
+    if (!m) return 21;
+    const n = parseInt(m[1], 16);
+    const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 1.05 / (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2] + 0.05);
+  },
+  /* Lo que conviene saber de cómo quedó el formato. Son avisos: igual se puede guardar. */
+  avisosFormato(b) {
+    const l = [], ve = k => b.campos[k] && b.campos[k].mostrar, pide = k => ve(k) && b.campos[k].obligatorio;
+    if (!ve('placa')) l.push('Sin placa, el preoperacional no queda en la ficha de ningún vehículo y su kilometraje no llega a Cambios de aceite.');
+    else if (!pide('placa')) l.push('La placa no es obligatoria: si el conductor no la escoge, ese preoperacional no queda en la ficha de ningún vehículo.');
+    if (!ve('documento') && !ve('nombre')) l.push('Sin documento ni nombre, no queda quién hizo el preoperacional.');
+    else if (!pide('documento') && !pide('nombre')) l.push('El conductor no es obligatorio: puede llegar un preoperacional sin saber quién lo hizo.');
+    if (!ve('fecha')) l.push('Sin fecha, cada preoperacional queda con la fecha del día en que se envía.');
+    if (!b.opciones.some(o => o.cuenta === 'novedad' || o.cuenta === 'grave')) l.push('Ninguna respuesta cuenta como novedad: el sistema nunca va a marcar novedades.');
+    if (this.contraste(b.colores.principal) < 3) l.push('Con ese color principal, la letra blanca de los botones y de la banda casi no se va a leer.');
+    if (this.contraste(b.colores.oscuro) < 3) l.push('Con ese color oscuro, los bordes y las etiquetas del PDF casi no se van a ver.');
+    b.opciones.filter(o => this.contraste(o.color) < 2.5)
+      .forEach(o => l.push('El color de «' + (o.nombre || o.boton) + '» es muy claro: en el PDF su letra blanca casi no se va a leer.'));
+    return l;
+  },
+  previaOpciones(ops) {
+    return ops.map(o => '<span class="brm-b" style="border-color:' + attr(o.color) + ';color:' + attr(o.color) + ';background:' + this.rgba(o.color, 0.1) + '">' +
+      esc(o.boton || '?') + '</span>').join('');
+  },
+  /* La muestra de los colores: el encabezado del PDF y la barra del celular.
+     Al cambiar un color solo cambian estas variables. */
+  varsColores(c) {
+    return '--p:' + c.principal + ';--o:' + c.oscuro + ';--a:' + c.acento + ';--k:' + this.oscurecer(c.oscuro, 0.25) + ';--cl:' + this.tinte(c.principal, 0.898);
+  },
+  previaColores(c) {
+    return '<div class="cp-hoja" id="peColVars" style="' + attr(this.varsColores(c)) + '"><div class="cp-cap">En el PDF</div>' +
+      '<div class="cp-sst"><div>' + (MARCA.logo ? '<img src="' + attr(MARCA.logo) + '" alt="SINUGRAVAS">' : 'SINUGRAVAS') + '</div>' +
+        '<div class="cp-tt">INSPECCIÓN PREOPERACIONAL DE VEHÍCULOS</div><div class="cp-cod">' + esc((this.borrador || {}).codigo || 'SST-FRT-022') + '</div></div>' +
+      '<div class="cp-banda">THX 523 · SÁBADO 24 DE OCTUBRE DE 2026</div><div class="cp-sec">1. CABINA</div>' +
+      '<div class="cp-cel"><div class="cp-form">' + (MARCA.emblema ? '<img class="cp-emb" src="' + attr(MARCA.emblema) + '" alt="">' : '') +
+        '<span class="cp-tit">SINUGRAVAS</span><span class="cp-btn">Siguiente ›</span></div><div class="cp-linea"></div></div></div>';
+  },
+  /* Después de cada cambio: el aviso de cambios sin guardar, el botón de
+     guardar (apagado si no hay nada que guardar) y los avisos */
+  pintarSucio() {
+    const sucio = this.sucio(), e = $('#peSucio'), g = $('#peGuardar'), a = $('#peAvisos');
+    if (e) e.style.display = sucio ? 'inline-flex' : 'none';
+    if (g) g.disabled = !sucio;
+    if (a && this.borrador) {
+      const l = this.avisosFormato(this.borrador);
+      a.innerHTML = l.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>Para tener en cuenta</b> (igual se puede guardar):<ul class="pe-avisos">' +
+        l.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div></div>' : '';
+    }
+  },
   vistaEditor() {
     const titulo = 'Formulario preoperacional', sub = 'Ítems, campos y datos del formato';
     const arriba = '<div class="crumbs"><a data-ir="preoperacionales">Preoperacionales</a>' + Icon('chevR', '', 12) + '<span>Formulario</span></div>' +
@@ -5946,11 +6108,38 @@ const Preop = {
       '<div class="field mb0"><label>Lo llenan</label><div class="flex g12 mt4" style="flex-wrap:wrap">' +
         ORDEN.map(t => ck(b.tipos.includes(t), TIPOS[t].plural, 'data-pe-tipo="' + t + '"')).join('') + '</div></div>', { cls: 'mb16' });
     const campos = UI.card('Campos del encabezado', this.CAMPOS.map(c => {
-      const k = c[0], v = k ? this.campo(k) : null;
-      return '<div class="campo-ed"><span>' + esc(c[1]) + '</span>' + (k
-        ? ck(v.mostrar, 'Mostrar', 'data-pe-campo="' + k + '" data-pe-que="mostrar"') + ck(v.obligatorio, 'Obligatorio', 'data-pe-campo="' + k + '" data-pe-que="obligatorio"')
-        : '<span class="siempre">Siempre, obligatorio</span>') + '</div>';
-    }).join(''), { sub: 'Quitar un campo es quitarle «Mostrar»' });
+      const k = c[0], v = this.campo(k);
+      return '<div class="campo-ed"><span>' + esc(c[1]) + '</span>' +
+        ck(v.mostrar, 'Mostrar', 'data-pe-campo="' + k + '" data-pe-que="mostrar"') + ck(v.obligatorio, 'Obligatorio', 'data-pe-campo="' + k + '" data-pe-que="obligatorio"') + '</div>';
+    }).join(''), { sub: 'Quitar un campo es quitarle «Mostrar»', cls: 'mb16' });
+    /* Las respuestas de cada ítem: el botón, lo que quiere decir, su color y cómo cuenta */
+    const ops = b.opciones;
+    const botonOp = (act, ic, t, extra, o) => '<button class="btn btn-sm btn-ghost btn-icon' + (act === 'preopOpQuitar' ? ' btn-del' : '') + '" data-act="' + act +
+      '" data-o="' + attr(o) + '"' + (extra || '') + ' title="' + t + '" aria-label="' + t + '"' + dis + '>' + Icon(ic, '', 13) + '</button>';
+    const respuestas = UI.card('Respuestas de cada ítem', '<div class="op-cab"><span>Color</span><span>Botón</span><span>Qué quiere decir</span><span>Cómo cuenta</span><span></span></div>' +
+        ops.map((o, i) => '<div class="op-ed">' +
+          '<input type="color" data-pe-op="color" data-o="' + attr(o.id) + '" value="' + attr(o.color) + '" title="Color de esta respuesta"' + dis + '>' +
+          '<input class="inp op-boton" data-pe-op="boton" data-o="' + attr(o.id) + '" value="' + attr(o.boton) + '" maxlength="4" placeholder="B" title="Lo que dice el botón"' + dis + '>' +
+          '<input class="inp" data-pe-op="nombre" data-o="' + attr(o.id) + '" value="' + attr(o.nombre) + '" placeholder="Por ejemplo: Bueno" title="Lo que quiere decir"' + dis + '>' +
+          '<select class="inp" data-pe-op="cuenta" data-o="' + attr(o.id) + '" title="Cómo la cuenta el sistema"' + dis + '>' + Object.keys(this.CUENTA).map(k =>
+            '<option value="' + k + '"' + (o.cuenta === k ? ' selected' : '') + '>' + esc(this.CUENTA[k]) + '</option>').join('') + '</select>' +
+          '<span class="op-acc">' + botonOp('preopOpMover', 'arriba', 'Subir', ' data-d="-1"' + (i === 0 ? ' disabled' : ''), o.id) +
+            botonOp('preopOpMover', 'abajo', 'Bajar', ' data-d="1"' + (i === ops.length - 1 ? ' disabled' : ''), o.id) +
+            botonOp('preopOpQuitar', 'x', 'Quitar la respuesta', ops.length <= 2 ? ' disabled' : '', o.id) + '</span></div>').join('') +
+        (puede && ops.length < 5 ? '<div class="agregar"><span class="link" data-act="preopOpAgregar">' + Icon('plus', '', 12) + ' Agregar respuesta</span></div>' : '') +
+        '<div class="op-prev"><span class="txt-3 fs12">Así las ve el conductor en cada ítem:</span><div class="brm-prev" id="peOpPrev">' + this.previaOpciones(ops) + '</div>' +
+          '<div class="txt-3 fs12" id="peOpLey">' + esc(ops.map(o => (o.boton || '?') + ' = ' + (o.nombre || '…')).join(' · ')) + '</div></div>',
+      { sub: 'Los botones que el conductor toca en cada ítem · de 2 a 5', cls: 'mb16' });
+    /* Los colores del formulario y del PDF */
+    const colorFila = (k, t, s) => '<div class="color-ed"><div><b>' + esc(t) + '</b><span>' + esc(s) + '</span></div>' +
+      '<input type="color" data-pe-col="' + k + '" value="' + attr(b.colores[k]) + '" title="' + attr(t) + '"' + dis + '>' +
+      '<input class="inp inp-hex" data-pe-colhex="' + k + '" value="' + attr(b.colores[k]) + '" maxlength="7" spellcheck="false" title="' + attr(t) + '"' + dis + '></div>';
+    const colores = UI.card('Colores', colorFila('principal', 'Color principal', 'Botones, banda y títulos del formulario y del PDF') +
+        colorFila('oscuro', 'Color oscuro', 'Bordes y líneas del PDF') +
+        colorFila('acento', 'Color de acento', 'La línea bajo la banda y en el celular') +
+        '<div class="col-prev" id="peColPrev">' + this.previaColores(b.colores) + '</div>' +
+        (puede ? '<button class="btn btn-sm mt12" data-act="preopColoresBase">' + Icon('refresh', '', 12) + 'Volver a los colores de siempre</button>' : ''),
+      { sub: 'El color de cada respuesta va con ella, en «Respuestas de cada ítem»' });
     const boton = (act, ic, t, extra, s, i) => '<button class="btn btn-sm btn-ghost btn-icon' + (act === 'preopQuitarItem' || act === 'preopQuitarSec' ? ' btn-del' : '') +
       '" data-act="' + act + '" data-s="' + attr(s) + '"' + (i ? ' data-i="' + attr(i) + '"' : '') + (extra || '') + ' title="' + t + '" aria-label="' + t + '"' + dis + '>' +
       Icon(ic, '', 13) + '</button>';
@@ -5972,21 +6161,24 @@ const Preop = {
         '</div>';
     }).join('');
     const items = UI.card('Ítems de verificación', '<p class="txt-3 fs12" style="margin-bottom:12px">' + b.secciones.length + ' secciones · ' + total +
-        ' ítems · cada uno se califica B, R, M o N/A</p>' + secciones +
+        ' ítems · cada uno se califica con ' + esc(ops.map(o => o.boton || '?').join(', ')) + '</p>' + secciones +
       (puede ? '<button class="btn btn-sm" data-act="preopAgregarSec">' + Icon('plus', '', 12) + 'Agregar sección</button>' : ''));
+    /* Guardar solo se prende cuando hay algo que guardar */
     const sucio = this.sucio();
     const barra = '<div class="barra-guardar"><span id="peSucio" style="display:' + (sucio ? 'inline-flex' : 'none') + ';align-items:center;gap:8px;margin-right:auto">' +
         '<span class="txt-3 fs12">Hay cambios sin guardar</span><button class="btn btn-ghost" data-act="preopDescartar">Descartar cambios</button></span>' +
       '<a class="btn" href="' + attr(this.enlace()) + '" target="_blank" rel="noopener">' + Icon('externo', '', 14) + 'Ver el formulario</a>' +
-      (puede ? '<button class="btn btn-primary" data-act="preopGuardar">' + Icon('save', '', 14) + 'Guardar cambios</button>' : '') + '</div>';
+      (puede ? '<button class="btn btn-primary" id="peGuardar" data-act="preopGuardar" title="Se prende cuando cambie algo"' + (sucio ? '' : ' disabled') + '>' +
+        Icon('save', '', 14) + 'Guardar cambios</button>' : '') + '</div>';
     const html = arriba + (puede ? '' : '<div class="alert a-info mb16">' + Icon('info') + '<div>Su cuenta puede ver el formulario, pero no cambiarlo.</div></div>') +
-      '<div id="preopEd"><div class="grid g23"><div>' + datos + campos + '</div><div>' + items + '</div></div>' + barra + '</div>';
+      '<div id="preopEd"><div id="peAvisos"></div><div class="grid g23"><div>' + datos + campos + colores + '</div><div>' + respuestas + items + '</div></div>' + barra + '</div>';
     return {
       titulo, sub, html,
       despues: () => {
         const raiz = $('#preopEd');
         raiz.addEventListener('input', e => this.escribir(e.target));
         raiz.addEventListener('change', e => this.escribir(e.target));
+        this.pintarSucio();
       }
     };
   },
@@ -6009,9 +6201,23 @@ const Preop = {
     } else if (d.peItem) {
       const s = this.sec(d.s), it = s && s.items.find(x => x.id === d.peItem);
       if (it) it.texto = t.value;
+    } else if (d.peOp) {
+      const o = this.opc(d.o);
+      if (!o) return;
+      o[d.peOp] = t.value;
+      $('#peOpPrev').innerHTML = this.previaOpciones(b.opciones);
+      $('#peOpLey').textContent = b.opciones.map(x => (x.boton || '?') + ' = ' + (x.nombre || '…')).join(' · ');
+    } else if (d.peCol || d.peColhex) {
+      /* El color se escoge en el cuadro o se escribe (#1d4ed8); los dos van juntos */
+      const k = d.peCol || d.peColhex, v = t.value.trim().toLowerCase();
+      if (!/^#[0-9a-f]{6}$/.test(v)) return;
+      b.colores[k] = v;
+      const otro = d.peCol ? $('[data-pe-colhex="' + k + '"]') : $('[data-pe-col="' + k + '"]');
+      if (otro) otro.value = v;
+      const muestra = $('#peColVars');
+      if (muestra) muestra.setAttribute('style', this.varsColores(b.colores));
     } else return;
-    const e = $('#peSucio');
-    if (e) e.style.display = this.sucio() ? 'inline-flex' : 'none';
+    this.pintarSucio();
   },
   async guardar(el) {
     const b = this.borrador;
@@ -6021,9 +6227,17 @@ const Preop = {
     ['codigo', 'version', 'fecha_creacion', 'supervisor'].forEach(k => { f[k] = String(f[k] || '').trim(); });
     f.secciones.forEach(s => { s.titulo = this.tituloSec(s).trim(); s.items.forEach(it => { it.texto = String(it.texto || '').trim(); }); });
     const mal = f.secciones.filter(s => !s.titulo || !s.items.length || s.items.some(it => !it.texto));
+    f.opciones.forEach(o => { o.boton = String(o.boton || '').trim(); o.nombre = String(o.nombre || '').trim(); });
+    const botones = f.opciones.map(o => o.boton.toLowerCase()), hex = c => /^#[0-9a-f]{6}$/i.test(c || '');
     if (!f.codigo || !f.version) { Toast.show('Escriba el código y la versión del formato.', 'err'); return; }
     if (!f.tipos.length) { Toast.show('Marque al menos un tipo de unidad que llene el formulario.', 'err'); return; }
     if (!f.secciones.length) { Toast.show('El formulario necesita al menos una sección con ítems.', 'err'); return; }
+    if (f.opciones.length < 2 || f.opciones.length > 5) { Toast.show('Deje entre 2 y 5 respuestas.', 'err'); return; }
+    if (f.opciones.some(o => !o.boton || !o.nombre)) { Toast.show('A cada respuesta escríbale lo que dice el botón y lo que quiere decir.', 'err'); return; }
+    if (new Set(botones).size !== botones.length) { Toast.show('Hay dos respuestas con el mismo botón: cámbiele el texto a una.', 'err'); return; }
+    if (!f.opciones.every(o => hex(o.color)) || !['principal', 'oscuro', 'acento'].every(k => hex(f.colores[k]))) {
+      Toast.show('Hay un color que no es válido. Escójalo en el cuadro de color.', 'err'); return;
+    }
     if (mal.length) {
       mal.forEach(s => this.abiertas.add(s.id));
       Router.pintar(true);
@@ -6043,7 +6257,9 @@ const Preop = {
     } catch (e) {
       el.disabled = false;
       el.innerHTML = antes;
-      Toast.show('No se pudo guardar: ' + esc(e.message), 'err');
+      /* Sin el paso 008 la nube no tiene dónde guardar las respuestas y los colores */
+      const falta008 = /opciones|colores/.test(e.message || '') && (e.codigo === 'PGRST204' || /column/i.test(e.message || ''));
+      Toast.show(falta008 ? 'No se pudo guardar: falta correr el paso 008 en Supabase.' : 'No se pudo guardar: ' + esc(e.message), 'err');
     }
   }
 };
@@ -6168,7 +6384,31 @@ Object.assign(Acciones, {
     Preop.abiertas = null;
     Router.pintar(true);
   },
-  preopGuardar(el) { Preop.guardar(el); }
+  preopGuardar(el) { Preop.guardar(el); },
+  preopOpMover(el) {
+    const ops = Preop.borrador.opciones, i = ops.findIndex(o => o.id === el.dataset.o), j = i + (+el.dataset.d);
+    if (i < 0 || j < 0 || j >= ops.length) return;
+    ops.splice(j, 0, ops.splice(i, 1)[0]);
+    Router.pintar(true);
+  },
+  preopOpQuitar(el) {
+    const b = Preop.borrador;
+    if (b.opciones.length <= 2) return;
+    b.opciones = b.opciones.filter(o => o.id !== el.dataset.o);
+    Router.pintar(true);
+  },
+  preopOpAgregar() {
+    const b = Preop.borrador, id = Preop.nuevoId('o');
+    if (b.opciones.length >= 5) return;
+    b.opciones.push({ id, boton: '', nombre: '', color: '#64748b', cuenta: 'novedad' });
+    Router.pintar(true);
+    const inp = $('[data-pe-op="boton"][data-o="' + id + '"]');
+    if (inp) inp.focus();
+  },
+  preopColoresBase() {
+    Preop.borrador.colores = Object.assign({}, Preop.COLORES);
+    Router.pintar(true);
+  }
 });
 
 /* ==========================================================================
@@ -6176,217 +6416,250 @@ Object.assign(Acciones, {
        llena en el celular, sin usuario. Vive en este mismo archivo y se
        abre con «?preoperacional» (flota.sinugravas.com/?preoperacional):
        entonces no arranca la plataforma, solo se pinta el formulario, con
-       sus propios estilos, igual al de siempre. Va dentro de una función
-       para que sus nombres no choquen con los de la plataforma.
+       sus propios estilos y la identidad de SINUGRAVAS. Va en tres pasos:
+       vehículo y conductor, verificación por secciones, revisar y firmar.
+       Va dentro de una función para que sus nombres no choquen con los de
+       la plataforma.
    ========================================================================== */
 const PreopPublico = (() => {
   const CSS = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg: #f4f5f7;
-  --card: #ffffff;
-  --border: #d0d5dd;
-  --text: #101828;
-  --muted: #667085;
-  --accent: #1d4ed8;
-  --accent-light: #eff6ff;
-  --green: #16a34a;
-  --green-bg: #f0fdf4;
-  --orange: #ea580c;
-  --orange-bg: #fff7ed;
-  --red: #dc2626;
-  --red-bg: #fef2f2;
-  --header-h: 64px;
+  --azul: #20449a; --azul-osc: #193680; --azul-prof: #132966; --azul-cl: #d5def5; --azul-cl2: #edf1fb; --azul-linea: #c3cfe9; --azul-ring: rgba(32,68,154,.14); --naranja: #e8830e;
+  --tinta: #161d24; --tinta-2: #4e5d6b; --gris: #6b7c8c; --borde: #dde4ea; --borde-2: #c3ced8; --fondo: #f3f5f8;
+  --ok: #0a6c42; --ok-bg: #e9f7ef; --mal: #93261e; --mal-bg: #fdecec; --aviso: #9a3d07; --aviso-bg: #fff3e8;
+  --font: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  --mono: "Cascadia Mono", "SF Mono", Consolas, "Roboto Mono", monospace;
 }
-body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; padding-bottom: 90px; }
-.app-header { position: sticky; top: 0; z-index: 50; background: #fff; border-bottom: 1px solid var(--border); height: var(--header-h); display: flex; align-items: center; padding: 0 20px; gap: 14px; }
-.logo { width: 40px; height: 40px; border-radius: 10px; background: var(--accent); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
-.header-text h1 { font-size: 15px; font-weight: 700; }
-.header-text p { font-size: 12px; color: var(--muted); }
-.progress-wrap { position: sticky; top: var(--header-h); z-index: 49; background: #fff; border-bottom: 1px solid var(--border); padding: 8px 20px 10px; }
-.progress-label { font-size: 12px; color: var(--muted); margin-bottom: 5px; }
-.progress-track { background: #e5e7eb; border-radius: 99px; height: 6px; }
-.progress-fill { height: 6px; border-radius: 99px; background: var(--accent); transition: width .3s; width: 0%; }
-.wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px; }
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
-.card-head { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-.card-num { width: 26px; height: 26px; background: var(--accent); color: #fff; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.card-title { font-size: 14px; font-weight: 600; }
-.card-body { padding: 20px; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-@media(max-width:540px) { .grid2,.grid3 { grid-template-columns: 1fr; } }
-.field { display: flex; flex-direction: column; gap: 5px; }
-.field label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-.field input, .field select, .field textarea { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text); background: #fff; width: 100%; transition: border-color .15s; -webkit-appearance: none; appearance: none; }
-.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,78,216,.1); }
-.field textarea { resize: vertical; min-height: 80px; }
-.field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; }
-.divider { height: 1px; background: var(--border); margin: 16px 0; }
-.section-label { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .6px; padding: 12px 0 6px; border-bottom: 1px solid var(--border); margin-bottom: 2px; }
-.chk-row { display: flex; align-items: center; padding: 9px 0; border-bottom: 1px solid #f3f4f6; gap: 10px; }
-.chk-row:last-child { border-bottom: none; }
-.chk-num { font-size: 11px; color: var(--muted); min-width: 32px; flex-shrink: 0; }
-.chk-label { flex: 1; font-size: 13px; line-height: 1.3; }
-.brm { display: flex; gap: 5px; flex-shrink: 0; }
-.brm button { width: 44px; height: 44px; border-radius: 8px; border: 2px solid var(--border); background: transparent; font-size: 12px; font-weight: 700; font-family: inherit; color: var(--muted); cursor: pointer; transition: all .12s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
-.brm button:active { transform: scale(.9); }
-.b-act { background: var(--green-bg) !important; border-color: var(--green) !important; color: var(--green) !important; }
-.r-act { background: var(--orange-bg) !important; border-color: var(--orange) !important; color: var(--orange) !important; }
-.m-act { background: var(--red-bg) !important; border-color: var(--red) !important; color: var(--red) !important; }
-.na-act { background: #ede9fe !important; border-color: #7c3aed !important; color: #7c3aed !important; }
-.firma-box { border: 2px dashed var(--border); border-radius: 10px; overflow: hidden; background: #fafafa; position: relative; cursor: crosshair; }
-.firma-box canvas { display: block; width: 100%; height: 140px; touch-action: none; }
-.firma-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: var(--muted); font-size: 13px; text-align: center; pointer-events: none; transition: opacity .2s; line-height: 1.6; }
-.clear-btn { background: none; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--muted); padding: 5px 12px; cursor: pointer; margin-top: 7px; font-family: inherit; transition: all .15s; }
-.clear-btn:hover { border-color: var(--red); color: var(--red); }
-.submit-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border); padding: 12px 20px; z-index: 60; }
-.submit-btn { width: 100%; max-width: 760px; display: block; margin: 0 auto; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; font-family: inherit; padding: 15px 20px; cursor: pointer; transition: background .15s, transform .1s; }
-.submit-btn:hover { background: #1e40af; }
-.submit-btn:active { transform: scale(.98); }
-.submit-btn:disabled { background: #93c5fd; cursor: not-allowed; transform: none; }
-#toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; font-size: 14px; font-weight: 600; padding: 12px 22px; border-radius: 30px; z-index: 999; opacity: 0; transition: opacity .25s; max-width: 90vw; text-align: center; pointer-events: none; }
-#toast.err { background: var(--red); }
-#toast.show { opacity: 1; }
-
-/* ---- Lo nuevo: cargar, sin señal, enviado y avisos antes de enviar ---- */
 [hidden] { display: none !important; }
-.estado { padding: 34px 20px; text-align: center; color: var(--muted); font-size: 14px; }
-.estado b { display: block; color: var(--text); font-size: 15px; margin-bottom: 4px; }
-.giro { width: 28px; height: 28px; border: 3px solid #dbeafe; border-top-color: var(--accent); border-radius: 50%; margin: 0 auto 12px; animation: giro .8s linear infinite; }
+html { -webkit-text-size-adjust: 100%; }
+body { font-family: var(--font); background: var(--fondo); color: var(--tinta); font-size: 15px; line-height: 1.45; padding-bottom: 130px; }
+body.blanco { background: #fff; padding-bottom: 0; }
+.app { max-width: 560px; margin: 0 auto; }
+/* Encabezado: la «S» del logo, el nombre, el código del formato y los pasos */
+.ap-h { position: sticky; top: 0; z-index: 30; background: #fff; }
+.ap-fila { display: flex; align-items: center; gap: 10px; padding: 9px 16px 10px; }
+.ap-s { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--borde); display: block; background: #fff; object-fit: contain; flex: 0 0 auto; }
+.ap-t { flex: 1; min-width: 0; line-height: 1.15; }
+.ap-t b { display: block; font-size: 14.5px; letter-spacing: .06em; color: var(--azul-prof); }
+.ap-t span { display: block; font-size: 11.5px; color: var(--gris); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ap-cod { font-size: 10px; font-weight: 700; color: var(--azul-osc); background: var(--azul-cl2); border: 1px solid var(--azul-cl); padding: 3px 7px; border-radius: 12px; white-space: nowrap; }
+.ap-linea { height: 3px; background: linear-gradient(90deg, var(--azul) 0 78%, var(--naranja) 78% 100%); }
+.pasos { background: #fff; border-bottom: 1px solid var(--borde); padding: 10px 16px 12px; }
+.pasos-t { font-size: 12px; color: var(--tinta-2); display: flex; justify-content: space-between; gap: 10px; }
+.pasos-t b { color: var(--azul); }
+.pasos-b { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 8px; }
+.pasos-b button { height: 5px; border: 0; border-radius: 5px; background: var(--borde); padding: 0; cursor: pointer; }
+.pasos-b button.on { background: var(--azul); }
+.pasos-b button.medio { background: linear-gradient(90deg, var(--azul) 0 var(--av, 45%), var(--borde) var(--av, 45%)); }
+/* Contenido */
+.cont { padding: 16px 14px 8px; }
+h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
+.fecha { font-size: 12.5px; color: var(--gris); margin: 3px 0 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.fecha button { border: 0; background: none; color: var(--azul); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; padding: 0; }
+.tj { background: #fff; border: 1px solid var(--borde); border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(13,19,25,.04); }
+.tj-h { display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 700; margin-bottom: 12px; color: var(--azul-prof); }
+.tj-n { width: 24px; height: 24px; border-radius: 50%; background: var(--azul); color: #fff; font-size: 12px; display: grid; place-items: center; flex: 0 0 auto; }
+.lb { display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--gris); margin: 0 0 5px; }
+.campo { margin-bottom: 12px; }
+.campo:last-child { margin-bottom: 0; }
+.sel, .inp, .area { width: 100%; border: 1.5px solid var(--borde-2); border-radius: 10px; font: inherit; font-size: 16px; color: var(--tinta); background: #fff; -webkit-appearance: none; appearance: none; }
+.sel, .inp { height: 46px; padding: 0 13px; }
+.sel { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7c8c' stroke-width='2.2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+.area { min-height: 76px; padding: 10px 12px; resize: vertical; line-height: 1.4; }
+.sel:focus, .inp:focus, .area:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px var(--azul-ring); }
+.ayuda { font-size: 11.5px; color: var(--gris); margin-top: 5px; }
+.ayuda.mal { color: var(--aviso); font-weight: 600; }
+.placa { display: inline-flex; align-items: center; height: 32px; padding: 0 11px; border: 2px solid var(--tinta); border-radius: 6px; font-family: var(--mono); font-weight: 700; font-size: 17px; letter-spacing: .09em; background: #fff; white-space: nowrap; }
+.placa.peq { height: 26px; font-size: 14px; padding: 0 8px; border-width: 1.5px; }
+.veh { display: flex; align-items: center; gap: 12px; background: var(--azul-cl2); border: 1px solid var(--azul-cl); border-radius: 12px; padding: 10px 12px; margin: -2px 0 12px; }
+.veh b { display: block; font-size: 13.5px; }
+.veh span { display: block; font-size: 11.5px; color: var(--tinta-2); }
+.cond { display: flex; align-items: center; gap: 11px; margin: -2px 0 10px; }
+.av { width: 40px; height: 40px; border-radius: 50%; background: var(--azul-cl2); color: var(--azul); font-weight: 800; font-size: 14px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid var(--azul-cl); }
+.cond-t { flex: 1; min-width: 0; }
+.cond-t b { display: block; font-size: 14px; }
+.cond-t span { font-size: 12px; color: var(--gris); }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+.pill.ok { background: var(--ok-bg); color: var(--ok); }
+.pill.mal { background: var(--mal-bg); color: var(--mal); }
+.mini { display: flex; border: 1px solid var(--borde); border-radius: 10px; overflow: hidden; }
+.mini > div { flex: 1 1 0; padding: 8px 10px; min-width: 0; }
+.mini > #cCat { flex-grow: .7; }
+.mini > #cVig { flex-grow: 1.3; }
+.mini > div:not([hidden]) ~ div { border-left: 1px solid var(--borde); }
+.mini small { display: block; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--gris); margin-bottom: 2px; }
+.mini-inp { width: 100%; border: 0; border-bottom: 1.5px dashed var(--borde); font: inherit; font-size: 14px; font-weight: 600; color: var(--tinta); background: transparent; padding: 1px 0 2px; -webkit-appearance: none; appearance: none; border-radius: 0; min-height: 24px; }
+.mini-inp:focus { outline: none; border-bottom-color: var(--azul); }
+/* La fecha sin el iconito: toda la casilla abre el calendario */
+.mini-inp[type=date] { position: relative; }
+.mini-inp[type=date]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
+/* Verificación: cada sección se abre y se cierra */
+.sec { background: #fff; border: 1px solid var(--borde); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
+.sec-h { width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 14px; font: inherit; font-size: 14px; font-weight: 700; color: var(--azul-prof); background: #fff; border: 0; cursor: pointer; text-align: left; }
+.sec-h .n { width: 26px; height: 26px; border-radius: 8px; background: var(--azul-cl2); color: var(--azul); font-size: 12px; display: grid; place-items: center; flex: 0 0 auto; }
+.sec-h .t { flex: 1; min-width: 0; }
+.sec-h .cta { font-size: 12px; font-weight: 700; color: var(--gris); white-space: nowrap; }
+.sec.lista .sec-h .n { background: var(--ok-bg); color: #16a34a; }
+.sec.lista .sec-h .cta { color: #16a34a; }
+.sec-b { display: none; }
+.sec.abierta .sec-b { display: block; }
+.sec.abierta .sec-h { border-bottom: 1px solid var(--borde); background: linear-gradient(90deg, var(--azul-cl2), #fff); }
+.it { padding: 11px 14px 12px; border-bottom: 1px solid #eef1f4; }
+.it:last-child { border-bottom: 0; }
+.it-t { display: flex; gap: 9px; font-size: 14px; line-height: 1.3; margin-bottom: 9px; }
+.it-t span { font-size: 11.5px; color: var(--gris); min-width: 28px; padding-top: 1px; }
+.res { display: grid; gap: 6px; padding-left: 37px; }
+.res button { height: 42px; border-radius: 10px; border: 1.5px solid var(--borde-2); display: grid; place-items: center; font: inherit; font-size: 13.5px; font-weight: 700; color: var(--gris); background: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; transition: transform .1s; }
+.res button:active { transform: scale(.94); }
+/* La respuesta marcada se llena con su color (--c, del formato) */
+.res button.on { background: var(--c); border-color: var(--c); color: #fff; }
+.nota { margin: 9px 0 0 37px; border: 1.5px dashed #f3b98a; background: #fffaf5; border-radius: 10px; padding: 8px 10px; }
+.nota small { display: block; font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #b4540f; margin-bottom: 2px; }
+.nota input { width: 100%; border: 0; background: transparent; font: inherit; font-size: 15px; color: #7a3a0c; padding: 2px 0; }
+.nota input::placeholder { color: #c98a5a; }
+.nota input:focus { outline: none; }
+/* Revisar y firmar */
+.resu { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.resu b { font-size: 13.5px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.novs { border-top: 1px solid var(--borde); padding-top: 9px; display: grid; gap: 8px; }
+.nv { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; }
+.nv > span:first-child { color: var(--gris); font-size: 11px; min-width: 24px; padding-top: 2px; }
+.nv em { font-style: normal; flex: 1; min-width: 0; padding-top: 1px; }
+.nv em small { display: block; color: var(--gris); font-size: 11.5px; }
+.sin-nov { font-size: 12.5px; color: var(--ok); font-weight: 600; }
+.firma-box { border: 1.5px dashed var(--azul-linea); background: #fbfcfe; border-radius: 12px; position: relative; overflow: hidden; cursor: crosshair; }
+.firma-box canvas { display: block; width: 100%; height: 130px; touch-action: none; }
+.firma-hint { position: absolute; inset: 0; display: grid; place-items: center; color: var(--gris); font-size: 13px; pointer-events: none; transition: opacity .2s; }
+.firma-pie { display: flex; justify-content: space-between; align-items: center; margin-top: 7px; font-size: 12px; color: var(--gris); gap: 10px; }
+.firma-pie b { color: var(--tinta); font-size: 13px; }
+.borrar { border: 0; background: none; font: inherit; font-size: 12px; font-weight: 700; color: #dc2626; cursor: pointer; padding: 4px 0; }
+.sup { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--tinta-2); margin: 2px 2px 8px; }
+.sup .av { width: 30px; height: 30px; font-size: 11px; }
+.sup b { color: var(--tinta); }
+/* La barra de abajo, con el botón de cada paso */
+.barra { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: #fff; border-top: 1px solid var(--borde); padding: 12px 14px calc(14px + env(safe-area-inset-bottom)); }
+.barra-in { max-width: 532px; margin: 0 auto; }
+.av-t { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--gris); margin-bottom: 8px; }
+.av-t b { color: var(--tinta); }
+.barra-btns { display: flex; gap: 8px; }
+.btn-p { flex: 1; height: 52px; border: 0; border-radius: 13px; background: var(--azul); color: #fff; font: inherit; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-decoration: none; }
+.btn-p:disabled, .btn-at:disabled { opacity: .6; cursor: default; }
+.btn-at { width: 52px; height: 52px; flex: 0 0 52px; border: 1.5px solid var(--borde-2); border-radius: 13px; background: #fff; color: var(--tinta); font: inherit; font-size: 24px; font-weight: 700; cursor: pointer; line-height: 1; }
+.btn-s { height: 46px; border: 1.5px solid var(--borde-2); border-radius: 12px; background: #fff; color: var(--tinta); font: inherit; font-size: 14.5px; font-weight: 700; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; text-decoration: none; cursor: pointer; }
+/* Enviado */
+.env { display: flex; flex-direction: column; align-items: center; padding: 8px 4px 0; text-align: center; }
+.env .logo { width: 200px; height: auto; margin: 4px 0 22px; }
+.ok-ic { width: 70px; height: 70px; border-radius: 50%; background: var(--ok-bg); border: 2px solid #b6e4c8; display: grid; place-items: center; margin-bottom: 12px; font-size: 30px; }
+.ok-ic.esp { background: var(--aviso-bg); border-color: #fed7aa; }
+.env h1 { font-size: 22px; }
+.env > p { font-size: 13.5px; color: var(--gris); margin: 5px 0 18px; max-width: 420px; }
+.env .tj { width: 100%; text-align: left; }
+.fila { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; padding: 7px 0; border-bottom: 1px solid #eef1f4; }
+.fila:last-child { border-bottom: 0; }
+.fila > span { color: var(--gris); }
+.fila b { text-align: right; }
+.env .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 6px; }
+.env .btns .btn-p { height: 46px; font-size: 14.5px; border-radius: 12px; }
+.env .btns [hidden] + .btn-p { grid-column: 1 / -1; }
+.env .pie { padding: 22px 0 26px; font-size: 11px; color: var(--gris); }
+.nota-p { font-size: 12px; color: var(--gris); margin-top: 8px; }
+/* Estados, avisos y diálogos */
+.estado { padding: 34px 12px; text-align: center; color: var(--gris); font-size: 14px; }
+.estado b { display: block; color: var(--tinta); font-size: 15px; margin-bottom: 4px; }
+.giro { width: 30px; height: 30px; border: 3px solid var(--azul-cl); border-top-color: var(--azul); border-radius: 50%; margin: 0 auto 12px; animation: giro .8s linear infinite; }
 @keyframes giro { to { transform: rotate(360deg); } }
-.pend { display: flex; align-items: center; gap: 12px; background: var(--orange-bg); border: 1px solid #fed7aa; color: #9a3412; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 13px; line-height: 1.45; }
-.pend-ic { font-size: 20px; flex-shrink: 0; }
+.pend { display: flex; align-items: center; gap: 12px; background: var(--aviso-bg); border: 1px solid #fed7aa; color: #9a3412; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; font-size: 13px; line-height: 1.45; }
 .pend b { color: #7c2d12; }
-.pend button { margin-left: auto; flex-shrink: 0; background: #fff; border: 1px solid #fdba74; color: #9a3412; border-radius: 8px; padding: 8px 12px; font: inherit; font-weight: 600; font-size: 12px; cursor: pointer; }
+.pend button { margin-left: auto; flex-shrink: 0; background: #fff; border: 1px solid #fdba74; color: #9a3412; border-radius: 8px; padding: 8px 12px; font: inherit; font-weight: 700; font-size: 12px; cursor: pointer; }
 .pend button:disabled { opacity: .6; cursor: default; }
-.nota { font-size: 12px; color: var(--muted); }
-.listo { text-align: center; padding: 30px 20px 26px; }
-.listo-ic { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; background: var(--green-bg); color: var(--green); border: 2px solid #bbf7d0; }
-.listo-ic.esp { background: var(--orange-bg); color: var(--orange); border-color: #fed7aa; }
-.listo h2 { font-size: 18px; margin-bottom: 4px; }
-.listo > p { color: var(--muted); font-size: 14px; max-width: 460px; margin: 0 auto; }
-.listo dl { display: grid; grid-template-columns: auto 1fr; gap: 7px 16px; text-align: left; max-width: 400px; margin: 20px auto 0; font-size: 13px; border-top: 1px solid var(--border); padding-top: 16px; }
-.listo dt { color: var(--muted); }
-.listo dd { font-weight: 600; overflow-wrap: anywhere; }
-.listo .nota { margin-top: 14px; }
-.listo-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
-.bt { border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit; padding: 12px 18px; cursor: pointer; border: 1.5px solid var(--border); background: #fff; color: var(--text); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.bt.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
-.dlg-bd { position: fixed; inset: 0; z-index: 200; background: rgba(16,24,40,.5); display: flex; align-items: flex-end; justify-content: center; padding: 16px; }
-@media(min-width:541px) { .dlg-bd { align-items: center; } }
-.dlg { background: #fff; border-radius: 14px; width: 100%; max-width: 460px; padding: 20px; box-shadow: 0 20px 40px rgba(16,24,40,.25); max-height: calc(100vh - 32px); overflow-y: auto; }
-.dlg h3 { font-size: 16px; margin-bottom: 10px; }
+#toast { position: fixed; top: 128px; left: 50%; transform: translateX(-50%); background: #0a6c42; color: #fff; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: 30px; z-index: 99; opacity: 0; transition: opacity .25s; max-width: 90vw; text-align: center; pointer-events: none; }
+#toast.err { background: #b42318; }
+#toast.show { opacity: 1; }
+.dlg-bd { position: fixed; inset: 0; z-index: 90; background: rgba(16,24,40,.5); display: flex; align-items: flex-end; justify-content: center; padding: 16px; }
+@media (min-width: 600px) { .dlg-bd { align-items: center; } }
+.dlg { background: #fff; border-radius: 16px; width: 100%; max-width: 460px; padding: 20px; box-shadow: 0 20px 40px rgba(16,24,40,.25); max-height: calc(100vh - 32px); overflow-y: auto; }
+.dlg h3 { font-size: 16px; margin-bottom: 10px; color: var(--azul-prof); }
 .dlg ul { padding-left: 20px; display: grid; gap: 8px; font-size: 14px; }
 .dlg p { font-size: 14px; }
 .dlg-btns { display: flex; gap: 10px; margin-top: 20px; }
-.dlg-btns .bt { flex: 1; }
+.dlg-btns button { flex: 1; height: 48px; border-radius: 12px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--borde-2); background: #fff; color: var(--tinta); }
+.dlg-btns button.pri { background: var(--azul); border-color: var(--azul); color: #fff; }
 `;
 
   const HTML = `
-<div class="app-header">
-  <div class="logo">SG</div>
-  <div class="header-text" style="flex:1">
-    <h1>Inspección Preoperacional de Vehículos</h1>
-    <p id="formatoTxt">SINÚGRAVAS S.A.S &nbsp;·&nbsp; SST-FRT-022 Versión 001</p>
+<div class="app">
+<header class="ap-h">
+  <div class="ap-fila" id="apFila"><img class="ap-s" id="apEmb" alt="SINUGRAVAS" hidden><div class="ap-t"><b>SINUGRAVAS</b><span id="apSub">Inspección preoperacional</span></div><span class="ap-cod" id="apCod"></span></div>
+  <div class="ap-linea"></div>
+  <div class="pasos" id="pasos" hidden>
+    <div class="pasos-t"><span id="pasoTxt"></span><span id="pasoCnt"></span></div>
+    <div class="pasos-b"><button type="button" data-paso="1" aria-label="Paso 1"></button><button type="button" data-paso="2" aria-label="Paso 2"></button><button type="button" data-paso="3" aria-label="Paso 3"></button></div>
   </div>
-</div>
-
-<div class="progress-wrap" id="progreso">
-  <div class="progress-label" id="progressLabel">0 de 0 ítems marcados</div>
-  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-</div>
+</header>
 
 <div id="toast"></div>
 
-<div class="wrap">
+<main class="cont">
+  <div class="pend" id="pendientes" hidden><div id="pendTxt"></div><button type="button" id="pendBtn">Reintentar</button></div>
 
-  <div class="pend" id="pendientes" hidden>
-    <span class="pend-ic">📤</span>
-    <div id="pendTxt"></div>
-    <button type="button" id="pendBtn">Reintentar</button>
-  </div>
+  <div class="tj" id="cargando"><div class="estado"><div class="giro"></div>Cargando el formulario…</div></div>
+  <div class="tj" id="cargaError" hidden><div class="estado"><b>No se pudo cargar el formulario</b><span id="cargaErrorTxt">Revise la señal o los datos del celular e intente otra vez.</span>
+    <div style="margin-top:16px"><button class="btn-p" type="button" id="reintentarCarga">Intentar otra vez</button></div></div></div>
 
-  <div class="card" id="cargando">
-    <div class="estado"><div class="giro"></div>Cargando el formulario…</div>
-  </div>
-
-  <div class="card" id="cargaError" hidden>
-    <div class="estado">
-      <b>No se pudo cargar el formulario</b>
-      <span id="cargaErrorTxt">Revise la señal o los datos del celular e intente otra vez.</span>
-      <div class="listo-btns"><button class="bt pri" type="button" id="reintentarCarga">Intentar otra vez</button></div>
+  <section id="paso1" hidden>
+    <h1>Inspección preoperacional</h1>
+    <p class="fecha"><span id="fechaTxt"></span><button type="button" id="fechaCambiar" hidden>Cambiar</button></p>
+    <div class="campo" id="cFecha" hidden><span class="lb" id="lbFecha">Fecha de inspección</span><input class="inp" id="fecha" type="date"></div>
+    <div class="tj" id="tjVeh">
+      <div class="tj-h"><span class="tj-n" id="nVeh">1</span>Vehículo</div>
+      <div class="campo" id="cPlaca"><span class="lb" id="lbPlaca">Placa</span><select class="sel" id="placa"></select></div>
+      <div class="veh" id="vehRes" hidden></div>
+      <div class="campo" id="cTipo"><span class="lb" id="lbTipo">Tipo de vehículo</span><select class="sel" id="tipoVeh"></select></div>
+      <div class="campo" id="cKm"><span class="lb" id="lbKm">Kilometraje de hoy</span>
+        <input class="inp" id="km" type="number" inputmode="decimal" min="0" step="any" placeholder="Ej. 125000" autocomplete="off"><p class="ayuda" id="kmAyuda" hidden></p></div>
     </div>
-  </div>
-
-  <div id="formulario" hidden>
-  <div class="card">
-    <div class="card-head"><div class="card-num">1</div><div class="card-title">Datos del Vehículo y Conductor</div></div>
-    <div class="card-body">
-      <div class="grid2">
-        <div class="field"><label for="placa">Placa del Vehículo *</label><select id="placa"></select></div>
-        <div class="field"><label for="tipoVeh">Tipo de Vehículo *</label><select id="tipoVeh"></select></div>
-        <div class="field"><label for="fecha">Fecha de Inspección *</label><input id="fecha" type="date"></div>
-        <div class="field"><label for="km">Kilometraje</label><input id="km" type="number" inputmode="decimal" min="0" step="any" placeholder="ej. 125000" autocomplete="off"></div>
-      </div>
-      <div class="divider"></div>
-      <div class="grid2">
-        <div class="field"><label for="docId">Documento de Identidad *</label><select id="docId"></select></div>
-        <div class="field"><label for="nombre">Nombre y Apellidos *</label><select id="nombre"></select></div>
-        <div class="field"><label for="licencia">Licencia de Conducción</label><select id="licencia"></select></div>
-        <div class="field"><label for="catLic">Categoría</label><select id="catLic"></select></div>
-        <div class="field"><label for="vigLic">Vigencia Licencia</label><input id="vigLic" type="date"></div>
+    <div class="tj" id="tjCond">
+      <div class="tj-h"><span class="tj-n" id="nCond">2</span>Conductor</div>
+      <div class="campo" id="cCond"><span class="lb" id="lbCond">Nombre y apellidos</span><select class="sel" id="cond"></select></div>
+      <div class="cond" id="condRes" hidden></div>
+      <div class="mini" id="condMini">
+        <div id="cLic"><small id="lbLic">Licencia</small><input class="mini-inp" id="licencia" autocomplete="off"></div>
+        <div id="cCat"><small id="lbCat">Categoría</small><select class="mini-inp" id="catLic"></select></div>
+        <div id="cVig"><small id="lbVig">Vence</small><input class="mini-inp" id="vigLic" type="date"></div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="card">
-    <div class="card-head"><div class="card-num">2</div><div class="card-title">II. Verificación de Elementos &nbsp;<small style="font-weight:400;color:var(--muted)">B=Bueno · R=Regular · M=Malo · N/A=No Aplica</small></div></div>
-    <div class="card-body" id="checklistBody"></div>
-  </div>
+  <section id="paso2" hidden><div id="secciones"></div></section>
 
-  <div class="card">
-    <div class="card-head"><div class="card-num">3</div><div class="card-title">III. Seguimiento y Observaciones</div></div>
-    <div class="card-body">
-      <div class="field"><label for="supervisor">Nombre del Supervisor</label><input id="supervisor" type="text" value="" readonly style="background:#f3f4f6;color:#667085;cursor:not-allowed"></div>
-      <div class="divider" id="obsDivider"></div>
-      <div class="field"><label for="obs">Observaciones</label><textarea id="obs" placeholder="Escriba novedades, anomalías o comentarios..."></textarea></div>
-    </div>
-  </div>
+  <section id="paso3" hidden>
+    <div class="tj" id="resumen"></div>
+    <div class="tj" id="tjObs"><span class="lb" id="lbObs">Observaciones</span><textarea class="area" id="obs" maxlength="4000" placeholder="Escriba novedades, anomalías o comentarios…"></textarea></div>
+    <div class="tj"><span class="lb">Firma del conductor</span>
+      <div class="firma-box"><canvas id="canvasC"></canvas><div class="firma-hint" id="hintC">Firme aquí con el dedo</div></div>
+      <div class="firma-pie"><b id="firmaNom"></b><button type="button" class="borrar" id="clearC">Borrar firma</button></div></div>
+    <div class="sup" id="supLinea" hidden><span class="av" id="supAv"></span><span>Lo revisa el supervisor: <b id="supNom"></b></span></div>
+  </section>
 
-  <div class="card">
-    <div class="card-head"><div class="card-num">4</div><div class="card-title">Firma del Conductor</div></div>
-    <div class="card-body">
-      <div class="field">
-        <label>Firma del Conductor</label>
-        <div class="firma-box"><canvas id="canvasC"></canvas><div class="firma-hint" id="hintC">✏️ Firme aquí<br><small>con dedo o mouse</small></div></div>
-        <button class="clear-btn" id="clearC" type="button">🗑 Borrar firma</button>
-      </div>
-    </div>
-  </div>
-  </div>
+  <section id="listo" class="env" hidden>
+    <img class="logo" id="listoLogo" alt="SINUGRAVAS S.A.S.">
+    <div class="ok-ic" id="listoIc"></div>
+    <h1 id="listoTit">Preoperacional enviado</h1>
+    <p id="listoTxt"></p>
+    <div class="tj"><div id="listoDatos"></div><p class="nota-p" id="listoNota" hidden></p></div>
+    <div class="btns"><a class="btn-s" id="listoPdf" hidden>Ver el PDF</a><button class="btn-p" type="button" id="listoOtro">Llenar otro</button></div>
+    <div class="pie">SINUGRAVAS S.A.S. · flota.sinugravas.com</div>
+  </section>
+</main>
 
-  <div class="card" id="listo" hidden>
-    <div class="listo">
-      <div class="listo-ic" id="listoIc">✓</div>
-      <h2 id="listoTit">Preoperacional enviado</h2>
-      <p id="listoTxt"></p>
-      <dl id="listoDatos"></dl>
-      <p class="nota" id="listoNota" hidden></p>
-      <div class="listo-btns">
-        <a class="bt" id="listoPdf" hidden>📄 Descargar PDF</a>
-        <button class="bt pri" id="listoOtro" type="button">Llenar otro</button>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<div class="submit-bar" id="barra" hidden>
-  <button class="submit-btn" id="submitBtn" type="button">Enviar</button>
+<div class="barra" id="barra" hidden><div class="barra-in">
+  <div class="av-t" id="barraAv" hidden><span>Verificación</span><b id="barraAvN"></b></div>
+  <div class="barra-btns"><button type="button" class="btn-at" id="btnAtras" aria-label="Volver al paso anterior" hidden>‹</button><button type="button" class="btn-p" id="btnSig"></button></div>
+</div></div>
 </div>
 `;
-
 
   /* La conexión es la de la plataforma (NUBE, en §N), con la llave pública:
      con ella este formulario solo puede leer el formulario, enviar
@@ -6470,120 +6743,354 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
      Lo que viene del sistema: el formato, las unidades y los conductores
      ========================================================================== */
   const D = { formato: null, unidades: [], conductores: [] };
-  const ST = {};
+  const ST = {};      // la respuesta de cada ítem
+  const NOTAS = {};   // lo que escribió el conductor en cada novedad («¿Qué se ve?»)
   const TIPOS = { carga: 'Vehículo de carga', remolque: 'Remolque', maquinaria: 'Maquinaria', canoa: 'Canoa' };
   const CATEGORIAS = ['A1', 'A2', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'];
+  const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  /* Los campos del encabezado: cada uno se muestra o no, y es obligatorio o
+     no, según el formato. Si el formato no dice nada, la placa, el tipo, la
+     fecha y el conductor salen y son obligatorios, como siempre. El
+     documento y el nombre son el mismo conductor. */
   const CAMPOS = {
-    kilometraje: { el: 'km', nombre: 'Kilometraje' },
-    licencia: { el: 'licencia', nombre: 'Licencia de Conducción' },
-    categoria: { el: 'catLic', nombre: 'Categoría' },
-    vigencia: { el: 'vigLic', nombre: 'Vigencia Licencia' },
-    observaciones: { el: 'obs', nombre: 'Observaciones' }
+    placa: { el: 'placa', caja: 'cPlaca', lb: 'lbPlaca', nombre: 'Placa', fijo: true },
+    tipo: { el: 'tipoVeh', caja: 'cTipo', lb: 'lbTipo', nombre: 'Tipo de vehículo', fijo: true },
+    fecha: { el: 'fecha', lb: 'lbFecha', nombre: 'Fecha de inspección', fijo: true },
+    kilometraje: { el: 'km', caja: 'cKm', lb: 'lbKm', nombre: 'Kilometraje de hoy' },
+    documento: { el: 'cond', nombre: 'Documento de identidad', fijo: true },
+    nombre: { el: 'cond', nombre: 'Nombre y apellidos', fijo: true },
+    licencia: { el: 'licencia', caja: 'cLic', lb: 'lbLic', nombre: 'Licencia' },
+    categoria: { el: 'catLic', caja: 'cCat', lb: 'lbCat', nombre: 'Categoría' },
+    vigencia: { el: 'vigLic', caja: 'cVig', lb: 'lbVig', nombre: 'Vence' },
+    observaciones: { el: 'obs', caja: 'tjObs', lb: 'lbObs', nombre: 'Observaciones' }
   };
-  const campo = k => Object.assign({ mostrar: true, obligatorio: false }, ((D.formato || {}).campos || {})[k]);
+  const campo = k => Object.assign({ mostrar: true, obligatorio: Boolean(CAMPOS[k] && CAMPOS[k].fijo) }, ((D.formato || {}).campos || {})[k]);
+  const pide = k => { const c = campo(k); return c.mostrar && c.obligatorio; };
+
+  /* Las respuestas de cada ítem (los botones) y los colores también salen del
+     formato. «cuenta» dice qué es cada respuesta: bien, novedad, novedad grave
+     o no aplica. Los colores de siempre son los de SINUGRAVAS. */
+  const OPCIONES_BASE = [
+    { id: 'B', boton: 'B', nombre: 'Bueno', color: '#16a34a', cuenta: 'bien' },
+    { id: 'R', boton: 'R', nombre: 'Regular', color: '#ea580c', cuenta: 'novedad' },
+    { id: 'M', boton: 'M', nombre: 'Malo', color: '#dc2626', cuenta: 'grave' },
+    { id: 'N/A', boton: 'N/A', nombre: 'No aplica', color: '#7c3aed', cuenta: 'no_aplica' }
+  ];
+  const COLORES_BASE = { principal: '#20449a', oscuro: '#193680', acento: '#e8830e' };
+  const opcionesDe = f => (f && Array.isArray(f.opciones) && f.opciones.length ? f.opciones : OPCIONES_BASE);
+  const coloresDe = f => Object.assign({}, COLORES_BASE, (f && f.colores) || {});
+  const hexRgb = h => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(h || '').trim()), n = m ? parseInt(m[1], 16) : 0x20449a;
+    return [n >> 16, (n >> 8) & 255, n & 255];
+  };
+  const hexDe = c => '#' + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  const oscurecer = (h, k) => hexDe(hexRgb(h).map(v => v * (1 - k)));
+  const rgba = (h, a) => 'rgba(' + hexRgb(h).join(',') + ',' + a + ')';
+  /* El mismo color con otra luz (0 negro, 1 blanco): conserva el tono y la
+     saturación (sat la baja), así los azules claros siguen siendo de la marca */
+  const tinte = (h, luz, sat) => {
+    const [r, g, b] = hexRgb(h).map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, l0 = (mx + mn) / 2;
+    const tono = !d ? 0 : mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    const s = (d ? d / (1 - Math.abs(2 * l0 - 1)) : 0) * (sat == null ? 1 : sat);
+    const c = (1 - Math.abs(2 * luz - 1)) * s, x = c * (1 - Math.abs(tono % 2 - 1)), m = luz - c / 2;
+    const t = [[c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x]][Math.floor(tono) % 6];
+    return hexDe(t.map(v => (v + m) * 255));
+  };
   const unidad = id => D.unidades.find(u => u.id === id);
   const conductor = id => D.conductores.find(c => c.id === id);
   const claseDe = u => u.clase || TIPOS[u.tipo] || 'Vehículo';
   /* En el sistema, un conductor sin cédula queda con «—» */
   const cedulaDe = c => (c && c.cedula && c.cedula !== '—' ? c.cedula : '');
+  /* «1000000001» → «1.000.000.001» */
+  const cedulaTxt = c => (/^\d+$/.test(c || '') ? miles(c) : c || '');
+  /* «THX523» → «THX 523», como se ve en el sistema */
+  const placaTxt = p => (/^[A-Z]{3}\d{3}$/.test(p || '') ? p.slice(0, 3) + ' ' + p.slice(3) : p || '');
+  /* «1026800.5» → «1.026.800,5» */
+  const kmTxt = v => { const [a, b] = String(v).split('.'); return miles(a) + (b ? ',' + b : ''); };
+  /* «Conductor de Prueba» → «CP»: la primera y la última palabra, sin «de», «la»… */
+  const iniciales = n => {
+    const p = String(n || '').split(/\s+/).filter(x => x && !/^(de|del|la|las|los|y)$/i.test(x));
+    return (p.length > 1 ? p[0].charAt(0) + p[p.length - 1].charAt(0) : p.length ? p[0].slice(0, 2) : '').toUpperCase();
+  };
   /* El número de cada sección sale de su orden; si el título trae uno, se quita */
   const tituloDe = s => String(s.titulo || '').replace(/^\s*\d+\s*[.)-]\s*/, '');
-  const textoDe = sel => sel.selectedIndex > 0 ? sel.options[sel.selectedIndex].text : '';
-  let tocado = false;
+  const opcion = id => opcionesDe(D.formato).find(o => o.id === id);
+  const esNovedad = id => { const o = opcion(id); return Boolean(o && (o.cuenta === 'novedad' || o.cuenta === 'grave')); };
+  /* «sábado, 24 de octubre de 2026» y «22 oct» (con el año si no es este) */
+  const fechaLarga = iso => { const d = new Date(iso + 'T12:00:00'); return DIAS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()] + ' de ' + d.getFullYear(); };
+  const fechaCorta = iso => {
+    const d = new Date(iso + 'T12:00:00');
+    return d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + (d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : '');
+  };
+  const BOTON = ['Siguiente: verificación ›', 'Siguiente: firma ›', 'Enviar preoperacional'];
+  let tocado = false, paso = 1;
 
   function opciones(sel, primera, lista) {
     sel.innerHTML = '<option value="">' + esc(primera) + '</option>' +
       lista.map(o => '<option value="' + esc(o.v) + '">' + esc(o.t) + '</option>').join('');
   }
 
+  /* ==========================================================================
+     PASO 1: vehículo y conductor
+     ========================================================================== */
   function pintarFormulario() {
-    const f = D.formato;
-    $('formatoTxt').innerHTML = 'SINÚGRAVAS S.A.S &nbsp;·&nbsp; ' + esc(f.codigo) + ' Versión ' + esc(f.version);
-    opciones($('placa'), D.unidades.length ? 'Seleccionar placa...' : 'No hay vehículos registrados',
-      D.unidades.map(u => ({ v: u.id, t: u.placa })));
-    opciones($('tipoVeh'), 'Seleccionar...', [...new Set(D.unidades.map(claseDe))].map(c => ({ v: c, t: c })));
-    const cs = D.conductores, sin = cs.length ? '' : 'No hay conductores registrados';
-    opciones($('docId'), sin || 'Seleccionar...', cs.map(c => ({ v: c.id, t: cedulaDe(c) || 'Sin cédula · ' + c.nombre })));
-    opciones($('nombre'), sin || 'Seleccionar conductor...', cs.map(c => ({ v: c.id, t: c.nombre })));
-    opciones($('licencia'), 'Seleccionar...', cs.filter(cedulaDe).map(c => ({ v: c.id, t: cedulaDe(c) })));
-    opciones($('catLic'), 'Seleccionar...', CATEGORIAS.map(k => ({ v: k, t: k })));
+    const f = D.formato, col = coloresDe(f), raiz = document.documentElement.style;
+    /* Los colores del formato: los claros salen del principal, con su mismo tono */
+    raiz.setProperty('--azul', col.principal);
+    raiz.setProperty('--azul-osc', col.oscuro);
+    raiz.setProperty('--naranja', col.acento);
+    raiz.setProperty('--azul-prof', oscurecer(col.oscuro, 0.25));
+    raiz.setProperty('--azul-cl', tinte(col.principal, 0.898));
+    raiz.setProperty('--azul-cl2', tinte(col.principal, 0.957));
+    raiz.setProperty('--azul-linea', tinte(col.principal, 0.84, 0.8));
+    raiz.setProperty('--azul-ring', rgba(col.principal, 0.14));
+    $('apCod').textContent = f.codigo + ' · v' + f.version;
 
-    /* Los campos del encabezado que se muestran y los obligatorios, como se
-       dejaron en el sistema */
-    Object.keys(CAMPOS).forEach(k => {
-      const c = campo(k), el = $(CAMPOS[k].el), caja = el.closest('.field');
-      caja.hidden = !c.mostrar;
-      caja.querySelector('label').textContent = CAMPOS[k].nombre + (c.obligatorio ? ' *' : '');
+    opciones($('placa'), D.unidades.length ? 'Seleccionar placa…' : 'No hay vehículos registrados', D.unidades.map(u => ({ v: u.id, t: u.placa })));
+    opciones($('tipoVeh'), 'Seleccionar…', [...new Set(D.unidades.map(claseDe))].map(c => ({ v: c, t: c })));
+    /* El conductor se escoge por el nombre; si el nombre no se muestra, por la cédula */
+    const porNombre = campo('nombre').mostrar, cs = D.conductores, sin = cs.length ? '' : 'No hay conductores registrados';
+    opciones($('cond'), sin || 'Seleccionar…', cs.map(c => ({ v: c.id, t: porNombre ? c.nombre : cedulaTxt(cedulaDe(c)) || 'Sin cédula · ' + c.nombre })));
+    opciones($('catLic'), '—', CATEGORIAS.map(k => ({ v: k, t: k })));
+
+    /* Lo que se muestra y lo obligatorio (con *), como quedó en el sistema */
+    const ver = k => campo(k).mostrar, et = k => CAMPOS[k].nombre + (pide(k) ? ' *' : '');
+    ['placa', 'kilometraje', 'licencia', 'categoria', 'vigencia', 'observaciones'].forEach(k => {
+      $(CAMPOS[k].caja).hidden = !ver(k);
+      $(CAMPOS[k].lb).textContent = et(k);
     });
-    $('obsDivider').hidden = !campo('observaciones').mostrar;
+    /* El tipo sale de la placa; se pregunta solo si la placa no se muestra */
+    $('cTipo').hidden = !ver('tipo') || ver('placa');
+    $('lbTipo').textContent = et('tipo');
+    $('cCond').hidden = !ver('nombre') && !ver('documento');
+    $('lbCond').textContent = porNombre ? et('nombre') : et('documento');
+    const mini = ['licencia', 'categoria', 'vigencia'].filter(ver).length;
+    $('condMini').hidden = !mini;
+    $('tjVeh').hidden = !ver('placa') && !ver('tipo') && !ver('kilometraje');
+    $('tjCond').hidden = $('cCond').hidden && !mini;
+    $('nCond').textContent = $('tjVeh').hidden ? '1' : '2';
 
     const hoy = Fecha.hoy();
     $('fecha').min = Fecha.sumar(hoy, -60);
     $('fecha').max = Fecha.sumar(hoy, 1);
     $('fecha').value = hoy;
-    $('supervisor').value = f.supervisor || '';
+    $('lbFecha').textContent = et('fecha');
+    $('fechaCambiar').hidden = !ver('fecha');
+    $('cFecha').hidden = true;
+    pintarFecha();
+
+    $('supLinea').hidden = !f.supervisor;
+    $('supNom').textContent = f.supervisor || '';
+    $('supAv').textContent = iniciales(f.supervisor) || 'SV';
     pintarLista();
+    elegirPlaca('');
+    elegirConductor('');
   }
 
-  function pintarLista() {
-    const c = $('checklistBody');
-    c.innerHTML = '';
-    Object.keys(ST).forEach(k => { delete ST[k]; });
-    (D.formato.secciones || []).forEach((s, i) => {
-      const d = document.createElement('div');
-      d.className = 'section-label';
-      d.textContent = (i + 1) + '. ' + tituloDe(s);
-      c.appendChild(d);
-      (s.items || []).forEach((item, j) => {
-        ST[item.id] = null;
-        const row = document.createElement('div');
-        row.className = 'chk-row';
-        row.innerHTML = '<span class="chk-num">' + (i + 1) + '.' + (j + 1) + '</span><span class="chk-label">' + esc(item.texto) + '</span>' +
-          '<div class="brm">' + ['B', 'R', 'M', 'N/A'].map(v => '<button type="button" data-i="' + esc(item.id) + '" data-v="' + v + '">' + v + '</button>').join('') + '</div>';
-        c.appendChild(row);
-      });
-    });
-    updateProg();
+  function pintarFecha() {
+    const t = fechaLarga(campo('fecha').mostrar && $('fecha').value ? $('fecha').value : Fecha.hoy());
+    $('fechaTxt').textContent = t.charAt(0).toUpperCase() + t.slice(1);
   }
 
-  const ACTIVO = { B: 'b-act', R: 'r-act', M: 'm-act', 'N/A': 'na-act' };
-  function setBRM(boton) {
-    const id = boton.dataset.i, val = boton.dataset.v;
-    boton.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('b-act', 'r-act', 'm-act', 'na-act'));
-    ST[id] = ST[id] === val ? null : val;
-    if (ST[id]) boton.classList.add(ACTIVO[val]);
-    tocado = true;
-    updateProg();
+  /* El tipo del vehículo: el de la placa escogida o, si no hay placa, el que se escoja */
+  function tipoActual() {
+    if (campo('placa').mostrar) { const u = unidad($('placa').value); return u ? claseDe(u) : ''; }
+    return campo('tipo').mostrar ? $('tipoVeh').value : '';
   }
 
-  function updateProg() {
-    const total = Object.keys(ST).length;
-    const done = Object.values(ST).filter(Boolean).length;
-    const pct = total ? Math.round(done / total * 100) : 0;
-    $('progressFill').style.width = pct + '%';
-    $('progressLabel').textContent = done + ' de ' + total + ' ítems marcados (' + pct + '%)';
+  function elegirPlaca(id) {
+    const u = unidad(id), caja = $('vehRes');
+    caja.hidden = !u;
+    if (u) {
+      caja.innerHTML = '<span class="placa">' + esc(placaTxt(u.placa)) + '</span><div><b>' + esc(claseDe(u)) + '</b><span>' +
+        (u.km != null ? 'Último kilometraje: ' + kmTxt(u.km) + ' km' + (u.km_fecha ? ' · ' + fechaCorta(u.km_fecha) : '') : 'Todavía no tiene kilometraje registrado') + '</span></div>';
+    }
+    ayudaKm();
+    pintarSub();
   }
 
-  /* Al escoger la cédula o el nombre se llena todo lo del conductor */
+  /* Debajo del kilometraje: cuánto subió desde la última lectura */
+  function ayudaKm() {
+    const u = campo('placa').mostrar ? unidad($('placa').value) : null, v = $('km').value.trim(), a = $('kmAyuda');
+    a.hidden = !(u && u.km != null && v !== '' && !isNaN(Number(v)));
+    if (a.hidden) return;
+    const dif = Number(v) - Number(u.km);
+    a.className = 'ayuda' + (dif < 0 || dif > 5000 ? ' mal' : '');
+    a.textContent = dif < 0 ? 'Es menor que la última lectura (' + kmTxt(u.km) + ' km). Revíselo.'
+      : dif > 5000 ? miles(dif) + ' km más que la última lectura. Revise que esté bien.' : miles(dif) + ' km más que la última lectura.';
+  }
+
+  /* Al escoger el conductor se llena todo lo suyo */
   function elegirConductor(id) {
-    const c = conductor(id);
-    $('docId').value = c ? id : '';
-    $('nombre').value = c ? id : '';
-    $('licencia').value = cedulaDe(c) ? id : '';
+    const c = conductor(id), caja = $('condRes');
+    $('cond').value = c ? id : '';
+    caja.hidden = !c;
+    if (c) {
+      const vence = c.licencia_vence;
+      caja.innerHTML = '<span class="av">' + esc(iniciales(c.nombre)) + '</span><div class="cond-t"><b>' + esc(c.nombre) + '</b>' +
+        (campo('documento').mostrar && cedulaDe(c) ? '<span>CC ' + esc(cedulaTxt(cedulaDe(c))) + '</span>' : '') + '</div>' +
+        (vence ? (vence < Fecha.hoy() ? '<span class="pill mal">Licencia vencida</span>' : '<span class="pill ok">Licencia vigente</span>') : '');
+    }
+    $('licencia').value = cedulaDe(c);
     const cat = c && c.categoria ? String(c.categoria).toUpperCase() : '';
     if (cat && ![...$('catLic').options].some(o => o.value === cat)) $('catLic').add(new Option(cat, cat));
     $('catLic').value = cat;
     $('vigLic').value = c && c.licencia_vence ? c.licencia_vence : '';
+    pintarSub();
+  }
+
+  /* Debajo de SINUGRAVAS: la placa y el conductor, desde el paso 2 */
+  function pintarSub() {
+    const u = campo('placa').mostrar ? unidad($('placa').value) : null, c = conductor($('cond').value);
+    const t = [u ? placaTxt(u.placa) : '', c ? c.nombre : ''].filter(Boolean).join(' · ');
+    $('apSub').textContent = paso > 1 && t ? t : 'Inspección preoperacional';
   }
 
   /* ==========================================================================
+     PASO 2: la verificación, por secciones que se abren y se cierran
+     ========================================================================== */
+  function pintarLista() {
+    const ops = opcionesDe(D.formato);
+    Object.keys(ST).forEach(k => { delete ST[k]; });
+    Object.keys(NOTAS).forEach(k => { delete NOTAS[k]; });
+    $('secciones').innerHTML = (D.formato.secciones || []).map((s, i) => {
+      (s.items || []).forEach(it => { ST[it.id] = null; });
+      return '<div class="sec' + (i === 0 ? ' abierta' : '') + '">' +
+        '<button type="button" class="sec-h"><span class="n">' + (i + 1) + '</span><span class="t">' + (i + 1) + '. ' + esc(tituloDe(s)) + '</span>' +
+          '<span class="cta"></span></button>' +
+        '<div class="sec-b">' + (s.items || []).map((it, j) => '<div class="it">' +
+          '<div class="it-t"><span>' + (i + 1) + '.' + (j + 1) + '</span>' + esc(it.texto) + '</div>' +
+          '<div class="res" style="grid-template-columns:repeat(' + ops.length + ',1fr)">' + ops.map(o => '<button type="button" data-i="' + esc(it.id) +
+            '" data-v="' + esc(o.id) + '" style="--c:' + esc(o.color) + '" aria-label="' + esc(o.nombre) + '">' + esc(o.boton) + '</button>').join('') + '</div>' +
+          '<div class="nota" hidden><small>¿Qué se ve?</small><input data-nota="' + esc(it.id) + '" maxlength="300" placeholder="Escriba qué se ve (opcional)" autocomplete="off"></div>' +
+        '</div>').join('') + '</div></div>';
+    }).join('');
+    contar();
+  }
+
+  const completa = sec => [...sec.querySelectorAll('.res')].every(r => r.querySelector('button.on'));
+
+  function responder(b) {
+    const id = b.dataset.i, val = b.dataset.v, it = b.closest('.it'), sec = b.closest('.sec'), antes = completa(sec);
+    it.querySelectorAll('.res button').forEach(x => x.classList.remove('on'));
+    ST[id] = ST[id] === val ? null : val;
+    if (ST[id]) b.classList.add('on');
+    /* En una novedad se puede escribir qué se ve */
+    it.querySelector('.nota').hidden = !esNovedad(ST[id]);
+    tocado = true;
+    contar();
+    /* Al terminar una sección se pasa sola a la siguiente (si no queda una nota por escribir) */
+    if (!antes && completa(sec) && !esNovedad(ST[id])) setTimeout(() => siguienteSeccion(sec), 280);
+  }
+
+  /* Baja hasta algo, sin que lo tape el encabezado */
+  function llevarA(el) {
+    const y = el.getBoundingClientRect().top + window.scrollY - document.querySelector('.ap-h').offsetHeight - 10;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+  }
+
+  function siguienteSeccion(sec) {
+    sec.classList.remove('abierta');
+    const todas = [...document.querySelectorAll('#secciones .sec')];
+    const sig = todas.slice(todas.indexOf(sec) + 1).concat(todas).find(s => !completa(s));
+    if (sig) { sig.classList.add('abierta'); llevarA(sig); }
+  }
+
+  /* Lleva al primer ítem sin marcar, con su sección abierta */
+  function irAlQueFalta() {
+    const r = [...document.querySelectorAll('#secciones .res')].find(x => !x.querySelector('button.on'));
+    if (!r) return;
+    r.closest('.sec').classList.add('abierta');
+    llevarA(r.closest('.it'));
+  }
+
+  /* Los contadores de cada sección, de arriba y de abajo */
+  function contar() {
+    const total = Object.keys(ST).length, hechos = Object.values(ST).filter(Boolean).length;
+    document.querySelectorAll('#secciones .sec').forEach((s, i) => {
+      const n = s.querySelectorAll('.res').length, k = s.querySelectorAll('.res button.on').length, lista = n > 0 && k === n;
+      s.classList.toggle('lista', lista);
+      s.querySelector('.n').textContent = lista ? '✓' : String(i + 1);
+      s.querySelector('.cta').textContent = k + ' de ' + n;
+    });
+    $('pasoCnt').textContent = hechos + ' de ' + total;
+    $('barraAvN').textContent = hechos + ' de ' + total + ' ítems';
+    pintarPasos();
+  }
+
+  /* ==========================================================================
+     PASO 3: revisar y firmar
+     ========================================================================== */
+  function pintarResumen() {
+    const ops = opcionesDe(D.formato), n = {}, nov = [];
+    Object.keys(ST).forEach(k => { if (ST[k]) n[ST[k]] = (n[ST[k]] || 0) + 1; });
+    (D.formato.secciones || []).forEach((s, i) => (s.items || []).forEach((it, j) => {
+      if (esNovedad(ST[it.id])) nov.push({ num: (i + 1) + '.' + (j + 1), t: it.texto, o: opcion(ST[it.id]), nota: (NOTAS[it.id] || '').trim() });
+    }));
+    const u = campo('placa').mostrar ? unidad($('placa').value) : null;
+    const pill = (o, txt) => '<span class="pill" style="background:' + rgba(o.color, 0.13) + ';color:' + oscurecer(o.color, 0.35) + '">' + esc(txt) + '</span>';
+    const sinMarcar = Object.values(ST).filter(v => !v).length;
+    $('resumen').innerHTML = '<div class="resu">' + (u ? '<span class="placa peq">' + esc(placaTxt(u.placa)) + '</span>' : '') + '<b>Así queda</b></div>' +
+      '<div class="chips">' + ops.filter(o => n[o.id]).map(o => pill(o, n[o.id] + ' ' + String(o.nombre).toLowerCase())).join('') +
+        (sinMarcar ? '<span class="pill" style="background:#eef1f4;color:#4e5d6b">' + sinMarcar + ' sin marcar</span>' : '') + '</div>' +
+      '<div class="novs">' + (nov.length ? nov.map(x => '<div class="nv"><span>' + x.num + '</span><em>' + esc(x.t) +
+          (x.nota ? '<small>' + esc(x.nota) + '</small>' : '') + '</em>' + pill(x.o, x.o.nombre) + '</div>').join('')
+        : '<div class="sin-nov">Sin novedades: ningún ítem quedó como novedad.</div>') + '</div>';
+    const c = conductor($('cond').value);
+    $('firmaNom').textContent = c ? c.nombre : '';
+  }
+
+  /* ==========================================================================
+     Los pasos: la barra de arriba, el botón de abajo y el «atrás» del celular.
+     Desde el paso 2 hay una entrada propia en el historial: el «atrás» del
+     celular vuelve un paso en vez de salir de la página.
+     ========================================================================== */
+  let trampa = false;
+  function pintarPasos() {
+    const total = Object.keys(ST).length, hechos = Object.values(ST).filter(Boolean).length;
+    const av = paso === 1 ? 45 : paso === 2 ? (total ? Math.round(hechos / total * 100) : 0) : (Firma.hay() ? 85 : 45);
+    document.querySelectorAll('.pasos-b button').forEach((b, i) => {
+      b.className = i + 1 < paso ? 'on' : i + 1 === paso ? 'medio' : '';
+      b.style.setProperty('--av', av + '%');
+    });
+  }
+
+  function irPaso(n) {
+    paso = n;
+    ['paso1', 'paso2', 'paso3'].forEach((p, i) => { $(p).hidden = i + 1 !== n; });
+    $('pasoTxt').innerHTML = '<b>Paso ' + n + ' de 3</b> · ' + ['Vehículo y conductor', 'Verificación', 'Revisar y firmar'][n - 1];
+    $('btnAtras').hidden = n === 1;
+    $('btnSig').textContent = BOTON[n - 1];
+    $('barraAv').hidden = n !== 2;
+    if (n === 3) { pintarResumen(); setTimeout(() => Firma.medir(), 0); }
+    pintarSub();
+    pintarPasos();
+    window.scrollTo(0, 0);
+    if (n > 1 && !trampa) { history.pushState({ preop: 'paso' }, ''); trampa = true; }
+  }
+
+  async function siguiente() {
+    if (paso === 1) { if (validarPaso1()) irPaso(2); return; }
+    if (paso === 2) {
+      const total = Object.keys(ST).length, faltan = Object.values(ST).filter(v => !v).length;
+      if (faltan && await dialogo('Faltan ítems por marcar', '<p>Faltan ' + faltan + ' de ' + total + ' ítems. ¿Los revisa o sigue así?</p>', ['Revisar', 'Seguir así']) !== 1) {
+        irAlQueFalta();
+        return;
+      }
+      irPaso(3);
+      return;
+    }
+    enviar();
+  }
+  /* ==========================================================================
      FIRMA. Se guarda cada trazo: si el celular cambia de tamaño (al bajar por
      la página aparece y se esconde la barra del navegador), la firma no se
-     borra. Sale como JPEG, que pesa poco, con el mismo fondo del recuadro de
-     la firma en el PDF.
+     borra. Sale como JPEG, que pesa poco: tinta azul sobre blanco, como queda
+     en el PDF.
      ========================================================================== */
   const Firma = {
-    trazos: [], actual: null, ancho: 0, alto: 140,
+    trazos: [], actual: null, ancho: 0, alto: 130,
     iniciar() {
       const cv = this.cv = $('canvasC');
       this.medir();
@@ -6626,7 +7133,7 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
       this.dibujar();
     },
     trazar(ctx, w, h, grosor) {
-      ctx.strokeStyle = '#1d4ed8';
+      ctx.strokeStyle = '#20449a';
       ctx.lineWidth = grosor;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -6658,7 +7165,7 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
       c.width = w;
       c.height = h;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#f9fafb';
+      ctx.fillStyle = '#fff';
       ctx.fillRect(0, 0, w, h);
       this.trazar(ctx, w, h, 5);
       return { url: c.toDataURL('image/jpeg', 0.85), ancho: w, alto: h };
@@ -6726,9 +7233,12 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
   }
 
   /* ==========================================================================
-     EL PDF: el mismo de siempre (jsPDF), con los ítems del formato de ese día
-     y, al pie, la hora en que lo recibió el sistema y la IP. Se arma igual cada
-     vez, así un reintento produce el mismo archivo.
+     EL PDF: un documento SST de SINUGRAVAS, como la hoja de vida. En cada
+     hoja, el encabezado (logo, título y el cuadro de código, versión, fecha y
+     página) y la banda con la línea de acento; primero los datos y el
+     resultado con las novedades, después la verificación completa y al final
+     las observaciones, las firmas y la trazabilidad. Se arma igual cada vez,
+     así un reintento produce el mismo archivo.
      ========================================================================== */
   const Pdf = {
     promesa: null,
@@ -6754,164 +7264,350 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
       .replace(/[‘’‚′]/g, "'").replace(/[“”„″]/g, '"')
       .replace(/[‐-―−]/g, '-').replace(/…/g, '...').replace(/[    ]/g, ' ')
       .replace(/[•●]/g, '-').replace(/[^\n\x20-\x7E\xA0-\xFF]/g, ''),
+    /* El logo de la empresa en JPEG, porque el PDF no lee webp. Se arma una vez. */
+    logo() {
+      if (!this.logoListo) {
+        this.logoListo = new Promise(listo => {
+          const img = new Image();
+          img.onload = () => {
+            try {
+              const w = 600, h = Math.round(w * img.naturalHeight / img.naturalWidth), c = document.createElement('canvas');
+              c.width = w;
+              c.height = h;
+              const g = c.getContext('2d');
+              g.fillStyle = '#fff';
+              g.fillRect(0, 0, w, h);
+              g.imageSmoothingQuality = 'high';
+              g.drawImage(img, 0, 0, w, h);
+              listo({ url: c.toDataURL('image/jpeg', 0.9), w, h });
+            } catch (x) { listo(null); }
+          };
+          img.onerror = () => listo(null);
+          img.src = MARCA.logo;
+        });
+      }
+      return this.logoListo;
+    },
 
     async generar(e) {
-      const JsPDF = await this.cargar();
-      const v = e.vista, R = e.p.respuestas || {}, T = this.txt;
+      const JsPDF = await this.cargar(), logo = await this.logo();
+      const v = e.vista, R = e.p.respuestas || {}, N = e.p.notas || {}, ev = e.p.evidencia || {}, T = this.txt;
       const doc = new JsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
       try {
         doc.setCreationDate(new Date(e.recibido));
         doc.setFileId(e.id.replace(/-/g, '').toUpperCase());
       } catch (x) { /* versión sin esas funciones */ }
-      const pw = 210, ml = 12, mr = 12, usable = pw - ml - mr;
-      let y = 10;
-      const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-      const diaSem = v.fecha ? dias[new Date(v.fecha + 'T12:00:00').getDay()] : '';
-      const codigo = T(v.codigo + ' v' + v.version);
-
-      const fc = (r, g, b) => doc.setFillColor(r, g, b);
-      const dc = (r, g, b) => doc.setDrawColor(r, g, b);
-      const tc = (r, g, b) => doc.setTextColor(r, g, b);
+      /* Los colores y las respuestas del formato con que se llenó */
+      const col = coloresDe({ colores: v.colores }), ops = opcionesDe({ opciones: v.opciones });
+      const P = hexRgb(col.principal), O = hexRgb(col.oscuro), A = hexRgb(col.acento);
+      const C1 = hexRgb(tinte(col.principal, 0.898)), C2 = hexRgb(tinte(col.principal, 0.957)), LN = hexRgb(tinte(col.principal, 0.84, 0.8));
+      const DK = hexRgb(oscurecer(col.oscuro, 0.25)), TI = [27, 36, 48], GR = [78, 93, 107], GC = [107, 124, 140], BL = [255, 255, 255];
+      const fc = c => doc.setFillColor(c[0], c[1], c[2]), dc = c => doc.setDrawColor(c[0], c[1], c[2]), tc = c => doc.setTextColor(c[0], c[1], c[2]);
       const bold = sz => { doc.setFont('helvetica', 'bold'); doc.setFontSize(sz); };
       const normal = sz => { doc.setFont('helvetica', 'normal'); doc.setFontSize(sz); };
+      /* Una sola línea: lo que no cabe se corta */
+      const linea = (t, w) => doc.splitTextToSize(T(t), w)[0] || '';
+      const W = 210, ml = 10, mr = 10, U = W - ml - mr, LIM = 280;
+      const ver = k => Object.assign({ mostrar: true }, (v.campos || {})[k]).mostrar;
+      const recibido = Fecha.colombia(e.recibido);
+      const banda = T(([v.placa ? placaTxt(v.placa) : v.tipo, fechaLarga(v.fecha).replace(',', '')].filter(Boolean).join(' · ')).toUpperCase());
+      const numero = T('PREOPERACIONAL N.º ' + e.id.slice(0, 8).toUpperCase());
+      let y = 9, marco = null, continua = null;
 
-      function drawPageHeader() {
-        fc(15, 27, 45); doc.rect(0, 0, pw, 14, 'F');
-        fc(29, 78, 216); doc.rect(0, 13, pw, 1.5, 'F');
-        bold(9); tc(240, 244, 248);
-        doc.text('SINUGRAVAS S.A.S - INSPECCION PREOPERACIONAL DE VEHICULOS', pw / 2, 9, { align: 'center' });
-        normal(6.5); tc(102, 112, 130);
-        doc.text(codigo, pw - mr, 12.5, { align: 'right' });
-        y = 18;
+      function encabezado() {
+        const h = 20, xc = W - mr - 50, cx = ml + 46 + (xc - ml - 46) / 2;
+        dc(O); doc.setLineWidth(0.32);
+        doc.rect(ml, y, U, h);
+        doc.line(ml + 46, y, ml + 46, y + h);
+        doc.line(xc, y, xc, y + h);
+        if (logo) {
+          const k = Math.min(42 / logo.w, 15 / logo.h), lw = logo.w * k, lh = logo.h * k;
+          doc.addImage(logo.url, 'JPEG', ml + 2 + (42 - lw) / 2, y + (h - lh) / 2, lw, lh, 'logo');
+        } else { bold(11); tc(DK); doc.text('SINUGRAVAS', ml + 23, y + 11.5, { align: 'center' }); }
+        bold(11.5); tc(DK);
+        const tit = doc.splitTextToSize(T('INSPECCIÓN PREOPERACIONAL DE VEHÍCULOS'), xc - ml - 46 - 6), t1 = y + (tit.length > 1 ? 7.3 : 9.6);
+        doc.text(tit, cx, t1, { align: 'center' });
+        normal(7.5); tc(GR);
+        doc.text(T('Sistema de Gestión de Flota · SINUGRAVAS S.A.S.'), cx, t1 + (tit.length - 1) * 4.67 + 4.4, { align: 'center' });
+        [['Código', v.codigo], ['Versión', v.version], ['Fecha de creación', v.fecha_creacion], ['Página', '']].forEach((f, i) => {
+          const fy = y + i * 5;
+          if (i) { dc(LN); doc.setLineWidth(0.18); doc.line(xc, fy, W - mr, fy); }
+          normal(7); tc(GR); doc.text(T(f[0]), xc + 2.4, fy + 3.4);
+          bold(7.5); tc(DK); doc.text(T(f[1] || ''), W - mr - 2.4, fy + 3.4, { align: 'right' });
+        });
+        y += h + 2;
+        fc(P); doc.rect(ml, y, U, 7, 'F');
+        fc(A); doc.rect(ml, y + 7, U, 1.1, 'F');
+        bold(8.6); tc(BL); doc.text(banda, ml + 3, y + 4.75);
+        bold(7.5); doc.text(numero, W - mr - 3, y + 4.75, { align: 'right' });
+        y += 8.1 + 2.6;
       }
-      function pageCheck(h) {
-        if (y + h > 282) { doc.addPage(); y = 10; drawPageHeader(); }
+      /* El recuadro de cada sección se cierra al terminarla o al pasar de hoja */
+      const abrirMarco = () => { marco = y; };
+      const cerrarMarco = () => {
+        if (marco !== null && y > marco) { dc(O); doc.setLineWidth(0.32); doc.rect(ml, marco, U, y - marco); }
+        marco = null;
+      };
+      /* Si no cabe, hoja nueva; lo que venía (una tabla) sigue con su título */
+      function cabe(h) {
+        if (y + h <= LIM) return;
+        const seguia = marco !== null;
+        cerrarMarco();
+        doc.addPage();
+        y = 9;
+        encabezado();
+        if (seguia && continua) continua();
       }
-      drawPageHeader();
-
-      function cell(lbl, val, x, w, ry) {
-        fc(239, 246, 255); dc(209, 213, 221);
-        doc.rect(x, ry, w, 8, 'FD');
-        bold(6); tc(29, 78, 216);
-        doc.text(T(lbl.toUpperCase()), x + 2, ry + 3.2);
-        normal(8); tc(15, 27, 45);
-        doc.text(T(val || '-'), x + 2, ry + 7, { maxWidth: w - 4 });
+      function titulo(t, der) {
+        fc(C1); doc.rect(ml, y, U, 5.6, 'F');
+        dc(O); doc.setLineWidth(0.18); doc.line(ml, y + 5.6, W - mr, y + 5.6);
+        bold(7.8); tc(DK); doc.text(T(t.toUpperCase()), ml + 2.5, y + 3.9);
+        if (der) { bold(7); doc.text(T(der), W - mr - 2.5, y + 3.9, { align: 'right' }); }
+        y += 5.6;
       }
-      const hw = usable / 2, qw = usable / 4, tw = usable / 3;
-      cell('Placa', v.placa, ml, hw, y); cell('Tipo de vehiculo', v.tipo, ml + hw, hw, y); y += 10;
-      cell('Conductor', v.nombre, ml, hw, y); cell('Doc. Identidad', v.documento, ml + hw, qw, y);
-      cell('Fecha', v.fecha, ml + hw + qw, qw, y); y += 10;
-      cell('Licencia', v.licencia, ml, tw, y); cell('Categoria', v.categoria, ml + tw, tw, y);
-      cell('Vigencia', v.vigencia, ml + tw * 2, tw, y); y += 10;
-      cell('Kilometraje', v.km ? v.km + ' km' : '-', ml, tw, y);
-      cell('Dia de la semana', diaSem, ml + tw, tw, y);
-      cell('Supervisor', v.supervisor, ml + tw * 2, tw, y); y += 12;
-
-      function secTitle(t) {
-        pageCheck(8);
-        fc(29, 78, 216); doc.rect(ml, y, usable, 7, 'F');
-        bold(8); tc(240, 244, 248);
-        doc.text(t, ml + 3, y + 5); y += 9;
+      /* Una cuadrícula de cuatro columnas: la etiqueta arriba y el dato abajo */
+      function cuadricula(celdas) {
+        const cw = U / 4, lh = 3.7, vh = 5.4, filas = [];
+        let fila = [], usadas = 0;
+        celdas.forEach(c => {
+          const s = Math.min(c.s || 1, 4);
+          if (usadas + s > 4) { fila[fila.length - 1].s += 4 - usadas; filas.push(fila); fila = []; usadas = 0; }
+          fila.push(Object.assign({}, c, { s }));
+          usadas += s;
+        });
+        if (fila.length) { fila[fila.length - 1].s += 4 - usadas; filas.push(fila); }
+        filas.forEach((f, i) => {
+          let x = ml;
+          f.forEach((c, j) => {
+            const w = cw * c.s;
+            fc(C2); doc.rect(x, y, w, lh, 'F');
+            dc(LN); doc.setLineWidth(0.18);
+            if (j) doc.line(x, y, x, y + lh + vh);
+            bold(6); tc(O); doc.text(T(c.l.toUpperCase()), x + 2, y + 2.65);
+            bold(8.3); tc(TI); doc.text(linea(c.v || '-', w - 4), x + 2, y + lh + 3.85);
+            x += w;
+          });
+          if (i < filas.length - 1) { dc(LN); doc.line(ml, y + lh + vh, W - mr, y + lh + vh); }
+          y += lh + vh;
+        });
       }
 
-      // VERIFICACIÓN
-      secTitle('I. VERIFICACION DE ELEMENTOS  B=Bueno  R=Regular  M=Malo  N/A=No Aplica');
-      const nw = 28, lw = usable - 28 - 24, bw = 6;
-      fc(239, 246, 255); dc(209, 213, 221);
-      doc.rect(ml, y, nw, 6, 'FD');
-      doc.rect(ml + nw, y, lw, 6, 'FD');
-      doc.rect(ml + nw + lw, y, bw, 6, 'FD');
-      doc.rect(ml + nw + lw + bw, y, bw, 6, 'FD');
-      doc.rect(ml + nw + lw + bw * 2, y, bw, 6, 'FD');
-      doc.rect(ml + nw + lw + bw * 3, y, bw + 2, 6, 'FD');
-      bold(6.5); tc(102, 112, 130);
-      doc.text('N', ml + 2, y + 4.2); doc.text('Elemento', ml + nw + 2, y + 4.2);
-      tc(22, 163, 74); doc.text('B', ml + nw + lw + bw * 0 + bw / 2, y + 4.2, { align: 'center' });
-      tc(234, 88, 12); doc.text('R', ml + nw + lw + bw * 1 + bw / 2, y + 4.2, { align: 'center' });
-      tc(220, 38, 38); doc.text('M', ml + nw + lw + bw * 2 + bw / 2, y + 4.2, { align: 'center' });
-      tc(124, 58, 237); doc.text('N/A', ml + nw + lw + bw * 3 + (bw + 2) / 2, y + 4.2, { align: 'center' });
-      y += 6;
+      encabezado();
 
-      let rowIdx = 0;
+      // DATOS DEL VEHÍCULO Y DEL CONDUCTOR
+      const d = new Date(v.fecha + 'T12:00:00'), celdas = [];
+      if (ver('placa')) celdas.push({ l: 'Placa', v: v.placa });
+      if (ver('tipo') || ver('placa')) celdas.push({ l: 'Tipo de vehículo', v: v.tipo });
+      celdas.push({ l: 'Fecha de inspección', v: Fecha.dmy(v.fecha) + ' · ' + DIAS[d.getDay()] });
+      if (ver('kilometraje')) celdas.push({ l: 'Kilometraje', v: v.km ? kmTxt(v.km) + ' km' : '' });
+      if (ver('nombre') || ver('documento')) celdas.push({ l: 'Conductor', v: v.nombre, s: 2 });
+      if (ver('documento')) celdas.push({ l: 'Documento', v: cedulaTxt(v.documento) });
+      if (ver('licencia') || ver('categoria')) celdas.push({ l: 'Licencia · categoría', v: [v.licencia, v.categoria].filter(Boolean).join(' · ') });
+      if (ver('vigencia')) celdas.push({ l: 'Vigencia de la licencia', v: v.vigencia ? Fecha.dmy(v.vigencia) : '' });
+      celdas.push({ l: 'Supervisor', v: v.supervisor, s: 2 });
+      celdas.push({ l: 'Recibido en el sistema', v: recibido.replace(/:\d\d (?=[ap]\.)/, ' ') });
+      abrirMarco();
+      titulo('Datos del vehículo y del conductor');
+      cuadricula(celdas);
+      cerrarMarco();
+      y += 2.6;
+
+      // RESULTADO: cuántas de cada respuesta y las novedades, con lo que se vio
+      const total = (v.secciones || []).reduce((s, x) => s + (x.items || []).length, 0), n = {}, porId = {}, nov = [];
+      Object.keys(R).forEach(k => { n[R[k]] = (n[R[k]] || 0) + 1; });
+      ops.forEach(o => { porId[o.id] = o; });
+      (v.secciones || []).forEach((s, i) => (s.items || []).forEach((it, j) => {
+        const o = porId[R[it.id]];
+        if (o && (o.cuenta === 'novedad' || o.cuenta === 'grave')) nov.push({ num: (i + 1) + '.' + (j + 1), t: it.texto, o, nota: N[it.id] });
+      }));
+      /* Cada novedad se mide para donde va: en la primera hoja, al lado de los
+         conteos; si sigue en otra hoja, a todo lo ancho */
+      const xr = ml + 62 + 3;
+      const medir = (x, xx) => {
+        normal(8);
+        const l = doc.splitTextToSize(T(x.t + (x.nota ? ' - ' + x.nota : '')), W - mr - 3 - 12 - (xx + 8));
+        return { xx, l, h: Math.max(5.2, l.length * 3.4 + 1.8) };
+      };
+      const filasNov = nov.map(x => Object.assign(x, medir(x, xr)));
+      const altoIzq = 2.4 + Math.ceil(ops.length / 2) * 9.6 - 1.6 + 2.4;
+      const altoRes = Math.max(altoIzq, 6.4 + (filasNov.length ? filasNov.reduce((s, x) => s + x.h, 0) : 5.2) + 2);
+      cabe(5.6 + Math.min(altoRes, 60));
+      abrirMarco();
+      titulo('Resultado', total + (total === 1 ? ' ítem' : ' ítems'));
+      const y0 = y, hoja0 = doc.getNumberOfPages(), bw = (62 - 2.4 * 2 - 1.6) / 2;
+      ops.forEach((o, k) => {
+        const bx = ml + 2.4 + (k % 2) * (bw + 1.6), by = y0 + 2.4 + Math.floor(k / 2) * 9.6, num = String(n[o.id] || 0);
+        dc(LN); doc.setLineWidth(0.18); doc.roundedRect(bx, by, bw, 8, 1.2, 1.2);
+        fc(hexRgb(o.color)); doc.roundedRect(bx + 2, by + 2.4, 3.2, 3.2, 0.7, 0.7, 'F');
+        bold(12); tc(TI); doc.text(num, bx + 6.8, by + 5.6);
+        const nx = bx + 6.8 + doc.getTextWidth(num) + 1.8;
+        normal(6.6); tc(GR);
+        const et = doc.splitTextToSize(T(o.boton + ' · ' + o.nombre), bx + bw - nx - 1).slice(0, 2);
+        doc.text(et, nx, by + (et.length > 1 ? 3.5 : 4.9));
+      });
+      bold(7); tc([147, 38, 30]); doc.text(T('NOVEDADES (' + nov.length + ')'), xr, y0 + 4.4);
+      y = y0 + 6.4;
+      let corte = null;
+      continua = () => { abrirMarco(); titulo('Resultado (continúa)', 'Novedades'); y += 1; };
+      if (!filasNov.length) { bold(8); tc([10, 108, 66]); doc.text(T('Ninguna: ningún ítem quedó como novedad.'), xr, y + 3.6); y += 5.2; }
+      filasNov.forEach(x => {
+        let m = doc.getNumberOfPages() === hoja0 ? x : medir(x, ml + 3);
+        if (y + m.h > LIM) {
+          if (corte === null) corte = y;
+          cabe(m.h);
+          m = medir(x, ml + 3);
+        }
+        normal(7); tc(GC); doc.text(x.num, m.xx, y + 3.6);
+        normal(8); tc(TI); doc.text(m.l, m.xx + 8, y + 3.6);
+        bold(6.6);
+        const mw = Math.max(5.4, doc.getTextWidth(T(x.o.boton)) + 2);
+        fc(hexRgb(x.o.color)); doc.roundedRect(W - mr - 3 - mw, y + 0.8, mw, 4.2, 0.8, 0.8, 'F');
+        tc(BL); doc.text(T(x.o.boton), W - mr - 3 - mw / 2, y + 3.75, { align: 'center' });
+        dc(LN); doc.setLineWidth(0.15); doc.setLineDashPattern([0.8, 0.8], 0);
+        doc.line(m.xx, y + m.h, W - mr - 3, y + m.h);
+        doc.setLineDashPattern([], 0);
+        y += m.h;
+      });
+      y = corte === null ? Math.max(y + 2, y0 + altoIzq) : y + 2;
+      /* La raya entre los conteos y las novedades, en la primera hoja */
+      const hojaFin = doc.getNumberOfPages();
+      doc.setPage(hoja0);
+      dc(LN); doc.setLineWidth(0.18); doc.line(ml + 62, y0, ml + 62, corte === null ? y : corte);
+      doc.setPage(hojaFin);
+      cerrarMarco();
+      continua = null;
+      y += 2.6;
+
+      // VERIFICACIÓN DE ELEMENTOS: una columna por cada respuesta del formato
+      const leyenda = ops.map(o => o.boton + ' = ' + o.nombre).join(' · ');
+      bold(6.5);
+      const anchos = ops.map(o => (String(o.boton).length <= 1 ? 6.5 : Math.max(8, doc.getTextWidth(T(o.boton)) + 3)));
+      const nw = 9, lw = U - nw - anchos.reduce((s, w) => s + w, 0), xs = [];
+      anchos.reduce((x, w) => { xs.push(x); return x + w; }, ml + nw + lw);
+      function cabeceraTabla() {
+        fc(C2); doc.rect(ml, y, U, 5, 'F');
+        dc(LN); doc.setLineWidth(0.18); doc.line(ml, y + 5, W - mr, y + 5); doc.line(ml + nw, y, ml + nw, y + 5);
+        bold(6.5); tc(O); doc.text(T('N.º'), ml + 1.6, y + 3.4); doc.text('ELEMENTO', ml + nw + 1.6, y + 3.4);
+        ops.forEach((o, k) => {
+          doc.line(xs[k], y, xs[k], y + 5);
+          tc(hexRgb(o.color)); doc.text(T(o.boton), xs[k] + anchos[k] / 2, y + 3.4, { align: 'center' });
+        });
+        y += 5;
+      }
+      cabe(5.6 + 5 + 5 + 4.7);
+      abrirMarco();
+      titulo('Verificación de elementos', leyenda);
+      cabeceraTabla();
+      continua = () => { abrirMarco(); titulo('Verificación de elementos (continúa)', leyenda); cabeceraTabla(); };
       (v.secciones || []).forEach((s, i) => {
-        pageCheck(6 + 5.5);   // el título no queda solo al final de la página
-        fc(239, 246, 255); doc.rect(ml, y, usable, 6, 'F');
-        fc(29, 78, 216); doc.rect(ml, y, 2.5, 6, 'F');
-        dc(209, 213, 221); doc.rect(ml, y, usable, 6, 'S');
-        bold(7); tc(29, 78, 216);
-        doc.text(T((i + 1) + '. ' + tituloDe(s)), ml + 5, y + 4.2); y += 6;
-
-        (s.items || []).forEach((item, j) => {
-          normal(7);
-          const lineas = doc.splitTextToSize(T(item.texto), lw - 4);
-          const h = 5.5 + (lineas.length - 1) * 3;
-          pageCheck(h);
-          const val = R[item.id];
-          if (rowIdx % 2 === 0) fc(249, 250, 251); else fc(255, 255, 255);
-          dc(209, 213, 221);
-          doc.rect(ml, y, nw, h, 'FD');
-          doc.rect(ml + nw, y, lw, h, 'FD');
-          doc.rect(ml + nw + lw, y, bw, h, 'FD');
-          doc.rect(ml + nw + lw + bw, y, bw, h, 'FD');
-          doc.rect(ml + nw + lw + bw * 2, y, bw, h, 'FD');
-          doc.rect(ml + nw + lw + bw * 3, y, bw + 2, h, 'FD');
-          normal(6); tc(102, 112, 130);
-          doc.text((i + 1) + '.' + (j + 1), ml + 2, y + 3.8);
-          normal(7); tc(15, 27, 45);
-          doc.text(lineas, ml + nw + 2, y + 3.8);
-          const marca = (col, ancho, t, sz) => { bold(sz); tc(255, 255, 255); doc.text(t, ml + nw + lw + bw * col + ancho / 2, y + 3.8, { align: 'center' }); };
-          if (val === 'B') { fc(22, 163, 74); doc.rect(ml + nw + lw, y, bw, h, 'F'); marca(0, bw, 'B', 7); }
-          if (val === 'R') { fc(234, 88, 12); doc.rect(ml + nw + lw + bw, y, bw, h, 'F'); marca(1, bw, 'R', 7); }
-          if (val === 'M') { fc(220, 38, 38); doc.rect(ml + nw + lw + bw * 2, y, bw, h, 'F'); marca(2, bw, 'M', 7); }
-          if (val === 'N/A') { fc(124, 58, 237); doc.rect(ml + nw + lw + bw * 3, y, bw + 2, h, 'F'); marca(3, bw + 2, 'N/A', 6); }
-          y += h; rowIdx++;
+        cabe(5 + 4.7);   // el título de la sección no queda solo al final de la hoja
+        fc(C2); doc.rect(ml, y, U, 5, 'F');
+        fc(P); doc.rect(ml, y, 1.1, 5, 'F');
+        dc(LN); doc.setLineWidth(0.18); doc.line(ml, y + 5, W - mr, y + 5);
+        bold(7.2); tc(DK); doc.text(T((i + 1) + '. ' + tituloDe(s)), ml + 3, y + 3.5);
+        const k = (s.items || []).length;
+        bold(6.6); tc(GR); doc.text(T(k + (k === 1 ? ' ítem' : ' ítems')), W - mr - 2, y + 3.5, { align: 'right' });
+        y += 5;
+        (s.items || []).forEach((it, j) => {
+          normal(7.4);
+          const lineas = doc.splitTextToSize(T(it.texto), lw - 3.2), h = Math.max(4.7, lineas.length * 3.1 + 1.6);
+          cabe(h);
+          dc(LN); doc.setLineWidth(0.18);
+          doc.line(ml, y + h, W - mr, y + h);
+          doc.line(ml + nw, y, ml + nw, y + h);
+          xs.forEach(x => doc.line(x, y, x, y + h));
+          normal(6.6); tc(GC); doc.text((i + 1) + '.' + (j + 1), ml + 1.6, y + 3.2);
+          normal(7.4); tc(TI); doc.text(lineas, ml + nw + 1.6, y + 3.2);
+          /* La respuesta marcada: su casilla con el color de esa respuesta */
+          const m = ops.findIndex(o => o.id === R[it.id]);
+          if (m >= 0) {
+            fc(hexRgb(ops[m].color)); doc.rect(xs[m] + 0.1, y + 0.1, anchos[m] - 0.2, h - 0.2, 'F');
+            bold(String(ops[m].boton).length > 2 ? 5.8 : 6.8); tc(BL);
+            doc.text(T(ops[m].boton), xs[m] + anchos[m] / 2, y + h / 2 + 1.1, { align: 'center' });
+          }
+          y += h;
         });
       });
-      y += 5;
+      cerrarMarco();
+      continua = null;
+      y += 2.6;
 
-      // OBSERVACIONES
-      normal(8);
-      const obs = v.observaciones ? doc.splitTextToSize(T(v.observaciones), usable - 6) : [];
-      const altoObs = Math.max(20, obs.length * 3.6 + 6);
-      pageCheck(Math.min(altoObs, 60) + 9);
-      secTitle('II. OBSERVACIONES');
-      fc(249, 250, 251); dc(209, 213, 221);
-      doc.rect(ml, y, usable, altoObs, 'FD');
-      if (obs.length) { normal(8); tc(15, 27, 45); doc.text(obs, ml + 3, y + 5); }
-      y += altoObs + 4;
-
-      // FIRMAS
-      pageCheck(50);
-      secTitle('IV. FIRMAS');
-      const sw = usable / 2 - 4, fx = ml;
-      fc(249, 250, 251); dc(209, 213, 221);
-      doc.rect(fx, y, sw, 40, 'FD');
-      bold(7); tc(102, 112, 130);
-      doc.text('CONDUCTOR', fx + 3, y + 4.5);
-      if (e.firma) {
-        /* La firma entera, sin estirarla */
-        const maxW = sw - 6, maxH = 26, k = Math.min(maxW / e.firma.ancho, maxH / e.firma.alto);
-        const w = e.firma.ancho * k, h = e.firma.alto * k;
-        try { doc.addImage(e.firma.url, 'JPEG', fx + 3 + (maxW - w) / 2, y + 6 + (maxH - h) / 2, w, h); } catch (x) { /* sin firma */ }
+      // OBSERVACIONES: si son largas, siguen en la hoja siguiente
+      if (ver('observaciones')) {
+        normal(8.3);
+        const obs = v.observaciones ? doc.splitTextToSize(T(v.observaciones), U - 6) : [];
+        cabe(5.6 + Math.min(Math.max(16, obs.length * 3.7 + 3.6), 40));
+        abrirMarco();
+        titulo('Observaciones');
+        const y1 = y, hoja1 = doc.getNumberOfPages();
+        continua = () => { abrirMarco(); titulo('Observaciones (continúa)'); };
+        y += 1.8;
+        if (!obs.length) { normal(8); tc(GC); doc.text('Sin observaciones.', ml + 3, y + 3.2); y += 3.7; }
+        obs.forEach(l => { cabe(3.7); normal(8.3); tc(TI); doc.text(l, ml + 3, y + 3.2); y += 3.7; });
+        y = doc.getNumberOfPages() === hoja1 ? Math.max(y + 1.8, y1 + 16) : y + 1.8;
+        cerrarMarco();
+        continua = null;
+        y += 2.6;
       }
-      fc(209, 213, 221); doc.rect(fx, y + 34, sw, 0.5, 'F');
-      normal(8); tc(15, 27, 45);
-      doc.text(T(v.nombre || ''), fx + 3, y + 39);
-      y += 44;
 
-      // PIE: la hora en que lo recibió el sistema y desde qué IP
-      const total = doc.getNumberOfPages();
-      const pie = T(codigo + ' - Recibido en el sistema: ' + Fecha.colombia(e.recibido) + (e.ip ? ' - IP ' + e.ip : '') + ' - Envio ' + e.id.slice(0, 8));
-      for (let p = 1; p <= total; p++) {
+      // FIRMAS: la del conductor, hecha en el celular, y la del supervisor al imprimir
+      cabe(5.6 + 35);
+      abrirMarco();
+      titulo('Firmas');
+      const fw = (U - 12) / 2, f1 = ml + 3, f2 = ml + 3 + fw + 6, ly = y + 3 + 21 + 1;
+      if (e.firma) {
+        const k = Math.min(62 / e.firma.ancho, 19 / e.firma.alto), w = e.firma.ancho * k, h = e.firma.alto * k;
+        try { doc.addImage(e.firma.url, 'JPEG', f1 + (fw - w) / 2, y + 3 + (21 - h) / 2, w, h); } catch (x) { /* sin firma */ }
+      }
+      dc(TI); doc.setLineWidth(0.22); doc.line(f1, ly, f1 + fw, ly); doc.line(f2, ly, f2 + fw, ly);
+      bold(8); tc(TI);
+      doc.text(linea(v.nombre || 'Conductor', fw), f1 + fw / 2, ly + 4.2, { align: 'center' });
+      doc.text(linea(v.supervisor || 'Supervisor', fw), f2 + fw / 2, ly + 4.2, { align: 'center' });
+      normal(6.8); tc(GC);
+      doc.text(T('Conductor' + (v.documento ? ' · CC ' + cedulaTxt(v.documento) : '') + (e.firma ? ' · firmó en el celular' : ' · sin firma')), f1 + fw / 2, ly + 7.4, { align: 'center' });
+      doc.text(T('Revisado por · firma y fecha al imprimir'), f2 + fw / 2, ly + 7.4, { align: 'center' });
+      y = ly + 10;
+      cerrarMarco();
+      y += 2.6;
+
+      // TRAZABILIDAD: dónde y cuándo llegó
+      const u = ev.ubicacion, cel = ev.hora ? Fecha.colombia(ev.hora) : '';
+      const traz = [['Recibido en el sistema', recibido],
+        ['Hora en el celular', !cel ? '-' : cel.slice(0, 10) === recibido.slice(0, 10) ? cel.slice(11) : cel],
+        ['IP', e.ip || '-'], ['Celular', ev.celular || '-'],
+        ['Ubicación', u ? Number(u.lat).toFixed(5) + ', ' + Number(u.lng).toFixed(5) + (u.precision ? ' (± ' + u.precision + ' m)' : '') : 'Sin ubicación (no dio el permiso)'],
+        ['Envío', e.id]];
+      cabe(5.6 + 16.4);
+      abrirMarco();
+      titulo('Trazabilidad', 'Evidencia de dónde y cuándo llegó');
+      const cw3 = U / 3;
+      dc(LN); doc.setLineWidth(0.18);
+      doc.line(ml, y + 8.2, W - mr, y + 8.2);
+      doc.line(ml + cw3, y, ml + cw3, y + 16.4);
+      doc.line(ml + cw3 * 2, y, ml + cw3 * 2, y + 16.4);
+      traz.forEach((c, i) => {
+        const tx = ml + (i % 3) * cw3, ty = y + Math.floor(i / 3) * 8.2;
+        bold(6); tc(O); doc.text(T(c[0].toUpperCase()), tx + 2, ty + 3);
+        normal(7.4); tc(TI); doc.text(linea(c[1], cw3 - 4), tx + 2, ty + 6.6);
+      });
+      y += 16.4;
+      cerrarMarco();
+
+      // En cada hoja: el número de la página y el pie con la trazabilidad
+      const hojas = doc.getNumberOfPages(), pie = T(recibido + (e.ip ? ' · IP ' + e.ip : '') + ' · Envío ' + e.id.slice(0, 8));
+      for (let p = 1; p <= hojas; p++) {
         doc.setPage(p);
-        fc(15, 27, 45); doc.rect(0, 289, pw, 8, 'F');
-        normal(6.5); tc(102, 112, 130);
-        doc.text(pie, ml, 294);
-        doc.text('Pagina ' + p + ' de ' + total, pw - mr, 294, { align: 'right' });
+        bold(7.5); tc(DK); doc.text(p + ' de ' + hojas, W - mr - 2.4, 9 + 15 + 3.4, { align: 'right' });
+        dc(LN); doc.setLineWidth(0.22); doc.line(ml, 284, W - mr, 284);
+        bold(6.4); tc(DK); doc.text('Recibido en el sistema', ml, 287.4);
+        const x = ml + doc.getTextWidth('Recibido en el sistema ');
+        normal(6.4); tc(GC); doc.text(pie, x, 287.4);
+        doc.text(T('Generado por el Sistema de Gestión de Flota de SINUGRAVAS S.A.S. · flota.sinugravas.com'), ml, 290.6);
+        bold(7); tc(DK); doc.text(T('Página ' + p + ' de ' + hojas), W - mr, 290.6, { align: 'right' });
       }
       return new Uint8Array(doc.output('arraybuffer'));
     },
-    nombre: e => 'INSPECCION_' + e.vista.placa + '_' + e.vista.fecha + '.pdf'
+    nombre: e => 'INSPECCION_' + (e.vista.placa || 'SIN-PLACA') + '_' + e.vista.fecha + '.pdf'
   };
 
   const aBase64 = bytes => {
@@ -7024,7 +7720,7 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
       const l = Cola.lista, caja = $('pendientes');
       caja.hidden = !l.length;
       if (!l.length) return;
-      const quien = l.map(e => esc(e.vista.placa) + ' del ' + Fecha.dmy(e.vista.fecha)).join(', ');
+      const quien = l.map(e => esc(e.vista.placa ? placaTxt(e.vista.placa) : 'Sin placa') + ' del ' + Fecha.dmy(e.vista.fecha)).join(', ');
       const solo = l.every(e => e.etapa !== 'enviar');
       $('pendTxt').innerHTML = '<b>' + (l.length === 1 ? 'Un preoperacional' : l.length + ' preoperacionales') + ' sin terminar de enviar</b> (' + quien + '). ' +
         (solo ? 'Ya llegó al sistema; falta subir el PDF. ' : 'Quedó guardado en este celular. ') +
@@ -7035,41 +7731,42 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
   };
 
   /* ==========================================================================
-     Pantallas: el formulario, «enviado» y «guardado en el celular»
+     Pantallas: cargando, el formulario (en tres pasos) y «enviado»
      ========================================================================== */
   const Pantalla = {
     actual: 'cargando',
     envio: null,   // el envío que se muestra en «enviado»
     ver(cual) {
       this.actual = cual;
+      const form = cual === 'form';
       $('cargando').hidden = cual !== 'cargando';
       $('cargaError').hidden = cual !== 'error';
-      $('formulario').hidden = cual !== 'form';
-      $('barra').hidden = cual !== 'form';
-      $('progreso').hidden = cual !== 'form';
       $('listo').hidden = cual !== 'listo';
-    },
-    resultado(e) {
-      const n = { B: 0, R: 0, M: 0, 'N/A': 0 }, R = e.p.respuestas || {};
-      Object.keys(R).forEach(k => { n[R[k]] = (n[R[k]] || 0) + 1; });
-      const total = (e.vista.secciones || []).reduce((s, x) => s + (x.items || []).length, 0);
-      const sin = total - n.B - n.R - n.M - n['N/A'];
-      return n.B + ' bueno · ' + n.R + ' regular · ' + n.M + ' malo · ' + n['N/A'] + ' no aplica' + (sin > 0 ? ' · ' + sin + ' sin marcar' : '');
+      $('pasos').hidden = !form;
+      $('barra').hidden = !form;
+      $('apFila').hidden = cual === 'listo';
+      ['paso1', 'paso2', 'paso3'].forEach((p, i) => { $(p).hidden = !form || i + 1 !== paso; });
+      document.body.classList.toggle('blanco', cual === 'listo');
+      if (!form) $('apSub').textContent = 'Inspección preoperacional';
     },
     mostrar(e) {
       this.envio = e;
-      const llego = e.etapa !== 'enviar';
-      $('listoIc').className = 'listo-ic' + (llego ? '' : ' esp');
-      $('listoIc').textContent = llego ? '✓' : '📤';
+      const llego = e.etapa !== 'enviar', v = e.vista, R = e.p.respuestas || {}, ops = opcionesDe({ opciones: v.opciones });
+      const nov = Object.keys(R).filter(k => { const o = ops.find(x => x.id === R[k]); return o && (o.cuenta === 'novedad' || o.cuenta === 'grave'); }).length;
+      $('listoIc').className = 'ok-ic' + (llego ? '' : ' esp');
+      $('listoIc').innerHTML = llego ? '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : '📤';
       $('listoTit').textContent = llego ? 'Preoperacional enviado' : 'Quedó guardado en el celular';
       $('listoTxt').textContent = llego ? 'Quedó registrado en el Sistema de Gestión de Flota.'
-        : (e.error && e.error !== 'sin señal' ? 'El sistema no lo recibió todavía (' + e.error + '). '
-          : 'No hay señal en este momento. ') + 'Se envía solo apenas se pueda: con esta página abierta, o la próxima vez que la abra.';
-      const v = e.vista, filas = [['Vehículo', v.placa + ' · ' + v.tipo], ['Fecha', Fecha.dmy(v.fecha)], ['Conductor', v.nombre],
-        ['Resultado', this.resultado(e)]];
-      if (v.km) filas.push(['Kilometraje', miles(v.km) + ' km']);
-      if (llego) filas.push(['Recibido', Fecha.colombia(e.recibido)]);
-      $('listoDatos').innerHTML = filas.map(f => '<dt>' + esc(f[0]) + '</dt><dd>' + esc(f[1]) + '</dd>').join('');
+        : (e.error && e.error !== 'sin señal' ? 'El sistema no lo recibió todavía (' + e.error + '). ' : 'No hay señal en este momento. ') +
+          'Se envía solo apenas se pueda: con esta página abierta, o la próxima vez que la abra.';
+      const filas = [];
+      if (v.placa) filas.push(['Vehículo', '<span class="placa peq">' + esc(placaTxt(v.placa)) + '</span>']);
+      else if (v.tipo) filas.push(['Vehículo', esc(v.tipo)]);
+      filas.push(['Fecha', esc(Fecha.dmy(v.fecha))]);
+      if (v.nombre) filas.push(['Conductor', esc(v.nombre)]);
+      filas.push(['Resultado', nov ? nov + (nov === 1 ? ' novedad' : ' novedades') : 'Sin novedades']);
+      if (llego) filas.push(['Recibido', esc(Fecha.colombia(e.recibido).replace(/^\S+ /, '')) + ' · hora del sistema']);
+      $('listoDatos').innerHTML = filas.map(f => '<div class="fila"><span>' + f[0] + '</span><b>' + f[1] + '</b></div>').join('');
       const falta = llego && e.etapa !== 'listo';
       $('listoNota').hidden = !falta;
       $('listoNota').textContent = falta ? 'El PDF termina de subir al sistema apenas haya señal.' : '';
@@ -7081,16 +7778,17 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
         a.download = Pdf.nombre(e);
       } else a.removeAttribute('href');
       this.ver('listo');
+      window.scrollTo(0, 0);
     },
     /* Un envío avanzó: si es el que está en pantalla, se actualiza; si no, un aviso */
     avanzo(e) {
       if (this.actual === 'listo' && this.envio && this.envio.id === e.id) { this.mostrar(e); return; }
-      if (e.etapa === 'listo' && e.id !== enviandoId) showToast('✅ Se envió el preoperacional de ' + e.vista.placa + ' del ' + Fecha.dmy(e.vista.fecha));
+      if (e.etapa === 'listo' && e.id !== enviandoId) showToast('✅ Se envió el preoperacional ' + (e.vista.placa ? 'de ' + placaTxt(e.vista.placa) + ' ' : '') + 'del ' + Fecha.dmy(e.vista.fecha));
     },
     rechazado(e, motivo) {
       if (e.id === enviandoId) { motivoRechazo = motivo; return; }
       if (this.actual === 'listo' && this.envio && this.envio.id === e.id) this.ver('form');
-      aviso('No se pudo enviar el preoperacional de ' + e.vista.placa + ' del ' + Fecha.dmy(e.vista.fecha), motivo);
+      aviso('No se pudo enviar el preoperacional ' + (e.vista.placa ? 'de ' + placaTxt(e.vista.placa) + ' ' : '') + 'del ' + Fecha.dmy(e.vista.fecha), motivo);
     }
   };
 
@@ -7108,7 +7806,7 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
       const bd = document.createElement('div');
       bd.className = 'dlg-bd';
       bd.innerHTML = '<div class="dlg" role="dialog" aria-modal="true"><h3>' + esc(titulo) + '</h3>' + cuerpo + '<div class="dlg-btns">' +
-        botones.map((b, i) => '<button type="button" class="bt' + (i === botones.length - 1 ? ' pri' : '') + '" data-r="' + i + '">' + esc(b) + '</button>').join('') +
+        botones.map((b, i) => '<button type="button" class="' + (i === botones.length - 1 ? 'pri' : '') + '" data-r="' + i + '">' + esc(b) + '</button>').join('') +
         '</div></div>';
       bd.addEventListener('click', ev => {
         const b = ev.target.closest('[data-r]');
@@ -7117,35 +7815,44 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
         listo(b ? +b.dataset.r : -1);
       });
       document.body.appendChild(bd);
-      bd.querySelector('.bt.pri').focus();
+      bd.querySelector('button.pri').focus();
     });
   }
   const aviso = (titulo, texto) => dialogo(titulo, '<p>' + esc(texto) + '</p>', ['Entendido']);
 
-  // VALIDAR
+  /* ==========================================================================
+     Revisar antes de seguir y antes de enviar
+     ========================================================================== */
+  /* Lo obligatorio del paso 1. Si falta algo, se dice qué y se lleva ahí. */
+  function validarPaso1() {
+    const falta = (k, el, txt) => {
+      if (paso !== 1) irPaso(1);
+      showToast('⚠️ ' + (txt || 'Falta: ' + CAMPOS[k].nombre), 'err');
+      setTimeout(() => { if (el) el.focus(); }, 60);
+      return false;
+    };
+    if (pide('placa') && !$('placa').value) return falta('placa', $('placa'));
+    if (pide('tipo') && !tipoActual()) return campo('placa').mostrar ? falta('placa', $('placa')) : falta('tipo', $('tipoVeh'));
+    if (campo('fecha').mostrar) {
+      const f = $('fecha').value, hoy = Fecha.hoy();
+      if (!f && pide('fecha')) { $('cFecha').hidden = false; return falta('fecha', $('fecha')); }
+      if (f && (f > Fecha.sumar(hoy, 1) || f < Fecha.sumar(hoy, -60))) { $('cFecha').hidden = false; return falta('fecha', $('fecha'), 'La fecha de inspección no es válida'); }
+    }
+    if (campo('kilometraje').mostrar) {
+      const km = $('km'), v = km.value.trim();
+      if ((km.validity && km.validity.badInput) || (v && !/^\d{1,12}(\.\d{1,2})?$/.test(v))) return falta('kilometraje', km, 'El kilometraje no es válido: escríbalo solo con números');
+      if (!v && pide('kilometraje')) return falta('kilometraje', km);
+    }
+    if ((pide('documento') || pide('nombre')) && !$('cond').value) return falta(campo('nombre').mostrar ? 'nombre' : 'documento', $('cond'));
+    if (pide('licencia') && !$('licencia').value.trim()) return falta('licencia', $('licencia'));
+    if (pide('categoria') && !$('catLic').value) return falta('categoria', $('catLic'));
+    if (pide('vigencia') && !$('vigLic').value) return falta('vigencia', $('vigLic'));
+    return true;
+  }
+
   function validar() {
-    const req = [['placa', 'Placa'], ['tipoVeh', 'Tipo de Vehículo'], ['fecha', 'Fecha'], ['docId', 'Documento Identidad'], ['nombre', 'Nombre del Conductor']];
-    Object.keys(CAMPOS).forEach(k => { const c = campo(k); if (c.mostrar && c.obligatorio) req.push([CAMPOS[k].el, CAMPOS[k].nombre]); });
-    for (const [id, nom] of req) {
-      const el = $(id);
-      if (!String(el.value).trim() && !(el.validity && el.validity.badInput)) {
-        showToast('⚠️ Campo requerido: ' + nom, 'err');
-        el.focus();
-        return false;
-      }
-    }
-    const km = $('km');
-    if (campo('kilometraje').mostrar && ((km.validity && km.validity.badInput) || (km.value.trim() && !/^\d{1,12}(\.\d{1,2})?$/.test(km.value.trim())))) {
-      showToast('⚠️ El kilometraje no es válido: escríbalo solo con números', 'err');
-      km.focus();
-      return false;
-    }
-    const f = $('fecha').value, hoy = Fecha.hoy();
-    if (f > Fecha.sumar(hoy, 1) || f < Fecha.sumar(hoy, -60)) {
-      showToast('⚠️ La fecha de inspección no es válida', 'err');
-      $('fecha').focus();
-      return false;
-    }
+    if (!validarPaso1()) return false;
+    if (pide('observaciones') && !$('obs').value.trim()) { showToast('⚠️ Falta: Observaciones', 'err'); $('obs').focus(); return false; }
     return true;
   }
 
@@ -7155,15 +7862,15 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
     const total = Object.keys(ST).length, faltan = Object.values(ST).filter(v => !v).length;
     if (faltan) l.push(faltan === total ? 'No ha marcado ningún ítem de la verificación.' : 'Faltan ' + faltan + ' de ' + total + ' ítems por marcar.');
     if (!Firma.hay()) l.push('No ha firmado.');
-    const u = unidad($('placa').value), km = $('km').value.trim();
+    const u = campo('placa').mostrar ? unidad($('placa').value) : null, km = $('km').value.trim();
     if (u && u.km != null && km !== '' && campo('kilometraje').mostrar) {
       const nuevo = Number(km), ultimo = Number(u.km), cuando = u.km_fecha ? ' el ' + Fecha.dmy(u.km_fecha) : '';
-      if (nuevo < ultimo) l.push('El kilometraje (' + miles(nuevo) + ') es menor que el último registrado para ' + u.placa + ': ' + miles(ultimo) + ' km' + cuando + '.');
-      else if (nuevo - ultimo > 5000) l.push('El kilometraje (' + miles(nuevo) + ') está ' + miles(nuevo - ultimo) + ' km por encima del último registrado para ' + u.placa + ' (' + miles(ultimo) + ' km' + cuando + ').');
+      if (nuevo < ultimo) l.push('El kilometraje (' + kmTxt(km) + ') es menor que el último registrado para ' + placaTxt(u.placa) + ': ' + kmTxt(u.km) + ' km' + cuando + '.');
+      else if (nuevo - ultimo > 5000) l.push('El kilometraje (' + kmTxt(km) + ') está ' + miles(nuevo - ultimo) + ' km por encima del último registrado para ' + placaTxt(u.placa) + ' (' + kmTxt(u.km) + ' km' + cuando + ').');
     }
-    const vig = $('vigLic').value, f = $('fecha').value;
-    if (vig && f && vig < f && campo('vigencia').mostrar) l.push('La licencia de conducción aparece vencida desde el ' + Fecha.dmy(vig) + '.');
-    if (f && f !== Fecha.hoy()) l.push('La fecha de la inspección (' + Fecha.dmy(f) + ') no es la de hoy.');
+    const vig = $('vigLic').value, f = campo('fecha').mostrar && $('fecha').value ? $('fecha').value : Fecha.hoy();
+    if (vig && vig < f && campo('vigencia').mostrar) l.push('La licencia de conducción aparece vencida desde el ' + Fecha.dmy(vig) + '.');
+    if (campo('fecha').mostrar && f !== Fecha.hoy()) l.push('La fecha de la inspección (' + Fecha.dmy(f) + ') no es la de hoy.');
     return l;
   }
 
@@ -7173,34 +7880,44 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
     if (enviandoId || !validar()) return;
     const av = avisos();
     if (av.length && await dialogo('Antes de enviar, revise', '<ul>' + av.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>', ['Revisar', 'Enviar así']) !== 1) return;
-    const btn = $('submitBtn');
+    const btn = $('btnSig');
     btn.disabled = true;
-    btn.textContent = '⏳ Enviando...';
+    $('btnAtras').disabled = true;
+    btn.textContent = 'Enviando…';
     enviandoId = nuevoId();
     motivoRechazo = null;
     try {
       const [ubic, cel] = await Promise.all([Ubicacion.obtener(8000), celular()]);
-      const u = unidad($('placa').value), c = conductor($('nombre').value), f = D.formato;
-      const ver = k => campo(k).mostrar;
-      const respuestas = {};
-      Object.keys(ST).forEach(k => { if (ST[k]) respuestas[k] = ST[k]; });
+      const ver = k => campo(k).mostrar, f = D.formato;
+      /* Lo que no se muestra no se manda: sin placa ni conductor, si así quedó el formato */
+      const u = ver('placa') ? unidad($('placa').value) : null;
+      const c = ver('documento') || ver('nombre') ? conductor($('cond').value) : null;
+      /* Las respuestas, y la nota de cada novedad que la tenga */
+      const respuestas = {}, notas = {};
+      Object.keys(ST).forEach(k => {
+        if (!ST[k]) return;
+        respuestas[k] = ST[k];
+        const t = (NOTAS[k] || '').trim();
+        if (t && esNovedad(ST[k])) notas[k] = t.slice(0, 300);
+      });
       const datos = {
-        fecha: $('fecha').value,
+        fecha: ver('fecha') && $('fecha').value ? $('fecha').value : Fecha.hoy(),
         kilometraje: ver('kilometraje') ? $('km').value.trim() : '',
-        tipo_vehiculo: $('tipoVeh').value,
-        licencia: ver('licencia') ? textoDe($('licencia')) : '',
+        tipo_vehiculo: tipoActual(),
+        licencia: ver('licencia') ? $('licencia').value.trim() : '',
         categoria: ver('categoria') ? $('catLic').value : '',
         vigencia_licencia: ver('vigencia') ? $('vigLic').value : '',
         observaciones: ver('observaciones') ? $('obs').value.trim() : ''
       };
       const e = {
         id: enviandoId, etapa: 'enviar', intentos: 0, creado: Date.now(),
-        p: Object.assign({ unidad_id: u.id, conductor_id: c.id, respuestas }, datos, {
+        p: Object.assign({ unidad_id: u ? u.id : '', conductor_id: c ? c.id : '', respuestas, notas }, datos, {
           evidencia: { celular: cel, hora: Fecha.conZona(new Date()), ubicacion: ubic ? { lat: ubic.lat, lng: ubic.lng, precision: ubic.precision } : undefined }
         }),
-        vista: { placa: u.placa, tipo: datos.tipo_vehiculo, fecha: datos.fecha, km: datos.kilometraje, documento: cedulaDe(c), nombre: c.nombre,
+        vista: { placa: u ? u.placa : '', tipo: datos.tipo_vehiculo, fecha: datos.fecha, km: datos.kilometraje, documento: cedulaDe(c), nombre: c ? c.nombre : '',
           licencia: datos.licencia, categoria: datos.categoria, vigencia: datos.vigencia_licencia, observaciones: datos.observaciones,
-          supervisor: f.supervisor || '', codigo: f.codigo, version: f.version, secciones: f.secciones },
+          supervisor: f.supervisor || '', codigo: f.codigo, version: f.version, fecha_creacion: f.fecha_creacion, secciones: f.secciones,
+          opciones: opcionesDe(f), colores: coloresDe(f), campos: f.campos || {} },
         firma: Firma.jpeg()
       };
       Cola.agregar(e);
@@ -7210,23 +7927,25 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
       } else {
         tocado = false;
         Pantalla.mostrar(e);
-        window.scrollTo(0, 0);
       }
     } catch (err) {
       showToast('❌ Error: ' + err.message, 'err');
     } finally {
       enviandoId = null;
       btn.disabled = false;
-      btn.textContent = 'Enviar';
+      $('btnAtras').disabled = false;
+      btn.textContent = BOTON[paso - 1];
     }
   }
 
   function limpiar() {
-    ['placa', 'tipoVeh', 'km', 'docId', 'nombre', 'licencia', 'catLic', 'vigLic', 'obs'].forEach(id => { $(id).value = ''; });
+    ['placa', 'tipoVeh', 'km', 'cond', 'licencia', 'catLic', 'vigLic', 'obs'].forEach(id => { $(id).value = ''; });
     $('fecha').value = Fecha.hoy();
-    document.querySelectorAll('.brm button').forEach(b => b.classList.remove('b-act', 'r-act', 'm-act', 'na-act'));
-    Object.keys(ST).forEach(k => { ST[k] = null; });
-    updateProg();
+    $('cFecha').hidden = true;
+    pintarFecha();
+    pintarLista();
+    elegirPlaca('');
+    elegirConductor('');
     Firma.borrar();
     tocado = false;
   }
@@ -7256,8 +7975,9 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
     D.unidades = d.unidades || [];
     D.conductores = d.conductores || [];
     pintarFormulario();
+    paso = 1;
     Pantalla.ver('form');
-    Firma.medir();
+    irPaso(1);
     if (guardado) showToast('Sin señal: se cargó el formulario guardado en este celular', 'err');
     return true;
   }
@@ -7265,7 +7985,7 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
   return {
     activo: () => new URLSearchParams(location.search).has('preoperacional'),
     iniciar() {
-      document.title = 'Inspección Preoperacional — SINÚGRAVAS';
+      document.title = 'Inspección preoperacional · SINUGRAVAS';
       const vp = document.querySelector('meta[name="viewport"]');
       if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
       /* Solo se ve el formulario: los estilos de la plataforma se quitan y van los suyos */
@@ -7275,21 +7995,45 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
       document.head.appendChild(estilo);
       document.documentElement.removeAttribute('data-theme');
       document.body.innerHTML = HTML;
-      $('checklistBody').addEventListener('click', ev => { const b = ev.target.closest('button[data-i]'); if (b) setBRM(b); });
-      $('placa').addEventListener('change', ev => { const u = unidad(ev.target.value); $('tipoVeh').value = u ? claseDe(u) : ''; });
-      $('docId').addEventListener('change', ev => elegirConductor(ev.target.value));
-      $('nombre').addEventListener('change', ev => elegirConductor(ev.target.value));
-      $('formulario').addEventListener('input', () => { tocado = true; });
-      $('clearC').addEventListener('click', () => Firma.borrar());
-      $('submitBtn').addEventListener('click', enviar);
+      /* El logo: la «S» arriba (y en la pestaña) y el logo completo al enviar */
+      $('listoLogo').src = MARCA.logo;
+      MARCA.preparar().then(() => { if (MARCA.emblema) { $('apEmb').src = MARCA.emblema; $('apEmb').hidden = false; } });
+      trampa = Boolean(history.state && history.state.preop === 'paso');
+
+      $('placa').addEventListener('change', ev => elegirPlaca(ev.target.value));
+      $('cond').addEventListener('change', ev => elegirConductor(ev.target.value));
+      $('km').addEventListener('input', ayudaKm);
+      $('fecha').addEventListener('change', pintarFecha);
+      $('fechaCambiar').addEventListener('click', () => { $('cFecha').hidden = false; $('fecha').focus(); });
+      $('secciones').addEventListener('click', ev => {
+        const b = ev.target.closest('.res button');
+        if (b) { responder(b); return; }
+        const h = ev.target.closest('.sec-h');
+        if (h) h.parentElement.classList.toggle('abierta');
+      });
+      $('secciones').addEventListener('input', ev => { const k = ev.target.dataset.nota; if (k) NOTAS[k] = ev.target.value; });
+      document.querySelector('.app').addEventListener('input', () => { tocado = true; });
+      document.querySelector('.app').addEventListener('change', () => { tocado = true; });
+      document.querySelector('.pasos-b').addEventListener('click', ev => {
+        const b = ev.target.closest('[data-paso]');
+        if (b && +b.dataset.paso < paso && !enviandoId) irPaso(+b.dataset.paso);
+      });
+      $('btnSig').addEventListener('click', siguiente);
+      $('btnAtras').addEventListener('click', () => { if (paso > 1) irPaso(paso - 1); });
+      window.addEventListener('popstate', ev => {
+        trampa = Boolean(ev.state && ev.state.preop === 'paso');
+        if (Pantalla.actual === 'form' && !trampa && paso > 1 && !enviandoId) irPaso(paso - 1);
+      });
+      $('clearC').addEventListener('click', () => { Firma.borrar(); pintarPasos(); });
+      $('canvasC').addEventListener('pointerup', pintarPasos);
       $('pendBtn').addEventListener('click', () => Cola.procesar());
       $('reintentarCarga').addEventListener('click', async () => { if (await cargarDatos()) Cola.procesar(); });
       $('listoOtro').addEventListener('click', () => {
         limpiar();
         Pantalla.envio = null;
+        paso = 1;
         Pantalla.ver('form');
-        Firma.medir();
-        window.scrollTo(0, 0);
+        irPaso(1);
       });
       window.addEventListener('online', () => Cola.procesar());
       document.addEventListener('visibilitychange', () => { if (!document.hidden && Cola.lista.length) Cola.procesar(); });
@@ -7302,6 +8046,7 @@ body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-s
       Cola.cargar();
       Avisos.pintar();
       Pdf.cargar().catch(() => { /* se intenta de nuevo al armar el PDF */ });
+      Pdf.logo();
       Ubicacion.calentar();
       cargarDatos().then(() => Cola.procesar());
     }
