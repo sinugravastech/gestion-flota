@@ -1024,20 +1024,35 @@ html.sb-mini .sb-salir{display:none}
 .plano .det{fill:none;stroke:var(--ink-400);stroke-width:1.2;vector-effect:non-scaling-stroke}
 .plano .zona{cursor:pointer}
 .plano .zona.quieta,.plano.mini .zona{cursor:default}
-.plano .zona.h1 .forma{fill:#dfe6f7}
-.plano .zona.h2 .forma{fill:#b3c4ec}
-.plano .zona.h3 .forma{fill:#7d99d8}
+/* Los arreglos, de amarillo a rojo como un mapa de calor (1 · 2 · 3 a 4 · 5 o
+   más); el azul queda solo para la parte escogida, para que no se confundan */
+.plano .zona.h1 .forma{fill:#fde8a8}
+.plano .zona.h2 .forma{fill:#f8c56f}
+.plano .zona.h3 .forma{fill:#ef8f4b}
+.plano .zona.h4 .forma{fill:#d4513a}
 .plano .zona:not(.quieta):hover .forma{stroke:var(--brand-600)}
-.plano .zona.sel .forma{stroke:var(--brand-700);stroke-width:3}
+.plano .zona.sel .forma{stroke:var(--brand-600);stroke-width:3.5}
+/* La parte escogida: un halo azul alrededor, su nombre arriba y las demás un poco apagadas */
+.plano .zona{transition:opacity .15s}
+.plano.con-foco .zona:not(.sel){opacity:.5}
+.plano .halo{pointer-events:none}
+.plano .halo .forma{fill:none;stroke:rgba(42,82,173,.3);stroke-width:13;vector-effect:non-scaling-stroke}
+.plano .halo .det{display:none}
+.plano .etq{pointer-events:none}
+.plano .etq rect,.plano .etq path{fill:var(--brand-600)}
+.plano .etq text{fill:#fff;font-family:var(--font);font-size:18px;font-weight:700}
 .plano .alerta{pointer-events:none}
 .plano .alerta circle{fill:var(--dang-500);stroke:#fff;stroke-width:2}
 .plano .alerta text{fill:#fff;font-size:13px;font-weight:800;font-family:var(--font)}
 html[data-theme="dark"] .plano .forma{stroke:#a7b6c2}
 html[data-theme="dark"] .plano .det{stroke:#5d6f7d}
-html[data-theme="dark"] .plano .zona.h1 .forma{fill:#25365c}
-html[data-theme="dark"] .plano .zona.h2 .forma{fill:#33528f}
-html[data-theme="dark"] .plano .zona.h3 .forma{fill:#4d72c4}
+html[data-theme="dark"] .plano .zona.h1 .forma{fill:#6f6233}
+html[data-theme="dark"] .plano .zona.h2 .forma{fill:#9a7330}
+html[data-theme="dark"] .plano .zona.h3 .forma{fill:#b8652f}
+html[data-theme="dark"] .plano .zona.h4 .forma{fill:#c9483a}
 html[data-theme="dark"] .plano .zona.sel .forma{stroke:var(--brand-300)}
+html[data-theme="dark"] .plano .halo .forma{stroke:rgba(134,161,224,.35)}
+html[data-theme="dark"] .plano .etq rect,html[data-theme="dark"] .plano .etq path{fill:var(--brand-500)}
 html[data-theme="dark"] .plano .alerta circle{stroke:var(--surface)}
 .plano-caja{background:radial-gradient(130% 100% at 15% 0%,var(--ph-a),var(--ph-b));border-radius:var(--radius);padding:18px 12px 6px}
 .plano-caja.claro{background:var(--surface-2);border:1px solid var(--border)}
@@ -1054,16 +1069,20 @@ html[data-theme="dark"] .plano .alerta circle{stroke:var(--surface)}
 .pl-bar{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;margin-bottom:12px}
 .pl-bar .lbl{font-size:11.5px;color:var(--text-3);font-weight:600}
 .pl-bar .seg + .lbl{margin-left:8px}
-.pl-ley{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;font-size:11.5px;color:var(--text-3);margin-top:10px}
-.pl-esc{display:inline-flex;gap:3px}
-.pl-esc i,.zchip i{display:inline-block;width:16px;height:12px;border-radius:3px;border:1px solid var(--ink-300);background:var(--surface)}
-.pl-esc i.h1,.zchip.h1 i{background:#dfe6f7}
-.pl-esc i.h2,.zchip.h2 i{background:#b3c4ec}
-.pl-esc i.h3,.zchip.h3 i{background:#7d99d8}
-html[data-theme="dark"] .pl-esc i,html[data-theme="dark"] .zchip i{border-color:var(--border-strong)}
-html[data-theme="dark"] .pl-esc i.h1,html[data-theme="dark"] .zchip.h1 i{background:#25365c}
-html[data-theme="dark"] .pl-esc i.h2,html[data-theme="dark"] .zchip.h2 i{background:#33528f}
-html[data-theme="dark"] .pl-esc i.h3,html[data-theme="dark"] .zchip.h3 i{background:#4d72c4}
+/* La leyenda dice qué es cada color: cuántos arreglos o cuántos pesos */
+.pl-ley{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--text-2);margin-top:10px}
+.pl-ley > span{display:inline-flex;align-items:center;gap:6px}
+.pl-ley-t{font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em}
+.pl-ley i,.zchip i{display:inline-block;width:18px;height:13px;border-radius:3px;border:1px solid var(--ink-300);background:var(--surface)}
+.pl-ley i.h1,.zchip.h1 i{background:#fde8a8}
+.pl-ley i.h2,.zchip.h2 i{background:#f8c56f}
+.pl-ley i.h3,.zchip.h3 i{background:#ef8f4b}
+.pl-ley i.h4,.zchip.h4 i{background:#d4513a}
+html[data-theme="dark"] .pl-ley i,html[data-theme="dark"] .zchip i{border-color:var(--border-strong)}
+html[data-theme="dark"] .pl-ley i.h1,html[data-theme="dark"] .zchip.h1 i{background:#6f6233}
+html[data-theme="dark"] .pl-ley i.h2,html[data-theme="dark"] .zchip.h2 i{background:#9a7330}
+html[data-theme="dark"] .pl-ley i.h3,html[data-theme="dark"] .zchip.h3 i{background:#b8652f}
+html[data-theme="dark"] .pl-ley i.h4,html[data-theme="dark"] .zchip.h4 i{background:#c9483a}
 .pl-ley-al{display:inline-flex;align-items:center;gap:6px;margin-left:4px}
 .pl-ley-al em,.zchip .al{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--dang-500);color:#fff;
   font-size:10px;font-weight:800;font-style:normal}
@@ -1124,20 +1143,22 @@ html[data-theme="dark"] .pl-taller{color:var(--dang-500)}
 .pl-ll-t p{margin:0 0 7px;line-height:1.45}
 .llantas-v{width:100%;height:auto;display:block}
 .llantas-v .llanta{fill:var(--surface);stroke:var(--ink-700);stroke-width:1.5;cursor:pointer;transition:fill .15s}
-.llantas-v .llanta.h1{fill:#dfe6f7}
-.llantas-v .llanta.h2{fill:#b3c4ec}
-.llantas-v .llanta.h3{fill:#7d99d8}
+.llantas-v .llanta.h1{fill:#fde8a8}
+.llantas-v .llanta.h2{fill:#f8c56f}
+.llantas-v .llanta.h3{fill:#ef8f4b}
+.llantas-v .llanta.h4{fill:#d4513a}
 .llantas-v .llanta:hover{stroke:var(--brand-600)}
-.llantas-v .llanta.sel{stroke:var(--brand-700);stroke-width:3}
+.llantas-v .llanta.sel{stroke:var(--brand-600);stroke-width:3.5}
 .llantas-v .ll-chasis{fill:var(--surface-3);stroke:var(--ink-400);stroke-width:1.2}
 .llantas-v .ll-eje{stroke:var(--ink-400);stroke-width:4;stroke-linecap:round}
 .llantas-v .ll-num{fill:var(--surface);stroke:var(--ink-400);stroke-width:1.2}
 .llantas-v .ll-n{font-size:11px;font-weight:700;fill:var(--text-2);font-family:var(--font)}
 .llantas-v .ll-txt{font-size:11px;font-weight:700;letter-spacing:.1em;fill:var(--text-3);font-family:var(--font)}
 html[data-theme="dark"] .llantas-v .llanta{stroke:#a7b6c2}
-html[data-theme="dark"] .llantas-v .llanta.h1{fill:#25365c}
-html[data-theme="dark"] .llantas-v .llanta.h2{fill:#33528f}
-html[data-theme="dark"] .llantas-v .llanta.h3{fill:#4d72c4}
+html[data-theme="dark"] .llantas-v .llanta.h1{fill:#6f6233}
+html[data-theme="dark"] .llantas-v .llanta.h2{fill:#9a7330}
+html[data-theme="dark"] .llantas-v .llanta.h3{fill:#b8652f}
+html[data-theme="dark"] .llantas-v .llanta.h4{fill:#c9483a}
 html[data-theme="dark"] .llantas-v .llanta.sel{stroke:var(--brand-300)}
 /* En la ficha, arriba de la historia */
 .pl-ficha{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:20px;align-items:center}
@@ -1209,6 +1230,8 @@ html[data-theme="dark"] .reg-sel .zchip.on{background:var(--accent-soft);color:v
   .solo-web{display:none}
   .solo-cel{display:inline}
   .plano .zona,.zchip,.llantas-v .llanta,.uc-plano{-webkit-tap-highlight-color:transparent}
+  /* El nombre arriba de la parte escogida quedaría diminuto: ya lo dicen el botón de abajo y la parte marcada */
+  .plano .etq{display:none}
   /* Los indicadores, más pequeños */
   .mant-kpis{gap:8px;margin-bottom:12px}
   .mant-kpis-h{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -3916,12 +3939,16 @@ const Plano = {
     });
     return r;
   },
-  /* El color de cada parte: por arreglos (1, 2, 3 o más) o por gasto, frente a la que más gastó */
+  /* El color de cada parte: por arreglos (1 · 2 · 3 a 4 · 5 o más) o por
+     gasto, en cuartos del que más gastó */
+  NIVEL: n => (n >= 5 ? 4 : n >= 3 ? 3 : n || 0),
   niveles(pp, modo) {
     const max = Math.max.apply(null, Object.values(pp).map(x => x.gasto).concat([0])), out = {};
-    Object.keys(pp).forEach(k => { out[k] = modo === 'gasto' ? (max ? Math.ceil(3 * pp[k].gasto / max) : 0) : Math.min(3, pp[k].n); });
+    Object.keys(pp).forEach(k => { out[k] = modo === 'gasto' ? (max ? Math.ceil(4 * pp[k].gasto / max) : 0) : this.NIVEL(pp[k].n); });
     return out;
   },
+  /* «$ 7,3 M» o «$ 450.000» */
+  pesos: v => (v >= 1e6 ? '$ ' + (v / 1e6).toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' M' : Money.format(v)),
   /* De las partes a las zonas del dibujo: si dos partes comparten zona, manda la más alta */
   aZonas(k, porParte) {
     const out = {};
@@ -3973,30 +4000,47 @@ const Plano = {
 
   /* ---------------- El dibujo ---------------- */
   /* o: nivel y alertas por zona, sel (las zonas escogidas), mini (para ver,
-     sin tocar) y act/u (lo que hace el clic en una parte) */
+     sin tocar), act/u (lo que hace el clic en una parte), halo (alrededor de
+     lo escogido), foco (las demás, un poco apagadas) y etiqueta (el nombre
+     arriba de lo escogido) */
   svg(k, o) {
     o = o || {};
     const d = PLANOS[k], n = o.nivel || {}, sel = o.sel || [], al = o.alertas || {}, vis = o.partes || this.visibles(k);
     const g = ([z, forma]) => {
       const ps = vis.filter(p => p.zona === z), toca = ps.length > 0 && !o.mini && o.act;
-      return '<g class="zona h' + (n[z] || 0) + (sel.includes(z) ? ' sel' : '') + (toca ? '' : ' quieta') + '"' +
+      return (o.halo && sel.includes(z) ? '<g class="halo">' + forma + '</g>' : '') +
+        '<g class="zona h' + (n[z] || 0) + (sel.includes(z) ? ' sel' : '') + (toca ? '' : ' quieta') + '"' +
         (toca ? ' data-act="' + o.act + '" data-p="' + attr(ps[0].k) + '"' + (o.u ? ' data-u="' + attr(o.u) + '"' : '') : '') + '>' +
         (ps.length && !o.mini ? '<title>' + esc(ps.map(p => p.n).join(' · ')) + '</title>' : '') + forma + '</g>';
     };
     const marca = z => '<g class="alerta"><circle cx="' + d.marcas[z][0] + '" cy="' + d.marcas[z][1] + '" r="10"/><text x="' + d.marcas[z][0] +
       '" y="' + (d.marcas[z][1] + 4.5) + '" text-anchor="middle">!</text></g>';
-    return '<svg class="plano' + (o.mini ? ' mini' : '') + '" viewBox="' + d.vb + '" role="img" aria-label="' + attr('Plano: ' + d.nombre) + '">' +
-      '<path class="suelo" d="' + d.suelo + '"/>' + d.zonas.map(g).join('') +
-      Object.keys(al).filter(z => al[z] && d.marcas[z]).map(marca).join('') + '</svg>';
+    const etq = o.etiqueta && sel.length && d.marcas[sel[0]] ? this.etiqueta(d.marcas[sel[0]], o.etiqueta) : '';
+    return '<svg class="plano' + (o.mini ? ' mini' : '') + (o.foco && sel.length ? ' con-foco' : '') + '" viewBox="' + d.vb + '" role="img" aria-label="' +
+        attr('Plano: ' + d.nombre) + '">' + '<path class="suelo" d="' + d.suelo + '"/>' + d.zonas.map(g).join('') +
+      Object.keys(al).filter(z => al[z] && d.marcas[z]).map(marca).join('') + etq + '</svg>';
+  },
+  /* El nombre de lo escogido, en una etiqueta arriba de la parte (abajo, si arriba no cabe) */
+  etiqueta([x, y], txt) {
+    const w = Math.round(30 + txt.length * 10.6), x0 = Math.min(Math.max(x - w / 2, 24), 884 - w), arriba = y - 58 >= 42, y0 = arriba ? y - 58 : y + 16;
+    const punta = arriba ? 'M' + (x - 8) + ' ' + (y0 + 34) + 'L' + x + ' ' + (y - 12) + 'L' + (x + 8) + ' ' + (y0 + 34) + 'Z'
+      : 'M' + (x - 8) + ' ' + (y0 + 2) + 'L' + x + ' ' + (y + 12) + 'L' + (x + 8) + ' ' + (y0 + 2) + 'Z';
+    return '<g class="etq"><path d="' + punta + '"/><rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="36" rx="18"/>' +
+      '<text x="' + (x0 + w / 2) + '" y="' + (y0 + 24.5) + '" text-anchor="middle">' + esc(txt) + '</text></g>';
   },
   /* El de las tarjetas: el color de los arreglos de los últimos 12 meses y las novedades */
   mini(u) {
     const k = this.clave(u), pp = this.porParte(this.arreglos(u, this.desde('12')));
     return this.svg(k, { mini: true, nivel: this.aZonas(k, this.niveles(pp, 'arreglos')), alertas: this.aZonas(k, this.alertas(u)) });
   },
-  leyenda(modo) {
-    return '<div class="pl-ley"><span>Menos</span><span class="pl-esc"><i></i><i class="h1"></i><i class="h2"></i><i class="h3"></i></span>' +
-      '<span>Más ' + (modo === 'gasto' ? 'gasto' : 'arreglos') + '</span><span class="pl-ley-al"><em>!</em>Novedad del preoperacional sin arreglar</span></div>';
+  /* Qué es cada color: cuántos arreglos o, en «Gasto», los pesos de este vehículo en cuartos */
+  leyenda(modo, max) {
+    const pasos = modo !== 'gasto' ? [['', '0'], ['h1', '1'], ['h2', '2'], ['h3', '3 a 4'], ['h4', '5 o más']]
+      : max ? [['', '$ 0'], ['h1', 'hasta ' + this.pesos(max / 4)], ['h2', 'hasta ' + this.pesos(max / 2)], ['h3', 'hasta ' + this.pesos(max * 3 / 4)],
+        ['h4', 'más de ' + this.pesos(max * 3 / 4)]] : [['', 'Sin gasto en el período']];
+    return '<div class="pl-ley"><span class="pl-ley-t">' + (modo === 'gasto' ? 'Gasto' : 'Arreglos') + '</span>' +
+      pasos.map(([c, txt]) => '<span><i' + (c ? ' class="' + c + '"' : '') + '></i>' + esc(txt) + '</span>').join('') +
+      '<span class="pl-ley-al"><em>!</em>Novedad del preoperacional sin arreglar</span></div>';
   },
   /* Las mismas partes en lista, para tocarlas también desde aquí */
   chips(k, o) {
@@ -4072,6 +4116,10 @@ const Plano = {
        novedad o la de más arreglos */
     const sel = vis.find(p => p.k === st.sel) || vis.find(p => alP[p.k]) ||
       vis.slice().sort((a, b) => ((pp[b.k] || {}).n || 0) - ((pp[a.k] || {}).n || 0))[0] || null;
+    /* Arriba de la parte escogida: su nombre con sus arreglos (o su gasto) */
+    const xs = sel && pp[sel.k], maxG = Math.max.apply(null, Object.values(pp).map(x => x.gasto).concat([0]));
+    const etq = !sel ? '' : sel.n + ' · ' + (st.modo === 'gasto' ? (xs && xs.gasto ? this.pesos(xs.gasto) : 'sin gasto')
+      : xs ? xs.n + (xs.n === 1 ? ' arreglo' : ' arreglos') : 'sin arreglos');
     const gasto = lista.reduce((s, m) => s + this.costo(m), 0), prev = lista.filter(m => m.tipo === 'preventivo').length;
     const top = campo => vis.filter(p => pp[p.k] && pp[p.k][campo] > 0).sort((a, b) => pp[b.k][campo] - pp[a.k][campo])[0];
     const masN = top('n'), masG = top('gasto');
@@ -4085,8 +4133,9 @@ const Plano = {
     const dibujo = UI.card('Plano del vehículo',
       '<div class="pl-bar"><span class="lbl">Color según</span>' + seg('planoModo', st.modo, [['arreglos', 'Arreglos'], ['gasto', 'Gasto']]) +
         '<span class="lbl">Período</span>' + seg('planoPeriodo', st.periodo, this.PERIODOS) + '</div>' +
-      '<div class="plano-caja claro">' + this.svg(k, { nivel: this.aZonas(k, nivP), alertas: this.aZonas(k, alP), sel: sel && sel.zona ? [sel.zona] : [], act: 'planoParte' }) + '</div>' +
-      this.leyenda(st.modo) + this.chips(k, { pp, nivel: nivP, alertas: alP, sel: sel ? sel.k : null, act: 'planoParte' }) +
+      '<div class="plano-caja claro">' + this.svg(k, { nivel: this.aZonas(k, nivP), alertas: this.aZonas(k, alP), sel: sel && sel.zona ? [sel.zona] : [], act: 'planoParte',
+        halo: true, foco: true, etiqueta: etq }) + '</div>' +
+      this.leyenda(st.modo, maxG) + this.chips(k, { pp, nivel: nivP, alertas: alP, sel: sel ? sel.k : null, act: 'planoParte' }) +
       Novedades.aviso() +
       (sinParte.length ? '<div class="pl-nota">' + Icon('info', '', 13) + '<span>' + (sinParte.length === 1 ? '1 arreglo del período no tiene' : sinParte.length + ' arreglos del período no tienen') +
         ' la parte marcada. Salen abajo, en «Sin parte marcada».</span></div>' : ''),
@@ -4140,7 +4189,7 @@ const Plano = {
   panelLlantas(u, lista) {
     const st = UIState.plano, cuenta = {}, nivel = {};
     lista.forEach(m => (m.llantas || []).forEach(p => { cuenta[p] = (cuenta[p] || 0) + 1; }));
-    Object.keys(cuenta).forEach(p => { nivel[p] = Math.min(3, cuenta[p]); });
+    Object.keys(cuenta).forEach(p => { nivel[p] = this.NIVEL(cuenta[p]); });
     const ejes = Llantas.ejes(u);
     return '<div class="pl-llantas"><div class="pl-ll-d">' + Llantas.svg(u, { nivel, sel: st.llanta ? [st.llanta] : [], act: 'planoLlanta' }) + '</div>' +
       '<div class="pl-ll-t"><b>Llantas por posición</b><p>' + (st.llanta ? esc(Llantas.nombre(st.llanta)) + ': ' + (cuenta[st.llanta] || 0) +
@@ -4535,7 +4584,7 @@ const PlanoForm = {
   pintar(m) {
     const u = this.u(m), k = Plano.clave(u), vis = Plano.visibles(k), sel = vis.filter(p => m._partes.includes(p.k));
     const caja = $('#mcPlano', m), lista = $('#mcSel', m), ll = $('#mcLlantas', m), sug = $('#mcSug', m), nv = $('#mcNov', m);
-    if (caja) caja.innerHTML = Plano.svg(k, { sel: sel.map(p => p.zona).filter(Boolean), act: 'regParte' });
+    if (caja) caja.innerHTML = Plano.svg(k, { sel: sel.map(p => p.zona).filter(Boolean), act: 'regParte', halo: true });
     if (lista) lista.innerHTML = vis.map(p => {
       const on = m._partes.includes(p.k);
       return '<button type="button" class="zchip' + (on ? ' on' : '') + '" data-act="regParte" data-p="' + attr(p.k) + '" aria-pressed="' + on + '">' +
@@ -7966,6 +8015,13 @@ const PreopPublico = (() => {
 html { -webkit-text-size-adjust: 100%; }
 body { font-family: var(--font); background: var(--fondo); color: var(--tinta); font-size: 15px; line-height: 1.45; padding-bottom: 130px; }
 body.blanco { background: #fff; padding-bottom: 0; }
+/* En el celular, la página siempre más alta que la pantalla sin las barras del
+   navegador. Si queda entre las dos alturas (el paso 1 sin conductor y el
+   paso 3 quedaban así), al bajar el navegador esconde sus barras, la página ya
+   no tiene para dónde moverse y se queda corrida hacia arriba, sin dejar subir. */
+@media (hover: none) and (pointer: coarse) {
+  body { min-height: calc(100vh + 140px); min-height: calc(100svh + 140px); }
+}
 .app { max-width: 560px; margin: 0 auto; }
 /* Encabezado: la «S» del logo, el nombre, el código del formato y los pasos */
 .ap-h { position: sticky; top: 0; z-index: 30; background: #fff; }
