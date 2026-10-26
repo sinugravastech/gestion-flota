@@ -4128,10 +4128,8 @@ const Plano = {
     if (st.u !== u.id) Object.assign(st, { u: u.id, sel: null, llanta: null });
     const lista = this.arreglos(u, this.desde(st.periodo)), pp = this.porParte(lista), nivP = this.niveles(pp, st.modo);
     const novs = Novedades.de(u), alP = this.alertas(u);
-    /* La que se tocó o, mientras no se toque ninguna, la que tiene una
-       novedad o la de más arreglos */
-    const sel = vis.find(p => p.k === st.sel) || vis.find(p => alP[p.k]) ||
-      vis.slice().sort((a, b) => ((pp[b.k] || {}).n || 0) - ((pp[a.k] || {}).n || 0))[0] || null;
+    /* Solo la parte que se tocó: al abrir, ninguna (se ve todo el vehículo) */
+    const sel = vis.find(p => p.k === st.sel) || null;
     /* Arriba de la parte escogida: su nombre con sus arreglos (o su gasto) */
     const xs = sel && pp[sel.k], maxG = Math.max.apply(null, Object.values(pp).map(x => x.gasto).concat([0]));
     const etq = !sel || !sel.zona ? '' : this.etiqueta(k, sel.zona, sel.n, st.modo === 'gasto' ? (xs && xs.gasto ? this.pesos(xs.gasto) : 'sin gasto')
@@ -4155,7 +4153,7 @@ const Plano = {
       Novedades.aviso() +
       (sinParte.length ? '<div class="pl-nota">' + Icon('info', '', 13) + '<span>' + (sinParte.length === 1 ? '1 arreglo del período no tiene' : sinParte.length + ' arreglos del período no tienen') +
         ' la parte marcada. Salen abajo, en «Sin parte marcada».</span></div>' : ''),
-      { sub: 'Toque una parte para ver sus arreglos' });
+      { sub: sel ? 'Toque la misma parte para ver todo el vehículo' : 'Toque una parte para ver sus arreglos' });
     return '<div class="pl-pagina"><div class="crumbs"><a data-ir="mantenimientos">Mantenimientos</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
       '<div class="page-head"><div class="pl-tit">' + UI.placa(u, 'xl') + '<div><h1>' + esc([u.clase || TIPOS[u.tipo].nombre, UI.nombre(u), u.modelo].filter(Boolean).join(' · ')) + '</h1>' +
           '<div class="ph-sub">' + esc([lect ? Aceite.fmt(u, lect.valor) : '', ult ? 'último arreglo ' + Fecha.hace(ult.fecha) : 'sin arreglos registrados'].filter(Boolean).join(' · ')) + '</div></div></div>' +
@@ -4185,7 +4183,7 @@ const Plano = {
   },
   /* A la derecha: la historia de la parte escogida */
   panel(u, k, p, lista, pp, novs) {
-    if (!p) return UI.card('Partes', UI.empty('tool', 'Este dibujo no tiene partes', 'Se agregan en Configuración.'));
+    if (!p) return this.panelTodo(u, lista, novs);
     const st = UIState.plano, esLlantas = p.k === 'llantas' && Llantas.aplica(u), x = pp[p.k] || { n: 0, gasto: 0, ult: '' };
     let mios = lista.filter(m => (m.partes || []).some(r => r.k === p.k));
     const llantas = esLlantas ? this.panelLlantas(u, mios) : '';
@@ -4199,7 +4197,21 @@ const Plano = {
         : '<div class="pl-vacio">' + (st.llanta && esLlantas ? 'Esta llanta no ha tenido arreglos en el período.' : 'Esta parte no ha tenido arreglos en el período.') + '</div>') +
       '<button class="btn pl-btn" data-act="registrarArreglo" data-u="' + attr(u.id) + '" data-p="' + attr(p.k) + '"' + (esLlantas && st.llanta ? ' data-pos="' + attr(st.llanta) + '"' : '') + '>' +
         Icon('plus', '', 14) + 'Registrar arreglo en ' + esc(p.n) + '</button>',
-      { sub: 'La historia de esta parte' });
+      { sub: 'La historia de esta parte',
+        act: '<button class="btn btn-sm btn-ghost" data-act="planoParte" data-p="" title="Soltar la parte">' + Icon('x', '', 12) + 'Ver todo el vehículo</button>' });
+  },
+  /* Sin parte escogida: todo el vehículo, con sus novedades y todos sus arreglos del período */
+  panelTodo(u, lista, novs) {
+    const gasto = lista.reduce((s, m) => s + this.costo(m), 0), ult = lista[0];
+    return UI.card('Todo el vehículo',
+      '<div class="zp-h"><p>Toque una parte en el dibujo para ver solo la suya.</p><div class="zp-n"><b>' + lista.length + '</b><span>' +
+        (lista.length === 1 ? 'arreglo' : 'arreglos') + '</span></div></div>' +
+      novs.filter(n => n.parte).map(n => this.cajaNovedad(u, n)).join('') +
+      '<div class="zp-res"><span>Gasto: <b>' + esc(Money.format(gasto)) + '</b></span>' + (ult ? '<span>Último: <b>' + esc(Fecha.hace(ult.fecha)) + '</b></span>' : '') + '</div>' +
+      (lista.length ? '<div class="pm-tl">' + lista.map(m => this.itemTl(u, m, null, m.tipo !== 'preventivo' && !(m.partes || []).length)).join('') + '</div>'
+        : '<div class="pl-vacio">Este vehículo no ha tenido arreglos en el período.</div>') +
+      '<button class="btn pl-btn" data-act="registrarArreglo" data-u="' + attr(u.id) + '">' + Icon('plus', '', 14) + 'Registrar arreglo</button>',
+      { sub: 'Sus arreglos del período' });
   },
   /* Las llantas vistas desde arriba, con el color de sus arreglos */
   panelLlantas(u, lista) {
@@ -4239,7 +4251,8 @@ const Plano = {
         (prev ? (m.adjunto ? UI.file(m.adjunto, m.adjuntoId) : '')
           : '<button type="button" class="chip chip-btn" data-act="pdfCorrectivo" data-m="' + attr(m.id) + '" title="Ver el PDF con las fotos">' + Icon('pdf', '', 11) + 'PDF</button>') +
         ((m.novedades || []).length ? '<span class="chip">' + Icon('checkSquare', '', 11) + 'Vino del preoperacional</span>' : '') +
-        (otras.length ? '<span class="chip" title="Este arreglo también tocó otras partes">También: ' + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>' : '') +
+        (otras.length ? (k === null ? '<span class="chip">' + Icon('tool', '', 11) + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>'
+          : '<span class="chip" title="Este arreglo también tocó otras partes">También: ' + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>') : '') +
         (m.estado === 'taller' ? '<button type="button" class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>' : '') +
         (marcar ? '<button type="button" class="btn btn-sm" data-act="asignarPartes" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Marcar la parte</button>' : '') +
       '</div></div>';
@@ -6611,7 +6624,13 @@ Object.assign(Acciones, {
   /* Mantenimientos por vehículo y el plano de cada unidad */
   tabMant(el) { UIState.mantTab = el.dataset.v; Router.pintar(true); },
   mantTipo(el) { UIState.mantTipo = el.dataset.v; Router.pintar(true); },
-  planoParte(el) { Object.assign(UIState.plano, { sel: el.dataset.p || el.dataset.v, llanta: null }); Router.pintar(true); },
+  planoParte(el) {
+    const st = UIState.plano, p = el.dataset.p;
+    /* En el dibujo o en la lista, tocar la parte escogida otra vez la suelta; «Más arreglos» y «Más gasto» la escogen */
+    st.sel = p !== undefined ? (p && st.sel !== p ? p : null) : el.dataset.v || null;
+    st.llanta = null;
+    Router.pintar(true);
+  },
   planoModo(el) { UIState.plano.modo = el.dataset.v; Router.pintar(true); },
   planoPeriodo(el) { UIState.plano.periodo = el.dataset.v; Router.pintar(true); },
   planoLlanta(el) { const p = el.dataset.pos || null; UIState.plano.llanta = UIState.plano.llanta === p ? null : p; Router.pintar(true); },
