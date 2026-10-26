@@ -857,7 +857,8 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .doc-page{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 /* Todos los documentos con la identidad de SINUGRAVAS, como la hoja de vida
    y el preoperacional: bordes en azul oscuro, títulos de sección en azul
-   claro, la banda azul con la línea naranja del logo y el pie del sistema */
+   claro, la banda con borde azul y el pie del sistema. Solo azul, y la
+   banda sin relleno: se suelen imprimir en blanco y negro (Juan, 26/10/2026) */
 .dp-head{display:flex;align-items:stretch;border:1.2px solid #193680}
 .dp-logo{width:44mm;flex:0 0 44mm;border-right:1.2px solid #193680;display:flex;align-items:center;justify-content:center;padding:2mm}
 .dp-logo .lg-txt{font-weight:800;font-size:12.5pt;text-align:center;letter-spacing:.5px;line-height:1.1;color:#132966}
@@ -869,9 +870,9 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .dp-num{width:40mm;border-left:1.2px solid #193680;padding:2.5mm;display:flex;flex-direction:column;justify-content:center;gap:1.5mm}
 .dp-num div{font-size:7.5pt;color:#4e5d6b}
 .dp-num b{display:block;font-size:10.5pt;font-family:Consolas,monospace;letter-spacing:.5px;color:#132966}
-.dp-banda{display:flex;justify-content:space-between;align-items:center;gap:4mm;margin-top:2mm;padding:2mm 3mm;background:#20449a;color:#fff;
-  font-size:8.6pt;font-weight:800;letter-spacing:.3px;text-transform:uppercase;border-bottom:1.1mm solid #e8830e}
-.dp-banda span{font-size:7.5pt;font-weight:700;white-space:nowrap}
+.dp-banda{display:flex;justify-content:space-between;align-items:center;gap:4mm;margin-top:2mm;padding:2mm 3mm;background:#fff;color:#132966;
+  font-size:8.6pt;font-weight:800;letter-spacing:.3px;text-transform:uppercase;border:.45mm solid #20449a}
+.dp-banda span{font-size:7.5pt;font-weight:700;white-space:nowrap;color:#20449a}
 .dp-sec{border:1.2px solid #193680;margin-top:2.6mm}
 .dp-sec-t{background:#d5def5;color:#132966;padding:1.2mm 3mm;font-size:8pt;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:.6px solid #193680}
 .dp-fields{display:grid;grid-template-columns:repeat(2,1fr)}
@@ -914,8 +915,8 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .sst-cod{border-left:1.2px solid #193680;display:flex;flex-direction:column}
 .sst-cod div{flex:1;display:flex;align-items:center;justify-content:center;border-bottom:.6px solid #193680;font-size:8pt;font-weight:700;padding:.8mm 1mm}
 .sst-cod div:last-child{border-bottom:0;font-weight:600}
-.sst-banda{background:#20449a;color:#fff;text-align:center;font-size:11pt;font-weight:800;padding:2mm;margin-top:2mm;text-transform:uppercase;letter-spacing:.3px;
-  border-bottom:1.1mm solid #e8830e}
+.sst-banda{background:#fff;color:#132966;text-align:center;font-size:11pt;font-weight:800;padding:2mm;margin-top:2mm;text-transform:uppercase;letter-spacing:.3px;
+  border:.45mm solid #20449a}
 .sst-sec{border:1.2px solid #193680;margin-top:2mm;break-inside:avoid}
 .sst-sec-t{background:#d5def5;color:#132966;text-align:center;font-size:8.5pt;font-weight:800;padding:1.2mm;text-transform:uppercase;border-bottom:.6px solid #193680}
 /* Las líneas entre casillas son el espacio de la rejilla; la última casilla
@@ -1014,6 +1015,294 @@ html.sb-mini .sb-salir{display:none}
 }
 
 /* ==========================================================================
+   Plano de mantenimiento: el dibujo de cada vehículo por partes, sus
+   arreglos, las llantas por posición y lo que se cambia en Configuración
+   ========================================================================== */
+.plano{width:100%;height:auto;display:block}
+.plano .suelo{stroke:var(--border-strong);stroke-width:2;fill:none}
+.plano .forma{fill:var(--surface);stroke:var(--ink-700);stroke-width:1.6;vector-effect:non-scaling-stroke;transition:fill .15s,stroke .15s}
+.plano .det{fill:none;stroke:var(--ink-400);stroke-width:1.2;vector-effect:non-scaling-stroke}
+.plano .zona{cursor:pointer}
+.plano .zona.quieta,.plano.mini .zona{cursor:default}
+.plano .zona.h1 .forma{fill:#dfe6f7}
+.plano .zona.h2 .forma{fill:#b3c4ec}
+.plano .zona.h3 .forma{fill:#7d99d8}
+.plano .zona:not(.quieta):hover .forma{stroke:var(--brand-600)}
+.plano .zona.sel .forma{stroke:var(--brand-700);stroke-width:3}
+.plano .alerta{pointer-events:none}
+.plano .alerta circle{fill:var(--dang-500);stroke:#fff;stroke-width:2}
+.plano .alerta text{fill:#fff;font-size:13px;font-weight:800;font-family:var(--font)}
+html[data-theme="dark"] .plano .forma{stroke:#a7b6c2}
+html[data-theme="dark"] .plano .det{stroke:#5d6f7d}
+html[data-theme="dark"] .plano .zona.h1 .forma{fill:#25365c}
+html[data-theme="dark"] .plano .zona.h2 .forma{fill:#33528f}
+html[data-theme="dark"] .plano .zona.h3 .forma{fill:#4d72c4}
+html[data-theme="dark"] .plano .zona.sel .forma{stroke:var(--brand-300)}
+html[data-theme="dark"] .plano .alerta circle{stroke:var(--surface)}
+.plano-caja{background:radial-gradient(130% 100% at 15% 0%,var(--ph-a),var(--ph-b));border-radius:var(--radius);padding:18px 12px 6px}
+.plano-caja.claro{background:var(--surface-2);border:1px solid var(--border)}
+.uc-plano .uc-ph .plano-caja{position:absolute;inset:0;border-radius:0;display:grid;place-items:center;padding:30px 12px 8px}
+.uc-zs{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}
+.uc-zs .chip b,.uc-f b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
+.tab-ic{display:inline-flex;align-items:center;gap:6px}
+.m-partes{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+/* La barra de arriba del plano, la leyenda y las partes en lista */
+.pl-tit{display:flex;align-items:center;gap:12px;min-width:0}
+.pl-tit h1{font-size:18px}
+.pl-grid{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);align-items:start}
+@media(max-width:1100px){.pl-grid{grid-template-columns:minmax(0,1fr)}}
+.pl-bar{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;margin-bottom:12px}
+.pl-bar .lbl{font-size:11.5px;color:var(--text-3);font-weight:600}
+.pl-bar .seg + .lbl{margin-left:8px}
+.pl-ley{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;font-size:11.5px;color:var(--text-3);margin-top:10px}
+.pl-esc{display:inline-flex;gap:3px}
+.pl-esc i,.zchip i{display:inline-block;width:16px;height:12px;border-radius:3px;border:1px solid var(--ink-300);background:var(--surface)}
+.pl-esc i.h1,.zchip.h1 i{background:#dfe6f7}
+.pl-esc i.h2,.zchip.h2 i{background:#b3c4ec}
+.pl-esc i.h3,.zchip.h3 i{background:#7d99d8}
+html[data-theme="dark"] .pl-esc i,html[data-theme="dark"] .zchip i{border-color:var(--border-strong)}
+html[data-theme="dark"] .pl-esc i.h1,html[data-theme="dark"] .zchip.h1 i{background:#25365c}
+html[data-theme="dark"] .pl-esc i.h2,html[data-theme="dark"] .zchip.h2 i{background:#33528f}
+html[data-theme="dark"] .pl-esc i.h3,html[data-theme="dark"] .zchip.h3 i{background:#4d72c4}
+.pl-ley-al{display:inline-flex;align-items:center;gap:6px;margin-left:4px}
+.pl-ley-al em,.zchip .al{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--dang-500);color:#fff;
+  font-size:10px;font-weight:800;font-style:normal}
+.zchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.zchip{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 10px;border:1px solid var(--border-strong);border-radius:16px;
+  background:var(--surface);font-size:12px;color:var(--text-2);cursor:pointer;white-space:nowrap}
+.zchip:hover{border-color:var(--brand-400)}
+.zchip.sel{border-color:var(--brand-600);box-shadow:0 0 0 2px var(--brand-100);color:var(--text)}
+html[data-theme="dark"] .zchip.sel{box-shadow:0 0 0 2px var(--accent-soft)}
+.zchip i{width:12px;height:12px}
+.zchip b{font-variant-numeric:tabular-nums;color:var(--text);font-weight:700}
+.pl-nota{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-3);margin-top:12px;line-height:1.45}
+.pl-nota > svg{flex:0 0 auto}
+/* A la derecha, la historia de la parte escogida */
+.zp-h{display:flex;align-items:flex-start;gap:10px}
+.zp-h p{font-size:12px;color:var(--text-3);margin:2px 0 0;flex:1;min-width:0;line-height:1.45}
+.zp-n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.zp-n b{display:block;font-size:20px;letter-spacing:-.02em;line-height:1.1}
+.zp-n span{font-size:11px;color:var(--text-3)}
+.zp-res{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-2);padding:10px 0 12px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.zp-res b{color:var(--text)}
+.nov-ab{border:1px solid rgba(200,134,13,.3);background:var(--warn-50);border-radius:var(--radius);padding:10px 12px;margin:12px 0 4px;font-size:12px;color:var(--warn-700);line-height:1.45}
+.nov-ab.grave{border-color:rgba(200,55,45,.3);background:var(--dang-50);color:var(--dang-700)}
+html[data-theme="dark"] .nov-ab{color:var(--warn-500)}
+html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
+.nov-ab > b{display:flex;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.nov-q{color:var(--text);margin:4px 0 9px;font-size:12.5px}
+.nov-acc{display:flex;gap:6px;flex-wrap:wrap}
+.pm-tl{position:relative;padding-left:18px}
+.pm-tl::before{content:'';position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--border)}
+.pm-tl-i{position:relative;padding:0 0 15px}
+.pm-tl-i::before{content:'';position:absolute;left:-17px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--brand-500)}
+.pm-tl-i:last-child{padding-bottom:4px}
+.pm-tl-f{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;font-size:11.5px;color:var(--text-3)}
+.pm-tl-f .v{margin-left:auto;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.pm-tl-t{font-size:13px;font-weight:650;margin-top:3px}
+.pm-tl-t span{font-weight:500;color:var(--text-3)}
+.pm-tl-q{font-size:12px;color:var(--text-2);margin-top:2px}
+.pm-tl-q span{color:var(--text-3)}
+.pm-tl-m{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:7px}
+.chip-btn{cursor:pointer;font-family:inherit}
+.chip-btn:hover{border-color:var(--border-strong);color:var(--text)}
+.chip-btn svg{color:var(--dang-500)}
+.pl-vacio{padding:22px 10px;text-align:center;color:var(--text-3);font-size:12.5px}
+/* Arriba del plano: lo que sigue en el taller, para terminarlo cuando la unidad sale */
+.pl-taller{display:flex;align-items:center;gap:12px;padding:10px 14px;margin-bottom:14px;border:1px solid rgba(200,55,45,.3);background:var(--dang-50);border-radius:var(--radius);font-size:12.5px;color:var(--dang-700)}
+.pl-taller > svg{flex:0 0 auto}
+.pl-taller b{display:block;font-size:13px}
+.pl-taller span{display:block;color:var(--text-2);margin-top:1px}
+.pl-taller .btn{flex:0 0 auto}
+html[data-theme="dark"] .pl-taller{color:var(--dang-500)}
+.pl-btn{width:100%;justify-content:center;margin-top:10px}
+/* Las llantas vistas desde arriba */
+.pl-llantas{display:flex;gap:14px;align-items:flex-start;padding:0 0 14px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.pl-ll-d{flex:0 0 150px}
+.pl-ll-t{flex:1;min-width:0;font-size:12px;color:var(--text-2)}
+.pl-ll-t b{display:block;font-size:12.5px;color:var(--text);margin-bottom:4px}
+.pl-ll-t p{margin:0 0 7px;line-height:1.45}
+.llantas-v{width:100%;height:auto;display:block}
+.llantas-v .llanta{fill:var(--surface);stroke:var(--ink-700);stroke-width:1.5;cursor:pointer;transition:fill .15s}
+.llantas-v .llanta.h1{fill:#dfe6f7}
+.llantas-v .llanta.h2{fill:#b3c4ec}
+.llantas-v .llanta.h3{fill:#7d99d8}
+.llantas-v .llanta:hover{stroke:var(--brand-600)}
+.llantas-v .llanta.sel{stroke:var(--brand-700);stroke-width:3}
+.llantas-v .ll-chasis{fill:var(--surface-3);stroke:var(--ink-400);stroke-width:1.2}
+.llantas-v .ll-eje{stroke:var(--ink-400);stroke-width:4;stroke-linecap:round}
+.llantas-v .ll-num{fill:var(--surface);stroke:var(--ink-400);stroke-width:1.2}
+.llantas-v .ll-n{font-size:11px;font-weight:700;fill:var(--text-2);font-family:var(--font)}
+.llantas-v .ll-txt{font-size:11px;font-weight:700;letter-spacing:.1em;fill:var(--text-3);font-family:var(--font)}
+html[data-theme="dark"] .llantas-v .llanta{stroke:#a7b6c2}
+html[data-theme="dark"] .llantas-v .llanta.h1{fill:#25365c}
+html[data-theme="dark"] .llantas-v .llanta.h2{fill:#33528f}
+html[data-theme="dark"] .llantas-v .llanta.h3{fill:#4d72c4}
+html[data-theme="dark"] .llantas-v .llanta.sel{stroke:var(--brand-300)}
+/* En la ficha, arriba de la historia */
+.pl-ficha{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:20px;align-items:center}
+.pl-ficha .plano-caja{cursor:pointer;padding:12px 10px 4px}
+.pl-ficha-t p{margin:0;font-size:12.5px;color:var(--text-2);line-height:1.5}
+@media(max-width:760px){.pl-ficha{grid-template-columns:minmax(0,1fr)}}
+/* Registrar un arreglo */
+.reg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px}
+@media(max-width:860px){.reg{grid-template-columns:minmax(0,1fr)}}
+.reg .plano-caja{padding:12px 8px 4px}
+/* Lo escogido en la ventana, con un relleno suave (allí no hay colores de arreglos) */
+.pl-marcar .plano .zona.sel .forma{fill:#c9d6f3}
+html[data-theme="dark"] .pl-marcar .plano .zona.sel .forma{fill:#33528f}
+.reg-sel{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.reg-sel .zchip{height:27px;padding:0 9px;font-size:11.5px;gap:5px}
+.reg-sel .zchip.on{background:var(--brand-50);border-color:var(--brand-400);color:var(--brand-700);font-weight:600}
+html[data-theme="dark"] .reg-sel .zchip.on{background:var(--accent-soft);color:var(--brand-300)}
+.sug{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.sug .chip{cursor:pointer;font-family:inherit}
+.sug .chip:hover{border-color:var(--border-strong);color:var(--text)}
+.reg-ll{display:flex;gap:14px;align-items:flex-start}
+.reg-ll .llantas-v{width:150px;flex:0 0 150px}
+.reg-ll .hint{margin-top:0}
+.ej-fila{display:flex;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid var(--border)}
+.ej-fila b{font-size:12.5px;min-width:52px}
+/* Configuración → Planos de mantenimiento */
+.pe-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:18px;align-items:start;margin-top:4px}
+.pe-grid > div:first-child{position:sticky;top:calc(var(--topbar-h) + 12px)}
+.pe-ayuda{font-size:12px;color:var(--text-3);margin:0 0 8px;line-height:1.45}
+@media(max-width:1100px){.pe-grid{grid-template-columns:minmax(0,1fr)}.pe-grid > div:first-child{position:static}}
+.pe-lista{display:flex;flex-direction:column;gap:8px}
+.pe-fila{border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;background:var(--surface)}
+.pe-fila.oculta{background:var(--surface-2)}
+.pe-fila.oculta .pe-n{color:var(--text-3);text-decoration:line-through}
+.pe-l1{display:flex;align-items:center;gap:6px}
+.pe-l2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:6px;margin-top:6px;padding-left:26px}
+.pe-num{flex:0 0 20px;font-size:11px;font-weight:700;color:var(--text-3);text-align:center}
+.pe-n{flex:1 1 140px;min-width:0;font-weight:600}
+.pe-z{flex:0 0 190px;width:190px}
+.pe-oc{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-2);white-space:nowrap;cursor:pointer}
+.pe-hueco{flex:0 0 26px}
+.pe-sub{font-size:12.5px;font-weight:650;margin:22px 0 6px;padding-top:14px;border-top:1px solid var(--border)}
+.pe-preop summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--accent)}
+.pe-sec{font-size:11px;font-weight:700;color:var(--text-2);margin:14px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+.pe-preg{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px dashed var(--border);font-size:12.5px}
+.pe-preg span{flex:1;min-width:0}
+.pe-preg select{flex:0 0 250px;width:250px}
+.pe-pie{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.pe-pie .tb-sp{flex:1}
+.pe-mod{color:var(--warn-500);font-weight:800;margin-left:2px}
+@media(max-width:760px){.pe-l2{grid-template-columns:minmax(0,1fr);padding-left:0}.pe-l1{flex-wrap:wrap}.pe-z{flex:1 1 100%;width:auto;order:5}.pe-preg{flex-wrap:wrap}.pe-preg select{flex:1 1 100%;width:100%}}
+/* En el PDF del correctivo: la parte arreglada en el plano, en colores que
+   salen bien en blanco y negro (también con el tema oscuro) */
+.dp-arreglo{display:grid;grid-template-columns:70mm 1fr}
+.dp-plano{padding:2mm 3mm 1mm;border-right:.6px solid #c3cfe9;display:flex;align-items:center}
+.dp-arreglo .dp-fields{grid-template-columns:1fr}
+.dp-arreglo .dp-f{border-right:0;border-bottom:.6px solid #c3cfe9}
+.dp-arreglo .dp-f:last-child{border-bottom:0}
+.doc-page .plano .forma,html[data-theme="dark"] .doc-page .plano .forma{fill:#fff;stroke:#3a4753}
+.doc-page .plano .det,html[data-theme="dark"] .doc-page .plano .det{stroke:#93a3b1}
+.doc-page .plano .suelo{stroke:#c3ced8}
+.doc-page .plano .zona.sel .forma,html[data-theme="dark"] .doc-page .plano .zona.sel .forma{fill:#d5def5;stroke:#193680;stroke-width:2.4}
+/* ==========================================================================
+   Mantenimientos en el celular (hasta 600 px de ancho), para llenarlo desde
+   el taller. En el computador nada de esto se ve ni cambia.
+   ========================================================================== */
+.mant-buscar,.pl-barra-cel,.cam-cel,.solo-cel{display:none}
+@media(max-width:600px){
+  .solo-web{display:none}
+  .solo-cel{display:inline}
+  .plano .zona,.zchip,.llantas-v .llanta,.uc-plano{-webkit-tap-highlight-color:transparent}
+  /* Los indicadores, más pequeños */
+  .mant-kpis{gap:8px;margin-bottom:12px}
+  .mant-kpis-h{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mant-kpis .kpi{padding:9px 11px}
+  .mant-kpis .kpi-l{font-size:9.5px;letter-spacing:.04em}
+  .mant-kpis .kpi-v{font-size:18px;margin-top:2px}
+  .mant-kpis .kpi-m{font-size:11px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Por vehículo: buscar la placa y las tarjetas en filas, las del taller primero */
+  .mant-buscar{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;margin-bottom:10px;border:1px solid var(--border-strong);
+    border-radius:var(--radius);background:var(--surface);color:var(--text-3)}
+  .mant-buscar .inp{border:0;height:42px;padding:0;font-size:16px;background:transparent;box-shadow:none}
+  .mant-tipos{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -14px 12px;padding:0 14px}
+  .mant-tipos::-webkit-scrollbar{display:none}
+  .mant-tipos .fchip{flex:0 0 auto;height:32px}
+  .mant-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+  .uc-plano{display:grid;grid-template-columns:42% minmax(0,1fr);grid-template-areas:"ph b" "ph f"}
+  .uc-plano:hover{transform:none}
+  .uc-plano.en-taller{order:-1}
+  .uc-plano .uc-ph{grid-area:ph;aspect-ratio:auto;min-height:126px}
+  .uc-plano .uc-ph .plano-caja{padding:30px 6px 6px}
+  .uc-plano .uc-tag{display:none}
+  .uc-plano .uc-est{top:7px;left:7px;right:auto}
+  .uc-plano .uc-b{grid-area:b;padding:10px 12px 4px;min-width:0}
+  .uc-plano .uc-mm{margin-top:4px}
+  .uc-plano .uc-zs{margin-top:6px}
+  .uc-plano .uc-zs .chip{font-size:11px;padding:1px 7px}
+  .uc-plano .uc-f{grid-area:f;border-top:0;padding:4px 12px 10px;flex-wrap:wrap;gap:2px 10px;background:transparent}
+  /* El plano de una unidad: primero el aviso del taller, el plano y la parte;
+     los indicadores, después. El botón para registrar, abajo. */
+  .pl-pagina{display:flex;flex-direction:column;padding-bottom:72px}
+  .pl-pagina > .pl-grid{order:1}
+  .pl-pagina > .kpis4{order:2;margin-top:12px}
+  .pl-pagina > .card{order:3}
+  .pl-pagina > .page-head{margin-bottom:12px}
+  .pl-pagina .page-head .ph-actions{margin-left:0}
+  .pl-pagina .page-head .ph-actions [data-act=registrarArreglo]{display:none}
+  .pl-tit{gap:10px}
+  .pl-tit .placa.xl{height:28px;font-size:15px;padding:0 9px}
+  .pl-tit h1{font-size:15px;line-height:1.3}
+  .pl-taller{flex-wrap:wrap;padding:10px 12px}
+  .pl-taller .btn{width:100%;height:40px;font-size:13px}
+  .pl-grid{gap:12px}
+  .pl-bar{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 10px}
+  .pl-bar .seg + .lbl{margin-left:0}
+  .pl-bar .seg{width:100%}
+  .pl-bar .seg button{flex:1;justify-content:center;padding:0 6px;height:34px}
+  .pl-pagina .plano-caja{padding:12px 6px 4px}
+  .zchip{height:36px;font-size:12.5px}
+  .pl-btn{display:none}
+  .pl-llantas{flex-wrap:wrap}
+  .pl-barra-cel{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:45;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -6px 18px rgba(13,19,25,.08)}
+  .pl-barra-cel .btn{flex:1;height:46px;font-size:14.5px;gap:8px}
+  body:has(.pl-barra-cel) .toasts{left:12px;right:12px;max-width:none;bottom:calc(78px + env(safe-area-inset-bottom))}
+  /* Las ventanas de Mantenimientos, a pantalla completa, con Guardar siempre abajo */
+  .modal-bd:has(> .m-hoja){padding:0}
+  .modal.m-hoja{max-width:none;min-height:100%;margin:0;border:0;border-radius:0;display:flex;flex-direction:column}
+  .m-hoja .modal-h{position:sticky;top:0;z-index:3;background:var(--surface);padding:12px 14px}
+  .m-hoja .modal-b{flex:1;max-height:none;overflow:visible;padding:14px}
+  .m-hoja .modal-f{position:sticky;bottom:0;z-index:3;border-radius:0;flex-wrap:nowrap;padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+  .m-hoja .modal-f .mf-left{display:none}
+  .m-hoja .modal-f .btn{height:46px;font-size:14px}
+  .m-hoja .modal-f .btn-primary{flex:1}
+  /* Sin zoom al escribir: el iPhone lo hace con letra de menos de 16 */
+  .m-hoja .inp,.m-hoja .foto input{font-size:16px}
+  .m-hoja .inp:not(textarea){height:42px}
+  .m-hoja textarea.inp{min-height:96px}
+  .m-hoja .seg button{height:40px;flex:1;justify-content:center}
+  .m-hoja .seg{display:flex;width:100%}
+  .m-hoja .row > .field:has(.seg){flex-basis:100%}
+  .m-hoja .reg-sel .zchip{height:34px;font-size:12.5px}
+  .m-hoja .sug .chip{padding:6px 10px;font-size:12px}
+  .m-hoja .reg-ll .llantas-v{width:130px;flex-basis:130px}
+  .cam-cel{display:flex;margin-bottom:8px}
+  .cam-cel .btn{flex:1;height:46px;font-size:14.5px;gap:8px}
+  .m-hoja .dz{padding:12px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .m-hoja .dz > svg{width:18px;height:18px;margin:0}
+  .m-hoja .dz h4{margin:0;font-size:13.5px}
+  .m-hoja .dz p{display:none}
+  .m-hoja .fotos{grid-template-columns:repeat(2,minmax(0,1fr))}
+  /* El historial, en tarjetas */
+  .tbl-mant thead{display:none}
+  .tbl-mant,.tbl-mant tbody{display:block}
+  .tbl-mant tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;padding:12px 14px;border-bottom:1px solid var(--border)}
+  .tbl-mant tbody tr:last-child{border-bottom:0}
+  table.tbl.tbl-mant td{padding:0;border:0}
+  .tbl-mant td:nth-child(1){grid-column:1;grid-row:1}
+  .tbl-mant td:nth-child(8){grid-column:2;grid-row:1;justify-self:end}
+  .tbl-mant td:nth-child(2),.tbl-mant td:nth-child(3),.tbl-mant td:nth-child(4),.tbl-mant td:nth-child(7){grid-column:1 / -1}
+  .tbl-mant td:nth-child(5){grid-column:1;color:var(--text-2)}
+  .tbl-mant td:nth-child(6){grid-column:2;text-align:right}
+  .tbl-mant td:nth-child(7):not(:has(*:not(div))){display:none}
+}
+/* ==========================================================================
    Preoperacionales: la lista del día, cada envío, el editor del formulario y
    la pestaña de la ficha
    ========================================================================== */
@@ -1089,14 +1378,14 @@ html.sb-mini .sb-salir{display:none}
 .cp-sst img{max-width:100%;max-height:22px;display:block}
 .cp-tt{font-weight:800;font-size:9.5px;color:var(--k)}
 .cp-cod{font-size:8.5px;font-weight:700;color:var(--k)}
-.cp-banda{background:var(--p);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:5px 7px;margin-top:4px;border-bottom:3px solid var(--a)}
+.cp-banda{background:#fff;color:var(--k);font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:5px 7px;margin-top:4px;border:1.7px solid var(--p)}
 .cp-sec{border:1.2px solid var(--o);margin-top:5px;background:var(--cl);color:var(--k);font-size:9px;font-weight:800;letter-spacing:.04em;padding:3px 7px}
 .cp-cel{margin-top:12px;border:1px solid #dde4ea;border-radius:10px;overflow:hidden}
 .cp-form{display:flex;align-items:center;gap:9px;padding:8px 10px}
 .cp-emb{width:26px;height:26px;border-radius:7px;border:1px solid #dde4ea;display:block;flex:0 0 auto}
 .cp-tit{flex:1;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--k)}
 .cp-btn{background:var(--p);color:#fff;font-size:12px;font-weight:700;padding:6px 13px;border-radius:7px}
-.cp-linea{height:3px;background:linear-gradient(90deg,var(--p) 0 78%,var(--a) 78% 100%)}
+.cp-linea{height:3px;background:var(--p)}
 </style>
 </head>
 <body>
@@ -2013,6 +2302,208 @@ const ilusDe = u => u.tipo === 'carga' ? 'camion' : u.tipo === 'maquinaria' ? 'e
   : (/cisterna/i.test(u.clase) ? 'cisterna' : 'trailer');
 
 /* ==========================================================================
+   §2b  PLANOS — el dibujo de cada vehículo, de lado y dividido en zonas. No
+        es exacto: cada zona es una parte que se toca para ver sus arreglos.
+        Las partes (nombre, qué incluye, componentes y en qué zona se pintan)
+        son las de siempre, y se cambian en Configuración.
+   ========================================================================== */
+const PLANOS = (() => {
+  const r = (x, y, w, h, rx) => '<rect class="forma" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '"' + (rx ? ' rx="' + rx + '"' : '') + '/>';
+  const c = (x, y, rr) => '<circle class="forma" cx="' + x + '" cy="' + y + '" r="' + rr + '"/>';
+  const p = d => '<path class="forma" d="' + d + '"/>';
+  const l = d => '<path class="det" d="' + d + '"/>';
+  const ruedas = (xs, y, rr) => xs.map(x => c(x, y, rr)).join('');
+  /* Las partes que se repiten de un dibujo a otro */
+  const P = {
+    motor: { k: 'motor', n: 'Motor', d: 'Motor, refrigeración, turbo y escape', comp: ['Bomba de agua', 'Radiador', 'Turbo', 'Inyectores', 'Correas', 'Escape'] },
+    cabina: { k: 'cabina', n: 'Cabina y latonería', d: 'Interior, puertas, vidrios, aire y latonería', comp: ['Luces internas', 'Aire acondicionado', 'Vidrios', 'Puertas', 'Sillas', 'Latonería'] },
+    hidraulico: { k: 'hidraulico', n: 'Hidráulico', d: 'Toma de fuerza, bomba, tanque y mangueras', comp: ['Toma de fuerza', 'Bomba', 'Mangueras', 'Tanque', 'Válvulas'] },
+    electrico: { k: 'electrico', n: 'Eléctrico', d: 'Baterías, alternador, arranque y luces', comp: ['Baterías', 'Alternador', 'Arranque', 'Luces', 'Cableado'] },
+    combustible: { k: 'combustible', n: 'Combustible', d: 'Tanques, filtros y bomba de combustible', comp: ['Tanque', 'Filtros', 'Bomba', 'Líneas'] },
+    transmision: { k: 'transmision', n: 'Transmisión', d: 'Embrague, caja y cardán', comp: ['Embrague', 'Caja', 'Cardán', 'Crucetas'] },
+    direccion: { k: 'direccion', n: 'Dirección y eje delantero', d: 'Caja de dirección, barras y suspensión delantera', comp: ['Caja de dirección', 'Terminales', 'Barras', 'Muelles delanteros'] },
+    ejes: { k: 'ejes', n: 'Ejes traseros y suspensión', d: 'Diferenciales, muelles y bolsas de aire', comp: ['Diferencial', 'Bolsas de aire', 'Muelles', 'Amortiguadores'] },
+    frenos: { k: 'frenos', n: 'Frenos', d: 'Aire, compresor, bandas y campanas', comp: ['Freno de parqueo', 'Bandas', 'Campanas', 'Compresor', 'Válvulas', 'Rachets'] },
+    llantas: { k: 'llantas', n: 'Llantas y rines', d: 'Llantas, rines y tuercas', comp: ['Llantas', 'Rines', 'Tuercas', 'Válvulas'] },
+    volco: { k: 'volco', n: 'Volco', d: 'Caja, compuerta, pistón y bisagras', comp: ['Caja', 'Compuerta', 'Pistón', 'Bisagras', 'Carpa'] },
+    /* Los de los remolques */
+    rChasis: { k: 'chasis', n: 'Chasis, king pin y patas', d: 'Chasis, king pin, patas de apoyo y bómper', comp: ['King pin', 'Patas de apoyo', 'Chasis', 'Bómper', 'Guardafangos'] },
+    rEjes: { k: 'ejes', n: 'Ejes y suspensión', d: 'Ejes, muelles, bolsas de aire y rodamientos', comp: ['Ejes', 'Muelles', 'Bolsas de aire', 'Rodamientos', 'Bujes'] },
+    rFrenos: { k: 'frenos', n: 'Frenos', d: 'Cámaras, bandas, campanas y líneas de aire', comp: ['Cámaras de freno', 'Bandas', 'Campanas', 'Rachets', 'Líneas de aire', 'Válvulas'] },
+    rLuces: { k: 'electrico', n: 'Luces y cableado', d: 'Luces, conector y cableado', comp: ['Luces traseras', 'Luces laterales', 'Conector', 'Cableado'] },
+    /* Los de la maquinaria */
+    mMotor: { k: 'motor', n: 'Motor', d: 'Motor, refrigeración, filtros y escape', comp: ['Radiador', 'Bomba de agua', 'Turbo', 'Inyectores', 'Correas', 'Filtros'] },
+    mCabina: { k: 'cabina', n: 'Cabina', d: 'Mandos, silla, vidrios y aire', comp: ['Mandos', 'Silla', 'Vidrios', 'Aire acondicionado', 'Tablero'] },
+    mHidraulico: { k: 'hidraulico', n: 'Hidráulico', d: 'Bomba, tanque, válvulas y mangueras', comp: ['Bomba', 'Tanque', 'Válvulas', 'Mangueras', 'Filtro hidráulico'] },
+    mTransmision: { k: 'transmision', n: 'Transmisión', d: 'Caja, convertidor y cardán', comp: ['Caja', 'Convertidor', 'Cardán', 'Crucetas'] },
+    mEjes: { k: 'ejes', n: 'Ejes y frenos', d: 'Ejes, diferenciales, mandos finales y frenos', comp: ['Diferencial', 'Mandos finales', 'Frenos', 'Rodamientos'] },
+    mCombustible: { k: 'combustible', n: 'Combustible', d: 'Tanque, filtros y bomba', comp: ['Tanque', 'Filtros', 'Bomba', 'Líneas'] }
+  };
+
+  /* El frente de los camiones (cabina, motor y lo de debajo), igual en el
+     tractocamión y en la volqueta */
+  const frente = {
+    direccion: r(708, 252, 68, 10, 4) + r(790, 252, 26, 17, 3),
+    transmision: r(352, 262, 122, 8, 3) + r(472, 254, 44, 24, 5),
+    combustible: r(524, 256, 118, 32, 15) + '<circle class="det" cx="628" cy="264" r="3"/>',
+    electrico: r(652, 256, 46, 30, 4) + l('M661 268h9M665.5 263.5v9M681 268h9') + r(834, 192, 12, 16, 3),
+    motor: p('M650 150H818Q840 152 842 170V238H650Z') + l('M826 176v56M832 176v56M670 166h140'),
+    cabina: p('M482 238V122Q482 102 502 102H624L650 150V238Z') + l('M566 114h54l20 34h-74zM558 158v74H644M546 196h8'),
+    llantas: ruedas([230, 318, 742], 296, 34),
+    frenos: ruedas([230, 318, 742], 296, 14)
+  };
+  /* Lo de debajo de los semirremolques: el chasis con el king pin y las
+     patas, tres ejes atrás y las luces */
+  const semi = {
+    chasis: r(70, 240, 742, 12, 3) + r(752, 252, 12, 10, 2) + r(616, 252, 10, 58, 2) + r(606, 308, 30, 8, 2) +
+      r(62, 252, 8, 42, 2) + r(54, 290, 40, 8, 2) + r(110, 252, 8, 62, 2),
+    ejes: r(140, 252, 220, 10, 4),
+    llantas: ruedas([170, 250, 330], 296, 34),
+    frenos: ruedas([170, 250, 330], 296, 14),
+    electrico: r(76, 262, 12, 10, 2) + r(452, 243, 12, 6, 2) + r(560, 243, 12, 6, 2) + c(800, 248, 5)
+  };
+  const marcasSemi = { chasis: [632, 300], ejes: [362, 252], frenos: [346, 278], llantas: [362, 270], electrico: [92, 260] };
+
+  return {
+    tractocamion: {
+      nombre: 'Tractocamión', vb: '20 40 870 300', suelo: 'M40 331H880', ejes: ['s', 'd', 'd'], repuesto: true,
+      zonas: [
+        ['chasis', r(118, 240, 732, 12, 3) + r(206, 229, 128, 11, 3) + l('M252 229v-5h36v5') + r(846, 234, 22, 20, 3) + r(156, 252, 8, 64, 2)],
+        ['ejes', r(196, 252, 156, 10, 4)],
+        ['direccion', frente.direccion], ['transmision', frente.transmision], ['combustible', frente.combustible], ['electrico', frente.electrico],
+        ['hidraulico', r(394, 170, 56, 68, 9) + l('M411 170v-8h22v8M404 188h36')],
+        ['motor', frente.motor + r(460, 64, 12, 174, 5)],
+        ['cabina', frente.cabina], ['llantas', frente.llantas], ['frenos', frente.frenos]
+      ],
+      marcas: { motor: [760, 166], cabina: [610, 112], hidraulico: [446, 176], electrico: [694, 262], combustible: [632, 262], transmision: [508, 258],
+        direccion: [772, 256], ejes: [346, 256], frenos: [338, 278], llantas: [768, 270], chasis: [190, 234] },
+      partes: [P.motor, P.cabina, P.hidraulico, P.electrico, P.combustible, P.transmision, P.direccion, P.ejes, P.frenos, P.llantas,
+        { k: 'chasis', n: 'Chasis y quinta rueda', d: 'Chasis, quinta rueda y bómper', comp: ['Quinta rueda', 'Chasis', 'Bómper', 'Soportes'] }]
+    },
+    volqueta: {
+      nombre: 'Volqueta', vb: '20 40 870 300', suelo: 'M40 331H880', ejes: ['s', 'd', 'd'], repuesto: true,
+      zonas: [
+        ['chasis', r(118, 240, 732, 12, 3) + r(846, 234, 22, 20, 3) + r(156, 252, 8, 64, 2)],
+        ['ejes', r(196, 252, 156, 10, 4)],
+        ['direccion', frente.direccion], ['transmision', frente.transmision], ['combustible', frente.combustible], ['electrico', frente.electrico],
+        ['hidraulico', r(378, 250, 60, 28, 6) + l('M390 250v-6h14v6')],
+        ['volco', p('M140 238L128 124Q128 116 136 116H456Q462 116 462 122V238Z') + p('M440 116L452 92H536Q542 92 542 98V104L462 116Z') +
+          l('M200 120v114M264 120v114M328 120v114M392 120v114M134 150h324') + r(466, 128, 11, 110, 4)],
+        ['motor', frente.motor], ['cabina', frente.cabina], ['llantas', frente.llantas], ['frenos', frente.frenos]
+      ],
+      marcas: { volco: [440, 126], motor: [760, 166], cabina: [610, 118], hidraulico: [432, 252], electrico: [694, 262], combustible: [632, 262],
+        transmision: [508, 258], direccion: [772, 256], ejes: [346, 256], frenos: [338, 278], llantas: [768, 270], chasis: [190, 236] },
+      partes: [P.motor, P.cabina, P.volco, P.hidraulico, P.electrico, P.combustible, P.transmision, P.direccion, P.ejes, P.frenos, P.llantas,
+        { k: 'chasis', n: 'Chasis y bómper', d: 'Chasis, bómper y guardafangos', comp: ['Chasis', 'Bómper', 'Guardafangos', 'Soportes'] }]
+    },
+    semi_volco: {
+      nombre: 'Semirremolque volco', vb: '20 40 870 300', suelo: 'M40 331H880', ejes: ['d', 'd', 'd'], repuesto: true,
+      zonas: [
+        ['chasis', semi.chasis], ['ejes', semi.ejes], ['electrico', semi.electrico],
+        ['volco', p('M88 238L78 126Q78 118 86 118H790Q798 118 798 126V238Z') + l('M180 122v112M290 122v112M400 122v112M510 122v112M620 122v112M730 122v112M84 152h712') +
+          r(804, 104, 12, 134, 4)],
+        ['llantas', semi.llantas], ['frenos', semi.frenos]
+      ],
+      marcas: Object.assign({ volco: [790, 128] }, marcasSemi),
+      partes: [Object.assign({}, P.volco, { comp: ['Caja', 'Compuerta', 'Pistón', 'Bisagras', 'Carpa', 'Mangueras del pistón'] }), P.rChasis, P.rEjes, P.rFrenos, P.llantas, P.rLuces]
+    },
+    semi_tanque: {
+      nombre: 'Semirremolque tanque', vb: '20 40 870 300', suelo: 'M40 331H880', ejes: ['d', 'd', 'd'], repuesto: true,
+      zonas: [
+        ['chasis', semi.chasis], ['ejes', semi.ejes], ['electrico', semi.electrico],
+        ['tanque', r(80, 120, 724, 118, 59) + l('M250 124v110M440 120v118M630 124v110M180 112h560')],
+        ['valvulas', r(232, 104, 36, 16, 3) + r(424, 104, 36, 16, 3) + r(616, 104, 36, 16, 3) + r(430, 238, 28, 14, 3) + r(458, 241, 46, 8, 3)],
+        ['llantas', semi.llantas], ['frenos', semi.frenos]
+      ],
+      marcas: Object.assign({ tanque: [770, 140], valvulas: [652, 104] }, marcasSemi),
+      partes: [{ k: 'tanque', n: 'Tanque', d: 'Cuerpo, compartimentos, pasarela y escalera', comp: ['Cuerpo', 'Compartimentos', 'Rompeolas', 'Pasarela', 'Escalera'] },
+        { k: 'valvulas', n: 'Válvulas y bocas', d: 'Bocas de llenado, válvulas y mangueras de descargue', comp: ['Bocas de llenado', 'Tapas', 'Válvulas de descargue', 'Mangueras', 'Empaques'] },
+        P.rChasis, P.rEjes, P.rFrenos, P.llantas, P.rLuces]
+    },
+    semi_plancha: {
+      nombre: 'Semirremolque plancha', vb: '20 40 870 300', suelo: 'M40 331H880', ejes: ['d', 'd', 'd'], repuesto: true,
+      zonas: [
+        ['chasis', semi.chasis], ['ejes', semi.ejes], ['electrico', semi.electrico],
+        ['plataforma', r(66, 222, 748, 18, 3) + r(796, 160, 16, 62, 3) + l('M150 222v18M250 222v18M350 222v18M450 222v18M550 222v18M650 222v18M750 222v18')],
+        ['llantas', semi.llantas], ['frenos', semi.frenos]
+      ],
+      marcas: Object.assign({ plataforma: [796, 168] }, marcasSemi),
+      partes: [{ k: 'plataforma', n: 'Plataforma', d: 'Piso, estacas, amarres y cabecera', comp: ['Piso', 'Estacas', 'Amarres', 'Cabecera', 'Rampas'] },
+        P.rChasis, P.rEjes, P.rFrenos, P.llantas, P.rLuces]
+    },
+    retro: {
+      nombre: 'Retroexcavadora', vb: '20 40 870 300', suelo: 'M40 331H880', ejes: ['s', 's'],
+      zonas: [
+        ['chasis', r(246, 230, 470, 16, 4) + p('M262 232Q264 204 330 202Q396 204 398 232Z')],
+        ['transmision', r(392, 272, 220, 8, 3) + r(534, 258, 50, 26, 5)],
+        ['combustible', r(404, 246, 58, 26, 10)],
+        ['hidraulico', r(468, 246, 60, 26, 5) + l('M480 246v-4h12v4')],
+        ['electrico', r(588, 246, 30, 20, 3) + l('M595 256h6M598 253v6M607 256h6') + r(372, 72, 16, 9, 2) + r(512, 72, 16, 9, 2)],
+        ['motor', p('M532 230V186Q532 176 542 176H690Q702 176 708 186L722 230Z') + l('M704 194v30M711 194v30M552 190h140') + r(596, 134, 10, 42, 3)],
+        ['estabilizadores', p('M246 236L258 240L232 316L220 312Z') + r(206, 312, 46, 10, 3)],
+        ['brazo', r(226, 194, 30, 52, 5) + p('M232 206L246 196L168 94L152 104Z') + p('M150 92L166 98L120 262L104 258Z') + l('M226 214L178 128M196 120L160 214')],
+        ['cucharon', p('M98 254L128 266L118 304Q102 318 82 306L74 272Z') + l('M84 302l-6 8M96 308l-4 9')],
+        ['cabina', p('M374 230V92Q374 82 384 82H520Q530 82 530 92V230Z') + l('M388 96H516V178H388ZM452 96v134M440 196h8')],
+        ['cargador', p('M524 160L540 152L774 246L762 264Z') + l('M560 196L720 246') +
+          p('M752 236H818Q826 236 828 244L840 318H760Q750 318 748 308Z') + l('M760 260h72')],
+        ['llantas', c(330, 279, 52) + c(650, 297, 34)],
+        ['ejes', c(330, 279, 18) + c(650, 297, 13)]
+      ],
+      marcas: { motor: [700, 182], cabina: [522, 92], hidraulico: [524, 250], electrico: [614, 250], combustible: [460, 250], transmision: [578, 262],
+        ejes: [346, 266], llantas: [372, 236], chasis: [270, 232], brazo: [168, 100], cucharon: [124, 270], cargador: [826, 244], estabilizadores: [248, 304] },
+      partes: [P.mMotor, P.mCabina, P.mHidraulico,
+        { k: 'brazo', n: 'Brazo de la retro', d: 'Pluma, balancín, pistones y pines', comp: ['Pluma', 'Balancín', 'Pistones', 'Pines y bujes', 'Giro'] },
+        { k: 'cucharon', n: 'Cucharón de la retro', d: 'Cucharón, dientes y cuchilla', comp: ['Cucharón', 'Dientes', 'Cuchilla', 'Pasadores'] },
+        { k: 'cargador', n: 'Cargador frontal', d: 'Brazos, pistones y balde frontal', comp: ['Balde', 'Brazos', 'Pistones', 'Cuchilla', 'Pines y bujes'] },
+        { k: 'estabilizadores', n: 'Estabilizadores', d: 'Patas, pistones y zapatas', comp: ['Patas', 'Pistones', 'Zapatas'] },
+        P.mTransmision, P.mEjes, P.llantas, P.electrico, P.mCombustible,
+        { k: 'chasis', n: 'Chasis', d: 'Chasis, guardafangos y soldaduras', comp: ['Chasis', 'Guardafangos', 'Soportes', 'Contrapeso'] }]
+    },
+    cargador: {
+      nombre: 'Cargador', vb: '20 40 870 300', suelo: 'M40 331H880', ejes: ['s', 's'],
+      zonas: [
+        ['chasis', r(160, 228, 280, 24, 4) + r(470, 228, 172, 22, 4) + r(436, 230, 38, 20, 4) + '<circle class="det" cx="455" cy="240" r="6"/>' +
+          p('M150 190H176V262H150Q140 262 140 252V200Q140 190 150 190Z')],
+        ['transmision', r(354, 252, 70, 18, 5) + r(354, 268, 212, 7, 3)],
+        ['combustible', r(180, 236, 56, 26, 8)],
+        ['electrico', r(146, 266, 28, 18, 3) + r(142, 200, 8, 12, 2) + r(428, 62, 14, 8, 2)],
+        ['motor', p('M176 228V172Q176 164 184 164H336V228Z') + l('M196 176v42M206 176v42M216 176v42') + r(300, 122, 10, 42, 3)],
+        ['hidraulico', r(446, 170, 40, 56, 6) + l('M456 170v-5h12v5')],
+        ['cabina', p('M336 228V82Q336 72 346 72H434Q444 72 444 82V228Z') + l('M348 86H432V170H348ZM392 86v142')],
+        ['brazos', p('M484 178L506 168L776 236L762 258Z') + l('M512 216L702 236') + p('M498 140L512 134L600 186L590 196Z')],
+        ['cucharon', p('M744 196H806Q820 196 822 210L842 322H752Q740 322 738 310Z') + l('M750 222h80')],
+        ['llantas', c(300, 277, 54) + c(620, 277, 54)],
+        ['ejes', c(300, 277, 20) + c(620, 277, 20)]
+      ],
+      marcas: { motor: [320, 172], cabina: [436, 82], hidraulico: [482, 176], electrico: [170, 268], combustible: [232, 240], transmision: [420, 256],
+        ejes: [318, 262], llantas: [348, 236], chasis: [640, 230], brazos: [700, 214], cucharon: [826, 206] },
+      partes: [P.mMotor, P.mCabina, P.mHidraulico,
+        { k: 'brazos', n: 'Brazos y pistones', d: 'Brazos de levante, pistones, varillaje y pines', comp: ['Brazos', 'Pistones de levante', 'Pistón de volteo', 'Varillaje', 'Pines y bujes'] },
+        { k: 'cucharon', n: 'Balde', d: 'Balde, cuchilla, dientes y esquineros', comp: ['Balde', 'Cuchilla', 'Dientes', 'Esquineros'] },
+        P.mTransmision, P.mEjes, P.llantas, P.electrico, P.mCombustible,
+        { k: 'chasis', n: 'Chasis y articulación', d: 'Chasis, articulación central y contrapeso', comp: ['Articulación', 'Pines y bujes', 'Cilindros de dirección', 'Contrapeso', 'Chasis'] }]
+    },
+    canoa: {
+      nombre: 'Canoa', vb: '20 40 870 300', suelo: 'M30 300c30-10 60-10 90 0s60 10 90 0 60-10 90 0 60 10 90 0 60-10 90 0 60 10 90 0 60-10 90 0 60 10 90 0 60-10 90 0',
+      zonas: [
+        ['casco', p('M92 206H800Q842 202 870 164L880 152Q876 214 834 246Q800 270 752 270H120Q100 270 94 254Z') + l('M110 226H812M300 206v62M520 206v62')],
+        ['combustible', r(150, 178, 60, 28, 7) + l('M164 178v-6h12v6')],
+        ['electrico', r(230, 182, 36, 24, 3) + l('M238 194h6M241 191v6M252 194h6') + r(126, 140, 6, 66, 2) + c(129, 136, 6) + r(842, 136, 6, 34, 2) + c(845, 132, 6)],
+        ['mando', p('M98 148L176 164L174 172L96 158Z')],
+        ['motor', p('M38 122Q38 108 52 108H96Q108 108 110 122L114 166Q114 178 102 178H48Q38 178 38 166Z') + l('M50 128h52') + r(96, 176, 14, 34, 3)],
+        ['helice', p('M58 178H86L80 290H64Z') + p('M70 300L54 280Q50 274 58 276L72 292L88 278Q94 276 90 284L74 302L90 322Q92 330 84 326L70 310L56 324Q50 328 52 320Z')]
+      ],
+      marcas: { casco: [500, 214], combustible: [206, 180], electrico: [262, 184], mando: [168, 156], motor: [104, 116], helice: [92, 292] },
+      partes: [{ k: 'casco', n: 'Casco', d: 'Fondo, costados, proa, popa y pintura', comp: ['Fondo', 'Costados', 'Proa', 'Popa', 'Espejo', 'Pintura'] },
+        { k: 'motor', n: 'Motor fuera de borda', d: 'Motor, encendido, carburación y refrigeración', comp: ['Bujías', 'Carburador', 'Bomba de agua', 'Arranque', 'Termostato'] },
+        { k: 'helice', n: 'Pata y hélice', d: 'Hélice, pata, aceite de la pata y ánodo', comp: ['Hélice', 'Pata', 'Aceite de la pata', 'Ánodo', 'Pasador'] },
+        P.mCombustible, { k: 'mando', n: 'Mando', d: 'Caña, acelerador y cables', comp: ['Caña', 'Acelerador', 'Cables', 'Soporte del motor'] },
+        { k: 'electrico', n: 'Eléctrico y luces', d: 'Batería y luces de navegación', comp: ['Batería', 'Luz de proa', 'Luz de popa', 'Luces de banda', 'Cableado'] }]
+    }
+  };
+})();
+
+/* ==========================================================================
    §3  CATÁLOGOS — lo que se sabe hoy de la flota
    ========================================================================== */
 const TIPOS = {
@@ -2043,7 +2534,11 @@ const DOCS_UNIDAD = ['soat', 'tecno', 'tarjeta', 'vin', 'registro', 'poliza', 'p
 const Config = {
   diasAviso: 30,
   req: { carga: ['soat', 'tecno', 'tarjeta', 'vin', 'poliza'], maquinaria: ['tarjeta'], remolque: ['registro'], canoa: ['patente'] },
-  comparendos: ['carga', 'maquinaria', 'remolque']
+  comparendos: ['carga', 'maquinaria', 'remolque'],
+  /* Los planos de mantenimiento: solo lo que se cambió en Configuración (el
+     dibujo de cada clase, las partes de cada dibujo y la parte de cada
+     pregunta del preoperacional). Vacío: los de siempre (ver PLANOS). */
+  planos: {}
 };
 /* La hoja de vida de cada tipo de unidad, con las secciones de los formatos
    del ingeniero anterior (código SST-FRT-026). Los vehículos de carga y la
@@ -2443,10 +2938,13 @@ const UI = {
         (m.estado === 'taller' ? this.pill('bad', 'En taller') : '') + '</div>' +
       '<div class="tl-m">' + esc(Fecha.larga(m.fecha)) + (m.salida ? ' a ' + esc(Fecha.larga(m.salida)) : '') + ' · ' + esc(p ? p.nombre : '—') +
         (m.lectura ? ' · ' + esc(m.lectura) : '') + (m.valor ? ' · ' + Money.format(m.valor) : '') + (conUnidad && u ? ' · ' + esc(this.placaTxt(u)) : '') + '</div>' +
-      '<div class="tl-x">' + (m.adjunto ? this.file(m.adjunto, m.adjuntoId) : '') +
+      (m.falla ? '<div class="tl-m">Qué pasó: ' + esc(m.falla) + '</div>' : '') +
+      '<div class="tl-x">' + (m.partes || []).map(x => '<span class="chip">' + Icon('tool', '', 12) + esc(Plano.nombre(u, x)) + '</span>').join('') +
+        (m.adjunto ? this.file(m.adjunto, m.adjuntoId) : '') +
         (m.fotos ? '<span class="chip">' + Icon('image', '', 12) + m.fotos + ' fotos</span>' : '') +
         (m.oc ? '<span class="chip">' + Icon('cart', '', 12) + esc(m.oc) + '</span>' : '') +
         (!prev && !m.adjunto ? '<button class="btn btn-sm" data-act="pdfCorrectivo" data-m="' + m.id + '">' + Icon('pdf', '', 12) + 'Generar PDF</button>' : '') +
+        (m.estado === 'taller' ? '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + m.id + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>' : '') +
       '</div></div>';
   },
   tablaOC(li, conUnidad) {
@@ -2592,11 +3090,18 @@ const Dz = {
     return '<label class="dz" id="' + id + '">' + Icon('upload') + '<h4>' + titulo + '</h4><p>' + sub + '</p>' +
       '<input type="file" hidden accept="' + accept + '"' + (multiple ? ' multiple' : '') + '></label><div class="dz-files" id="' + id + 'F"></div>';
   },
+  /* El botón que abre la cámara del celular (en el computador no se ve) */
+  camara(id) {
+    return '<div class="cam-cel"><label class="btn btn-primary">' + Icon('camera', '', 16) + 'Tomar foto' +
+      '<input type="file" hidden accept="image/*" capture="environment" id="' + id + 'Cam"></label></div>';
+  },
   bind(id, alRecibir) {
     const dz = document.getElementById(id);
     if (!dz) return;
     const inp = dz.querySelector('input');
     inp.addEventListener('change', () => { const f = Array.from(inp.files); inp.value = ''; if (f.length) alRecibir(f); });
+    const cam = document.getElementById(id + 'Cam');
+    if (cam) cam.addEventListener('change', () => { const f = Array.from(cam.files); cam.value = ''; if (f.length) alRecibir(f); });
     ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('over'); }));
     ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('over'); }));
     dz.addEventListener('drop', e => { const f = Array.from(e.dataTransfer.files); if (f.length) alRecibir(f); });
@@ -3350,6 +3855,727 @@ const Aceite = {
   }
 };
 
+/* ==========================================================================
+   §8b  PLANO DE MANTENIMIENTO — los arreglos de cada unidad sobre su dibujo.
+        Cada mantenimiento lleva la parte (o las partes) que tocó: «partes»,
+        con su clave y su nombre de ese día. El color de cada parte dice
+        cuánto se ha arreglado o cuánto ha costado.
+   ========================================================================== */
+const sinTildes = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+const Plano = {
+  PERIODOS: [['anio', 'Este año'], ['12', 'Últimos 12 meses'], ['todo', 'Todo']],
+  /* El dibujo de cada unidad sale de su clase; en Configuración se puede
+     escoger otro para cada clase */
+  adivinar(u) {
+    const c = u.clase || '';
+    if (u.tipo === 'canoa') return 'canoa';
+    if (u.tipo === 'maquinaria') return /retro|excav/i.test(c) ? 'retro' : 'cargador';
+    if (u.tipo === 'remolque') return /tanque|cisterna/i.test(c) ? 'semi_tanque' : /volc|volteo/i.test(c) ? 'semi_volco' : 'semi_plancha';
+    return /volq/i.test(c) ? 'volqueta' : 'tractocamion';
+  },
+  dibujoDeClase(tipo, clase) {
+    const k = (Config.planos.dibujo || {})[tipo + '|' + clase];
+    return PLANOS[k] ? k : this.adivinar({ tipo, clase });
+  },
+  clave(u) { return this.dibujoDeClase(u.tipo, u.clase); },
+  /* Las partes de un dibujo: las de siempre o las que se dejaron en Configuración */
+  partes(k, cfg) {
+    const c = ((cfg || Config.planos).partes || {})[k];
+    return (Array.isArray(c) && c.length ? c : PLANOS[k].partes).map(p => Object.assign({ zona: p.k, d: '', comp: [] }, p));
+  },
+  visibles(k) { return this.partes(k).filter(p => !p.oculta); },
+  parte(k, pk) { return this.partes(k).find(p => p.k === pk) || null; },
+  /* El nombre de una parte de un arreglo: el de hoy o, si ya no está, el que tenía al guardarlo */
+  nombre(u, ref) { const p = u && this.parte(this.clave(u), ref.k); return p ? p.n : ref.n || ref.k; },
+
+  /* ---------------- Los arreglos ---------------- */
+  desde(per) { return per === 'todo' ? '' : per === 'anio' ? HOY.getFullYear() + '-01-01' : R(-365); },
+  arreglos(u, desde) {
+    return Datos.mantenimientos.filter(m => m.unidad === u.id && (!desde || m.fecha >= desde))
+      .sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.ts || 0) - (a.ts || 0));
+  },
+  /* Lo que costó: si se pagó con orden de compra, el total de la orden (como
+     en el Dashboard); si no, su valor */
+  costo(m) {
+    const o = m.oc && Datos.ocs.find(x => x.numero === m.oc);
+    return o ? UI.totalOC(o) : m.valor || 0;
+  },
+  /* Por parte: cuántos arreglos, cuánto gasto y el último. Si un arreglo tocó
+     varias partes, su valor se reparte entre ellas. */
+  porParte(lista) {
+    const r = {};
+    lista.forEach(m => {
+      const ps = m.partes || [], c = this.costo(m);
+      ps.forEach(p => {
+        const x = r[p.k] || (r[p.k] = { n: 0, gasto: 0, ult: '' });
+        x.n++;
+        x.gasto += c / ps.length;
+        if (m.fecha > x.ult) x.ult = m.fecha;
+      });
+    });
+    return r;
+  },
+  /* El color de cada parte: por arreglos (1, 2, 3 o más) o por gasto, frente a la que más gastó */
+  niveles(pp, modo) {
+    const max = Math.max.apply(null, Object.values(pp).map(x => x.gasto).concat([0])), out = {};
+    Object.keys(pp).forEach(k => { out[k] = modo === 'gasto' ? (max ? Math.ceil(3 * pp[k].gasto / max) : 0) : Math.min(3, pp[k].n); });
+    return out;
+  },
+  /* De las partes a las zonas del dibujo: si dos partes comparten zona, manda la más alta */
+  aZonas(k, porParte) {
+    const out = {};
+    this.visibles(k).forEach(p => { if (p.zona && porParte[p.k]) out[p.zona] = Math.max(out[p.zona] || 0, porParte[p.k]); });
+    return out;
+  },
+  /* Las novedades sin arreglar de una unidad, contadas por parte */
+  alertas(u) {
+    const out = {};
+    Novedades.de(u).forEach(n => { if (n.parte) out[n.parte] = (out[n.parte] || 0) + 1; });
+    return out;
+  },
+
+  /* ---------------- El preoperacional ---------------- */
+  /* Qué parte se prende con cada pregunta, según lo que dice: la primera regla
+     que coincide y que tenga una parte en el dibujo */
+  PALABRAS: [
+    [/freno/, ['frenos', 'ejes']],
+    [/luz interior|aire acondicionado|ventilacion|sill|puerta|cerradura|apoyacabeza|aseo interno|cabina|cinturon/, ['cabina']],
+    [/vidrio|parabrisa|espejo|pintura|latoneria|carroceria|aseo externo/, ['cabina', 'volco', 'tanque', 'plataforma', 'casco']],
+    [/direccion|holgura|suspension delantera|estabilidad/, ['direccion', 'ejes']],
+    [/suspension|amortiguador|muelle|bolsa de aire|diferencial/, ['ejes', 'transmision']],
+    [/llanta|\brin(es)?\b|labrado|tuerca|rodamiento/, ['llantas']],
+    [/hidraulic|toma de fuerza|piston/, ['hidraulico', 'volco']],
+    [/combustible|acpm|diesel|gasolina/, ['combustible']],
+    [/transmision|embrague|clutch|cambios|cardan|vibracion|ruido/, ['transmision']],
+    [/bateria|electric|instrumento|indicador|testigo|odometro|tacometro|velocimetro|encendido|ilumina|luces|\bluz\b|bocina|pito|alarma|accesorio/, ['electrico']],
+    [/helice|\bpata\b/, ['helice']],
+    [/motor|aceite|refrigerante|manguera|fuga|radiador|turbo|escape/, ['motor']],
+    [/chasis|quinta rueda|quinpin|king ?pin|placa|bomper|guardafango|\bpatas\b/, ['chasis']],
+    [/casco|fondo|costado|proa|popa/, ['casco']],
+    [/volco|tanque|remolque|plataforma/, ['volco', 'tanque', 'plataforma']]
+  ],
+  adivinarParte(k, txt, vis) {
+    const t = sinTildes(txt), ks = (vis || this.visibles(k)).map(p => p.k);
+    for (const [re, partes] of this.PALABRAS) {
+      if (!re.test(t)) continue;
+      const p = partes.find(x => ks.includes(x));
+      if (p) return p;
+    }
+    return '';
+  },
+  /* La que se escogió en Configuración o, si no, la que dice su texto (o el de su sección) */
+  deLaPregunta(k, it, sec, cfg) {
+    const c = (((cfg || Config.planos).preop || {})[k] || {})[it.id], vis = cfg ? this.partes(k, cfg).filter(p => !p.oculta) : this.visibles(k);
+    if (c !== undefined && (c === '' || vis.some(p => p.k === c))) return c;
+    return this.adivinarParte(k, it.texto, vis) || this.adivinarParte(k, sec ? sec.titulo : '', vis);
+  },
+
+  /* ---------------- El dibujo ---------------- */
+  /* o: nivel y alertas por zona, sel (las zonas escogidas), mini (para ver,
+     sin tocar) y act/u (lo que hace el clic en una parte) */
+  svg(k, o) {
+    o = o || {};
+    const d = PLANOS[k], n = o.nivel || {}, sel = o.sel || [], al = o.alertas || {}, vis = o.partes || this.visibles(k);
+    const g = ([z, forma]) => {
+      const ps = vis.filter(p => p.zona === z), toca = ps.length > 0 && !o.mini && o.act;
+      return '<g class="zona h' + (n[z] || 0) + (sel.includes(z) ? ' sel' : '') + (toca ? '' : ' quieta') + '"' +
+        (toca ? ' data-act="' + o.act + '" data-p="' + attr(ps[0].k) + '"' + (o.u ? ' data-u="' + attr(o.u) + '"' : '') : '') + '>' +
+        (ps.length && !o.mini ? '<title>' + esc(ps.map(p => p.n).join(' · ')) + '</title>' : '') + forma + '</g>';
+    };
+    const marca = z => '<g class="alerta"><circle cx="' + d.marcas[z][0] + '" cy="' + d.marcas[z][1] + '" r="10"/><text x="' + d.marcas[z][0] +
+      '" y="' + (d.marcas[z][1] + 4.5) + '" text-anchor="middle">!</text></g>';
+    return '<svg class="plano' + (o.mini ? ' mini' : '') + '" viewBox="' + d.vb + '" role="img" aria-label="' + attr('Plano: ' + d.nombre) + '">' +
+      '<path class="suelo" d="' + d.suelo + '"/>' + d.zonas.map(g).join('') +
+      Object.keys(al).filter(z => al[z] && d.marcas[z]).map(marca).join('') + '</svg>';
+  },
+  /* El de las tarjetas: el color de los arreglos de los últimos 12 meses y las novedades */
+  mini(u) {
+    const k = this.clave(u), pp = this.porParte(this.arreglos(u, this.desde('12')));
+    return this.svg(k, { mini: true, nivel: this.aZonas(k, this.niveles(pp, 'arreglos')), alertas: this.aZonas(k, this.alertas(u)) });
+  },
+  leyenda(modo) {
+    return '<div class="pl-ley"><span>Menos</span><span class="pl-esc"><i></i><i class="h1"></i><i class="h2"></i><i class="h3"></i></span>' +
+      '<span>Más ' + (modo === 'gasto' ? 'gasto' : 'arreglos') + '</span><span class="pl-ley-al"><em>!</em>Novedad del preoperacional sin arreglar</span></div>';
+  },
+  /* Las mismas partes en lista, para tocarlas también desde aquí */
+  chips(k, o) {
+    return '<div class="zchips">' + this.visibles(k).map(p => '<button type="button" class="zchip h' + (o.nivel[p.k] || 0) + (o.sel === p.k ? ' sel' : '') +
+      '" data-act="' + o.act + '" data-p="' + attr(p.k) + '"><i></i>' + esc(p.n) + ' <b>' + (o.pp[p.k] ? o.pp[p.k].n : 0) + '</b>' +
+      (o.alertas[p.k] ? '<span class="al">!</span>' : '') + '</button>').join('') + '</div>';
+  },
+
+  /* ---------------- Mantenimientos → Por vehículo ---------------- */
+  vistaFlota() {
+    Novedades.pedir();
+    const f = UIState.mantTipo, desde = this.desde('12');
+    const us = ORDEN.flatMap(t => Datos.unidades.filter(u => u.tipo === t));
+    const lista = us.filter(u => f === 'todos' || u.tipo === f);
+    const del12 = Datos.mantenimientos.filter(m => m.fecha >= desde);
+    const taller = Datos.mantenimientos.filter(m => m.estado === 'taller');
+    const gasto = del12.reduce((s, m) => s + this.costo(m), 0);
+    /* La parte que más gasta en toda la flota, por su nombre */
+    const porNombre = {};
+    del12.forEach(m => {
+      const u = Q.unidad(m.unidad), ps = m.partes || [], c = this.costo(m);
+      ps.forEach(p => { const n = this.nombre(u, p); porNombre[n] = (porNombre[n] || 0) + c / ps.length; });
+    });
+    const masGasta = Object.keys(porNombre).filter(n => porNombre[n] > 0).sort((a, b) => porNombre[b] - porNombre[a])[0];
+    const listo = Novedades.listo(), conNov = listo ? us.map(u => [u, Novedades.de(u)]).filter(x => x[1].length) : [];
+    const nNov = conNov.reduce((s, x) => s + x[1].length, 0);
+    const kpis = '<div class="kpis4 mant-kpis">' +
+      UI.kpi({ label: 'Correctivos del mes', valor: Datos.mantenimientos.filter(m => m.tipo === 'correctivo' && m.fecha.slice(0, 7) === hoyISO.slice(0, 7)).length,
+        icono: 'camera', color: 'var(--warn-500)', meta: 'Visitas al taller', act: 'filtroMant', v: 'correctivo' }) +
+      UI.kpi({ label: 'En el taller ahora', valor: taller.length, icono: 'warn', color: 'var(--dang-500)', vcolor: taller.length ? 'var(--dang-500)' : '',
+        meta: esc(taller.map(m => Q.unidad(m.unidad)).filter(Boolean).map(u => UI.placaTxt(u)).join(' · ') || 'Ninguna'), act: 'filtroMant', v: 'taller' }) +
+      UI.kpi({ label: 'Novedades sin arreglar', valor: listo ? nNov : '…', icono: 'checkSquare', color: 'var(--dang-500)', vcolor: nNov ? 'var(--dang-500)' : '',
+        meta: !listo ? (Novedades.error ? 'No se pudieron revisar los preoperacionales' : 'Revisando los preoperacionales…')
+          : nNov ? esc(conNov.map(x => UI.placaTxt(x[0])).join(' · ')) + ' · del preoperacional' : 'Del preoperacional, últimos ' + Novedades.DIAS + ' días' }) +
+      UI.kpi({ label: 'Gasto en 12 meses', valor: esc(Money.format(gasto)), icono: 'pesos', meta: masGasta ? 'La parte que más gasta: ' + esc(masGasta) : 'Talleres y órdenes de compra' }) +
+      '</div>';
+    const filtros = [['todos', 'Todos', us.length]].concat(ORDEN.map(t => [t, TIPOS[t].plural, us.filter(u => u.tipo === t).length]).filter(x => x[2]));
+    const chips = '<label class="mant-buscar">' + Icon('search', '', 16) + '<input class="inp" id="mantBuscar" type="search" placeholder="Buscar placa…" ' +
+      'autocomplete="off" enterkeyhint="search" aria-label="Buscar placa"></label><div class="fchips mant-tipos">' + filtros.map(s => '<button class="fchip' + (f === s[0] ? ' on' : '') + '" data-act="mantTipo" data-v="' + s[0] + '">' +
+      esc(s[1]) + '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div>';
+    const tarjeta = u => {
+      const k = this.clave(u), ar = this.arreglos(u, desde), pp = this.porParte(ar), nov = listo ? Novedades.de(u) : [];
+      const top = this.visibles(k).filter(p => pp[p.k]).sort((a, b) => pp[b.k].n - pp[a.k].n).slice(0, 3);
+      const g = ar.reduce((s, m) => s + this.costo(m), 0);
+      const enTaller = taller.some(m => m.unidad === u.id);
+      const est = enTaller ? UI.pill('bad', 'En el taller')
+        : nov.length ? '<span title="Del preoperacional, sin arreglar">' + UI.pill('warn', nov.length === 1 ? '1 novedad' : nov.length + ' novedades') + '</span>' : '';
+      return '<article class="uc uc-plano' + (enTaller ? ' en-taller' : '') + '" data-ir="mantenimientos/' + attr(u.id) + '" tabindex="0" data-buscar="' +
+          attr(sinTildes([u.placa, UI.placaTxt(u), u.clase, UI.nombre(u), u.alias].join(' '))) + '">' +
+        '<div class="uc-ph"><div class="plano-caja">' + this.mini(u) + '</div>' +
+          '<span class="uc-tag">' + Icon(TIPOS[u.tipo].icono, '', 12) + esc(u.clase || TIPOS[u.tipo].nombre) + '</span>' +
+          (est ? '<span class="uc-est">' + est + '</span>' : '') + '</div>' +
+        '<div class="uc-b"><div class="uc-l1">' + UI.placa(u) + '<span class="uc-anio">' + esc(u.modelo || '') + '</span></div>' +
+          '<div class="uc-mm">' + esc(UI.nombre(u) || PLANOS[k].nombre) + '</div>' +
+          '<div class="uc-zs">' + (top.length ? top.map(p => '<span class="chip">' + esc(p.n) + ' <b>' + pp[p.k].n + '</b></span>').join('')
+            : '<span class="chip">' + (ar.length ? 'Sin partes marcadas' : 'Sin arreglos en 12 meses') + '</span>') + '</div></div>' +
+        '<div class="uc-f"><span>' + Icon('tool', '', 12) + (ar.length ? ar.length + (ar.length === 1 ? ' arreglo' : ' arreglos') + ' en 12 meses' : 'Ningún arreglo en 12 meses') +
+          '</span><b>' + esc(Money.format(g)) + '</b></div></article>';
+    };
+    return kpis + chips + (lista.length ? '<div class="ugrid mant-grid" id="mantGrid">' + lista.map(tarjeta).join('') + '</div>' +
+        '<div class="card hidden" id="mantNada">' + UI.empty('search', 'Ninguna placa coincide', 'Pruebe con otra o borre la búsqueda.') + '</div>'
+      : '<div class="card">' + UI.empty('truck', 'No hay unidades', Datos.unidades.length ? 'Ninguna de este tipo.' : 'Se registran en Flota.') + '</div>');
+  },
+
+  /* ---------------- El plano de una unidad ---------------- */
+  vista(u) {
+    Novedades.pedir();
+    const st = UIState.plano, k = this.clave(u), vis = this.visibles(k);
+    if (st.u !== u.id) Object.assign(st, { u: u.id, sel: null, llanta: null });
+    const lista = this.arreglos(u, this.desde(st.periodo)), pp = this.porParte(lista), nivP = this.niveles(pp, st.modo);
+    const novs = Novedades.de(u), alP = this.alertas(u);
+    /* La que se tocó o, mientras no se toque ninguna, la que tiene una
+       novedad o la de más arreglos */
+    const sel = vis.find(p => p.k === st.sel) || vis.find(p => alP[p.k]) ||
+      vis.slice().sort((a, b) => ((pp[b.k] || {}).n || 0) - ((pp[a.k] || {}).n || 0))[0] || null;
+    const gasto = lista.reduce((s, m) => s + this.costo(m), 0), prev = lista.filter(m => m.tipo === 'preventivo').length;
+    const top = campo => vis.filter(p => pp[p.k] && pp[p.k][campo] > 0).sort((a, b) => pp[b.k][campo] - pp[a.k][campo])[0];
+    const masN = top('n'), masG = top('gasto');
+    const enPer = { anio: 'este año', '12': 'en 12 meses', todo: 'en total' }[st.periodo];
+    const resumen = p => pp[p.k].n + (pp[p.k].n === 1 ? ' arreglo · ' : ' arreglos · ') + esc(Money.format(pp[p.k].gasto));
+    const lect = Aceite.aplica(u) ? Aceite.actual(u) : null, ult = this.arreglos(u, '')[0];
+    const seg = (act, actual, ops) => '<div class="seg">' + ops.map(o => '<button type="button" class="' + (o[0] === actual ? 'on' : '') +
+      '" data-act="' + act + '" data-v="' + o[0] + '">' + esc(o[1]) + '</button>').join('') + '</div>';
+    /* Los correctivos sin parte (a un preventivo no hace falta marcársela) */
+    const sinParte = lista.filter(m => m.tipo !== 'preventivo' && !(m.partes || []).length), otras = novs.filter(n => !n.parte);
+    const dibujo = UI.card('Plano del vehículo',
+      '<div class="pl-bar"><span class="lbl">Color según</span>' + seg('planoModo', st.modo, [['arreglos', 'Arreglos'], ['gasto', 'Gasto']]) +
+        '<span class="lbl">Período</span>' + seg('planoPeriodo', st.periodo, this.PERIODOS) + '</div>' +
+      '<div class="plano-caja claro">' + this.svg(k, { nivel: this.aZonas(k, nivP), alertas: this.aZonas(k, alP), sel: sel && sel.zona ? [sel.zona] : [], act: 'planoParte' }) + '</div>' +
+      this.leyenda(st.modo) + this.chips(k, { pp, nivel: nivP, alertas: alP, sel: sel ? sel.k : null, act: 'planoParte' }) +
+      Novedades.aviso() +
+      (sinParte.length ? '<div class="pl-nota">' + Icon('info', '', 13) + '<span>' + (sinParte.length === 1 ? '1 arreglo del período no tiene' : sinParte.length + ' arreglos del período no tienen') +
+        ' la parte marcada. Salen abajo, en «Sin parte marcada».</span></div>' : ''),
+      { sub: 'Toque una parte para ver sus arreglos' });
+    return '<div class="pl-pagina"><div class="crumbs"><a data-ir="mantenimientos">Mantenimientos</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
+      '<div class="page-head"><div class="pl-tit">' + UI.placa(u, 'xl') + '<div><h1>' + esc([u.clase || TIPOS[u.tipo].nombre, UI.nombre(u), u.modelo].filter(Boolean).join(' · ')) + '</h1>' +
+          '<div class="ph-sub">' + esc([lect ? Aceite.fmt(u, lect.valor) : '', ult ? 'último arreglo ' + Fecha.hace(ult.fecha) : 'sin arreglos registrados'].filter(Boolean).join(' · ')) + '</div></div></div>' +
+        '<div class="ph-actions"><button class="btn" data-act="irUnidad" data-u="' + attr(u.id) + '" data-tab="mant">' + Icon('truck', '', 14) + 'Ver la ficha</button>' +
+          '<button class="btn btn-primary" data-act="registrarArreglo" data-u="' + attr(u.id) + '"' + (sel ? ' data-p="' + attr(sel.k) + '"' : '') + '>' + Icon('plus', '', 14) + 'Registrar arreglo</button></div></div>' +
+      /* Lo que está en el taller, arriba: se termina cuando la unidad sale */
+      this.arreglos(u, '').filter(m => m.estado === 'taller').map(m => '<div class="pl-taller">' + Icon('tool', '', 16) +
+        '<div class="f1"><b>En el taller desde el ' + esc(Fecha.larga(m.fecha)) + '</b><span>' + esc([m.trabajo, (m.partes || []).map(x => this.nombre(u, x)).join(', ')].filter(Boolean).join(' · ')) + '</span></div>' +
+        '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button></div>').join('') +
+      '<div class="kpis4 mant-kpis">' +
+        UI.kpi({ label: 'Arreglos ' + enPer, valor: lista.length, icono: 'tool', meta: (lista.length - prev) + (lista.length - prev === 1 ? ' correctivo · ' : ' correctivos · ') + prev + (prev === 1 ? ' preventivo' : ' preventivos') }) +
+        UI.kpi({ label: 'Gasto ' + enPer, valor: esc(Money.format(gasto)), icono: 'pesos', meta: 'Talleres y órdenes de compra' }) +
+        UI.kpi({ label: 'Más arreglos', valor: masN ? esc(masN.n) : '—', icono: 'refresh', color: 'var(--warn-500)', meta: masN ? resumen(masN) : 'Ninguna parte con arreglos',
+          act: masN ? 'planoParte' : '', v: masN ? masN.k : '' }) +
+        UI.kpi({ label: 'Más gasto', valor: masG ? esc(masG.n) : '—', icono: 'pesos', color: 'var(--warn-500)', meta: masG ? resumen(masG) : 'Ninguna parte con gasto',
+          act: masG ? 'planoParte' : '', v: masG ? masG.k : '' }) +
+      '</div>' +
+      '<div class="grid pl-grid">' + dibujo + '<div>' + this.panel(u, k, sel, lista, pp, novs) + '</div></div>' +
+      (otras.length ? UI.card('Otras novedades del preoperacional', otras.map(n => this.cajaNovedad(u, n)).join(''),
+        { cls: 'mt16', sub: 'No corresponden a una parte del dibujo. Se cambia en Configuración.' }) : '') +
+      (sinParte.length ? UI.card('Sin parte marcada', '<div class="pm-tl">' + sinParte.map(m => this.itemTl(u, m, '', true)).join('') + '</div>',
+        { cls: 'mt16', sub: 'Correctivos del período sin la parte del vehículo: márquela para que salgan en el plano' }) : '') +
+      /* En el celular, el botón para registrar queda abajo, siempre a la mano */
+      '<div class="pl-barra-cel"><button class="btn btn-primary" data-act="registrarArreglo" data-u="' + attr(u.id) + '"' + (sel ? ' data-p="' + attr(sel.k) + '"' : '') +
+        (sel && sel.k === 'llantas' && st.llanta ? ' data-pos="' + attr(st.llanta) + '"' : '') + '>' + Icon('plus', '', 16) +
+        (sel ? 'Registrar arreglo en ' + esc(sel.n) : 'Registrar arreglo') + '</button></div></div>';
+  },
+  /* A la derecha: la historia de la parte escogida */
+  panel(u, k, p, lista, pp, novs) {
+    if (!p) return UI.card('Partes', UI.empty('tool', 'Este dibujo no tiene partes', 'Se agregan en Configuración.'));
+    const st = UIState.plano, esLlantas = p.k === 'llantas' && Llantas.aplica(u), x = pp[p.k] || { n: 0, gasto: 0, ult: '' };
+    let mios = lista.filter(m => (m.partes || []).some(r => r.k === p.k));
+    const llantas = esLlantas ? this.panelLlantas(u, mios) : '';
+    if (esLlantas && st.llanta) mios = mios.filter(m => (m.llantas || []).includes(st.llanta));
+    return UI.card(esc(p.n),
+      '<div class="zp-h"><p>' + esc(p.d || '') + '</p><div class="zp-n"><b>' + x.n + '</b><span>' + (x.n === 1 ? 'arreglo' : 'arreglos') + '</span></div></div>' +
+      novs.filter(n => n.parte === p.k).map(n => this.cajaNovedad(u, n)).join('') +
+      '<div class="zp-res"><span>Gasto: <b>' + esc(Money.format(x.gasto)) + '</b></span>' + (x.ult ? '<span>Último: <b>' + esc(Fecha.hace(x.ult)) + '</b></span>' : '') + '</div>' +
+      llantas +
+      (mios.length ? '<div class="pm-tl">' + mios.map(m => this.itemTl(u, m, p.k)).join('') + '</div>'
+        : '<div class="pl-vacio">' + (st.llanta && esLlantas ? 'Esta llanta no ha tenido arreglos en el período.' : 'Esta parte no ha tenido arreglos en el período.') + '</div>') +
+      '<button class="btn pl-btn" data-act="registrarArreglo" data-u="' + attr(u.id) + '" data-p="' + attr(p.k) + '"' + (esLlantas && st.llanta ? ' data-pos="' + attr(st.llanta) + '"' : '') + '>' +
+        Icon('plus', '', 14) + 'Registrar arreglo en ' + esc(p.n) + '</button>',
+      { sub: 'La historia de esta parte' });
+  },
+  /* Las llantas vistas desde arriba, con el color de sus arreglos */
+  panelLlantas(u, lista) {
+    const st = UIState.plano, cuenta = {}, nivel = {};
+    lista.forEach(m => (m.llantas || []).forEach(p => { cuenta[p] = (cuenta[p] || 0) + 1; }));
+    Object.keys(cuenta).forEach(p => { nivel[p] = Math.min(3, cuenta[p]); });
+    const ejes = Llantas.ejes(u);
+    return '<div class="pl-llantas"><div class="pl-ll-d">' + Llantas.svg(u, { nivel, sel: st.llanta ? [st.llanta] : [], act: 'planoLlanta' }) + '</div>' +
+      '<div class="pl-ll-t"><b>Llantas por posición</b><p>' + (st.llanta ? esc(Llantas.nombre(st.llanta)) + ': ' + (cuenta[st.llanta] || 0) +
+        ((cuenta[st.llanta] || 0) === 1 ? ' arreglo.' : ' arreglos.') + ' <span class="link" data-act="planoLlanta" data-pos="">Ver todas</span>'
+        : 'Toque una llanta para ver solo sus arreglos.') + '</p>' +
+        '<p class="txt-3">' + ejes.length + (ejes.length === 1 ? ' eje: ' : ' ejes: ') + esc(ejes.map(t => (t === 'd' ? 'doble' : 'sencilla')).join(', ')) +
+          '. <span class="link" data-act="cambiarEjes" data-u="' + attr(u.id) + '">Cambiar</span></p></div></div>';
+  },
+  cajaNovedad(u, n) {
+    return '<div class="nov-ab' + (n.grave ? ' grave' : '') + '"><b>' + Icon('warn', '', 12) + (n.grave ? 'Novedad grave sin arreglar' : 'Novedad sin arreglar') + '</b>' +
+      esc('Preoperacional ' + (n.fecha === hoyISO ? 'de hoy' : 'del ' + Fecha.corta(n.fecha)) + ' · ' + Preop.hora(n.recibido) + (n.conductor ? ' · ' + n.conductor : '') +
+        (n.veces > 1 ? ' · reportada ' + n.veces + ' veces desde el ' + Fecha.corta(n.primera) : '')) +
+      '<div class="nov-q"><b>' + esc((n.num ? n.num + ' ' : '') + n.texto) + '</b> · ' + esc(n.resp) + (n.nota ? ' · «' + esc(n.nota) + '»' : '') + '</div>' +
+      '<div class="nov-acc"><button class="btn btn-sm ' + (n.grave ? 'btn-danger' : 'btn-primary') + '" data-act="registrarArreglo" data-u="' + attr(u.id) + '" data-nov="' + attr(n.i) + '"' +
+          (n.parte ? ' data-p="' + attr(n.parte) + '"' : '') + '>' + Icon('tool', '', 12) + 'Registrar el arreglo</button>' +
+        '<button class="btn btn-sm" data-act="revisarNovedad" data-u="' + attr(u.id) + '" data-nov="' + attr(n.i) + '">' + Icon('check', '', 12) + 'Marcar como revisada</button>' +
+        '<button class="btn btn-sm btn-ghost" data-act="verPreop" data-p="' + attr(n.preop) + '">' + Icon('eye', '', 12) + 'Ver el preoperacional</button></div></div>';
+  },
+  /* Un arreglo en la historia de una parte */
+  itemTl(u, m, k, marcar) {
+    const prev = m.tipo === 'preventivo', prov = Q.proveedor(m.prov), c = this.costo(m), otras = (m.partes || []).filter(r => r.k !== k);
+    return '<div class="pm-tl-i"><div class="pm-tl-f"><span>' + esc(Fecha.corta(m.fecha)) + '</span>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') +
+        (m.estado === 'taller' ? UI.pill('bad', 'En taller') : '') + '<span class="v">' + (c ? esc(Money.format(c)) : '—') + '</span></div>' +
+      '<div class="pm-tl-t">' + esc(m.trabajo || 'Sin descripción') + (m.componente ? '<span> · ' + esc(m.componente) + '</span>' : '') + '</div>' +
+      (m.falla ? '<div class="pm-tl-q"><span>Qué pasó:</span> ' + esc(m.falla) + '</div>' : '') +
+      '<div class="pm-tl-m">' + (prov ? '<span class="chip">' + Icon('briefcase', '', 11) + esc(prov.nombre) + '</span>' : '') +
+        (m.lectura ? '<span class="chip">' + Icon('medidor', '', 11) + esc(m.lectura) + '</span>' : '') +
+        ((m.llantas || []).length ? '<span class="chip">' + Icon('disc', '', 11) + esc(m.llantas.map(p => Llantas.nombre(p, true)).join(', ')) + '</span>' : '') +
+        (m.fotos ? '<span class="chip">' + Icon('image', '', 11) + m.fotos + (m.fotos === 1 ? ' foto' : ' fotos') + '</span>' : '') +
+        (m.oc ? '<span class="chip">' + Icon('cart', '', 11) + esc(m.oc) + '</span>' : '') +
+        (prev ? (m.adjunto ? UI.file(m.adjunto, m.adjuntoId) : '')
+          : '<button type="button" class="chip chip-btn" data-act="pdfCorrectivo" data-m="' + attr(m.id) + '" title="Ver el PDF con las fotos">' + Icon('pdf', '', 11) + 'PDF</button>') +
+        ((m.novedades || []).length ? '<span class="chip">' + Icon('checkSquare', '', 11) + 'Vino del preoperacional</span>' : '') +
+        (otras.length ? '<span class="chip" title="Este arreglo también tocó otras partes">También: ' + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>' : '') +
+        (m.estado === 'taller' ? '<button type="button" class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>' : '') +
+        (marcar ? '<button type="button" class="btn btn-sm" data-act="asignarPartes" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Marcar la parte</button>' : '') +
+      '</div></div>';
+  },
+  /* En la ficha, arriba de la historia: el plano y el botón para abrirlo */
+  tarjetaFicha(u) {
+    const k = this.clave(u), ar = this.arreglos(u, this.desde('12')), pp = this.porParte(ar), al = Novedades.listo() ? this.alertas(u) : {};
+    const top = this.visibles(k).filter(p => pp[p.k]).sort((a, b) => pp[b.k].n - pp[a.k].n).slice(0, 4), nAl = Object.values(al).reduce((s, n) => s + n, 0);
+    return UI.card('Plano de mantenimiento',
+      '<div class="pl-ficha"><div class="plano-caja claro" data-act="irPlano" data-u="' + attr(u.id) + '" title="Abrir el plano">' + this.mini(u) + '</div>' +
+        '<div class="pl-ficha-t"><p>' + (ar.length ? ar.length + (ar.length === 1 ? ' arreglo' : ' arreglos') + ' en los últimos 12 meses.' : 'Ningún arreglo en los últimos 12 meses.') +
+          (nAl ? ' <b class="tx-bad">' + (nAl === 1 ? '1 novedad' : nAl + ' novedades') + ' del preoperacional sin arreglar.</b>' : '') + '</p>' +
+          (top.length ? '<div class="uc-zs">' + top.map(p => '<span class="chip">' + esc(p.n) + ' <b>' + pp[p.k].n + '</b></span>').join('') + '</div>' : '') +
+          '<button class="btn btn-sm mt12" data-act="irPlano" data-u="' + attr(u.id) + '">' + Icon('eye', '', 12) + 'Abrir el plano</button></div></div>',
+      { cls: 'mb16', sub: 'El color dice qué partes se han arreglado más' });
+  },
+  /* En el celular: buscar la unidad por su placa, sin volver a dibujar */
+  buscador() {
+    const inp = $('#mantBuscar');
+    if (!inp) return;
+    inp.addEventListener('input', () => {
+      const q = sinTildes(inp.value).replace(/\s+/g, '');
+      let n = 0;
+      $$('#mantGrid .uc-plano').forEach(c => {
+        const si = !q || c.dataset.buscar.replace(/\s+/g, '').includes(q);
+        c.classList.toggle('hidden', !si);
+        if (si) n++;
+      });
+      $('#mantNada').classList.toggle('hidden', n > 0);
+    });
+  }
+};
+
+/* Las novedades del preoperacional (lo que el conductor marcó como regular o
+   malo) de los últimos días. Una novedad queda atendida cuando se registra el
+   arreglo que vino de ella o cuando se marca como revisada; si el conductor la
+   vuelve a reportar después, sale otra vez. Los preoperacionales no se tocan:
+   lo atendido queda en el arreglo o en la unidad. */
+const Novedades = {
+  DIAS: 30,
+  filas: null, porUnidad: new Map(), t: 0, error: null, trayendo: null,
+  listo() { return Boolean(this.filas) && !this.error; },
+  pedir() {
+    if (this.trayendo || (this.filas && Date.now() - this.t < 60000)) return;
+    const q = 'preoperacionales?select=id,unidad_id,fecha,recibido,conductor_nombre,respuestas,notas&fecha=gte.' + R(-this.DIAS) + '&order=recibido.desc&limit=1000';
+    this.trayendo = Promise.all([Nube.pedir(q + '&regulares=gt.0'), Nube.pedir(q + '&malos=gt.0'), Preop.formato ? null : Preop.traerFormato()])
+      .then(([a, b]) => {
+        const vistos = new Set();
+        this.filas = (a || []).concat(b || []).filter(p => !vistos.has(p.id) && vistos.add(p.id));
+        this.porUnidad = new Map();
+        this.filas.forEach(p => { if (!this.porUnidad.has(p.unidad_id)) this.porUnidad.set(p.unidad_id, []); this.porUnidad.get(p.unidad_id).push(p); });
+        this.error = null;
+      })
+      .catch(e => { this.error = e; })
+      .finally(() => { this.t = Date.now(); this.trayendo = null; this.repintar(); });
+  },
+  olvidar() { this.t = 0; },
+  repintar() {
+    const r = Router.actual();
+    if (!$('#vista')) return;
+    const b = $('#mantBuscar');
+    if (b && document.activeElement === b) { b.addEventListener('blur', () => this.repintar(), { once: true }); return; }
+    if (r.vista === 'mantenimientos') Router.pintar(true);
+    else if (r.vista === 'unidad' && UIState.tab === 'mant' && $('#tabBody')) $('#tabBody').innerHTML = Vistas.tab_mant(Q.unidad(r.id));
+  },
+  /* Debajo del plano, si todavía no se sabe o no se pudo saber */
+  aviso() {
+    if (this.error) return '<div class="pl-nota">' + Icon('warn', '', 13) + '<span>No se pudieron revisar las novedades del preoperacional. <span class="link" data-act="novReintentar">Intentar otra vez</span></span></div>';
+    if (!this.filas) return '<div class="pl-nota"><span class="spin"></span><span>Revisando las novedades del preoperacional…</span></div>';
+    return '';
+  },
+  /* Cada pregunta del formulario de hoy, con su sección y su número */
+  preguntas() {
+    const out = {};
+    ((Preop.formato && Preop.formato.secciones) || []).forEach((s, i) => (s.items || []).forEach((it, j) => { out[it.id] = { it, sec: s, num: (i + 1) + '.' + (j + 1) }; }));
+    return out;
+  },
+  opciones() {
+    const f = Preop.formato, ops = f && Array.isArray(f.opciones) && f.opciones.length ? f.opciones : Preop.OPCIONES, out = {};
+    ops.forEach(o => { out[o.id] = o; });
+    return out;
+  },
+  /* Hasta qué fecha quedó atendida cada pregunta de una unidad */
+  atendidas(u) {
+    const h = {}, poner = (i, f) => { if (f && (!h[i] || f > h[i])) h[i] = f; };
+    Datos.mantenimientos.forEach(m => { if (m.unidad === u.id) (m.novedades || []).forEach(n => poner(n.i, n.f > m.fecha ? n.f : m.fecha)); });
+    (u.preopRevisadas || []).forEach(r => poner(r.i, r.f));
+    return h;
+  },
+  /* Las novedades sin atender de una unidad: una por pregunta, con la más
+     reciente y cuántas veces se reportó */
+  de(u) {
+    if (!this.filas || !u) return [];
+    const q = this.preguntas(), ops = this.opciones(), at = this.atendidas(u), k = Plano.clave(u), por = {};
+    (this.porUnidad.get(u.id) || []).forEach(p => {
+      Object.keys(p.respuestas || {}).forEach(i => {
+        const o = ops[p.respuestas[i]];
+        if (!o || (o.cuenta !== 'novedad' && o.cuenta !== 'grave') || (at[i] && p.fecha <= at[i])) return;
+        const x = por[i] || (por[i] = { i, veces: 0, grave: false, p, primera: p.fecha });
+        x.veces++;
+        if (o.cuenta === 'grave') x.grave = true;
+        if (String(p.recibido) > String(x.p.recibido)) x.p = p;
+        if (p.fecha < x.primera) x.primera = p.fecha;
+      });
+    });
+    return Object.values(por).map(x => {
+      const d = q[x.i], o = ops[x.p.respuestas[x.i]];
+      return { i: x.i, texto: d ? d.it.texto : 'Pregunta que ya no está en el formulario', num: d ? d.num : '', resp: o ? o.nombre : '', grave: x.grave,
+        nota: (x.p.notas || {})[x.i] || '', fecha: x.p.fecha, recibido: x.p.recibido, conductor: x.p.conductor_nombre || '', preop: x.p.id,
+        veces: x.veces, primera: x.primera, parte: d ? Plano.deLaPregunta(k, d.it, d.sec) : '' };
+    }).sort((a, b) => String(b.recibido).localeCompare(String(a.recibido)));
+  }
+};
+
+/* Las llantas por posición, vistas desde arriba con el frente arriba. Cada eje
+   es de llanta sencilla (s) o doble (d) a cada lado; los de cada unidad se
+   cambian en su plano. */
+const Llantas = {
+  ejes(u) { return Array.isArray(u.ejes) && u.ejes.length ? u.ejes : PLANOS[Plano.clave(u)].ejes || []; },
+  aplica(u) { return this.ejes(u).length > 0; },
+  LADO: { I: 'izquierda', D: 'derecha', IE: 'izquierda, por fuera', II: 'izquierda, por dentro', DI: 'derecha, por dentro', DE: 'derecha, por fuera' },
+  CORTO: { I: 'izq.', D: 'der.', IE: 'izq. fuera', II: 'izq. dentro', DI: 'der. dentro', DE: 'der. fuera' },
+  nombre(pos, corto) {
+    if (pos === 'R') return 'Repuesto';
+    const p = String(pos).split('-'), e = p[0].slice(1);
+    return (corto ? 'E' + e + ' ' : 'Eje ' + e + ' · ') + ((corto ? this.CORTO : this.LADO)[p[1]] || p[1]);
+  },
+  /* Cada posición con su sitio en el dibujo */
+  posiciones(u) {
+    const ejes = this.ejes(u), k = Plano.clave(u), frontal = !/^semi_/.test(k), out = [];
+    let y = 62;
+    ejes.forEach((t, i) => {
+      if (i) y += i === 1 && frontal ? 124 : 64;
+      const n = 'E' + (i + 1) + '-';
+      (t === 'd' ? [['IE', 22], ['II', 48], ['DI', 150], ['DE', 176]] : [['I', 35], ['D', 163]]).forEach(([l, x]) => out.push({ k: n + l, x, y }));
+    });
+    if (PLANOS[k].repuesto && ejes.length) out.push({ k: 'R', x: 86, y: y + 66, rep: true });
+    return out;
+  },
+  /* o: nivel y sel por posición, act y u (lo que hace el clic) */
+  svg(u, o) {
+    o = o || {};
+    const pos = this.posiciones(u), n = o.nivel || {}, sel = o.sel || [];
+    const ys = Array.from(new Set(pos.filter(p => !p.rep).map(p => p.y))), fin = ys[ys.length - 1] || 62, rep = pos.find(p => p.rep);
+    const alto = rep ? rep.y + 34 : fin + 46;
+    const llanta = p => '<rect class="llanta h' + (n[p.k] || 0) + (sel.includes(p.k) ? ' sel' : '') + '"' +
+      (o.act ? ' data-act="' + o.act + '" data-pos="' + p.k + '"' + (o.u ? ' data-u="' + attr(o.u) + '"' : '') : '') +
+      (p.rep ? ' x="' + p.x + '" y="' + (p.y - 11) + '" width="48" height="22"' : ' x="' + p.x + '" y="' + (p.y - 23) + '" width="22" height="46"') +
+      ' rx="6"><title>' + esc(this.nombre(p.k)) + '</title></rect>';
+    return '<svg class="llantas-v" viewBox="0 0 220 ' + alto + '" role="img" aria-label="Llantas vistas desde arriba">' +
+      '<text class="ll-txt" x="110" y="14" text-anchor="middle">FRENTE</text>' +
+      '<rect class="ll-chasis" x="97" y="24" width="26" height="' + (fin + 20 - 24) + '" rx="5"/>' +
+      ys.map((y, i) => '<path class="ll-eje" d="M34 ' + y + 'H186"/><circle class="ll-num" cx="110" cy="' + y + '" r="9"/>' +
+        '<text class="ll-n" x="110" y="' + (y + 3.5) + '" text-anchor="middle">' + (i + 1) + '</text>').join('') +
+      pos.map(llanta).join('') + (rep ? '<text class="ll-txt" x="110" y="' + (rep.y + 26) + '" text-anchor="middle">REPUESTO</text>' : '') + '</svg>';
+  }
+};
+
+/* Configuración → Planos de mantenimiento: las partes de cada dibujo, qué
+   dibujo usa cada clase y qué parte prende cada pregunta del preoperacional.
+   Todo se cambia en un borrador; «Guardar cambios» se prende solo si hay
+   cambios. Lo que queda igual a lo de siempre no se guarda. */
+const PlanoCfg = {
+  k: 'tractocamion',
+  borrador: null,
+  abierto: false,
+  pidiendo: null,
+  norm: p => ({ k: p.k, n: p.n, d: p.d || '', comp: (p.comp || []).slice(), zona: p.zona === undefined ? p.k : p.zona, oculta: Boolean(p.oculta) }),
+  normales(k) { return PLANOS[k].partes.map(this.norm); },
+  base() { if (!this.borrador) this.borrador = JSON.parse(JSON.stringify(Config.planos || {})); return this.borrador; },
+  /* Sin lo que es igual a lo de siempre */
+  limpio(c) {
+    const out = {}, dib = {}, partes = {}, preop = {};
+    Object.keys(c.dibujo || {}).forEach(x => {
+      const i = x.indexOf('|'), d = c.dibujo[x];
+      if (PLANOS[d] && d !== Plano.adivinar({ tipo: x.slice(0, i), clase: x.slice(i + 1) })) dib[x] = d;
+    });
+    Object.keys(c.partes || {}).forEach(k => {
+      const l = Array.isArray(c.partes[k]) ? c.partes[k].map(this.norm) : [];
+      if (PLANOS[k] && l.length && estable(l) !== estable(this.normales(k))) partes[k] = l;
+    });
+    Object.keys(c.preop || {}).forEach(k => { if (PLANOS[k] && Object.keys(c.preop[k] || {}).length) preop[k] = Object.assign({}, c.preop[k]); });
+    if (Object.keys(dib).length) out.dibujo = dib;
+    if (Object.keys(partes).length) out.partes = partes;
+    if (Object.keys(preop).length) out.preop = preop;
+    return out;
+  },
+  sucio() { return Boolean(this.borrador) && estable(this.limpio(this.borrador)) !== estable(this.limpio(Config.planos || {})); },
+  /* Las partes del dibujo escogido, para editarlas (la primera vez, las de siempre) */
+  lista() {
+    const b = this.base();
+    b.partes = b.partes || {};
+    if (!Array.isArray(b.partes[this.k]) || !b.partes[this.k].length) b.partes[this.k] = this.normales(this.k);
+    return b.partes[this.k];
+  },
+  cambiado(k) { const c = this.limpio(this.base()); return Boolean((c.partes || {})[k] || (c.preop || {})[k]); },
+  montar() {
+    const el = $('#cfgPlanos');
+    if (!el) return;
+    el.addEventListener('input', e => {
+      const t = e.target, f = t.dataset.f, fila = t.closest('.pe-fila');
+      if (!fila || !['n', 'd', 'comp'].includes(f)) return;
+      const p = this.lista()[+fila.dataset.i];
+      p[f] = f === 'comp' ? t.value.split(',').map(x => x.trim()).filter(Boolean) : f === 'n' ? t.value.trim() || 'Sin nombre' : t.value.trim();
+      this.pintarPie();
+    });
+    el.addEventListener('change', e => {
+      const t = e.target, b = this.base();
+      if (t.dataset.f === 'zona' || t.dataset.f === 'oculta') {
+        const p = this.lista()[+t.closest('.pe-fila').dataset.i];
+        if (t.dataset.f === 'zona') p.zona = t.value; else p.oculta = t.checked;
+        this.pintar();
+      } else if (t.dataset.cl) {
+        b.dibujo = b.dibujo || {};
+        b.dibujo[t.dataset.cl] = t.value;
+        this.pintarPie();
+      } else if (t.dataset.preg) {
+        b.preop = b.preop || {};
+        const m = b.preop[this.k] = b.preop[this.k] || {};
+        if (t.value === '*') delete m[t.dataset.preg]; else m[t.dataset.preg] = t.value;
+        this.pintarPie();
+      }
+    });
+    el.addEventListener('click', e => {
+      const t = e.target.closest('[data-pe],[data-pk]');
+      if (!t || t.disabled) return;
+      if (t.dataset.pk) { this.k = t.dataset.pk; this.pintar(); return; }
+      const acc = t.dataset.pe, l = this.lista(), fila = t.closest('.pe-fila'), i = fila ? +fila.dataset.i : -1;
+      if (acc === 'arriba' && i > 0) l.splice(i - 1, 0, l.splice(i, 1)[0]);
+      else if (acc === 'abajo' && i >= 0 && i < l.length - 1) l.splice(i + 1, 0, l.splice(i, 1)[0]);
+      else if (acc === 'quitar' && i >= 0) l.splice(i, 1);
+      else if (acc === 'agregar') l.push({ k: 'p' + Date.now().toString(36), n: 'Parte nueva', d: '', comp: [], zona: '', oculta: false });
+      else if (acc === 'siempre') {
+        const b = this.base();
+        if (b.partes) delete b.partes[this.k];
+        if (b.preop) delete b.preop[this.k];
+      } else if (acc === 'descartar') this.borrador = null;
+      else if (acc === 'guardar') { this.guardar(); return; }
+      this.pintar();
+      if (acc === 'agregar') { const n = $$('#cfgPlanos .pe-fila .pe-n'); if (n.length) { n[n.length - 1].focus(); n[n.length - 1].select(); } }
+    });
+    el.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('pe-preop')) this.abierto = e.target.open; }, true);
+    this.pintar();
+  },
+  pintar() {
+    const el = $('#cfgPlanos');
+    if (!el) return;
+    const k = this.k, l = this.lista(), d = PLANOS[k], b = this.base();
+    const vis = l.filter(p => !p.oculta), zonas = d.zonas.map(z => z[0]);
+    const nombreZona = z => (d.partes.find(p => p.k === z) || { n: z }).n;
+    const fila = (p, i) => '<div class="pe-fila' + (p.oculta ? ' oculta' : '') + '" data-i="' + i + '">' +
+      '<div class="pe-l1"><span class="pe-num">' + (i + 1) + '</span>' +
+        '<input class="inp inp-sm pe-n" data-f="n" value="' + attr(p.n) + '" placeholder="Nombre de la parte" aria-label="Nombre de la parte">' +
+        '<select class="inp inp-sm pe-z" data-f="zona" title="Dónde se pinta en el dibujo" aria-label="Dónde se pinta en el dibujo">' +
+          zonas.map(z => '<option value="' + z + '"' + (p.zona === z ? ' selected' : '') + '>' + esc(nombreZona(z)) + '</option>').join('') +
+          '<option value=""' + (p.zona ? '' : ' selected') + '>Solo en la lista</option></select>' +
+        '<label class="pe-oc" title="No sale en el plano ni al registrar"><input type="checkbox" data-f="oculta"' + (p.oculta ? ' checked' : '') + '>Ocultar</label>' +
+        '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-pe="arriba" title="Subir" aria-label="Subir"' + (i ? '' : ' disabled') + '>' + Icon('arriba', '', 13) + '</button>' +
+        '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-pe="abajo" title="Bajar" aria-label="Bajar"' + (i < l.length - 1 ? '' : ' disabled') + '>' + Icon('abajo', '', 13) + '</button>' +
+        (d.partes.some(x => x.k === p.k) ? '<span class="pe-hueco"></span>'
+          : '<button type="button" class="btn btn-sm btn-ghost btn-icon btn-del" data-pe="quitar" title="Quitar la parte" aria-label="Quitar la parte">' + Icon('trash', '', 13) + '</button>') + '</div>' +
+      '<div class="pe-l2"><input class="inp inp-sm" data-f="d" value="' + attr(p.d || '') + '" placeholder="Qué incluye" aria-label="Qué incluye">' +
+        '<input class="inp inp-sm" data-f="comp" value="' + attr((p.comp || []).join(', ')) + '" placeholder="Componentes, separados por comas" aria-label="Componentes"></div></div>';
+    /* Qué dibujo usa cada clase: las del catálogo y las que tengan las unidades */
+    const clases = ORDEN.flatMap(t => Array.from(new Set(TIPOS[t].clases.concat(Datos.unidades.filter(u => u.tipo === t).map(u => u.clase).filter(Boolean)))).map(c => [t, c]));
+    const tablaClases = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tipo</th><th>Clase</th><th>Dibujo</th><th class="num">Unidades</th></tr></thead><tbody>' +
+      clases.map(([t, c]) => {
+        const x = t + '|' + c, actual = PLANOS[(b.dibujo || {})[x]] ? b.dibujo[x] : Plano.adivinar({ tipo: t, clase: c });
+        return '<tr><td>' + esc(TIPOS[t].plural) + '</td><td>' + esc(c) + '</td><td><select class="inp inp-sm" data-cl="' + attr(x) + '" aria-label="' + attr('Dibujo de ' + c) + '">' +
+          Object.keys(PLANOS).map(o => '<option value="' + o + '"' + (o === actual ? ' selected' : '') + '>' + esc(PLANOS[o].nombre) + '</option>').join('') + '</select></td>' +
+          '<td class="num">' + Datos.unidades.filter(u => u.tipo === t && u.clase === c).length + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    /* Las preguntas del preoperacional y la parte que prende cada una */
+    let preguntas;
+    const f = Preop.formato;
+    if (!f) {
+      if (!this.pidiendo) this.pidiendo = Preop.traerFormato().catch(() => null).finally(() => { this.pidiendo = null; if ($('#cfgPlanos') && Preop.formato) this.pintar(); });
+      preguntas = '<div class="pl-nota"><span class="spin"></span><span>Trayendo las preguntas del preoperacional…</span></div>';
+    } else {
+      const m = (b.preop || {})[k] || {}, secs = f.secciones || [], n = secs.reduce((s, x) => s + (x.items || []).length, 0);
+      const opc = (it, s) => {
+        const auto = Plano.adivinarParte(k, it.texto, vis) || Plano.adivinarParte(k, s.titulo, vis), v = m[it.id];
+        const nAuto = auto ? (vis.find(p => p.k === auto) || {}).n : '';
+        return '<option value="*"' + (v === undefined ? ' selected' : '') + '>Automático: ' + esc(nAuto || 'ninguna') + '</option>' +
+          vis.map(p => '<option value="' + attr(p.k) + '"' + (v === p.k ? ' selected' : '') + '>' + esc(p.n) + '</option>').join('') +
+          '<option value=""' + (v === '' ? ' selected' : '') + '>Ninguna: sale en «Otras novedades»</option>';
+      };
+      preguntas = '<details class="pe-preop"' + (this.abierto ? ' open' : '') + '><summary>Qué parte se prende con cada pregunta (' + n + ' preguntas)</summary>' +
+        secs.map((s, i) => '<div class="pe-sec">' + (i + 1) + '. ' + esc(Preop.tituloSec(s)) + '</div>' + (s.items || []).map((it, j) =>
+          '<div class="pe-preg"><span>' + (i + 1) + '.' + (j + 1) + ' ' + esc(it.texto) + '</span><select class="inp inp-sm" data-preg="' + attr(it.id) + '" aria-label="' +
+            attr('Parte de ' + it.texto) + '">' + opc(it, s) + '</select></div>').join('')).join('') + '</details>';
+    }
+    el.innerHTML = '<div class="fchips">' + Object.keys(PLANOS).map(o => '<button type="button" class="fchip' + (o === k ? ' on' : '') + '" data-pk="' + o + '">' + esc(PLANOS[o].nombre) +
+        '</button>').join('') + '</div>' +
+      '<div class="pe-grid"><div><div class="plano-caja claro">' + Plano.svg(k, { partes: vis, act: 'peZona' }) + '</div>' +
+          '<p class="txt-3 fs12 mt8">Toque una zona del dibujo para ir a su parte. Cada parte se pinta en una zona; dos partes pueden compartir la misma.</p></div>' +
+        '<div><p class="pe-ayuda">Cada parte: su nombre, la zona del dibujo donde se pinta, qué incluye y sus componentes (separados por comas). ' +
+          'Las de siempre no se borran: se ocultan.</p><div class="pe-lista">' + l.map(fila).join('') + '</div>' +
+          '<button type="button" class="btn btn-sm mt8" data-pe="agregar">' + Icon('plus', '', 12) + 'Agregar parte</button></div></div>' +
+      '<div class="pe-sub">Preguntas del preoperacional · ' + esc(d.nombre) + '</div>' +
+      '<p class="txt-3 fs12 mb12">Cuando el conductor marca una pregunta como regular o mala, se prende un «!» en la parte que diga aquí.</p>' + preguntas +
+      '<div class="pe-sub">Qué dibujo usa cada clase</div>' + tablaClases +
+      '<div class="pe-pie" id="pePie"></div>';
+    this.pintarPie();
+  },
+  pintarPie() {
+    const el = $('#pePie');
+    if (!el) return;
+    const s = this.sucio();
+    el.innerHTML = '<button type="button" class="btn btn-ghost" data-pe="siempre"' + (this.cambiado(this.k) ? '' : ' disabled') + '>' + Icon('refresh', '', 13) +
+        'Volver a las partes de siempre</button><span class="tb-sp"></span>' +
+      (s ? '<span class="txt-3 fs12">Hay cambios sin guardar</span>' : '') +
+      '<button type="button" class="btn" data-pe="descartar"' + (s ? '' : ' disabled') + '>Descartar</button>' +
+      '<button type="button" class="btn btn-primary" data-pe="guardar"' + (s ? '' : ' disabled') + '>' + Icon('save', '', 14) + 'Guardar cambios</button>';
+    $$('#cfgPlanos [data-pk]').forEach(b => {
+      const m = b.querySelector('.pe-mod'), c = this.cambiado(b.dataset.pk);
+      if (c && !m) b.insertAdjacentHTML('beforeend', '<span class="pe-mod" title="Tiene cambios">•</span>');
+      else if (!c && m) m.remove();
+    });
+  },
+  guardar() {
+    Config.planos = this.limpio(this.base());
+    this.borrador = null;
+    Router.pintar(true);
+    Toast.show('Planos guardados: los cambios ya se ven en Mantenimientos.');
+  },
+  /* Al tocar una zona del dibujo, a su parte en la lista */
+  irA(pk) {
+    const i = this.lista().findIndex(p => p.k === pk), fila = $('#cfgPlanos .pe-fila[data-i="' + i + '"]');
+    if (!fila) return;
+    fila.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const n = $('.pe-n', fila);
+    n.focus();
+    n.select();
+  }
+};
+
+
+/* Lo del plano en los formularios de un arreglo (correctivo, preventivo y
+   «Marcar la parte»): las partes que tocó, las llantas, las sugerencias de
+   componente y las novedades del preoperacional que atiende. El estado va en
+   la ventana: _uid, _partes, _llantas y _novs. */
+const PlanoForm = {
+  u(m) { return Q.unidad(m._uid); },
+  poner(m, u, o) {
+    o = o || {};
+    const vis = Plano.visibles(Plano.clave(u));
+    m._uid = u.id;
+    m._partes = (o.partes || []).filter(x => vis.some(p => p.k === x));
+    m._llantas = (o.llantas || []).slice();
+    m._novs = (o.novs || []).slice();
+  },
+  /* Las partes escogidas, en el orden del dibujo y con su nombre de hoy */
+  escogidas(m) {
+    const k = Plano.clave(this.u(m));
+    return Plano.visibles(k).filter(p => m._partes.includes(p.k)).map(p => ({ k: p.k, n: p.n }));
+  },
+  pintar(m) {
+    const u = this.u(m), k = Plano.clave(u), vis = Plano.visibles(k), sel = vis.filter(p => m._partes.includes(p.k));
+    const caja = $('#mcPlano', m), lista = $('#mcSel', m), ll = $('#mcLlantas', m), sug = $('#mcSug', m), nv = $('#mcNov', m);
+    if (caja) caja.innerHTML = Plano.svg(k, { sel: sel.map(p => p.zona).filter(Boolean), act: 'regParte' });
+    if (lista) lista.innerHTML = vis.map(p => {
+      const on = m._partes.includes(p.k);
+      return '<button type="button" class="zchip' + (on ? ' on' : '') + '" data-act="regParte" data-p="' + attr(p.k) + '" aria-pressed="' + on + '">' +
+        (on ? Icon('check', '', 11) : '') + esc(p.n) + '</button>';
+    }).join('');
+    if (ll) {
+      const con = m._partes.includes('llantas') && Llantas.aplica(u);
+      ll.innerHTML = con ? '<div class="field"><label>¿Qué llantas? <span class="txt-3">(opcional)</span></label><div class="reg-ll">' +
+        Llantas.svg(u, { sel: m._llantas, act: 'regLlanta' }) + '<div class="hint">' + (m._llantas.length ? esc(m._llantas.map(p => Llantas.nombre(p)).join(' · '))
+          : 'Toque las llantas que se cambiaron o se repararon.') + '</div></div></div>' : '';
+    }
+    if (sug) sug.innerHTML = Array.from(new Set(sel.flatMap(p => p.comp || []))).map(c =>
+      '<button type="button" class="chip" data-act="regComp" data-v="' + attr(c) + '">' + esc(c) + '</button>').join('');
+    if (nv) {
+      const txt = n => (n.num ? n.num + ' ' : '') + n.texto + ' · ' + n.resp + (n.nota ? ' · «' + n.nota + '»' : '') + ' · ' + (n.fecha === hoyISO ? 'hoy' : Fecha.corta(n.fecha));
+      const ligadas = m._novs, otras = Novedades.de(u).filter(n => n.parte && m._partes.includes(n.parte) && !ligadas.some(x => x.i === n.i));
+      nv.innerHTML = (ligadas.length ? '<div class="alert a-info mb12">' + Icon('checkSquare') + '<div><b>' + (ligadas.length === 1 ? 'Viene del preoperacional'
+          : 'Atiende ' + ligadas.length + ' novedades del preoperacional') + '</b>' +
+          ligadas.map(n => '<div>' + esc(txt(n)) + ' <span class="link" data-act="regNov" data-nov="' + attr(n.i) + '">Quitar</span></div>').join('') +
+          (ligadas.length === 1 ? 'Al guardar, la novedad queda como arreglada.' : 'Al guardar, las novedades quedan como arregladas.') + '</div></div>' : '') +
+        otras.map(n => '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>Esta parte tiene una novedad sin arreglar</b><div>' + esc(txt(n)) + '</div>' +
+          '<span class="link" data-act="regNov" data-nov="' + attr(n.i) + '">Este arreglo la atiende</span></div></div>').join('');
+    }
+  },
+  /* Lo que depende de la unidad: la lectura y las órdenes de compra */
+  unidad(m) {
+    const u = this.u(m), lc = $('#mcLC', m), oc = $('#mcO', m);
+    if (lc) {
+      const ap = Aceite.aplica(u), a = ap ? Aceite.actual(u) : null, inp = $('#mcL', m);
+      lc.classList.toggle('hidden', !ap);
+      $('label', lc).textContent = u.tipo === 'maquinaria' ? 'Horómetro' : 'Kilometraje';
+      inp.placeholder = u.tipo === 'maquinaria' ? 'Ej.: 4.250 h' : 'Ej.: 183.500 km';
+      inp.value = a ? Aceite.fmt(u, a.valor) : '';
+    }
+    if (oc) oc.innerHTML = '<option value="">Sin orden de compra</option>' + Datos.ocs.filter(o => !o.unidad || o.unidad === u.id)
+      .sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 40)
+      .map(o => '<option value="' + attr(o.numero) + '">' + esc(o.numero + ' · ' + o.concepto + ' · ' + Money.format(UI.totalOC(o))) + '</option>').join('');
+  }
+};
+
 const Vistas = {
   /* ------------------------------------------------------------- Dashboard
      Lo que el jefe mira para decidir: el estado de la operación en números,
@@ -3698,10 +4924,11 @@ const Vistas = {
     '</div>';
   },
   tab_mant(u) {
+    Novedades.pedir();
     const ms = Datos.mantenimientos.filter(m => m.unidad === u.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
     const act = '<button class="btn btn-sm" data-act="nuevoPreventivo" data-u="' + u.id + '">' + Icon('tool', '', 12) + 'Preventivo</button>' +
       '<button class="btn btn-sm btn-primary" data-act="nuevoCorrectivo" data-u="' + u.id + '">' + Icon('camera', '', 12) + 'Correctivo</button>';
-    return UI.card('Historial de mantenimientos', ms.length ? '<div class="tl">' + ms.map(m => UI.itemMant(m, false)).join('') + '</div>'
+    return Plano.tarjetaFicha(u) + UI.card('Historial de mantenimientos', ms.length ? '<div class="tl">' + ms.map(m => UI.itemMant(m, false)).join('') + '</div>'
       : UI.empty('tool', 'Sin mantenimientos registrados', 'Registre el primero con los botones de arriba.'), { sub: ms.length + ' registro(s)', act });
   },
   tab_insp(u) {
@@ -4436,7 +5663,11 @@ const Acciones = {
    §B  SEGUNDA PARTE — mantenimientos, inspecciones, comparendos, compras,
    conductores, proveedores y configuración
    ========================================================================== */
-Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas' });
+Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
+  /* Mantenimientos: la pestaña (por vehículo o historial) y el tipo de unidad */
+  mantTab: 'vehiculos', mantTipo: 'todos',
+  /* El plano de una unidad: la parte y la llanta escogidas, el color y el período */
+  plano: { u: null, sel: null, llanta: null, modo: 'arreglos', periodo: '12' } });
 Money.compacto = n => n >= 1e6 ? '$' + (n / 1e6).toFixed(1).replace('.', ',') + ' M' : n >= 1e3 ? '$' + Math.round(n / 1e3) + ' mil' : Money.format(n);
 const iniciales2 = n => { const p = String(n).split(/\s+/).filter(Boolean); return (p.length > 1 ? p[0][0] + p[1][0] : String(n).slice(0, 2)).toUpperCase(); };
 
@@ -4471,8 +5702,8 @@ const Opc = {
    guardan como PDF desde la ventana de impresión del navegador.
    -------------------------------------------------------------------------- */
 const Formatos = {
-  /* El encabezado y, debajo, la banda azul con la línea naranja: a la
-     izquierda de qué se trata y a la derecha el número del documento */
+  /* El encabezado y, debajo, la banda con borde azul: a la izquierda de qué
+     se trata y a la derecha el número del documento */
   cabecera(titulo, meta, numero, numLbl, banda) {
     return '<div class="dp-head"><div class="dp-logo">' +
       (MARCA.ok ? '<img src="' + MARCA.logo + '" alt="SINUGRAVAS S.A.S.">' : '<div class="lg-txt">SINUGRAVAS<small>SISTEMA DE GESTIÓN DE FLOTA</small></div>') + '</div>' +
@@ -4494,12 +5725,20 @@ const Formatos = {
   /* El historial de una visita al taller, con una foto por cambio */
   correctivo(d) {
     const u = d.unidad, p = d.prov, c = Q.conductor(u.conductor), conPlaca = u.tipo === 'carga' || u.tipo === 'remolque';
+    /* La parte que se arregló, marcada en el plano de la unidad */
+    const k = Plano.clave(u), partes = d.partes || [], zonas = partes.map(x => (Plano.parte(k, x.k) || {}).zona).filter(Boolean);
+    const arreglo = [['Parte del vehículo', partes.length ? partes.map(x => Plano.nombre(u, x)).join(', ') : 'Sin marcar'], ['Componente', d.componente || '—']]
+      .concat(d.lectura ? [[u.tipo === 'maquinaria' ? 'Horómetro' : 'Kilometraje', d.lectura]] : [])
+      .concat((d.llantas || []).length ? [['Llantas', d.llantas.map(x => Llantas.nombre(x)).join(' · ')]] : []);
     return this.cabecera('Historial de mantenimiento correctivo', 'Visita al taller con el registro fotográfico de cada cambio', d.numero, null,
         [[UI.placaTxt(u), u.clase, d.entrada ? 'entró el ' + Fecha.larga(d.entrada) : ''].filter(Boolean).join(' · '), 'Correctivo N.º ' + d.numero]) +
       this.sec('Unidad', this.campos([[conPlaca ? 'Placa' : 'Código', UI.placaTxt(u)], ['Tipo', TIPOS[u.tipo].nombre + ' · ' + u.clase],
         ['Marca y línea', UI.nombre(u) || '—'], ['Conductor', c ? c.nombre : 'Sin asignar']])) +
       this.sec('Taller', this.campos([['Taller o proveedor', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'],
         ['Entró', Fecha.larga(d.entrada)], ['Salió', d.salida ? Fecha.larga(d.salida) : 'Sigue en el taller']])) +
+      this.sec('Arreglo', '<div class="dp-arreglo"><div class="dp-plano">' + Plano.svg(k, { mini: true, sel: zonas }) + '</div>' +
+        '<div class="dp-fields">' + arreglo.map(x => '<div class="dp-f"><label>' + esc(x[0]) + '</label><span>' + esc(x[1]) + '</span></div>').join('') + '</div></div>') +
+      (d.falla ? '<div class="dp-obs"><b>Qué pasó</b>' + esc(d.falla) + '</div>' : '') +
       '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo || 'Sin descripción todavía.') + '</div>' +
       this.sec('Registro fotográfico · ' + d.fotos.length + ' foto(s)', d.fotos.length ? '<div class="dp-fotos">' + d.fotos.map((f, i) => '<figure class="dp-foto" style="margin:0">' +
           (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<div class="ph" style="height:58mm">' + ILUS[ilusDe(u)] + '</div>') +
@@ -4610,8 +5849,22 @@ const Formatos = {
 };
 
 Object.assign(Vistas, {
-  /* -------------------------------------------------------- Mantenimientos */
-  mantenimientos() {
+  /* -------------------------------------------------------- Mantenimientos
+     Dos pestañas: por vehículo (cada uno con su plano) y el historial. Con
+     una unidad («mantenimientos/<id>»), el plano de esa unidad. */
+  mantenimientos(id) {
+    if (id) {
+      const u = Q.unidad(id);
+      if (!u) return { titulo: 'Mantenimientos', html: '<div class="card">' + UI.empty('truck', 'No se encontró la unidad', '<span class="link" data-ir="mantenimientos">Volver a Mantenimientos</span>') + '</div>' };
+      return { titulo: UI.placaTxt(u), sub: 'Plano de mantenimiento', html: Plano.vista(u) };
+    }
+    const head = UI.head('Mantenimientos', 'Preventivos con Navitrans y correctivos en el taller',
+      '<button class="btn" data-act="nuevoPreventivo">' + Icon('tool', '', 14) + 'Preventivo</button>' +
+      '<button class="btn btn-primary" data-act="nuevoCorrectivo">' + Icon('camera', '', 14) + 'Correctivo</button>');
+    const tabs = '<div class="tabs">' + [['vehiculos', 'Por vehículo', 'truck'], ['historial', 'Historial', 'list']].map(t => '<div class="tab tab-ic' +
+      (UIState.mantTab === t[0] ? ' active' : '') + '" data-act="tabMant" data-v="' + t[0] + '">' + Icon(t[2], '', 14) + t[1] + '</div>').join('') + '</div>';
+    if (UIState.mantTab !== 'historial') return { titulo: 'Mantenimientos', sub: 'Por vehículo, con el plano de cada uno', html: head + tabs + Plano.vistaFlota(),
+      despues: () => Plano.buscador() };
     const f = UIState.mant;
     const todos = Datos.mantenimientos.slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
     const delMes = m => { const d = Fecha.parse(m.fecha); return d.getMonth() === HOY.getMonth() && d.getFullYear() === HOY.getFullYear(); };
@@ -4620,37 +5873,37 @@ Object.assign(Vistas, {
     const lista = todos.filter(m => f === 'todos' || (f === 'taller' ? m.estado === 'taller' : m.tipo === f));
     const segs = [['todos', 'Todos', todos.length], ['preventivo', 'Preventivos', todos.filter(m => m.tipo === 'preventivo').length],
       ['correctivo', 'Correctivos', todos.filter(m => m.tipo === 'correctivo').length], ['taller', 'En taller', taller.length]];
-    const html =
-      UI.head('Mantenimientos', 'Preventivos con Navitrans y correctivos en el taller',
-        '<button class="btn" data-act="nuevoPreventivo">' + Icon('tool', '', 14) + 'Preventivo</button>' +
-        '<button class="btn btn-primary" data-act="nuevoCorrectivo">' + Icon('camera', '', 14) + 'Correctivo</button>') +
-      '<div class="grid g4 mb16">' +
+    const html = head + tabs +
+      '<div class="grid g4 mb16 mant-kpis mant-kpis-h">' +
         UI.kpi({ label: 'Preventivos del mes', valor: todos.filter(m => m.tipo === 'preventivo' && delMes(m)).length, icono: 'tool', color: 'var(--info-500)', meta: 'Cambios de aceite registrados', act: 'filtroMant', v: 'preventivo' }) +
         UI.kpi({ label: 'Correctivos del mes', valor: todos.filter(m => m.tipo === 'correctivo' && delMes(m)).length, icono: 'camera', color: 'var(--warn-500)', meta: 'Visitas al taller', act: 'filtroMant', v: 'correctivo' }) +
         UI.kpi({ label: 'En el taller ahora', valor: taller.length, icono: 'warn', color: 'var(--dang-500)', vcolor: taller.length ? 'var(--dang-500)' : '',
           meta: esc(taller.map(m => UI.placaTxt(Q.unidad(m.unidad))).join(' · ') || 'Ninguna'), act: 'filtroMant', v: 'taller' }) +
         UI.kpi({ label: 'Último cambio de aceite', valor: ultPrev ? esc(Fecha.hace(ultPrev.fecha)) : '—', icono: 'clock',
-          meta: ultPrev ? esc(UI.placaTxt(Q.unidad(ultPrev.unidad)) + ' · ' + Q.proveedor(ultPrev.prov).nombre) : '' }) +
+          meta: ultPrev ? esc([UI.placaTxt(Q.unidad(ultPrev.unidad)), (Q.proveedor(ultPrev.prov) || {}).nombre].filter(Boolean).join(' · ')) : '' }) +
       '</div>' +
-      '<div class="alert a-info mb16">' + Icon('info') + '<div><b>Así queda guardado.</b> El PDF de inspección rápida que manda Navitrans por WhatsApp se sube con «Preventivo». ' +
+      '<div class="alert a-info mb16 solo-web">' + Icon('info') + '<div><b>Así queda guardado.</b> El PDF de inspección rápida que manda Navitrans por WhatsApp se sube con «Preventivo». ' +
         'En un correctivo, las fotos de cada cambio se juntan en un PDF con el historial de la visita al taller.</div></div>' +
       '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroMant" data-v="' + s[0] + '">' + s[1] +
         '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div></div>' +
-      '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Trabajo</th><th>Proveedor o taller</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
+      '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Trabajo</th><th>Proveedor o taller</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
         lista.map(m => {
           const u = Q.unidad(m.unidad), p = Q.proveedor(m.prov), prev = m.tipo === 'preventivo';
           return '<tr class="row-click" data-act="irUnidad" data-u="' + u.id + '" data-tab="mant">' +
             '<td class="nowrap">' + esc(Fecha.corta(m.fecha)) + '<div class="dias">' + esc(Fecha.hace(m.fecha)) + '</div></td>' +
             '<td>' + UI.unidadCelda(u) + '</td>' +
             '<td>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + '</td>' +
-            '<td>' + esc(m.trabajo) + (m.lectura ? '<div class="dias">' + esc(m.lectura) + '</div>' : '') + '</td>' +
+            '<td>' + esc(m.trabajo) + (m.lectura ? '<div class="dias">' + esc(m.lectura) + '</div>' : '') +
+              ((m.partes || []).length ? '<div class="m-partes">' + m.partes.map(x => '<span class="chip">' + esc(Plano.nombre(u, x)) + '</span>').join('') + '</div>' : '') + '</td>' +
             '<td>' + esc(p ? p.nombre : '—') + '</td>' +
             /* Si se pagó con una orden de compra, su valor está en la orden */
             '<td class="num">' + (m.valor ? Money.format(m.valor) : m.oc ? '<span class="txt-3" title="Su valor está en la orden de compra">' + esc(m.oc) + '</span>' : '—') + '</td>' +
             '<td><div class="flex aic g6" style="flex-wrap:wrap">' + (m.adjunto ? UI.file(m.adjunto, m.adjuntoId) : '') +
               (m.fotos ? '<span class="chip" title="Fotos del taller">' + Icon('image', '', 12) + m.fotos + '</span>' : '') +
               (!prev && !m.adjunto ? '<button class="btn btn-sm" data-act="pdfCorrectivo" data-m="' + m.id + '">' + Icon('pdf', '', 12) + 'Generar PDF</button>' : '') + '</div></td>' +
-            '<td>' + (m.estado === 'taller' ? UI.pill('bad', 'En taller') : UI.pill('nr', 'Cerrado')) + '</td></tr>';
+            '<td>' + (m.estado === 'taller' ? '<div class="flex aic g6" style="flex-wrap:wrap">' + UI.pill('bad', 'En taller') +
+              '<button class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '" title="La unidad salió del taller">' + Icon('check', '', 12) + 'Terminar</button></div>'
+              : UI.pill('nr', 'Cerrado')) + '</td></tr>';
         }).join('') + '</tbody></table></div>' : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.')) + '</div>';
     return { titulo: 'Mantenimientos', sub: 'Preventivos y correctivos', html };
   },
@@ -4872,6 +6125,9 @@ Object.assign(Vistas, {
           '<div class="field mb0"><label>Se revisan en comparendos</label>' + ORDEN.map(tp => '<label class="flex aic g8 mt8" style="cursor:pointer;font-size:13px">' +
             '<input type="checkbox" data-act="cfgComp" data-tp="' + tp + '"' + (Config.comparendos.includes(tp) ? ' checked' : '') + '>' + esc(TIPOS[tp].plural) + '</label>').join('') + '</div>') +
       '</div>' +
+      /* Las partes de cada dibujo del plano de mantenimiento (ver PlanoCfg) */
+      UI.card('Planos de mantenimiento', '<div id="cfgPlanos"></div>',
+        { cls: 'mb16', sub: 'Las partes de cada dibujo, la parte de cada pregunta del preoperacional y el dibujo de cada clase' }) +
       UI.card('Política de archivos', '<ul class="ul-check ul-pol">' + [
           ['Foto de la unidad y tarjeta de propiedad', 'Se guardan tal cual se adjuntan, sin comprimir, con toda su calidad.'],
           ['PDF y fotos de los demás documentos', 'Compresión ligera: se busca bajar entre el 20 y el 30 % del peso sin tocar la resolución, para que se sigan leyendo igual.'],
@@ -4901,6 +6157,7 @@ Object.assign(Vistas, {
     return {
       titulo: 'Configuración', sub: 'Documentos, avisos y empresa', html,
       despues: () => {
+        PlanoCfg.montar();
         $('#cfgDias').addEventListener('change', e => {
           const v = Math.max(1, Math.min(120, Math.round(+e.target.value) || 30));
           Config.diasAviso = v;
@@ -4928,8 +6185,9 @@ Object.assign(Ventanas, {
 
   preventivo(o) {
     o = o || {};
+    if (!Datos.unidades.length) { Toast.show('Primero registre una unidad en Flota.', 'warn'); return; }
     const m = Modal.abrir({
-      titulo: 'Mantenimiento preventivo', sub: 'Cambio de aceite y el PDF de inspección rápida de Navitrans',
+      titulo: 'Mantenimiento preventivo', sub: 'Cambio de aceite y el PDF de inspección rápida de Navitrans', ancho: 'm-hoja',
       cuerpo:
         '<div class="row"><div class="field"><label>Unidad</label><select class="inp" id="mpU">' + Opc.unidades(o.u) + '</select></div>' +
         '<div class="field"><label>Fecha</label><input class="inp" type="date" id="mpF" value="' + hoyISO + '"></div></div>' +
@@ -4939,6 +6197,8 @@ Object.assign(Ventanas, {
         '<div class="row"><div class="field" style="flex:2 1 220px"><label>Trabajo</label><input class="inp" id="mpT" value="Cambio de aceite y filtros"></div>' +
         '<div class="field" style="flex:1 1 140px"><label>Valor</label><input class="inp" id="mpV" inputmode="numeric" placeholder="Ej.: 850.000">' +
           '<div class="hint">Si se pagó con orden de compra, déjelo vacío.</div></div></div>' +
+        '<div class="field"><label>¿Qué partes tocó? <span class="txt-3">(opcional)</span></label><div class="reg-sel" id="mcSel"></div>' +
+          '<div class="hint">Si las marca, este preventivo también sale en el plano de la unidad.</div></div>' +
         Dz.html('mpDz', 'PDF de inspección rápida', 'El que manda Navitrans por WhatsApp: arrástrelo aquí o haga clic', 'application/pdf,image/*', false),
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarPreventivo">' + Icon('save', '', 14) + 'Guardar</button>'
     });
@@ -4952,6 +6212,10 @@ Object.assign(Ventanas, {
     };
     $('#mpU', m).addEventListener('change', proponer);
     proponer();
+    /* Las partes, de la unidad escogida */
+    const partes = () => { PlanoForm.poner(m, Q.unidad($('#mpU', m).value)); PlanoForm.pintar(m); };
+    $('#mpU', m).addEventListener('change', partes);
+    partes();
   },
 
   /* Una lectura del kilometraje o del horómetro escrita a mano (la de cada
@@ -5001,27 +6265,65 @@ Object.assign(Ventanas, {
     });
   },
 
-  /* Correctivo: las fotos que hoy van al grupo de WhatsApp se juntan aquí,
-     cada una con lo que muestra, y salen en el PDF del historial */
+  /* Correctivo: el arreglo con la parte del vehículo que tocó (en su plano),
+     qué pasó y qué se hizo. Las fotos que hoy van al grupo de WhatsApp se
+     juntan aquí, cada una con lo que muestra, y salen en el PDF del
+     historial. o: u (la unidad), fijo (desde su plano: la unidad no se
+     cambia), p (una parte), pos (una llanta) y nov (la pregunta del
+     preoperacional que atiende). */
   correctivo(o) {
     o = o || {};
+    const u0 = (o.u && Q.unidad(o.u)) || Datos.unidades[0];
+    if (!u0) { Toast.show('Primero registre una unidad en Flota.', 'warn'); return; }
+    const fijo = Boolean(o.fijo);
     const m = Modal.abrir({
-      titulo: 'Mantenimiento correctivo', sub: 'Visita al taller con las fotos de cada cambio', ancho: 'wide',
-      cuerpo:
-        '<div class="row"><div class="field"><label>Unidad</label><select class="inp" id="mcU">' + Opc.unidades(o.u) + '</select></div>' +
-        '<div class="field"><label>Taller o proveedor</label><select class="inp" id="mcP">' + Opc.proveedores('p2') + '</select></div></div>' +
-        '<div class="row"><div class="field"><label>Entró al taller</label><input class="inp" type="date" id="mcE" value="' + hoyISO + '"></div>' +
-        '<div class="field"><label>Salió del taller</label><input class="inp" type="date" id="mcS"><div class="hint">Déjelo vacío si la unidad sigue en el taller.</div></div></div>' +
-        '<div class="field"><label>Trabajo realizado</label><textarea class="inp" id="mcT" placeholder="Qué se le hizo a la unidad y por qué"></textarea></div>' +
-        '<div class="row"><div class="field" style="flex:0 1 220px"><label>Valor</label><input class="inp" id="mcV" inputmode="numeric" placeholder="Ej.: 2.160.000"></div>' +
-          '<div class="field hint" style="flex:1 1 220px;align-self:center;margin-top:10px">Lo que se le pagó al taller. Si se pagó con orden de compra, déjelo vacío: ese gasto ya cuenta por la orden.</div></div>' +
-        '<div class="field mb0"><label>Fotos de cada cambio</label>' +
-          Dz.html('mcDz', 'Arrastre aquí las fotos que mandan los conductores', 'Puede soltar varias a la vez; a cada una se le escribe qué muestra', 'image/*', true) +
-          '<div class="fotos" id="mcFotos"></div></div>',
+      titulo: fijo ? 'Registrar arreglo · ' + UI.placaTxt(u0) : 'Mantenimiento correctivo',
+      sub: fijo ? esc([u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : 'Visita al taller con la parte que se arregló y las fotos de cada cambio', ancho: 'xwide m-hoja',
+      cuerpo: '<div class="reg"><div>' +
+          (fijo ? '' : '<div class="field"><label>Unidad</label><select class="inp" id="mcU">' + Opc.unidades(u0.id) + '</select></div>') +
+          '<div class="field"><label>Parte del vehículo</label><div class="plano-caja claro pl-marcar" id="mcPlano"></div>' +
+            '<div class="hint">Toque la parte que se arregló; si fueron varias, tóquelas todas.</div><div class="reg-sel" id="mcSel"></div></div>' +
+          '<div id="mcAviso"></div><div id="mcLlantas"></div><div id="mcNov"></div>' +
+        '</div><div>' +
+          '<div class="field"><label>Componente</label><input class="inp" id="mcC" placeholder="Ej.: bomba de agua"><div class="sug" id="mcSug"></div></div>' +
+          '<div class="field"><label>¿Qué pasó?</label><textarea class="inp" id="mcF" rows="2" placeholder="La falla, o lo que reportó el conductor"></textarea></div>' +
+          '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" id="mcT" rows="2" placeholder="El arreglo: qué se cambió o se reparó"></textarea></div>' +
+          '<div class="row"><div class="field"><label>Entró al taller</label><input class="inp" type="date" id="mcE" value="' + hoyISO + '"></div>' +
+            '<div class="field" id="mcLC"><label>Kilometraje</label><input class="inp" id="mcL"></div></div>' +
+          '<div class="row"><div class="field"><label>Taller o proveedor</label><select class="inp" id="mcP"><option value="">Sin taller registrado</option>' + Opc.proveedores('') + '</select></div>' +
+            '<div class="field"><label>Valor</label><input class="inp" id="mcV" inputmode="numeric" placeholder="Ej.: 2.160.000"></div></div>' +
+          '<div class="field"><label>O la orden de compra</label><select class="inp" id="mcO"></select>' +
+            '<div class="hint">Si se pagó con una orden de compra, escójala y deje el valor vacío: el gasto sale de la orden.</div></div>' +
+          '<div class="row"><div class="field"><label>Estado</label><div class="seg" id="mcEst"><button type="button" class="on" data-v="cerrado">' + Icon('check', '', 13) + 'Terminado</button>' +
+              '<button type="button" data-v="taller">' + Icon('tool', '', 13) + 'Sigue en el taller</button></div></div>' +
+            '<div class="field" id="mcSal"><label>Salió del taller</label><input class="inp" type="date" id="mcS" value="' + hoyISO + '"></div></div>' +
+          '<div class="field mb0"><label>Fotos del arreglo</label>' +
+            Dz.camara('mcDz') + Dz.html('mcDz', '<span class="solo-web">Arrastre aquí las fotos que mandan los conductores</span><span class="solo-cel">Escoger de la galería</span>',
+              '<span class="solo-web">Puede soltar varias a la vez; a cada una se le escribe qué muestra</span>', 'image/*', true) +
+            '<div class="fotos" id="mcFotos"></div></div>' +
+        '</div></div>',
       pie: '<button class="btn mf-left" data-act="vistaCorrectivo">' + Icon('eye', '', 14) + 'Vista previa del PDF</button>' +
-        '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarCorrectivo">' + Icon('save', '', 14) + 'Guardar</button>'
+        '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarCorrectivo">' + Icon('save', '', 14) +
+        (fijo ? 'Guardar arreglo' : 'Guardar') + '</button>'
     });
     m._fotos = [];
+    m._estado = 'cerrado';
+    /* Desde una novedad: su parte, su pregunta como componente y lo que reportó el conductor */
+    const nov = o.nov ? Novedades.de(u0).find(n => n.i === o.nov) : null;
+    PlanoForm.poner(m, u0, { partes: [o.p || (nov && nov.parte)].filter(Boolean), llantas: o.pos ? [o.pos] : [], novs: nov ? [nov] : [] });
+    if (nov) {
+      $('#mcC', m).value = nov.texto;
+      $('#mcF', m).value = 'Reportado en el preoperacional ' + (nov.fecha === hoyISO ? 'de hoy' : 'del ' + Fecha.corta(nov.fecha)) + (nov.conductor ? ' por ' + nov.conductor : '') +
+        ': ' + nov.texto + ', ' + String(nov.resp).toLowerCase() + (nov.nota ? ' («' + nov.nota + '»)' : '') + '.';
+    }
+    PlanoForm.unidad(m);
+    PlanoForm.pintar(m);
+    if ($('#mcU', m)) $('#mcU', m).addEventListener('change', e => { PlanoForm.poner(m, Q.unidad(e.target.value)); PlanoForm.unidad(m); PlanoForm.pintar(m); });
+    $$('#mcEst button', m).forEach(b => b.addEventListener('click', () => {
+      m._estado = b.dataset.v;
+      $$('#mcEst button', m).forEach(x => x.classList.toggle('on', x === b));
+      $('#mcSal', m).classList.toggle('hidden', m._estado === 'taller');
+    }));
     const pintar = () => {
       $('#mcFotos', m).innerHTML = m._fotos.map((f, i) => '<div class="foto"><img src="' + attr(f.src) + '" alt="">' +
         '<button type="button" data-i="' + i + '" title="Quitar la foto">' + Icon('x', '', 12) + '</button>' +
@@ -5212,10 +6514,14 @@ Object.assign(Ventanas, {
 /* Lo que se escribe en los formularios de correctivo y de orden de compra */
 const Leer = {
   correctivo(m) {
+    const u = PlanoForm.u(m), taller = m._estado === 'taller';
     return {
-      numero: Num.mc(), unidad: Q.unidad($('#mcU', m).value), prov: Q.proveedor($('#mcP', m).value),
-      entrada: $('#mcE', m).value || hoyISO, salida: $('#mcS', m).value, trabajo: $('#mcT', m).value.trim(), fotos: m._fotos.slice(),
-      valor: Leer.pesos($('#mcV', m).value)
+      numero: Num.mc(), unidad: u, prov: Q.proveedor($('#mcP', m).value),
+      entrada: $('#mcE', m).value || hoyISO, salida: taller ? '' : $('#mcS', m).value || $('#mcE', m).value || hoyISO,
+      trabajo: $('#mcT', m).value.trim(), fotos: m._fotos.slice(), valor: Leer.pesos($('#mcV', m).value), oc: $('#mcO', m).value,
+      componente: $('#mcC', m).value.trim(), falla: $('#mcF', m).value.trim(), lectura: Aceite.aplica(u) ? $('#mcL', m).value.trim() : '',
+      partes: PlanoForm.escogidas(m), llantas: m._partes.includes('llantas') ? m._llantas.slice() : [],
+      novedades: m._novs.map(n => ({ i: n.i, f: n.fecha, p: n.preop, t: n.texto }))
     };
   },
   /* «$ 850.000», «850.000» o «850000»: solo cuentan los dígitos */
@@ -5233,8 +6539,195 @@ const Leer = {
 Object.assign(Acciones, {
   filtroMant(el) {
     UIState.mant = el.dataset.v;
-    if (Router.actual().vista === 'mantenimientos') Router.pintar(true); else Router.ir('mantenimientos');
+    UIState.mantTab = 'historial';
+    const r = Router.actual();
+    if (r.vista === 'mantenimientos' && !r.id) Router.pintar(true); else Router.ir('mantenimientos');
   },
+  /* Mantenimientos por vehículo y el plano de cada unidad */
+  tabMant(el) { UIState.mantTab = el.dataset.v; Router.pintar(true); },
+  mantTipo(el) { UIState.mantTipo = el.dataset.v; Router.pintar(true); },
+  planoParte(el) { Object.assign(UIState.plano, { sel: el.dataset.p || el.dataset.v, llanta: null }); Router.pintar(true); },
+  planoModo(el) { UIState.plano.modo = el.dataset.v; Router.pintar(true); },
+  planoPeriodo(el) { UIState.plano.periodo = el.dataset.v; Router.pintar(true); },
+  planoLlanta(el) { const p = el.dataset.pos || null; UIState.plano.llanta = UIState.plano.llanta === p ? null : p; Router.pintar(true); },
+  irPlano(el) {
+    Object.assign(UIState.plano, { u: el.dataset.u, sel: el.dataset.p || null, llanta: null });
+    Router.ir('mantenimientos/' + el.dataset.u);
+  },
+  novReintentar() { Novedades.olvidar(); Novedades.error = null; Novedades.pedir(); Router.pintar(true); },
+  registrarArreglo(el) { Ventanas.correctivo({ u: el.dataset.u, fijo: true, p: el.dataset.p, pos: el.dataset.pos, nov: el.dataset.nov }); },
+  /* En la ventana de un arreglo: tocar una parte, una llanta, un componente o una novedad */
+  regParte(el) {
+    const m = el.closest('.modal-bd');
+    if (!m) return;
+    const i = m._partes.indexOf(el.dataset.p);
+    if (i >= 0) m._partes.splice(i, 1); else m._partes.push(el.dataset.p);
+    if (m._sinParte && m._partes.length && $('#mcAviso', m)) { m._sinParte = false; $('#mcAviso', m).innerHTML = ''; }
+    PlanoForm.pintar(m);
+  },
+  regLlanta(el) {
+    const m = el.closest('.modal-bd'), i = m._llantas.indexOf(el.dataset.pos);
+    if (i >= 0) m._llantas.splice(i, 1); else m._llantas.push(el.dataset.pos);
+    PlanoForm.pintar(m);
+  },
+  regComp(el) { const inp = $('#mcC', el.closest('.modal-bd')); inp.value = el.dataset.v; inp.focus(); },
+  regNov(el) {
+    const m = el.closest('.modal-bd'), i = m._novs.findIndex(n => n.i === el.dataset.nov);
+    if (i >= 0) m._novs.splice(i, 1);
+    else {
+      const n = Novedades.de(PlanoForm.u(m)).find(x => x.i === el.dataset.nov);
+      if (n) m._novs.push(n);
+    }
+    PlanoForm.pintar(m);
+  },
+  /* Marcar la parte de un arreglo que se guardó sin ella */
+  asignarPartes(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
+    if (!u) return;
+    const m = Modal.abrir({
+      titulo: 'Parte del arreglo · ' + UI.placaTxt(u), sub: esc(Fecha.larga(r.fecha) + ' · ' + (r.trabajo || 'Sin descripción')), ancho: 'wide m-hoja', sinFoco: true,
+      cuerpo: '<div class="field"><label>Parte del vehículo</label><div class="plano-caja claro pl-marcar" id="mcPlano"></div>' +
+          '<div class="hint">Toque la parte que se arregló; si fueron varias, tóquelas todas.</div><div class="reg-sel" id="mcSel"></div></div><div id="mcLlantas"></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarPartes" data-m="' + attr(r.id) + '">' +
+        Icon('save', '', 14) + 'Guardar</button>'
+    });
+    PlanoForm.poner(m, u, { partes: (r.partes || []).map(x => x.k), llantas: r.llantas || [] });
+    PlanoForm.pintar(m);
+  },
+  guardarPartes(el) {
+    const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
+    if (!r) return;
+    const partes = PlanoForm.escogidas(m), llantas = m._partes.includes('llantas') ? m._llantas.slice() : [];
+    if (partes.length) r.partes = partes; else delete r.partes;
+    if (llantas.length) r.llantas = llantas; else delete r.llantas;
+    Modal.cerrar(m);
+    Toast.show(partes.length ? 'Listo: el arreglo ya sale en <b>' + esc(partes.map(p => p.n).join(', ')) + '</b>.' : 'El arreglo quedó sin parte.');
+    Router.pintar(true);
+  },
+  /* Un arreglo que quedó «Sigue en el taller»: se termina cuando la unidad
+     sale. Mientras sigue allá, se le puede poner lo que se hizo, el valor y
+     más fotos. */
+  terminarArreglo(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
+    if (!u) return;
+    const ocs = Datos.ocs.filter(o => !o.unidad || o.unidad === u.id).sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 40);
+    const m = Modal.abrir({
+      titulo: 'Terminar arreglo · ' + UI.placaTxt(u), ancho: 'wide m-hoja', sinFoco: true,
+      sub: esc('Entró al taller el ' + Fecha.larga(r.fecha) + (r.numero ? ' · ' + r.numero : '') + ((r.partes || []).length ? ' · ' + r.partes.map(x => Plano.nombre(u, x)).join(', ') : '')),
+      cuerpo: (r.falla ? '<div class="alert a-info mb12">' + Icon('info') + '<div><b>Qué pasó:</b> ' + esc(r.falla) + '</div></div>' : '') +
+        '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" id="taT" rows="3" placeholder="El arreglo: qué se cambió o se reparó">' + esc(r.trabajo || '') + '</textarea></div>' +
+        '<div class="row"><div class="field"><label>Valor</label><input class="inp" id="taV" inputmode="numeric" placeholder="Ej.: 2.160.000" value="' +
+            (r.valor ? attr(r.valor.toLocaleString('es-CO')) : '') + '"></div>' +
+          '<div class="field"><label>O la orden de compra</label><select class="inp" id="taO"><option value="">Sin orden de compra</option>' +
+            ocs.map(o => '<option value="' + attr(o.numero) + '"' + (o.numero === r.oc ? ' selected' : '') + '>' + esc(o.numero + ' · ' + o.concepto + ' · ' + Money.format(UI.totalOC(o))) + '</option>').join('') +
+          '</select></div></div>' +
+        '<div class="row"><div class="field"><label>Estado</label><div class="seg" id="taEst"><button type="button" class="on" data-v="cerrado">' + Icon('check', '', 13) + 'Terminado</button>' +
+            '<button type="button" data-v="taller">' + Icon('tool', '', 13) + 'Sigue en el taller</button></div></div>' +
+          '<div class="field" id="taSal"><label>Salió del taller</label><input class="inp" type="date" id="taS" value="' + hoyISO + '"></div></div>' +
+        '<div id="taAviso"></div>' +
+        '<div class="field mb0"><label>Fotos del arreglo</label>' +
+          Dz.camara('taDz') + Dz.html('taDz', '<span class="solo-web">Agregar fotos</span><span class="solo-cel">Escoger de la galería</span>',
+            '<span class="solo-web">Arrastre aquí las fotos o haga clic; a cada una se le escribe qué muestra</span>', 'image/*', true) +
+          '<div class="fotos" id="taFotos"></div></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarTerminar" data-m="' + attr(r.id) + '">' +
+        Icon('save', '', 14) + 'Guardar</button>'
+    });
+    m._estado = 'cerrado';
+    /* Las fotos que ya tenía y las que se agreguen, cada una con lo que muestra */
+    m._fotos = (r.fotosData || []).map(f => ({ id: f.id, txt: f.txt || '', src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || '' }));
+    const pintar = () => {
+      $('#taFotos', m).innerHTML = m._fotos.map((f, i) => '<div class="foto">' + (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<div class="ph" style="height:104px">' + Icon('image', '', 20) + '</div>') +
+        '<button type="button" data-i="' + i + '" title="Quitar la foto">' + Icon('x', '', 12) + '</button>' +
+        '<input data-i="' + i + '" value="' + attr(f.txt) + '" placeholder="¿Qué muestra? Ej.: bomba nueva"></div>').join('');
+      $$('#taFotos input', m).forEach(inp => inp.addEventListener('input', () => { m._fotos[+inp.dataset.i].txt = inp.value; }));
+      $$('#taFotos button', m).forEach(b => b.addEventListener('click', () => { m._fotos.splice(+b.dataset.i, 1); pintar(); }));
+    };
+    Dz.bind('taDz', files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f)))
+      .then(lista => { lista.forEach(a => m._fotos.push({ id: a.id, src: Archivos.vistos.get(a.id).url, txt: '' })); pintar(); }));
+    $$('#taEst button', m).forEach(b => b.addEventListener('click', () => {
+      m._estado = b.dataset.v;
+      $$('#taEst button', m).forEach(x => x.classList.toggle('on', x === b));
+      $('#taSal', m).classList.toggle('hidden', m._estado === 'taller');
+      m._aviso = false;
+      $('#taAviso', m).innerHTML = '';
+    }));
+    $('#taS', m).addEventListener('change', () => { m._aviso = false; $('#taAviso', m).innerHTML = ''; });
+    pintar();
+  },
+  guardarTerminar(el) {
+    const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
+    if (!u) { Modal.cerrar(m); return; }
+    const trabajo = $('#taT', m).value.trim(), terminado = m._estado !== 'taller', salida = $('#taS', m).value || hoyISO;
+    if (!trabajo) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#taT', m).focus(); return; }
+    /* Una salida antes de la entrada suele ser un error al escoger la fecha: se avisa, pero se deja guardar */
+    if (terminado && salida < r.fecha && !m._aviso) {
+      m._aviso = true;
+      $('#taAviso', m).innerHTML = '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>La salida queda antes de la entrada</b> (entró el ' + esc(Fecha.larga(r.fecha)) +
+        '). Revise la fecha; si está bien, pulse Guardar otra vez.</div></div>';
+      return;
+    }
+    const valor = Leer.pesos($('#taV', m).value), oc = $('#taO', m).value;
+    r.trabajo = trabajo;
+    if (valor) r.valor = valor; else delete r.valor;
+    if (oc) r.oc = oc; else delete r.oc;
+    r.fotosData = m._fotos.map(f => ({ id: f.id, txt: f.txt }));
+    r.fotos = r.fotosData.length;
+    if (terminado) { r.estado = 'cerrado'; r.salida = salida; } else { r.estado = 'taller'; delete r.salida; }
+    Modal.cerrar(m);
+    Toast.show(terminado ? 'Arreglo terminado: <b>' + esc(UI.placaTxt(u)) + '</b> salió del taller el ' + esc(Fecha.larga(salida)) + '.'
+      : 'Arreglo de <b>' + esc(UI.placaTxt(u)) + '</b> guardado; sigue en el taller.');
+    Router.pintar(true);
+  },
+  /* Una novedad que se revisó y no hubo que arreglar: deja de salir hasta que el conductor la vuelva a reportar */
+  revisarNovedad(el) {
+    const u = Q.unidad(el.dataset.u), n = u && Novedades.de(u).find(x => x.i === el.dataset.nov);
+    if (!n) return;
+    Modal.abrir({
+      titulo: 'Marcar como revisada', sub: esc(UI.placaTxt(u) + ' · ' + (n.num ? n.num + ' ' : '') + n.texto), ancho: 'm-hoja',
+      cuerpo: '<p class="txt-2 mb12" style="font-size:13px;line-height:1.5">La novedad deja de salir en el plano. Sirve cuando se revisó y no hubo que arreglar nada. ' +
+          'Si el conductor la vuelve a reportar en otro preoperacional, sale otra vez.</p>' +
+        '<div class="field mb0"><label>Qué se encontró <span class="txt-3">(opcional)</span></label><textarea class="inp" id="rvN" rows="2" placeholder="Ej.: se revisó y está bien ajustado"></textarea></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarRevisada" data-u="' + attr(u.id) + '" data-nov="' + attr(n.i) + '">' +
+        Icon('check', '', 14) + 'Marcar como revisada</button>'
+    });
+  },
+  guardarRevisada(el) {
+    const m = el.closest('.modal-bd'), u = Q.unidad(el.dataset.u), n = u && Novedades.de(u).find(x => x.i === el.dataset.nov);
+    if (!n) { Modal.cerrar(m); return; }
+    (u.preopRevisadas = u.preopRevisadas || []).push({ i: n.i, f: n.fecha, t: n.texto, nota: $('#rvN', m).value.trim(), por: Cuenta.correo || '', ts: marca() });
+    Modal.cerrar(m);
+    Toast.show('La novedad <b>' + esc(n.texto) + '</b> quedó como revisada.');
+    Router.pintar(true);
+  },
+  /* Los ejes de una unidad: llanta sencilla o doble en cada uno */
+  cambiarEjes(el) {
+    const u = Q.unidad(el.dataset.u);
+    if (!u) return;
+    const m = Modal.abrir({
+      titulo: 'Ejes de ' + UI.placaTxt(u), sub: 'Para el dibujo de las llantas por posición', sinFoco: true, ancho: 'm-hoja',
+      cuerpo: '<div id="ejLista"></div><button type="button" class="btn btn-sm mt8" id="ejMas">' + Icon('plus', '', 12) + 'Agregar eje</button>' +
+        '<div class="hint mt12">El eje 1 es el de adelante. «Doble» es con dos llantas a cada lado.</div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarEjes" data-u="' + attr(u.id) + '">' + Icon('save', '', 14) + 'Guardar</button>'
+    });
+    m._ejes = Llantas.ejes(u).slice();
+    const pintar = () => {
+      $('#ejLista', m).innerHTML = m._ejes.map((t, i) => '<div class="ej-fila"><b>Eje ' + (i + 1) + '</b><div class="seg">' +
+          [['s', 'Sencilla'], ['d', 'Doble']].map(o => '<button type="button" class="' + (t === o[0] ? 'on' : '') + '" data-i="' + i + '" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div>' +
+          (m._ejes.length > 1 ? '<button type="button" class="btn btn-sm btn-ghost btn-icon btn-del" data-quitar="' + i + '" title="Quitar el eje" aria-label="Quitar el eje">' + Icon('trash', '', 13) + '</button>' : '') + '</div>').join('');
+      $$('#ejLista [data-v]', m).forEach(b => b.addEventListener('click', () => { m._ejes[+b.dataset.i] = b.dataset.v; pintar(); }));
+      $$('#ejLista [data-quitar]', m).forEach(b => b.addEventListener('click', () => { m._ejes.splice(+b.dataset.quitar, 1); pintar(); }));
+    };
+    $('#ejMas', m).addEventListener('click', () => { if (m._ejes.length < 8) { m._ejes.push('d'); pintar(); } });
+    pintar();
+  },
+  guardarEjes(el) {
+    const m = el.closest('.modal-bd'), u = Q.unidad(el.dataset.u);
+    u.ejes = m._ejes.slice();
+    Modal.cerrar(m);
+    Toast.show('Ejes de <b>' + esc(UI.placaTxt(u)) + '</b> guardados.');
+    Router.pintar(true);
+  },
+  peZona(el) { PlanoCfg.irA(el.dataset.p); },
   periodoDash(el) { UIState.dash = el.dataset.v; Router.pintar(true); },
   filtroInsp(el) { UIState.insp = el.dataset.v; Router.pintar(true); },
   filtroOC(el) {
@@ -5264,9 +6757,11 @@ Object.assign(Acciones, {
     /* El PDF de Navitrans se comprime poco, según la política */
     const a = m._archivo ? await Archivos.conBoton(el, () => Archivos.preparar(m._archivo)) : null;
     const fecha = $('#mpF', m).value || hoyISO, trabajo = $('#mpT', m).value.trim() || 'Cambio de aceite', lectura = $('#mpL', m).value.trim();
+    const partes = PlanoForm.escogidas(m);
     Datos.mantenimientos.push({
       id: 'mt' + Date.now(), unidad: u.id, tipo: 'preventivo', fecha, prov: $('#mpP', m).value, trabajo, lectura, valor: Leer.pesos($('#mpV', m).value) || undefined,
-      adjunto: a ? a.nombre : 'Inspección rápida ' + u.placa + '.pdf', adjuntoId: a ? a.id : undefined, estado: 'cerrado', hora: ahora(), ts: marca()
+      adjunto: a ? a.nombre : 'Inspección rápida ' + u.placa + '.pdf', adjuntoId: a ? a.id : undefined, estado: 'cerrado', hora: ahora(), ts: marca(),
+      partes: partes.length ? partes : undefined
     });
     /* Si fue un cambio de aceite, su kilometraje u horómetro es el nuevo punto
        de partida para el próximo */
@@ -5323,15 +6818,26 @@ Object.assign(Acciones, {
   },
   guardarCorrectivo(el) {
     const m = el.closest('.modal-bd'), d = Leer.correctivo(m);
-    if (!d.trabajo) { Toast.show('Escriba qué trabajo se le hizo a la unidad.', 'err'); $('#mcT', m).focus(); return; }
+    if (!d.trabajo) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#mcT', m).focus(); return; }
+    /* Sin la parte, el arreglo no sale en el plano: se avisa, pero se deja guardar */
+    if (!d.partes.length && !m._sinParte) {
+      m._sinParte = true;
+      $('#mcAviso', m).innerHTML = '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>No marcó la parte del vehículo.</b> Así el arreglo no sale en el plano. ' +
+        'Márquela arriba, o pulse Guardar otra vez para guardarlo así.</div></div>';
+      return;
+    }
     Datos.mantenimientos.push({
-      id: 'mt' + Date.now(), unidad: d.unidad.id, tipo: 'correctivo', fecha: d.entrada, salida: d.salida || undefined, prov: d.prov.id,
+      id: 'mt' + Date.now(), unidad: d.unidad.id, tipo: 'correctivo', fecha: d.entrada, salida: d.salida || undefined, prov: d.prov ? d.prov.id : null,
       /* De cada foto se guarda su archivo (por su id) y lo que muestra */
       trabajo: d.trabajo, fotos: d.fotos.length, fotosData: d.fotos.map(f => ({ id: f.id, txt: f.txt })), numero: d.numero, adjunto: 'Correctivo ' + d.numero + '.pdf',
-      valor: d.valor || undefined, estado: d.salida ? 'cerrado' : 'taller', hora: ahora(), ts: marca()
+      valor: d.valor || undefined, oc: d.oc || undefined, lectura: d.lectura || undefined, estado: d.salida ? 'cerrado' : 'taller', hora: ahora(), ts: marca(),
+      /* Lo del plano: las partes, el componente, qué pasó, las llantas y las novedades del preoperacional que atiende */
+      partes: d.partes.length ? d.partes : undefined, componente: d.componente || undefined, falla: d.falla || undefined,
+      llantas: d.llantas.length ? d.llantas : undefined, novedades: d.novedades.length ? d.novedades : undefined
     });
     Modal.cerrar(m);
-    Toast.show('Correctivo <b>' + esc(d.numero) + '</b> guardado en <b>' + esc(UI.placaTxt(d.unidad)) + '</b>, con su PDF.');
+    Toast.show('Correctivo <b>' + esc(d.numero) + '</b> guardado en <b>' + esc(UI.placaTxt(d.unidad)) + '</b>, con su PDF.' +
+      (d.novedades.length ? '<br>' + (d.novedades.length === 1 ? 'La novedad del preoperacional quedó como arreglada.' : 'Las novedades del preoperacional quedaron como arregladas.') : ''));
     Router.pintar(true);
   },
   /* PDF de un correctivo ya registrado. Los de ejemplo no tienen fotos reales:
@@ -5340,7 +6846,8 @@ Object.assign(Acciones, {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     const fotos = r.fotosData ? r.fotosData.map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || null, txt: f.txt }))
       : Array.from({ length: r.fotos || 0 }, (_, i) => ({ src: null, txt: 'Foto ' + (i + 1) + ' de ' + r.fotos + ' (ejemplo)' }));
-    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.proveedor(r.prov), entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos };
+    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.proveedor(r.prov), entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos,
+      partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [] };
     const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d),
       '<button class="btn mf-left" data-act="guardarPdfCorrectivo" data-m="' + r.id + '">' + Icon('save', '', 14) + 'Guardar el PDF en la unidad</button>');
     v._numero = d.numero;
@@ -5631,7 +7138,7 @@ const Preop = {
     { id: 'M', boton: 'M', nombre: 'Malo', color: '#dc2626', cuenta: 'grave' },
     { id: 'N/A', boton: 'N/A', nombre: 'No aplica', color: '#7c3aed', cuenta: 'no_aplica' }
   ],
-  COLORES: { principal: '#20449a', oscuro: '#193680', acento: '#e8830e' },
+  COLORES: { principal: '#20449a', oscuro: '#193680' },
   /* Cómo cuenta cada respuesta en el sistema */
   CUENTA: { bien: 'Está bien', novedad: 'Es novedad', grave: 'Es novedad grave', no_aplica: 'No aplica' },
   formato: null,     // el formulario que llenan los conductores, como está en la nube
@@ -6011,7 +7518,8 @@ const Preop = {
     return JSON.parse(JSON.stringify({ codigo: f.codigo, version: f.version, fecha_creacion: f.fecha_creacion, supervisor: f.supervisor,
       tipos: f.tipos, campos, secciones: f.secciones,
       opciones: Array.isArray(f.opciones) && f.opciones.length ? f.opciones : this.OPCIONES,
-      colores: Object.assign({}, this.COLORES, f.colores) }));
+      /* Solo los dos colores que se usan: el acento (las líneas naranjas) se quitó el 26/10/2026 */
+      colores: { principal: (f.colores || {}).principal || this.COLORES.principal, oscuro: (f.colores || {}).oscuro || this.COLORES.oscuro } }));
   },
   sucio() { return Boolean(this.borrador && this.formato && estable(this.borrador) !== estable(this.copiar(this.formato))); },
   campo(k) { return ((this.borrador || {}).campos || {})[k] || { mostrar: true, obligatorio: false }; },
@@ -6069,7 +7577,7 @@ const Preop = {
   /* La muestra de los colores: el encabezado del PDF y la barra del celular.
      Al cambiar un color solo cambian estas variables. */
   varsColores(c) {
-    return '--p:' + c.principal + ';--o:' + c.oscuro + ';--a:' + c.acento + ';--k:' + this.oscurecer(c.oscuro, 0.25) + ';--cl:' + this.tinte(c.principal, 0.898);
+    return '--p:' + c.principal + ';--o:' + c.oscuro + ';--k:' + this.oscurecer(c.oscuro, 0.25) + ';--cl:' + this.tinte(c.principal, 0.898);
   },
   previaColores(c) {
     return '<div class="cp-hoja" id="peColVars" style="' + attr(this.varsColores(c)) + '"><div class="cp-cap">En el PDF</div>' +
@@ -6142,7 +7650,6 @@ const Preop = {
       '<input class="inp inp-hex" data-pe-colhex="' + k + '" value="' + attr(b.colores[k]) + '" maxlength="7" spellcheck="false" title="' + attr(t) + '"' + dis + '></div>';
     const colores = UI.card('Colores', colorFila('principal', 'Color principal', 'Botones, banda y títulos del formulario y del PDF') +
         colorFila('oscuro', 'Color oscuro', 'Bordes y líneas del PDF') +
-        colorFila('acento', 'Color de acento', 'La línea bajo la banda y en el celular') +
         '<div class="col-prev" id="peColPrev">' + this.previaColores(b.colores) + '</div>' +
         (puede ? '<button class="btn btn-sm mt12" data-act="preopColoresBase">' + Icon('refresh', '', 12) + 'Volver a los colores de siempre</button>' : ''),
       { sub: 'El color de cada respuesta va con ella, en «Respuestas de cada ítem»' });
@@ -6243,7 +7750,7 @@ const Preop = {
     if (f.opciones.length < 2 || f.opciones.length > 5) { Toast.show('Deje entre 2 y 5 respuestas.', 'err'); return; }
     if (f.opciones.some(o => !o.boton || !o.nombre)) { Toast.show('A cada respuesta escríbale lo que dice el botón y lo que quiere decir.', 'err'); return; }
     if (new Set(botones).size !== botones.length) { Toast.show('Hay dos respuestas con el mismo botón: cámbiele el texto a una.', 'err'); return; }
-    if (!f.opciones.every(o => hex(o.color)) || !['principal', 'oscuro', 'acento'].every(k => hex(f.colores[k]))) {
+    if (!f.opciones.every(o => hex(o.color)) || !['principal', 'oscuro'].every(k => hex(f.colores[k]))) {
       Toast.show('Hay un color que no es válido. Escójalo en el cuadro de color.', 'err'); return;
     }
     if (mal.length) {
@@ -6284,7 +7791,7 @@ Object.assign(Acciones, {
   imprimirPreop(el) { Preop.pdf(el.dataset.p, true); },
   comprobarPreop(el) { Preop.comprobar(el.dataset.p, el); },
   filtroPreop(el) { Preop.filtro.periodo = el.dataset.v; Router.pintar(true); },
-  preopRecargar() { Preop.olvidar(); Router.pintar(true); },
+  preopRecargar() { Preop.olvidar(); Novedades.olvidar(); Router.pintar(true); },
   preopReintentar() { Preop.errorFormato = null; Router.pintar(true); },
   /* El formulario en modo demostración, con lo que tenga el editor aunque no
      esté guardado: el borrador pasa por el almacenamiento del navegador (es la
@@ -6449,7 +7956,7 @@ const PreopPublico = (() => {
   const CSS = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --azul: #20449a; --azul-osc: #193680; --azul-prof: #132966; --azul-cl: #d5def5; --azul-cl2: #edf1fb; --azul-linea: #c3cfe9; --azul-ring: rgba(32,68,154,.14); --naranja: #e8830e;
+  --azul: #20449a; --azul-osc: #193680; --azul-prof: #132966; --azul-cl: #d5def5; --azul-cl2: #edf1fb; --azul-linea: #c3cfe9; --azul-ring: rgba(32,68,154,.14);
   --tinta: #161d24; --tinta-2: #4e5d6b; --gris: #6b7c8c; --borde: #dde4ea; --borde-2: #c3ced8; --fondo: #f3f5f8;
   --ok: #0a6c42; --ok-bg: #e9f7ef; --mal: #93261e; --mal-bg: #fdecec; --aviso: #9a3d07; --aviso-bg: #fff3e8;
   --font: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
@@ -6468,7 +7975,7 @@ body.blanco { background: #fff; padding-bottom: 0; }
 .ap-t b { display: block; font-size: 14.5px; letter-spacing: .06em; color: var(--azul-prof); }
 .ap-t span { display: block; font-size: 11.5px; color: var(--gris); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ap-cod { font-size: 10px; font-weight: 700; color: var(--azul-osc); background: var(--azul-cl2); border: 1px solid var(--azul-cl); padding: 3px 7px; border-radius: 12px; white-space: nowrap; }
-.ap-linea { height: 3px; background: linear-gradient(90deg, var(--azul) 0 78%, var(--naranja) 78% 100%); }
+.ap-linea { height: 3px; background: var(--azul); }
 .pasos { background: #fff; border-bottom: 1px solid var(--borde); padding: 10px 16px 12px; }
 .pasos-t { font-size: 12px; color: var(--tinta-2); display: flex; justify-content: space-between; gap: 10px; }
 .pasos-t b { color: var(--azul); }
@@ -6521,17 +8028,15 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
 /* La fecha sin el iconito: toda la casilla abre el calendario */
 .mini-inp[type=date] { position: relative; }
 .mini-inp[type=date]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
-/* Verificación: cada sección se abre y se cierra */
+/* Verificación: todas las secciones a la vista, una debajo de otra, como el
+   formulario de siempre: nada se esconde, así nadie cree que ya terminó */
 .sec { background: #fff; border: 1px solid var(--borde); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
-.sec-h { width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 14px; font: inherit; font-size: 14px; font-weight: 700; color: var(--azul-prof); background: #fff; border: 0; cursor: pointer; text-align: left; }
+.sec-h { display: flex; align-items: center; gap: 10px; padding: 12px 14px; font-size: 14px; font-weight: 700; color: var(--azul-prof); border-bottom: 1px solid var(--borde); background: linear-gradient(90deg, var(--azul-cl2), #fff); }
 .sec-h .n { width: 26px; height: 26px; border-radius: 8px; background: var(--azul-cl2); color: var(--azul); font-size: 12px; display: grid; place-items: center; flex: 0 0 auto; }
 .sec-h .t { flex: 1; min-width: 0; }
 .sec-h .cta { font-size: 12px; font-weight: 700; color: var(--gris); white-space: nowrap; }
 .sec.lista .sec-h .n { background: var(--ok-bg); color: #16a34a; }
 .sec.lista .sec-h .cta { color: #16a34a; }
-.sec-b { display: none; }
-.sec.abierta .sec-b { display: block; }
-.sec.abierta .sec-h { border-bottom: 1px solid var(--borde); background: linear-gradient(90deg, var(--azul-cl2), #fff); }
 .it { padding: 11px 14px 12px; border-bottom: 1px solid #eef1f4; }
 .it:last-child { border-bottom: 0; }
 .it-t { display: flex; gap: 9px; font-size: 14px; line-height: 1.3; margin-bottom: 9px; }
@@ -6804,7 +8309,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     { id: 'M', boton: 'M', nombre: 'Malo', color: '#dc2626', cuenta: 'grave' },
     { id: 'N/A', boton: 'N/A', nombre: 'No aplica', color: '#7c3aed', cuenta: 'no_aplica' }
   ];
-  const COLORES_BASE = { principal: '#20449a', oscuro: '#193680', acento: '#e8830e' };
+  const COLORES_BASE = { principal: '#20449a', oscuro: '#193680' };
   const opcionesDe = f => (f && Array.isArray(f.opciones) && f.opciones.length ? f.opciones : OPCIONES_BASE);
   const coloresDe = f => Object.assign({}, COLORES_BASE, (f && f.colores) || {});
   const hexRgb = h => {
@@ -6867,7 +8372,6 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     /* Los colores del formato: los claros salen del principal, con su mismo tono */
     raiz.setProperty('--azul', col.principal);
     raiz.setProperty('--azul-osc', col.oscuro);
-    raiz.setProperty('--naranja', col.acento);
     raiz.setProperty('--azul-prof', oscurecer(col.oscuro, 0.25));
     raiz.setProperty('--azul-cl', tinte(col.principal, 0.898));
     raiz.setProperty('--azul-cl2', tinte(col.principal, 0.957));
@@ -6969,7 +8473,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
   }
 
   /* ==========================================================================
-     PASO 2: la verificación, por secciones que se abren y se cierran
+     PASO 2: la verificación, todas las secciones desplegadas, una debajo de otra
      ========================================================================== */
   function pintarLista() {
     const ops = opcionesDe(D.formato);
@@ -6977,10 +8481,10 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     Object.keys(NOTAS).forEach(k => { delete NOTAS[k]; });
     $('secciones').innerHTML = (D.formato.secciones || []).map((s, i) => {
       (s.items || []).forEach(it => { ST[it.id] = null; });
-      return '<div class="sec' + (i === 0 ? ' abierta' : '') + '">' +
-        '<button type="button" class="sec-h"><span class="n">' + (i + 1) + '</span><span class="t">' + (i + 1) + '. ' + esc(tituloDe(s)) + '</span>' +
-          '<span class="cta"></span></button>' +
-        '<div class="sec-b">' + (s.items || []).map((it, j) => '<div class="it">' +
+      return '<div class="sec">' +
+        '<div class="sec-h"><span class="n">' + (i + 1) + '</span><span class="t">' + (i + 1) + '. ' + esc(tituloDe(s)) + '</span>' +
+          '<span class="cta"></span></div>' +
+        '<div>' + (s.items || []).map((it, j) => '<div class="it">' +
           '<div class="it-t"><span>' + (i + 1) + '.' + (j + 1) + '</span>' + esc(it.texto) + '</div>' +
           '<div class="res" style="grid-template-columns:repeat(' + ops.length + ',1fr)">' + ops.map(o => '<button type="button" data-i="' + esc(it.id) +
             '" data-v="' + esc(o.id) + '" style="--c:' + esc(o.color) + '" aria-label="' + esc(o.nombre) + '">' + esc(o.boton) + '</button>').join('') + '</div>' +
@@ -6990,10 +8494,8 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     contar();
   }
 
-  const completa = sec => [...sec.querySelectorAll('.res')].every(r => r.querySelector('button.on'));
-
   function responder(b) {
-    const id = b.dataset.i, val = b.dataset.v, it = b.closest('.it'), sec = b.closest('.sec'), antes = completa(sec);
+    const id = b.dataset.i, val = b.dataset.v, it = b.closest('.it');
     it.querySelectorAll('.res button').forEach(x => x.classList.remove('on'));
     ST[id] = ST[id] === val ? null : val;
     if (ST[id]) b.classList.add('on');
@@ -7001,29 +8503,14 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     it.querySelector('.nota').hidden = !esNovedad(ST[id]);
     tocado = true;
     contar();
-    /* Al terminar una sección se pasa sola a la siguiente (si no queda una nota por escribir) */
-    if (!antes && completa(sec) && !esNovedad(ST[id])) setTimeout(() => siguienteSeccion(sec), 280);
   }
 
-  /* Baja hasta algo, sin que lo tape el encabezado */
-  function llevarA(el) {
-    const y = el.getBoundingClientRect().top + window.scrollY - document.querySelector('.ap-h').offsetHeight - 10;
-    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-  }
-
-  function siguienteSeccion(sec) {
-    sec.classList.remove('abierta');
-    const todas = [...document.querySelectorAll('#secciones .sec')];
-    const sig = todas.slice(todas.indexOf(sec) + 1).concat(todas).find(s => !completa(s));
-    if (sig) { sig.classList.add('abierta'); llevarA(sig); }
-  }
-
-  /* Lleva al primer ítem sin marcar, con su sección abierta */
+  /* Lleva al primer ítem sin marcar, sin que lo tape el encabezado */
   function irAlQueFalta() {
     const r = [...document.querySelectorAll('#secciones .res')].find(x => !x.querySelector('button.on'));
     if (!r) return;
-    r.closest('.sec').classList.add('abierta');
-    llevarA(r.closest('.it'));
+    const y = r.closest('.it').getBoundingClientRect().top + window.scrollY - document.querySelector('.ap-h').offsetHeight - 10;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
   }
 
   /* Los contadores de cada sección, de arriba y de abajo */
@@ -7256,7 +8743,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
   /* ==========================================================================
      EL PDF: un documento SST de SINUGRAVAS, como la hoja de vida. En cada
      hoja, el encabezado (logo, título y el cuadro de código, versión, fecha y
-     página) y la banda con la línea de acento; primero los datos y el
+     página) y la banda con la placa y la fecha; primero los datos y el
      resultado con las novedades, después la verificación completa y al final
      las observaciones, las firmas y la trazabilidad. Se arma igual cada vez,
      así un reintento produce el mismo archivo.
@@ -7320,7 +8807,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       } catch (x) { /* versión sin esas funciones */ }
       /* Los colores y las respuestas del formato con que se llenó */
       const col = coloresDe({ colores: v.colores }), ops = opcionesDe({ opciones: v.opciones });
-      const P = hexRgb(col.principal), O = hexRgb(col.oscuro), A = hexRgb(col.acento);
+      const P = hexRgb(col.principal), O = hexRgb(col.oscuro);
       const C1 = hexRgb(tinte(col.principal, 0.898)), C2 = hexRgb(tinte(col.principal, 0.957)), LN = hexRgb(tinte(col.principal, 0.84, 0.8));
       const DK = hexRgb(oscurecer(col.oscuro, 0.25)), TI = [27, 36, 48], GR = [78, 93, 107], GC = [107, 124, 140], BL = [255, 255, 255];
       const fc = c => doc.setFillColor(c[0], c[1], c[2]), dc = c => doc.setDrawColor(c[0], c[1], c[2]), tc = c => doc.setTextColor(c[0], c[1], c[2]);
@@ -7358,10 +8845,10 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
           bold(7.5); tc(DK); doc.text(T(f[1] || ''), W - mr - 2.4, fy + 3.4, { align: 'right' });
         });
         y += h + 2;
-        fc(P); doc.rect(ml, y, U, 7, 'F');
-        fc(A); doc.rect(ml, y + 7, U, 1.1, 'F');
-        bold(8.6); tc(BL); doc.text(banda, ml + 3, y + 4.75);
-        bold(7.5); doc.text(numero, W - mr - 3, y + 4.75, { align: 'right' });
+        /* La banda va sin relleno: así también se ve bien impresa en blanco y negro */
+        dc(P); doc.setLineWidth(0.45); doc.rect(ml, y, U, 8.1);
+        bold(8.6); tc(DK); doc.text(banda, ml + 3, y + 5.1);
+        bold(7.5); tc(P); doc.text(numero, W - mr - 3, y + 5.1, { align: 'right' });
         y += 8.1 + 2.6;
       }
       /* El recuadro de cada sección se cierra al terminarla o al pasar de hoja */
@@ -8060,9 +9547,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       $('km').addEventListener('input', ayudaKm);
       $('secciones').addEventListener('click', ev => {
         const b = ev.target.closest('.res button');
-        if (b) { responder(b); return; }
-        const h = ev.target.closest('.sec-h');
-        if (h) h.parentElement.classList.toggle('abierta');
+        if (b) responder(b);
       });
       $('secciones').addEventListener('input', ev => { const k = ev.target.dataset.nota; if (k) NOTAS[k] = ev.target.value; });
       document.querySelector('.app').addEventListener('input', () => { tocado = true; });
@@ -8603,6 +10088,7 @@ const Mapa = {
     poner('configuracion', { clave: 'dias_aviso', valor: config.diasAviso });
     poner('configuracion', { clave: 'documentos_obligatorios', valor: config.req });
     poner('configuracion', { clave: 'comparendos', valor: config.comparendos });
+    poner('configuracion', { clave: 'planos', valor: config.planos || {} });
     return f;
   },
 
@@ -8666,7 +10152,8 @@ const Mapa = {
     const config = {
       diasAviso: cfg.dias_aviso != null ? cfg.dias_aviso : Config.diasAviso,
       req: cfg.documentos_obligatorios || Config.req,
-      comparendos: cfg.comparendos || Config.comparendos
+      comparendos: cfg.comparendos || Config.comparendos,
+      planos: cfg.planos && typeof cfg.planos === 'object' ? cfg.planos : Config.planos || {}
     };
     return { datos: d, config };
   },
