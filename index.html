@@ -1057,6 +1057,7 @@ html.sb-mini .sb-salir{display:none}
 .agregar{padding:8px 12px}
 .campo-ed{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px}
 .campo-ed:last-child{border-bottom:0}
+.campo-fijo{grid-column:2 / -1;display:inline-flex;align-items:center;gap:6px;color:var(--text-3);font-size:12px}
 .campo-ed label,#preopEd .field .flex label{display:inline-flex;align-items:center;gap:6px;color:var(--text-2);cursor:pointer;font-size:12.5px}
 .siempre{color:var(--text-3);font-size:11.5px;grid-column:2 / span 2;text-align:right}
 .barra-guardar{position:sticky;bottom:0;display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;padding:12px 0;
@@ -5647,12 +5648,14 @@ const Preop = {
   unidades() { return ORDEN.flatMap(t => Datos.unidades.filter(u => u.tipo === t && this.aplica(u))); },
   /* Ante la duda (si no se supo el acceso) no se esconde nada: las reglas de la nube igual protegen */
   puede(a) { return Cuenta.admin || Cuenta.acciones.includes(a) || !Cuenta.rol; },
-  /* El formulario de los conductores es esta misma página con «?preoperacional» (§F) */
-  enlace() {
+  /* El formulario de los conductores es esta misma página con «?preoperacional» (§F).
+     Con «demo», en modo demostración (y con la clave del borrador del editor, si la trae). */
+  enlace(demo) {
     const url = new URL(location.href);
     url.hash = '';
     url.pathname = url.pathname.replace(/index\.html$/, '');
-    url.search = '?preoperacional' + (new URLSearchParams(location.search).get('nube') === 'local' ? '&nube=local' : '');
+    url.search = '?preoperacional' + (demo ? '&demo' + (demo === true ? '' : '=' + encodeURIComponent(demo)) : '') +
+      (new URLSearchParams(location.search).get('nube') === 'local' ? '&nube=local' : '');
     return url.href;
   },
   tituloSec: s => String(s.titulo || '').replace(/^\s*\d+\s*[.)-]\s*/, ''),
@@ -5787,8 +5790,10 @@ const Preop = {
     const url = this.enlace();
     const enlace = UI.card('Formulario para los conductores', '<div class="enlace">' + Icon('externo', '', 14) + esc(url.replace(/^https?:\/\//, '')) + '</div>' +
       '<div class="flex g8 mt12" style="flex-wrap:wrap"><button class="btn btn-primary btn-sm" data-act="copiarEnlacePreop">' + Icon('copiar', '', 13) + 'Copiar enlace</button>' +
-        '<a class="btn btn-sm" href="' + attr(url) + '" target="_blank" rel="noopener">' + Icon('externo', '', 13) + 'Abrir</a></div>' +
-      '<p class="txt-3 fs12 mt12" style="line-height:1.5">Se abre en el celular sin usuario ni contraseña. Las placas y los conductores salen de lo que esté registrado aquí.</p>');
+        '<a class="btn btn-sm" href="' + attr(url) + '" target="_blank" rel="noopener">' + Icon('externo', '', 13) + 'Abrir</a>' +
+        '<a class="btn btn-sm" href="' + attr(this.enlace(true)) + '" target="_blank" rel="noopener">' + Icon('movil', '', 13) + 'Ver en modo demo</a></div>' +
+      '<p class="txt-3 fs12 mt12" style="line-height:1.5">Se abre en el celular sin usuario ni contraseña. Las placas y los conductores salen de lo que esté registrado aquí. ' +
+        'En modo demo se ve completo, con conductores de ejemplo, y no se envía nada.</p>');
     const lim = f.periodo === 'hoy' ? hoyISO : f.periodo === 'mes' ? hoyISO.slice(0, 8) + '01' : Fecha.rel(-6);
     const lista = filas.filter(p => p.fecha >= lim && (!f.unidad || p.unidad_id === f.unidad));
     const toolbar = '<div class="toolbar"><div class="seg">' + [['hoy', 'Hoy'], ['7', 'Últimos 7 días'], ['mes', 'Este mes']].map(p =>
@@ -6050,7 +6055,6 @@ const Preop = {
     else if (!pide('placa')) l.push('La placa no es obligatoria: si el conductor no la escoge, ese preoperacional no queda en la ficha de ningún vehículo.');
     if (!ve('documento') && !ve('nombre')) l.push('Sin documento ni nombre, no queda quién hizo el preoperacional.');
     else if (!pide('documento') && !pide('nombre')) l.push('El conductor no es obligatorio: puede llegar un preoperacional sin saber quién lo hizo.');
-    if (!ve('fecha')) l.push('Sin fecha, cada preoperacional queda con la fecha del día en que se envía.');
     if (!b.opciones.some(o => o.cuenta === 'novedad' || o.cuenta === 'grave')) l.push('Ninguna respuesta cuenta como novedad: el sistema nunca va a marcar novedades.');
     if (this.contraste(b.colores.principal) < 3) l.push('Con ese color principal, la letra blanca de los botones y de la banda casi no se va a leer.');
     if (this.contraste(b.colores.oscuro) < 3) l.push('Con ese color oscuro, los bordes y las etiquetas del PDF casi no se van a ver.');
@@ -6109,6 +6113,8 @@ const Preop = {
         ORDEN.map(t => ck(b.tipos.includes(t), TIPOS[t].plural, 'data-pe-tipo="' + t + '"')).join('') + '</div></div>', { cls: 'mb16' });
     const campos = UI.card('Campos del encabezado', this.CAMPOS.map(c => {
       const k = c[0], v = this.campo(k);
+      /* La fecha no se escoge: el sistema pone la del día en que llega */
+      if (k === 'fecha') return '<div class="campo-ed"><span>' + esc(c[1]) + '</span><span class="campo-fijo">' + Icon('lock', '', 12) + 'Automática: la del día en que llega</span></div>';
       return '<div class="campo-ed"><span>' + esc(c[1]) + '</span>' +
         ck(v.mostrar, 'Mostrar', 'data-pe-campo="' + k + '" data-pe-que="mostrar"') + ck(v.obligatorio, 'Obligatorio', 'data-pe-campo="' + k + '" data-pe-que="obligatorio"') + '</div>';
     }).join(''), { sub: 'Quitar un campo es quitarle «Mostrar»', cls: 'mb16' });
@@ -6168,6 +6174,8 @@ const Preop = {
     const barra = '<div class="barra-guardar"><span id="peSucio" style="display:' + (sucio ? 'inline-flex' : 'none') + ';align-items:center;gap:8px;margin-right:auto">' +
         '<span class="txt-3 fs12">Hay cambios sin guardar</span><button class="btn btn-ghost" data-act="preopDescartar">Descartar cambios</button></span>' +
       '<a class="btn" href="' + attr(this.enlace()) + '" target="_blank" rel="noopener">' + Icon('externo', '', 14) + 'Ver el formulario</a>' +
+      '<button class="btn" data-act="preopDemo" title="El formulario completo, con lo que tenga aquí aunque no esté guardado y conductores de ejemplo. No envía nada.">' +
+        Icon('movil', '', 14) + 'Ver en modo demo</button>' +
       (puede ? '<button class="btn btn-primary" id="peGuardar" data-act="preopGuardar" title="Se prende cuando cambie algo"' + (sucio ? '' : ' disabled') + '>' +
         Icon('save', '', 14) + 'Guardar cambios</button>' : '') + '</div>';
     const html = arriba + (puede ? '' : '<div class="alert a-info mb16">' + Icon('info') + '<div>Su cuenta puede ver el formulario, pero no cambiarlo.</div></div>') +
@@ -6278,6 +6286,22 @@ Object.assign(Acciones, {
   filtroPreop(el) { Preop.filtro.periodo = el.dataset.v; Router.pintar(true); },
   preopRecargar() { Preop.olvidar(); Router.pintar(true); },
   preopReintentar() { Preop.errorFormato = null; Router.pintar(true); },
+  /* El formulario en modo demostración, con lo que tenga el editor aunque no
+     esté guardado: el borrador pasa por el almacenamiento del navegador (es la
+     misma página). Si no se puede guardar ahí, sale el formulario guardado. */
+  preopDemo() {
+    const clave = Math.random().toString(36).slice(2, 10);
+    try {
+      localStorage.setItem('preop.demo', JSON.stringify({ clave, formato: Preop.borrador || Preop.formato, sucio: Preop.sucio() }));
+    } catch (e) { /* sin almacenamiento */ }
+    const a = document.createElement('a');
+    a.href = Preop.enlace(clave);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  },
   async copiarEnlacePreop() {
     const url = Preop.enlace();
     try {
@@ -6455,8 +6479,11 @@ body.blanco { background: #fff; padding-bottom: 0; }
 /* Contenido */
 .cont { padding: 16px 14px 8px; }
 h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
-.fecha { font-size: 12.5px; color: var(--gris); margin: 3px 0 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.fecha button { border: 0; background: none; color: var(--azul); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; padding: 0; }
+.fecha { font-size: 12.5px; color: var(--gris); margin: 3px 0 14px; }
+/* Modo demostración: una franja que no deja olvidar que no se envía nada */
+.demo-b { background: #fff3e8; color: #9a3d07; border-bottom: 1px solid #fed7aa; font-size: 11.5px; line-height: 1.35; padding: 6px 16px; text-align: center; }
+.demo-b b { letter-spacing: .06em; }
+.demo-b span { display: block; }
 .tj { background: #fff; border: 1px solid var(--borde); border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(13,19,25,.04); }
 .tj-h { display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 700; margin-bottom: 12px; color: var(--azul-prof); }
 .tj-n { width: 24px; height: 24px; border-radius: 50%; background: var(--azul); color: #fff; font-size: 12px; display: grid; place-items: center; flex: 0 0 auto; }
@@ -6593,6 +6620,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
 <header class="ap-h">
   <div class="ap-fila" id="apFila"><img class="ap-s" id="apEmb" alt="SINUGRAVAS" hidden><div class="ap-t"><b>SINUGRAVAS</b><span id="apSub">Inspección preoperacional</span></div><span class="ap-cod" id="apCod"></span></div>
   <div class="ap-linea"></div>
+  <div class="demo-b" id="demoB" hidden></div>
   <div class="pasos" id="pasos" hidden>
     <div class="pasos-t"><span id="pasoTxt"></span><span id="pasoCnt"></span></div>
     <div class="pasos-b"><button type="button" data-paso="1" aria-label="Paso 1"></button><button type="button" data-paso="2" aria-label="Paso 2"></button><button type="button" data-paso="3" aria-label="Paso 3"></button></div>
@@ -6610,8 +6638,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
 
   <section id="paso1" hidden>
     <h1>Inspección preoperacional</h1>
-    <p class="fecha"><span id="fechaTxt"></span><button type="button" id="fechaCambiar" hidden>Cambiar</button></p>
-    <div class="campo" id="cFecha" hidden><span class="lb" id="lbFecha">Fecha de inspección</span><input class="inp" id="fecha" type="date"></div>
+    <p class="fecha" id="fechaTxt"></p>
     <div class="tj" id="tjVeh">
       <div class="tj-h"><span class="tj-n" id="nVeh">1</span>Vehículo</div>
       <div class="campo" id="cPlaca"><span class="lb" id="lbPlaca">Placa</span><select class="sel" id="placa"></select></div>
@@ -6750,13 +6777,13 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
   const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
   const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   /* Los campos del encabezado: cada uno se muestra o no, y es obligatorio o
-     no, según el formato. Si el formato no dice nada, la placa, el tipo, la
-     fecha y el conductor salen y son obligatorios, como siempre. El
-     documento y el nombre son el mismo conductor. */
+     no, según el formato. Si el formato no dice nada, la placa, el tipo y el
+     conductor salen y son obligatorios, como siempre. El documento y el
+     nombre son el mismo conductor. La fecha no está: es la del día y no se
+     puede cambiar (en el sistema queda la del día en que llega). */
   const CAMPOS = {
     placa: { el: 'placa', caja: 'cPlaca', lb: 'lbPlaca', nombre: 'Placa', fijo: true },
     tipo: { el: 'tipoVeh', caja: 'cTipo', lb: 'lbTipo', nombre: 'Tipo de vehículo', fijo: true },
-    fecha: { el: 'fecha', lb: 'lbFecha', nombre: 'Fecha de inspección', fijo: true },
     kilometraje: { el: 'km', caja: 'cKm', lb: 'lbKm', nombre: 'Kilometraje de hoy' },
     documento: { el: 'cond', nombre: 'Documento de identidad', fijo: true },
     nombre: { el: 'cond', nombre: 'Nombre y apellidos', fijo: true },
@@ -6824,7 +6851,8 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     return d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + (d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : '');
   };
   const BOTON = ['Siguiente: verificación ›', 'Siguiente: firma ›', 'Enviar preoperacional'];
-  let tocado = false, paso = 1;
+  /* DEMO: «?preoperacional&demo», para ver el formulario completo sin enviar nada */
+  let tocado = false, paso = 1, DEMO = false;
 
   function opciones(sel, primera, lista) {
     sel.innerHTML = '<option value="">' + esc(primera) + '</option>' +
@@ -6870,14 +6898,6 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     $('tjVeh').hidden = !ver('placa') && !ver('tipo') && !ver('kilometraje');
     $('tjCond').hidden = $('cCond').hidden && !mini;
     $('nCond').textContent = $('tjVeh').hidden ? '1' : '2';
-
-    const hoy = Fecha.hoy();
-    $('fecha').min = Fecha.sumar(hoy, -60);
-    $('fecha').max = Fecha.sumar(hoy, 1);
-    $('fecha').value = hoy;
-    $('lbFecha').textContent = et('fecha');
-    $('fechaCambiar').hidden = !ver('fecha');
-    $('cFecha').hidden = true;
     pintarFecha();
 
     $('supLinea').hidden = !f.supervisor;
@@ -6888,8 +6908,9 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     elegirConductor('');
   }
 
+  /* La fecha es la de hoy, sin opción de cambiarla */
   function pintarFecha() {
-    const t = fechaLarga(campo('fecha').mostrar && $('fecha').value ? $('fecha').value : Fecha.hoy());
+    const t = fechaLarga(Fecha.hoy());
     $('fechaTxt').textContent = t.charAt(0).toUpperCase() + t.slice(1);
   }
 
@@ -7311,7 +7332,8 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       const ver = k => Object.assign({ mostrar: true }, (v.campos || {})[k]).mostrar;
       const recibido = Fecha.colombia(e.recibido);
       const banda = T(([v.placa ? placaTxt(v.placa) : v.tipo, fechaLarga(v.fecha).replace(',', '')].filter(Boolean).join(' · ')).toUpperCase());
-      const numero = T('PREOPERACIONAL N.º ' + e.id.slice(0, 8).toUpperCase());
+      /* En demostración se marca en la banda, en los datos y en el pie */
+      const numero = T(e.demo ? 'DEMOSTRACIÓN · NO ES UN REGISTRO' : 'PREOPERACIONAL N.º ' + e.id.slice(0, 8).toUpperCase());
       let y = 9, marco = null, continua = null;
 
       function encabezado() {
@@ -7405,7 +7427,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       if (ver('licencia') || ver('categoria')) celdas.push({ l: 'Licencia · categoría', v: [v.licencia, v.categoria].filter(Boolean).join(' · ') });
       if (ver('vigencia')) celdas.push({ l: 'Vigencia de la licencia', v: v.vigencia ? Fecha.dmy(v.vigencia) : '' });
       celdas.push({ l: 'Supervisor', v: v.supervisor, s: 2 });
-      celdas.push({ l: 'Recibido en el sistema', v: recibido.replace(/:\d\d (?=[ap]\.)/, ' ') });
+      celdas.push({ l: 'Recibido en el sistema', v: e.demo ? 'Demostración (no se envió)' : recibido.replace(/:\d\d (?=[ap]\.)/, ' ') });
       abrirMarco();
       titulo('Datos del vehículo y del conductor');
       cuadricula(celdas);
@@ -7572,11 +7594,11 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
 
       // TRAZABILIDAD: dónde y cuándo llegó
       const u = ev.ubicacion, cel = ev.hora ? Fecha.colombia(ev.hora) : '';
-      const traz = [['Recibido en el sistema', recibido],
+      const traz = [['Recibido en el sistema', e.demo ? 'Demostración: no se envió' : recibido],
         ['Hora en el celular', !cel ? '-' : cel.slice(0, 10) === recibido.slice(0, 10) ? cel.slice(11) : cel],
         ['IP', e.ip || '-'], ['Celular', ev.celular || '-'],
         ['Ubicación', u ? Number(u.lat).toFixed(5) + ', ' + Number(u.lng).toFixed(5) + (u.precision ? ' (± ' + u.precision + ' m)' : '') : 'Sin ubicación (no dio el permiso)'],
-        ['Envío', e.id]];
+        ['Envío', e.demo ? 'Demostración' : e.id]];
       cabe(5.6 + 16.4);
       abrirMarco();
       titulo('Trazabilidad', 'Evidencia de dónde y cuándo llegó');
@@ -7594,13 +7616,14 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       cerrarMarco();
 
       // En cada hoja: el número de la página y el pie con la trazabilidad
-      const hojas = doc.getNumberOfPages(), pie = T(recibido + (e.ip ? ' · IP ' + e.ip : '') + ' · Envío ' + e.id.slice(0, 8));
+      const hojas = doc.getNumberOfPages(), et = e.demo ? 'Modo demostración' : 'Recibido en el sistema';
+      const pie = T(e.demo ? '· este preoperacional no se envió ni quedó en el sistema' : recibido + (e.ip ? ' · IP ' + e.ip : '') + ' · Envío ' + e.id.slice(0, 8));
       for (let p = 1; p <= hojas; p++) {
         doc.setPage(p);
         bold(7.5); tc(DK); doc.text(p + ' de ' + hojas, W - mr - 2.4, 9 + 15 + 3.4, { align: 'right' });
         dc(LN); doc.setLineWidth(0.22); doc.line(ml, 284, W - mr, 284);
-        bold(6.4); tc(DK); doc.text('Recibido en el sistema', ml, 287.4);
-        const x = ml + doc.getTextWidth('Recibido en el sistema ');
+        bold(6.4); tc(DK); doc.text(et, ml, 287.4);
+        const x = ml + doc.getTextWidth(et + ' ');
         normal(6.4); tc(GC); doc.text(pie, x, 287.4);
         doc.text(T('Generado por el Sistema de Gestión de Flota de SINUGRAVAS S.A.S. · flota.sinugravas.com'), ml, 290.6);
         bold(7); tc(DK); doc.text(T('Página ' + p + ' de ' + hojas), W - mr, 290.6, { align: 'right' });
@@ -7679,6 +7702,8 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
         }
         e.recibido = r.recibido;
         e.ip = r.ip || '';
+        /* La fecha la pone el sistema (la del día en que llega): con esa sale el PDF */
+        if (r.fecha) e.vista.fecha = String(r.fecha).slice(0, 10);
         e.etapa = 'pdf';
         this.guardar();
         Pantalla.avanzo(e);
@@ -7755,8 +7780,9 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       const nov = Object.keys(R).filter(k => { const o = ops.find(x => x.id === R[k]); return o && (o.cuenta === 'novedad' || o.cuenta === 'grave'); }).length;
       $('listoIc').className = 'ok-ic' + (llego ? '' : ' esp');
       $('listoIc').innerHTML = llego ? '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : '📤';
-      $('listoTit').textContent = llego ? 'Preoperacional enviado' : 'Quedó guardado en el celular';
-      $('listoTxt').textContent = llego ? 'Quedó registrado en el Sistema de Gestión de Flota.'
+      $('listoTit').textContent = e.demo ? 'Así quedaría enviado' : llego ? 'Preoperacional enviado' : 'Quedó guardado en el celular';
+      $('listoTxt').textContent = e.demo ? 'Modo demostración: no se envió nada ni quedó guardado en el sistema. Abra el PDF para ver cómo queda.'
+        : llego ? 'Quedó registrado en el Sistema de Gestión de Flota.'
         : (e.error && e.error !== 'sin señal' ? 'El sistema no lo recibió todavía (' + e.error + '). ' : 'No hay señal en este momento. ') +
           'Se envía solo apenas se pueda: con esta página abierta, o la próxima vez que la abra.';
       const filas = [];
@@ -7765,7 +7791,8 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       filas.push(['Fecha', esc(Fecha.dmy(v.fecha))]);
       if (v.nombre) filas.push(['Conductor', esc(v.nombre)]);
       filas.push(['Resultado', nov ? nov + (nov === 1 ? ' novedad' : ' novedades') : 'Sin novedades']);
-      if (llego) filas.push(['Recibido', esc(Fecha.colombia(e.recibido).replace(/^\S+ /, '')) + ' · hora del sistema']);
+      if (e.demo) filas.push(['Recibido', 'Demostración: no se envió']);
+      else if (llego) filas.push(['Recibido', esc(Fecha.colombia(e.recibido).replace(/^\S+ /, '')) + ' · hora del sistema']);
       $('listoDatos').innerHTML = filas.map(f => '<div class="fila"><span>' + f[0] + '</span><b>' + f[1] + '</b></div>').join('');
       const falta = llego && e.etapa !== 'listo';
       $('listoNota').hidden = !falta;
@@ -7795,6 +7822,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
   // TOAST
   function showToast(msg, type) {
     const el = $('toast');
+    el.style.top = (document.querySelector('.ap-h').offsetHeight + 12) + 'px';   // justo debajo del encabezado
     el.textContent = msg;
     el.className = 'show' + (type === 'err' ? ' err' : '');
     clearTimeout(el._t);
@@ -7833,11 +7861,6 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     };
     if (pide('placa') && !$('placa').value) return falta('placa', $('placa'));
     if (pide('tipo') && !tipoActual()) return campo('placa').mostrar ? falta('placa', $('placa')) : falta('tipo', $('tipoVeh'));
-    if (campo('fecha').mostrar) {
-      const f = $('fecha').value, hoy = Fecha.hoy();
-      if (!f && pide('fecha')) { $('cFecha').hidden = false; return falta('fecha', $('fecha')); }
-      if (f && (f > Fecha.sumar(hoy, 1) || f < Fecha.sumar(hoy, -60))) { $('cFecha').hidden = false; return falta('fecha', $('fecha'), 'La fecha de inspección no es válida'); }
-    }
     if (campo('kilometraje').mostrar) {
       const km = $('km'), v = km.value.trim();
       if ((km.validity && km.validity.badInput) || (v && !/^\d{1,12}(\.\d{1,2})?$/.test(v))) return falta('kilometraje', km, 'El kilometraje no es válido: escríbalo solo con números');
@@ -7868,9 +7891,8 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       if (nuevo < ultimo) l.push('El kilometraje (' + kmTxt(km) + ') es menor que el último registrado para ' + placaTxt(u.placa) + ': ' + kmTxt(u.km) + ' km' + cuando + '.');
       else if (nuevo - ultimo > 5000) l.push('El kilometraje (' + kmTxt(km) + ') está ' + miles(nuevo - ultimo) + ' km por encima del último registrado para ' + placaTxt(u.placa) + ' (' + kmTxt(u.km) + ' km' + cuando + ').');
     }
-    const vig = $('vigLic').value, f = campo('fecha').mostrar && $('fecha').value ? $('fecha').value : Fecha.hoy();
-    if (vig && vig < f && campo('vigencia').mostrar) l.push('La licencia de conducción aparece vencida desde el ' + Fecha.dmy(vig) + '.');
-    if (campo('fecha').mostrar && f !== Fecha.hoy()) l.push('La fecha de la inspección (' + Fecha.dmy(f) + ') no es la de hoy.');
+    const vig = $('vigLic').value;
+    if (vig && vig < Fecha.hoy() && campo('vigencia').mostrar) l.push('La licencia de conducción aparece vencida desde el ' + Fecha.dmy(vig) + '.');
     return l;
   }
 
@@ -7901,7 +7923,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
         if (t && esNovedad(ST[k])) notas[k] = t.slice(0, 300);
       });
       const datos = {
-        fecha: ver('fecha') && $('fecha').value ? $('fecha').value : Fecha.hoy(),
+        fecha: Fecha.hoy(),   // la de hoy; el sistema igual pone la del día en que llega
         kilometraje: ver('kilometraje') ? $('km').value.trim() : '',
         tipo_vehiculo: tipoActual(),
         licencia: ver('licencia') ? $('licencia').value.trim() : '',
@@ -7920,6 +7942,14 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
           opciones: opcionesDe(f), colores: coloresDe(f), campos: f.campos || {} },
         firma: Firma.jpeg()
       };
+      if (DEMO) {
+        /* En demostración no se manda nada: el PDF se arma aquí mismo, para verlo */
+        Object.assign(e, { demo: true, recibido: new Date().toISOString(), ip: '', etapa: 'listo' });
+        PDFS.set(e.id, await Pdf.generar(e));
+        tocado = false;
+        Pantalla.mostrar(e);
+        return;
+      }
       Cola.agregar(e);
       await Cola.procesar();
       if (motivoRechazo) {
@@ -7940,8 +7970,6 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
 
   function limpiar() {
     ['placa', 'tipoVeh', 'km', 'cond', 'licencia', 'catLic', 'vigLic', 'obs'].forEach(id => { $(id).value = ''; });
-    $('fecha').value = Fecha.hoy();
-    $('cFecha').hidden = true;
     pintarFecha();
     pintarLista();
     elegirPlaca('');
@@ -7954,17 +7982,41 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
      ARRANQUE: trae el formulario del sistema (si no hay señal, usa el último
      que quedó en el celular) y sigue con lo que haya pendiente
      ========================================================================== */
+  /* MODO DEMOSTRACIÓN: el formulario de verdad (o el que se está editando en
+     flota, si viene de ahí), los vehículos registrados y conductores de
+     ejemplo, para verlo completo aunque no haya conductores. No se envía ni
+     se guarda nada: al final solo se arma el PDF, marcado como demostración. */
+  function borradorDelEditor() {
+    const clave = new URLSearchParams(location.search).get('demo'), b = clave ? Local.leer('preop.demo', null) : null;
+    return b && b.clave === clave && b.formato ? b : null;
+  }
+  function conEjemplo(d) {
+    const b = borradorDelEditor(), formato = b ? b.formato : d && d.formato, hoy = Fecha.hoy();
+    if (!formato) return d;
+    $('demoB').innerHTML = '<b>MODO DEMOSTRACIÓN</b><span>' + (b && b.sucio ? 'Con sus cambios sin guardar' : 'Conductores de ejemplo') + ' · No se envía nada</span>';
+    return {
+      formato,
+      unidades: d && d.unidades && d.unidades.length ? d.unidades
+        : [{ id: 'demo-u', placa: 'EJE123', tipo: 'carga', clase: 'Vehículo de ejemplo', km: 125000, km_fecha: Fecha.sumar(hoy, -1) }],
+      conductores: [
+        { id: 'demo-1', nombre: 'Pedro Ejemplo', cedula: '1234567890', categoria: 'C2', licencia_vence: Fecha.sumar(hoy, 365) },
+        { id: 'demo-2', nombre: 'María Ejemplo', cedula: '9876543210', categoria: 'C3', licencia_vence: Fecha.sumar(hoy, -20) }
+      ]
+    };
+  }
+
   async function cargarDatos() {
     Pantalla.ver('cargando');
     let d = null, guardado = false, error = null;
     try {
       d = await Nube.rpc('preop_datos', {}, 15000);
-      if (d && d.formato) Local.poner('preop.datos', d);
+      if (d && d.formato && !DEMO) Local.poner('preop.datos', d);
     } catch (e) {
       error = e;
       d = Local.leer('preop.datos', null);
       guardado = true;
     }
+    if (DEMO) d = conEjemplo(d);
     if (!d || !d.formato) {
       $('cargaErrorTxt').textContent = error && !error.red ? 'El sistema respondió: ' + error.message
         : d ? 'El formulario todavía no está configurado en el sistema.' : 'Revise la señal o los datos del celular e intente otra vez.';
@@ -7985,7 +8037,8 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
   return {
     activo: () => new URLSearchParams(location.search).has('preoperacional'),
     iniciar() {
-      document.title = 'Inspección preoperacional · SINUGRAVAS';
+      DEMO = new URLSearchParams(location.search).has('demo');
+      document.title = (DEMO ? 'Demostración · ' : '') + 'Inspección preoperacional · SINUGRAVAS';
       const vp = document.querySelector('meta[name="viewport"]');
       if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
       /* Solo se ve el formulario: los estilos de la plataforma se quitan y van los suyos */
@@ -7999,12 +8052,12 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       $('listoLogo').src = MARCA.logo;
       MARCA.preparar().then(() => { if (MARCA.emblema) { $('apEmb').src = MARCA.emblema; $('apEmb').hidden = false; } });
       trampa = Boolean(history.state && history.state.preop === 'paso');
+      $('demoB').hidden = !DEMO;
+      $('demoB').innerHTML = '<b>MODO DEMOSTRACIÓN</b><span>Conductores de ejemplo · No se envía nada</span>';
 
       $('placa').addEventListener('change', ev => elegirPlaca(ev.target.value));
       $('cond').addEventListener('change', ev => elegirConductor(ev.target.value));
       $('km').addEventListener('input', ayudaKm);
-      $('fecha').addEventListener('change', pintarFecha);
-      $('fechaCambiar').addEventListener('click', () => { $('cFecha').hidden = false; $('fecha').focus(); });
       $('secciones').addEventListener('click', ev => {
         const b = ev.target.closest('.res button');
         if (b) { responder(b); return; }
@@ -8039,11 +8092,13 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       document.addEventListener('visibilitychange', () => { if (!document.hidden && Cola.lista.length) Cola.procesar(); });
       setInterval(() => { if (Cola.lista.length) Cola.procesar(); }, 30000);
       window.addEventListener('beforeunload', ev => {
-        if (tocado && Pantalla.actual === 'form') { ev.preventDefault(); ev.returnValue = ''; }
+        if (tocado && Pantalla.actual === 'form' && !DEMO) { ev.preventDefault(); ev.returnValue = ''; }
       });
 
       Firma.iniciar();
-      Cola.cargar();
+      /* En demostración la cola del celular ni se mira: lo pendiente de verdad
+         se envía la próxima vez que se abra el formulario normal */
+      if (!DEMO) Cola.cargar();
       Avisos.pintar();
       Pdf.cargar().catch(() => { /* se intenta de nuevo al armar el PDF */ });
       Pdf.logo();
