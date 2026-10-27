@@ -280,6 +280,10 @@ input[type=checkbox],input[type=radio]{width:15px;height:15px;accent-color:var(-
 
 .modal-bd{position:fixed;inset:0;background:rgba(13,19,25,.5);backdrop-filter:blur(2px);z-index:200;
   display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;animation:fade .14s ease}
+/* Con una ventana abierta, la página de atrás no se mueve. El espacio de la
+   barra de desplazamiento se guarda, para que la página no salte (ver Modal) */
+html:has(#modals > .modal-bd){overflow:hidden;padding-right:var(--barra,0px)}
+.modal-bd,.modal-b{overscroll-behavior:contain}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes pop{from{opacity:0;transform:translateY(-8px) scale(.985)}to{opacity:1;transform:none}}
 .modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--sh-3);width:100%;
@@ -482,6 +486,7 @@ html[data-theme="dark"] table.tbl tbody tr.sel td{background:#172133}
   border-radius:var(--radius-lg);box-shadow:var(--sh-1);overflow:hidden;margin-bottom:16px}
 .uh-ph{position:relative;min-height:236px;background:var(--surface-3)}
 .uh-ph > img,.uh-ph > .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.uh-ph > img[data-act]{cursor:zoom-in}
 .uh-b{padding:18px 20px;min-width:0;display:flex;flex-direction:column;gap:13px}
 .uh-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .uh-h{font-size:19px;font-weight:650;letter-spacing:-.01em}
@@ -511,6 +516,21 @@ html[data-theme="dark"] .uh-btn{background:rgba(22,29,36,.9);color:#dfe8ee;borde
 html[data-theme="dark"] .lic-dot{border-color:#161d24}
 .lic-vista{background:var(--surface-3);border-radius:10px;padding:16px;display:grid;place-items:center}
 .lic-vista img{max-width:100%;max-height:64vh;border-radius:8px;box-shadow:var(--sh-2);display:block}
+/* Al arrastrar un archivo sobre la página, la foto de la ficha muestra dónde
+   soltarlo: la mitad de la cámara es la foto; la de la licencia, la tarjeta */
+.uh-soltar{position:absolute;inset:0;z-index:2;display:none;gap:8px;padding:10px;background:rgba(13,19,25,.55)}
+html.arrastrando .uh-soltar{display:flex}
+.uh-sz{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px;
+  border:2px dashed rgba(255,255,255,.7);border-radius:10px;color:#fff;text-align:center;transition:background var(--t-fast),border-color var(--t-fast)}
+.uh-sz > svg{width:24px;height:24px;margin-bottom:2px}
+.uh-sz b{font-size:13px;font-weight:650;line-height:1.25}
+.uh-sz span{font-size:11.5px;opacity:.85;line-height:1.3}
+.uh-sz.over{background:rgba(32,68,154,.9);border-style:solid;border-color:#fff}
+.lic-vista.over{outline:2px dashed var(--accent);outline-offset:3px;background:var(--accent-soft)}
+/* Un documento al que se le puede soltar el archivo: su fila o su botón */
+.req.over{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+table.tbl tbody tr.over td{background:var(--accent-soft)}
+.btn.over{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 /* Actividad de la unidad: filtros, el mes y, debajo, sus eventos */
 .fchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .fchip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--border-strong);
@@ -2587,12 +2607,15 @@ const Config = {
    Documentos e «insp» de las inspecciones; esos dos no se escriben aquí.
    «lectura» es el kilometraje u horómetro de la última lectura (Cambios de
    aceite); si la unidad no tiene lecturas, se escribe como cualquier dato.
-   «fecha» se escribe con calendario. */
+   «fecha» se escribe con calendario.
+   El VIN va aparte del chasis: en la licencia de tránsito son dos datos, y en
+   algunos vehículos el chasis es solo el final del VIN (Juan, 27/10/2026). Las
+   máquinas no lo llevan: su tarjeta de registro trae el número de serie. */
 const HV_VEHICULO = maq => [
   { t: 'Información general', campos: [
     { n: 'Placa', de: 'placa' }, { n: 'Marca', de: 'marca' }, { n: 'Línea', de: 'linea' }, { n: 'Modelo', de: 'modelo' },
     { n: 'Tipo', de: 'clase' }, { n: 'Color', de: 'color' }, 'Uso del vehículo', 'N.º interno UPN',
-    'N.º de chasis', 'N.º de motor', 'Cilindraje', 'N.º licencia de tránsito',
+    'N.º de chasis', ...(maq ? [] : ['VIN']), 'N.º de motor', 'Cilindraje', 'N.º licencia de tránsito',
     { n: 'SOAT', doc: 'soat' }, { n: 'Tecnomecánica', doc: 'tecno' }, 'Combustible', maq ? 'Peso operativo' : 'Capacidad',
     { n: maq ? 'Operador' : 'Conductor', de: 'conductor' }, { n: maq ? 'Horómetro' : 'Kilometraje', lectura: true }] },
   { t: 'Motor', campos: ['Modelo del motor', 'Cilindros', 'Válvulas por cilindro', 'Turbo'] },
@@ -2889,10 +2912,10 @@ const UI = {
   },
   nombre(u) { return u.tipo === 'canoa' ? (u.alias || u.placa) : [u.marca, u.linea].filter(Boolean).join(' '); },
   /* La foto de la unidad: en las listas, la miniatura; en la ficha, la grande
-     (mientras baja, la miniatura) */
-  foto(u, chica) {
+     (mientras baja, la miniatura). «mas»: otros atributos para la imagen */
+  foto(u, chica, mas) {
     const src = chica ? u.mini || u.foto : u.foto || u.mini;
-    return src ? '<img src="' + attr(src) + '" alt="">' : '<div class="ph">' + ILUS[ilusDe(u)] + '</div>';
+    return src ? '<img src="' + attr(src) + '" alt=""' + (mas || '') + '>' : '<div class="ph">' + ILUS[ilusDe(u)] + '</div>';
   },
   thumb(u) { return '<span class="thumb">' + this.foto(u) + '</span>'; },
   unidadCelda(u) {
@@ -3149,6 +3172,12 @@ const Dz = {
     ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('over'); }));
     ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('over'); }));
     dz.addEventListener('drop', e => { const f = Array.from(e.dataTransfer.files); if (f.length) alRecibir(f); });
+  },
+  /* Una imagen que ya está, vista en grande: se cambia arrastrando la nueva encima */
+  encima(el, alRecibir) {
+    ['dragenter', 'dragover'].forEach(ev => el.addEventListener(ev, e => { e.preventDefault(); el.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach(ev => el.addEventListener(ev, e => { e.preventDefault(); el.classList.remove('over'); }));
+    el.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) alRecibir(f); });
   },
   /* Cada archivo elegido, con su peso y lo que se hará con él al guardar */
   lista(id, files, destino) {
@@ -3487,6 +3516,25 @@ const Guardadas = {
       Nube.subir('mini:' + u.id, mini, { ts: info.ts });
     }
     await this.guardar(tipo + ':' + u.id, { blob, info });
+    return info;
+  },
+  /* La foto o la tarjeta que llega del botón, de la ventana de la licencia o
+     arrastrada a la foto de la ficha: se revisa que se pueda abrir, se guarda y
+     se avisa cuánto bajó de peso. Devuelve lo que quedó, o nada. */
+  async recibir(u, tipo, f, origen) {
+    const foto = tipo === 'foto';
+    if (foto ? !/^image\//i.test(f.type) : !/^image\/|pdf/i.test(f.type) && !/\.pdf$/i.test(f.name || '')) {
+      Toast.show(foto ? 'La foto tiene que ser una imagen, JPG o PNG.' : 'La tarjeta tiene que ser una foto o un PDF.', 'err');
+      return null;
+    }
+    const ok = await Archivos.original(f);
+    if (!ok) return null;
+    if (foto) Toast.show('Comprimiendo la foto…');
+    const info = await this.poner(u, tipo, ok, origen);
+    Router.pintar(true);
+    const peso = info.tam < info.antes ? Peso.txt(info.antes) + ' → ' + Peso.txt(info.tam) : '';
+    Toast.show(foto ? 'Foto de <b>' + esc(UI.placaTxt(u)) + '</b> guardada' + (peso ? ': ' + esc(peso) : '') + '.'
+      : 'Tarjeta de propiedad de <b>' + esc(UI.placaTxt(u)) + '</b> guardada' + (peso ? ' (' + esc(peso) + ')' : '') + '. Ya quedó en Documentos.');
     return info;
   },
   /* Deja la imagen en la unidad. La licencia ES la tarjeta de propiedad: queda
@@ -3865,6 +3913,9 @@ const Modal = {
       '<button class="btn btn-ghost btn-icon btn-sm" data-act="cerrarModal" aria-label="Cerrar">' + Icon('x', '', 15) + '</button></div>' +
       '<div class="modal-b">' + o.cuerpo + '</div>' + (o.pie ? '<div class="modal-f">' + o.pie + '</div>' : '') + '</div>';
     bd.addEventListener('mousedown', e => { if (e.target === bd) Modal.cerrar(bd); });
+    /* Lo que ocupa la barra de desplazamiento, que se esconde mientras haya una
+       ventana abierta */
+    if (!this.abierto()) document.documentElement.style.setProperty('--barra', (innerWidth - document.documentElement.clientWidth) + 'px');
     $('#modals').appendChild(bd);
     const primero = bd.querySelector('.modal-b input:not([type=file]):not([type=hidden]):not([type=date]), .modal-b select, .modal-b textarea');
     if (primero && !o.sinFoco) setTimeout(() => primero.focus(), 40);
@@ -5086,12 +5137,17 @@ const Vistas = {
     const html =
       '<div class="crumbs"><a data-ir="flota">Flota</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
       '<section class="uh">' +
-        '<div class="uh-ph">' + UI.foto(u) +
+        '<div class="uh-ph">' + UI.foto(u, false, ' data-act="verFoto" data-u="' + u.id + '" title="Ver la foto en grande"') +
           '<button class="uh-btn uh-foto" data-act="cambiarFoto" data-u="' + u.id + '" title="' + (u.fotoInfo ? 'Cambiar la foto' : 'Poner una foto') + '" aria-label="' +
             (u.fotoInfo ? 'Cambiar la foto' : 'Poner una foto') + '">' + Icon(u.fotoInfo ? 'edit' : 'camera', '', 15) + '</button>' +
           (conLicencia ? '<button class="uh-btn uh-lic" data-act="verLicencia" data-u="' + u.id + '" aria-label="Licencia de tránsito" title="' +
             (u.licenciaInfo ? 'Ver la licencia de tránsito' : 'Licencia de tránsito: falta adjuntarla') + '">' + Icon('idcard', '', 16) +
-            (u.licenciaInfo ? '' : '<span class="lic-dot"></span>') + '</button>' : '') + '</div>' +
+            (u.licenciaInfo ? '' : '<span class="lic-dot"></span>') + '</button>' : '') +
+          /* Dónde se suelta la foto o la tarjeta al arrastrarlas (ver Soltar) */
+          '<div class="uh-soltar"><div class="uh-sz" data-sz="foto" data-u="' + u.id + '">' + Icon('camera', '', 24) +
+            '<b>Foto ' + HojaVida.deLa(u) + '</b><span>' + (u.fotoInfo ? 'Suéltela para cambiarla' : 'Suéltela aquí') + '</span></div>' +
+          (conLicencia ? '<div class="uh-sz" data-sz="licencia" data-u="' + u.id + '">' + Icon('idcard', '', 24) +
+            '<b>Tarjeta de propiedad</b><span>' + (u.licenciaInfo ? 'Suéltela para cambiarla' : 'Suéltela aquí') + '</span></div>' : '') + '</div></div>' +
         '<div class="uh-b">' +
           '<div class="uh-top">' + UI.placa(u, 'xl') + '<span class="pill p-gray np">' + Icon(TIPOS[u.tipo].icono, '', 12) + esc(TIPOS[u.tipo].nombre) + '</span>' +
             (e.k !== 'nr' ? UI.pill(e.k, e.txt) : '') + '</div>' +
@@ -5594,27 +5650,53 @@ const Ventanas = {
             : '<img src="' + attr(u.licencia) + '" alt="Frente de la licencia de tránsito de ' + attr(UI.placaTxt(u)) + '">') + '</div>' +
           '<div class="flex aic jcsb mt12" style="gap:12px;flex-wrap:wrap"><span class="txt-3 fs12">Adjuntada el ' + esc(Fecha.larga(info.fecha)) +
             (info.tam ? ' · ' + Peso.txt(info.tam) : '') + ' · también está en Documentos como tarjeta de propiedad</span>' +
-          '<label class="btn btn-sm" style="cursor:pointer">' + Icon('refresh', '', 12) + 'Cambiar<input type="file" accept="image/*,application/pdf" hidden id="licInp"></label></div>'
+          '<label class="btn btn-sm" style="cursor:pointer" title="O arrastre la nueva encima de la tarjeta">' + Icon('refresh', '', 12) +
+            'Cambiar<input type="file" accept="image/*,application/pdf" hidden id="licInp"></label></div>'
         : UI.empty('idcard', 'Todavía no se ha adjuntado', 'Tómele una foto al frente de la licencia de tránsito, o escanéela, y súbala aquí. ' +
             'Se guarda a 2.000 px, para que se lea bien, y queda también en Documentos como tarjeta de propiedad.') +
           Dz.html('licDz', 'Arrastre aquí la foto o el PDF del frente de la licencia', 'O haga clic para buscarlo en el equipo', 'image/*,application/pdf', false) +
           (tarjeta && tarjeta.archivo ? '<div class="alert a-info mt12">' + Icon('info') + '<div>Hoy, en Documentos, la tarjeta de propiedad es ' +
             UI.file(tarjeta.archivo, tarjeta.archivoId) + '. Lo que adjunte aquí la reemplaza.</div></div>' : '');
       /* Como documento: a 2.000 px, para que los números se sigan leyendo */
-      const recibir = f => Archivos.original(f).then(ok => {
-        if (!ok) return;
-        Guardadas.poner(u, 'licencia', ok, 'boton').then(i => {
-          if (document.body.contains(m)) pintar();
-          Router.pintar(true);
-          Toast.show('Tarjeta de propiedad de <b>' + esc(UI.placaTxt(u)) + '</b> guardada' +
-            (i.tam < i.antes ? ' (' + esc(Peso.txt(i.antes) + ' → ' + Peso.txt(i.tam)) + ')' : '') + '. Ya quedó en Documentos.');
-        });
-      });
-      if (u.licencia) $('#licInp', m).addEventListener('change', e => { const f = e.target.files[0]; if (f) recibir(f); });
-      else Dz.bind('licDz', files => recibir(files[0]));
+      const recibir = f => Guardadas.recibir(u, 'licencia', f, 'boton').then(i => { if (i && document.body.contains(m)) pintar(); });
+      if (u.licencia) {
+        $('#licInp', m).addEventListener('change', e => { const f = e.target.files[0]; if (f) recibir(f); });
+        Dz.encima($('.lic-vista', m), recibir);
+      } else Dz.bind('licDz', files => recibir(files[0]));
     };
     pintar();
     if (u.licenciaInfo && !u.licencia) Guardadas.traerUnidad(u).then(() => { fallo = !u.licencia; if (document.body.contains(m)) pintar(); });
+  },
+
+  /* La foto de la unidad en grande, al darle clic en la ficha: igual que la
+     licencia de tránsito, y también se cambia desde aquí */
+  foto(u) {
+    const m = Modal.abrir({
+      titulo: 'Foto ' + HojaVida.deLa(u) + ' · ' + UI.placaTxt(u), sub: esc(UI.nombre(u) + (u.modelo ? ' · ' + u.modelo : '')), ancho: 'wide', sinFoco: true,
+      cuerpo: '<div id="ftCuerpo"></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cerrar</button>'
+    });
+    let fallo = false;
+    const pintar = () => {
+      const info = u.fotoInfo || {};
+      /* En la ficha puede estar la miniatura mientras baja la grande */
+      if (!u.foto) {
+        $('#ftCuerpo', m).innerHTML = fallo
+          ? '<div class="alert a-warn">' + Icon('warn') + '<div>No se pudo bajar la foto. Revise el internet e intente otra vez.</div></div>'
+          : '<div class="flex aic g8 txt-2" style="justify-content:center;padding:48px 16px"><span class="spin"></span>Bajando la foto de la nube…</div>';
+        return;
+      }
+      $('#ftCuerpo', m).innerHTML = '<div class="lic-vista"><img src="' + attr(u.foto) + '" alt="Foto ' + attr(HojaVida.deLa(u) + ' ' + UI.placaTxt(u)) + '"></div>' +
+        '<div class="flex aic jcsb mt12" style="gap:12px;flex-wrap:wrap"><span class="txt-3 fs12">' +
+          (info.fecha ? 'Adjuntada el ' + esc(Fecha.larga(info.fecha)) : 'Foto ' + esc(HojaVida.deLa(u))) + (info.tam ? ' · ' + Peso.txt(info.tam) : '') + '</span>' +
+        '<label class="btn btn-sm" style="cursor:pointer" title="O arrastre la nueva encima de la foto">' + Icon('refresh', '', 12) +
+          'Cambiar<input type="file" accept="image/*" hidden id="ftInp"></label></div>';
+      const recibir = f => Guardadas.recibir(u, 'foto', f).then(i => { if (i && document.body.contains(m)) pintar(); });
+      $('#ftInp', m).addEventListener('change', e => { const f = e.target.files[0]; if (f) recibir(f); });
+      Dz.encima($('.lic-vista', m), recibir);
+    };
+    pintar();
+    if (!u.foto) Guardadas.traerUnidad(u).then(() => { fallo = !u.foto; if (document.body.contains(m)) pintar(); });
   }
 };
 
@@ -5782,6 +5864,7 @@ const Acciones = {
     Router.pintar(true);
   },
   verLicencia(el) { Ventanas.licencia(Q.unidad(el.dataset.u)); },
+  verFoto(el) { Ventanas.foto(Q.unidad(el.dataset.u)); },
   filtroDocs(el) {
     UIState.docs.k = el.dataset.v;
     if (Router.actual().vista === 'documentos') Router.pintar(true); else Router.ir('documentos');
@@ -5793,20 +5876,8 @@ const Acciones = {
     inp.accept = 'image/*';
     inp.multiple = false;
     inp.value = '';
-    inp.onchange = () => {
-      const f = inp.files[0];
-      if (!f) return;
-      /* Se comprime al guardar: a 1.600 px, con su miniatura para las listas */
-      Archivos.original(f).then(ok => {
-        if (!ok) return;
-        Toast.show('Comprimiendo la foto…');
-        Guardadas.poner(u, 'foto', ok).then(info => {
-          Router.pintar(true);
-          Toast.show('Foto de <b>' + esc(UI.placaTxt(u)) + '</b> guardada' +
-            (info.tam < info.antes ? ': ' + esc(Peso.txt(info.antes) + ' → ' + Peso.txt(info.tam)) : '') + '.');
-        });
-      });
-    };
+    /* Se comprime al guardar: a 1.600 px, con su miniatura para las listas */
+    inp.onchange = () => { const f = inp.files[0]; if (f) Guardadas.recibir(u, 'foto', f); };
     inp.click();
   },
   /* Registro fotográfico: se escogen varias fotos de una vez */
@@ -11017,33 +11088,74 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.menu-wrap')) $$('.menu-pop.open').forEach(m => m.classList.remove('open'));
   if (!e.target.closest('.gsearch')) { const g = $('#gsr'); if (g) g.classList.add('hidden'); }
 });
-/* Arrastrar un archivo a «Subir otro documento» de la ficha abre la ventana
-   con el archivo ya puesto. Las zonas de las ventanas se atienden solas; en
-   el resto de la página no se deja soltar, porque el navegador abriría el
-   archivo y se perdería lo que no se ha guardado. */
-const zonaSoltar = e => (e.target.closest ? e.target.closest('.dz[data-act="nuevoDocumento"], .rf-dz') : null);
+/* Todo lo que se sube se puede arrastrar (Juan, 27/10/2026):
+   · a la foto de la ficha: la mitad de la cámara guarda la foto y la de la
+     licencia, la tarjeta de propiedad;
+   · a un documento (su fila o su botón de subir): se abre «Subir documento»
+     con el archivo ya puesto, para ponerle las fechas;
+   · al registro fotográfico: varias fotos a la vez.
+   Las zonas de las ventanas se atienden solas; en el resto de la página no se
+   deja soltar, porque el navegador abriría el archivo y se perdería lo que no
+   se ha guardado. */
 const conArchivos = e => Boolean(e.dataTransfer) && Array.from(e.dataTransfer.types || []).includes('Files');
+const Soltar = {
+  actual: null,
+  _t: 0,
+  /* Dónde caería el archivo, o nada */
+  zona(e) {
+    const t = e.target && e.target.closest ? e.target : null;
+    if (!t) return null;
+    const z = t.closest('.uh-sz, .rf-dz, [data-act="nuevoDocumento"]');
+    if (z) return z;
+    const fila = t.closest('.req, table.tbl tbody tr');
+    return fila && fila.querySelector('[data-act="nuevoDocumento"]') ? fila : null;
+  },
+  /* La zona por donde pasa el archivo se marca */
+  marcar(z) {
+    if (this.actual === z) return;
+    if (this.actual) this.actual.classList.remove('over');
+    this.actual = z;
+    if (z) z.classList.add('over');
+  },
+  /* Mientras se arrastra, la foto de la ficha muestra sus zonas. Si dejan de
+     llegar avisos del arrastre (se salió de la ventana o se canceló), se
+     esconden solas. */
+  mostrar(si) {
+    clearTimeout(this._t);
+    document.documentElement.classList.toggle('arrastrando', si && !Modal.abierto());
+    if (si) this._t = setTimeout(() => { this.mostrar(false); this.marcar(null); }, 1000);
+  },
+  soltar(z, files) {
+    const u = Q.unidad(z.dataset.u);
+    if (z.classList.contains('uh-sz')) {
+      const f = z.dataset.sz === 'foto' ? files.find(x => /^image\//i.test(x.type)) || files[0] : files[0];
+      Guardadas.recibir(u, z.dataset.sz, f, 'arrastre');
+    } else if (z.classList.contains('rf-dz')) Registro.subir(u, files);
+    else {
+      const b = z.matches('[data-act="nuevoDocumento"]') ? z : z.querySelector('[data-act="nuevoDocumento"]');
+      Ventanas.documento({ u: b.dataset.u, c: b.dataset.c, t: b.dataset.t, fijo: b.dataset.fijo === '1', archivo: files[0] });
+    }
+  }
+};
 document.addEventListener('dragover', e => {
-  if (e.defaultPrevented || !conArchivos(e)) return;
+  if (!conArchivos(e)) return;
+  Soltar.mostrar(true);
+  if (e.defaultPrevented) { Soltar.marcar(null); return; }
   e.preventDefault();
-  const z = zonaSoltar(e);
+  const z = Soltar.zona(e);
   e.dataTransfer.dropEffect = z ? 'copy' : 'none';
-  $$('.dz.over[data-act]').forEach(x => { if (x !== z) x.classList.remove('over'); });
-  if (z) z.classList.add('over');
+  Soltar.marcar(z);
 });
 document.addEventListener('dragleave', e => {
-  const z = zonaSoltar(e);
-  if (z && !z.contains(e.relatedTarget)) z.classList.remove('over');
+  if (!e.relatedTarget) { Soltar.mostrar(false); Soltar.marcar(null); }
 });
 document.addEventListener('drop', e => {
+  Soltar.mostrar(false);
+  Soltar.marcar(null);
   if (e.defaultPrevented || !conArchivos(e)) return;
   e.preventDefault();
-  const z = zonaSoltar(e), f = e.dataTransfer.files[0];
-  if (!z || !f) return;
-  z.classList.remove('over');
-  /* Al registro fotográfico se pueden soltar varias fotos a la vez */
-  if (z.classList.contains('rf-dz')) Registro.subir(Q.unidad(z.dataset.u), Array.from(e.dataTransfer.files));
-  else Ventanas.documento({ u: z.dataset.u, t: z.dataset.t, fijo: z.dataset.fijo === '1', archivo: f });
+  const z = Soltar.zona(e), files = Array.from(e.dataTransfer.files);
+  if (z && files.length) Soltar.soltar(z, files);
 });
 /* Lo que muestra cada foto del registro se guarda al salir del campo */
 document.addEventListener('change', e => {
