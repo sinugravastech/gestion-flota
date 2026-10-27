@@ -2548,7 +2548,7 @@ const PLANOS = (() => {
 const TIPOS = {
   carga:      { nombre: 'Vehículo de carga', plural: 'Vehículos de carga', corto: 'Carga',      icono: 'truck',   ilus: 'camion',     clases: ['Volqueta', 'Tractocamión', 'Camión sencillo'] },
   maquinaria: { nombre: 'Maquinaria',        plural: 'Maquinaria amarilla', corto: 'Maquinaria', icono: 'excav',   ilus: 'excavadora', clases: ['Excavadora', 'Retroexcavadora', 'Cargador', 'Vibrocompactador', 'Motoniveladora', 'Bulldozer'] },
-  remolque:   { nombre: 'Remolque',          plural: 'Remolques',          corto: 'Remolques',  icono: 'trailer', ilus: 'cisterna',   clases: ['Cisterna', 'Tráiler cama baja', 'Tráiler plancha'] },
+  remolque:   { nombre: 'Remolque',          plural: 'Remolques',          corto: 'Remolques',  icono: 'trailer', ilus: 'cisterna',   clases: ['Semirremolque volco', 'Semirremolque tanque', 'Remolque volco', 'Cisterna', 'Tráiler cama baja', 'Tráiler plancha'] },
   canoa:      { nombre: 'Canoa',             plural: 'Canoas',             corto: 'Canoas',     icono: 'boat',    ilus: 'canoa',      clases: ['Canoa', 'Motocanoa'] }
 };
 const ORDEN = ['carga', 'maquinaria', 'remolque', 'canoa'];
@@ -2568,12 +2568,12 @@ const DOC_TIPOS = {
 const DOCS_UNIDAD = ['soat', 'tecno', 'tarjeta', 'vin', 'registro', 'poliza', 'patente'];
 /* Qué documentos pide cada tipo y qué unidades se revisan en comparendos. Se
    cambia en Configuración, sin tocar el programa: hoy los remolques solo piden
-   la tarjeta de registro y las canoas, que no tienen placa, no se revisan en
-   comparendos. */
+   la tarjeta de registro, y en comparendos solo se revisan los vehículos de
+   carga (Juan, 26/10/2026). */
 const Config = {
   diasAviso: 30,
   req: { carga: ['soat', 'tecno', 'tarjeta', 'vin', 'poliza'], maquinaria: ['tarjeta'], remolque: ['registro'], canoa: ['patente'] },
-  comparendos: ['carga', 'maquinaria', 'remolque'],
+  comparendos: ['carga'],
   /* Los planos de mantenimiento: solo lo que se cambió en Configuración (el
      dibujo de cada clase, las partes de cada dibujo y la parte de cada
      pregunta del preoperacional). Vacío: los de siempre (ver PLANOS). */
@@ -2888,7 +2888,12 @@ const UI = {
     return '<span class="placa' + (cod ? ' cod' : '') + (cls ? ' ' + cls : '') + '" title="' + (cod ? 'Código interno' : 'Placa') + '">' + esc(this.placaTxt(u)) + '</span>';
   },
   nombre(u) { return u.tipo === 'canoa' ? (u.alias || u.placa) : [u.marca, u.linea].filter(Boolean).join(' '); },
-  foto(u) { return u.foto ? '<img src="' + attr(u.foto) + '" alt="">' : '<div class="ph">' + ILUS[ilusDe(u)] + '</div>'; },
+  /* La foto de la unidad: en las listas, la miniatura; en la ficha, la grande
+     (mientras baja, la miniatura) */
+  foto(u, chica) {
+    const src = chica ? u.mini || u.foto : u.foto || u.mini;
+    return src ? '<img src="' + attr(src) + '" alt="">' : '<div class="ph">' + ILUS[ilusDe(u)] + '</div>';
+  },
   thumb(u) { return '<span class="thumb">' + this.foto(u) + '</span>'; },
   unidadCelda(u) {
     return '<div class="who">' + this.thumb(u) + '<div class="who-t"><b class="mono">' + esc(this.placaTxt(u)) + '</b><span>' +
@@ -3093,8 +3098,8 @@ const HojaVida = {
     const fotos = u.registro || [], tarjeta = u.tipo === 'remolque' ? ' y la tarjeta de registro' : u.tipo === 'canoa' ? ''
       : HojaVida.pide(u, 'vin') || (u.docs.vin && u.docs.vin.archivo) ? ', la tarjeta de propiedad y el VIN' : ' y la tarjeta de propiedad';
     return UI.card('Registro fotográfico', '<div class="fotos rf-fotos">' + fotos.map(f =>
-        '<div class="foto"><img src="' + attr(f.url) + '" alt="' + attr(f.txt || f.nombre) + '" data-act="verArchivo" data-nombre="' + attr(f.nombre) +
-          '" data-id="' + attr(Registro.clave(u, f)) + '" title="Ver la foto">' +
+        '<div class="foto">' + (f.url ? '<img src="' + attr(f.url) + '" alt="' + attr(f.txt || f.nombre) + '" data-act="verArchivo" data-nombre="' + attr(f.nombre) +
+          '" data-id="' + attr(Registro.clave(u, f)) + '" title="Ver la foto">' : '<div class="ph" style="height:104px" title="Bajando la foto…"><span class="spin"></span></div>') +
         '<button type="button" data-act="quitarFotoRegistro" data-u="' + u.id + '" data-f="' + f.id + '" title="Quitar la foto" aria-label="Quitar la foto">' + Icon('x', '', 12) + '</button>' +
         '<input class="rf-txt" data-u="' + u.id + '" data-f="' + f.id + '" value="' + attr(f.txt) + '" placeholder="¿Qué muestra? Ej.: lateral derecho" aria-label="Qué muestra la foto"></div>').join('') +
         '<div class="dz rf-dz" data-act="agregarFotosRegistro" data-u="' + u.id + '">' + Icon('camera') + '<h4>Agregar fotos</h4><p>Arrastre aquí o haga clic</p></div></div>',
@@ -3161,23 +3166,29 @@ const Peso = {
 };
 
 /* ==========================================================================
-   POLÍTICA DE ARCHIVOS
-   · La foto de la unidad y la tarjeta de propiedad (el frente de la licencia
-     de tránsito) se guardan tal cual se adjuntan, sin comprimir.
-   · Los PDF y las fotos de los demás documentos se comprimen poco: se busca
-     bajar entre el 20 y el 30 % del peso sin tocar la resolución, para que se
-     sigan leyendo igual.
-   · Un PDF con firma digital, una imagen PNG o lo que no baje de peso sin
-     perder calidad se guarda tal cual.
+   POLÍTICA DE ARCHIVOS (Juan, 26/10/2026: que el plan gratis de Supabase dure)
+   · Cada foto se achica a un lado mayor y se guarda en JPEG, según lo que
+     muestra: la de la unidad a 1.600 px (calidad 82 %), con una miniatura de
+     480 px para las listas; las tarjetas, el VIN y los demás documentos en
+     foto a 2.000 px (88 %), para que los números se sigan leyendo; el
+     registro fotográfico y las fotos de los arreglos a 1.600 px (80 %).
+   · Los PDF se comprimen poco: se recodifican sus fotos para bajar entre el
+     20 y el 30 % del peso, sin tocar la resolución. Un PDF con firma digital,
+     o lo que no baje de peso, se guarda tal cual.
    ========================================================================== */
 const Politica = {
+  /* Por lo que muestra cada imagen: [lado mayor en píxeles, calidad JPEG] */
+  PERFILES: { unidad: [1600, 0.82], documento: [2000, 0.88], registro: [1600, 0.80], mini: [480, 0.75] },
+  /* Qué se le hace a un archivo: 'pdf', un perfil de imagen o 'original'.
+     destino: un perfil, o 'foto' (la de la unidad), 'licencia' (la tarjeta) o
+     'arreglo' (las fotos del taller); sin destino, documento. */
   de(f, destino) {
-    if (destino === 'foto' || destino === 'licencia') return 'original';
-    if (/pdf/i.test(f.type) || /\.pdf$/i.test(f.name)) return 'pdf';
-    if (/^image\/jpe?g$/i.test(f.type)) return 'foto';
-    return 'original';
+    if (/pdf/i.test(f.type) || /\.pdf$/i.test(f.name || '')) return 'pdf';
+    if (!/^image\//i.test(f.type) || /svg/i.test(f.type)) return 'original';
+    const p = { foto: 'unidad', licencia: 'documento', arreglo: 'registro' }[destino] || destino;
+    return this.PERFILES[p] ? p : 'documento';
   },
-  texto(p) { return p === 'original' ? 'se guarda tal cual' : 'se comprime un poco al guardar'; }
+  texto(p) { return p === 'original' ? 'se guarda tal cual' : p === 'pdf' ? 'se comprime un poco al guardar' : 'se achica y se comprime al guardar'; }
 };
 
 /* «Otros documentos» no es para comparendos ni accidentes. El programa no lee
@@ -3242,12 +3253,29 @@ const Compresor = {
     }
     return mejor;
   },
-  async foto(f) {
-    const orig = new Uint8Array(await f.arrayBuffer());
-    const q = await this.calidad(orig, 'from-image');
-    if (!q) return { blob: f, nota: 'ya venía liviana' };
-    const out = await this.recodificar(orig, q, 'from-image');
-    return out.bytes.length < orig.length ? { blob: new File([out.bytes], f.name, { type: 'image/jpeg' }) } : { blob: f, nota: 'ya venía liviana' };
+  /* Una foto a su perfil (ver Politica): se achica al lado mayor, se gira
+     según la cámara y se pasa a JPEG sobre fondo blanco. Si así no baja de
+     peso, o el navegador no la puede abrir, queda la original. */
+  async imagen(f, perfil) {
+    const [lado, q] = Politica.PERFILES[perfil] || Politica.PERFILES.documento;
+    let bmp;
+    try { bmp = await createImageBitmap(f, { imageOrientation: 'from-image' }); } catch (e) {
+      try { bmp = await createImageBitmap(f); } catch (e2) { return { blob: f, nota: 'no se pudo comprimir' }; }
+    }
+    const k = Math.min(1, lado / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(bmp.width * k));
+    c.height = Math.max(1, Math.round(bmp.height * k));
+    const g = c.getContext('2d');
+    g.imageSmoothingQuality = 'high';
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    const out = await new Promise(ok => c.toBlob(ok, 'image/jpeg', q));
+    if (!out || out.size >= f.size) return { blob: f, nota: 'ya venía liviana' };
+    const nombre = String(f.name || 'foto').replace(/\.[a-z0-9]+$/i, '') + '.jpg';
+    return { blob: new File([out], nombre, { type: 'image/jpeg' }), w: c.width, h: c.height };
   },
   /* Un PDF: se recodifican sus fotos JPEG con la calidad elegida, sin tocar
      la resolución ni el texto, y se guarda optimizado. El resultado se vuelve
@@ -3354,13 +3382,26 @@ const PdfImagen = {
 
 const Archivos = {
   vistos: new Map(),
-  registrar(id, blob, nombre, antes) {
+  /* ver: la versión del archivo (la marca de cuando se subió), en los que se
+     reemplazan con la misma clave: la foto, su miniatura y la tarjeta */
+  registrar(id, blob, nombre, antes, ver) {
     const url = URL.createObjectURL(blob);
-    this.vistos.set(id, { url, tipo: blob.type, nombre, tam: blob.size, antes: antes || blob.size });
+    this.vistos.set(id, { url, tipo: blob.type, nombre, tam: blob.size, antes: antes || blob.size, ver });
     return url;
   },
-  /* Foto de la unidad o tarjeta de propiedad: tal cual. Solo se comprueba que
-     el navegador la pueda mostrar; devuelve nada si no puede */
+  /* El archivo ya abierto, si es de esa versión */
+  vigente(id, ver) {
+    const v = this.vistos.get(id);
+    return v && (ver == null || v.ver === ver) ? v : null;
+  },
+  /* Baja un archivo una sola vez, aunque lo pidan varios a la vez */
+  _trayendo: new Map(),
+  traer(clave) {
+    if (!this._trayendo.has(clave)) this._trayendo.set(clave, Nube.bajar(clave).finally(() => this._trayendo.delete(clave)));
+    return this._trayendo.get(clave);
+  },
+  /* Comprueba que el navegador pueda mostrar la imagen; devuelve nada si no
+     puede */
   original(f) {
     if (/pdf/i.test(f.type) || /\.pdf$/i.test(f.name)) return Promise.resolve(f);
     return new Promise(ok => {
@@ -3374,19 +3415,19 @@ const Archivos = {
       img.src = url;
     });
   },
-  /* Un documento: se comprime poco, según la política, y queda listo para verlo */
-  async preparar(f) {
-    const p = Politica.de(f);
+  /* Un documento o una foto que se adjunta: se comprime según la política
+     (destino: ver Politica.de; sin él, como documento) y queda listo para verlo */
+  async preparar(f, destino) {
+    const p = Politica.de(f, destino);
     let r = { blob: f, nota: 'se guardó tal cual' };
     try {
       if (p === 'pdf') r = await Compresor.pdf(f);
-      else if (p === 'foto') r = await Compresor.foto(f);
+      else if (Politica.PERFILES[p]) r = await Compresor.imagen(f, p);
     } catch (e) { r = { blob: f, nota: 'no se pudo comprimir' }; }
-    const id = 'doc' + marca();
-    this.registrar(id, r.blob, f.name, f.size);
-    /* Queda guardado en el navegador, para abrirlo de verdad después de recargar */
-    Guardadas.guardar('archivo:' + id, { blob: r.blob, info: { nombre: f.name, antes: f.size } });
-    return { id, nombre: f.name, tam: r.blob.size, antes: f.size, nota: r.nota || '' };
+    const id = 'doc' + marca(), nombre = r.blob.name || f.name;
+    this.registrar(id, r.blob, nombre, f.size);
+    Guardadas.guardar('archivo:' + id, { blob: r.blob, info: { nombre, antes: f.size } });
+    return { id, nombre, tam: r.blob.size, antes: f.size, nota: r.nota || '' };
   },
   /* «2,4 MB → 1,8 MB (−25 %)», o por qué quedó igual */
   resumen(a) {
@@ -3403,9 +3444,9 @@ const Archivos = {
 
 /* Las fotos y los archivos viven en el depósito privado «flota» de Supabase.
    Cada uno tiene su clave, y de ella sale su ruta en el depósito (ver Nube):
-   «foto:<unidad>», «licencia:<unidad>» (la tarjeta de propiedad),
-   «registro:<unidad>:<foto>» (el registro fotográfico) y «archivo:<id>» (los
-   documentos y PDF subidos). Lo que dice cada uno (nombre, fecha…) va en las
+   «foto:<unidad>», «mini:<unidad>» (su miniatura, para las listas),
+   «licencia:<unidad>» (la tarjeta de propiedad), «registro:<unidad>:<foto>»
+   (el registro fotográfico) y «archivo:<id>» (los documentos y PDF subidos). Lo que dice cada uno (nombre, fecha…) va en las
    tablas, con lo demás (ver Mapa). */
 const Guardadas = {
   /* Sube el archivo. No espera a que termine: queda en la cola de la nube, que
@@ -3419,19 +3460,40 @@ const Guardadas = {
     Nube.quitar(clave);
     return Promise.resolve();
   },
-  /* Pone la foto o la tarjeta de propiedad en la unidad, tal cual, y la sube */
-  poner(u, tipo, archivo, origen) {
-    const ext = /\.[a-z0-9]+$/i.test(archivo.name || '') ? archivo.name.match(/\.[a-z0-9]+$/i)[0].toLowerCase() : /pdf/i.test(archivo.type) ? '.pdf' : '.jpg';
-    const info = { fecha: hoyISO, hora: ahora(), ts: marca(), cambio: Boolean(u[tipo]), mime: archivo.type, tam: archivo.size, origen: origen || 'boton',
-      nombre: tipo === 'licencia' ? 'Tarjeta de propiedad ' + u.placa + ext : archivo.name };
-    this.mostrar(u, tipo, archivo, info);
-    return this.guardar(tipo + ':' + u.id, { blob: archivo, info });
+  /* Pone la foto o la tarjeta de propiedad en la unidad y la sube, comprimida
+     según la política: la foto a 1.600 px, con su miniatura para las listas,
+     y la tarjeta a 2.000 px (si es PDF, con la compresión ligera). «previo»:
+     lo que ya se sabía de ese archivo, cuando solo se vuelve a comprimir.
+     Devuelve lo que quedó (con su peso antes y después). */
+  async poner(u, tipo, archivo, origen, previo) {
+    let blob = archivo;
+    try {
+      const p = Politica.de(archivo, tipo);
+      if (p === 'pdf') blob = (await Compresor.pdf(archivo)).blob;
+      else if (Politica.PERFILES[p]) blob = (await Compresor.imagen(archivo, p)).blob;
+    } catch (e) { blob = archivo; }
+    const ext = /\.[a-z0-9]+$/i.test(blob.name || '') ? blob.name.match(/\.[a-z0-9]+$/i)[0].toLowerCase() : /pdf/i.test(blob.type) ? '.pdf' : '.jpg';
+    const info = Object.assign({ fecha: hoyISO, hora: ahora(), origen: origen || 'boton' }, previo, {
+      ts: marca(), pol: 2, cambio: Boolean(u[tipo + 'Info']), mime: blob.type, tam: blob.size, antes: previo ? previo.antes || previo.tam || archivo.size : archivo.size,
+      nombre: tipo === 'licencia' ? 'Tarjeta de propiedad ' + u.placa + ext : (previo && previo.nombre) || blob.name || archivo.name });
+    let mini = null;
+    if (tipo === 'foto') {
+      try { mini = (await Compresor.imagen(blob, 'mini')).blob; } catch (e) { mini = null; }
+      info.mini = Boolean(mini && mini !== blob);
+    }
+    this.mostrar(u, tipo, blob, info);
+    if (info.mini) {
+      u.mini = Archivos.registrar('mini:' + u.id, mini, 'Miniatura', undefined, info.ts);
+      Nube.subir('mini:' + u.id, mini, { ts: info.ts });
+    }
+    await this.guardar(tipo + ':' + u.id, { blob, info });
+    return info;
   },
   /* Deja la imagen en la unidad. La licencia ES la tarjeta de propiedad: queda
      también en Documentos, para no adjuntarla dos veces */
   mostrar(u, tipo, archivo, info) {
     const id = tipo + ':' + u.id;
-    u[tipo] = Archivos.registrar(id, archivo, info.nombre || tipo);
+    u[tipo] = Archivos.registrar(id, archivo, info.nombre || tipo, info.antes, info.ts);
     u[tipo + 'Info'] = info;
     if (tipo === 'licencia') u.docs.tarjeta = { archivo: info.nombre || 'Tarjeta de propiedad ' + u.placa, archivoId: id,
       subido: info.fecha, hora: info.hora, ts: info.ts, desdeLicencia: true };
@@ -3441,7 +3503,7 @@ const Guardadas = {
      unidad, aquí solo se cuelga el archivo */
   colgar(u, tipo, blob) {
     const clave = tipo + ':' + u.id, info = u[tipo + 'Info'] || {};
-    u[tipo] = Archivos.registrar(clave, blob, info.nombre || tipo, Nube.meta(clave).antes);
+    u[tipo] = Archivos.registrar(clave, blob, info.nombre || tipo, info.antes || Nube.meta(clave).antes, info.ts);
   },
   /* La tarjeta se llama «Tarjeta de propiedad» con la placa de la unidad. Si
      la placa cambia después de adjuntarla, el nombre se pone al día. */
@@ -3455,41 +3517,63 @@ const Guardadas = {
     const visto = Archivos.vistos.get('licencia:' + u.id);
     if (visto) visto.nombre = nombre;
   },
-  /* Al entrar se bajan los archivos que se ven sin abrirlos: la foto, la
-     tarjeta, el VIN y la tarjeta de registro (salen en la hoja de vida), el
-     registro fotográfico y las fotos de los correctivos. Los demás PDF se
-     bajan cuando se abren. Lo que ya estaba bajado no se vuelve a bajar.
-     Devuelve cuántos archivos llegaron. */
+  /* Al entrar solo se bajan las miniaturas de las fotos de las unidades, para
+     las listas (las fotos de antes de la compresión no tienen: va la grande).
+     Lo demás se baja cuando se abre (ver traerUnidad y traerArreglo), y lo que
+     ya está en este equipo no se vuelve a bajar. Devuelve cuántas fotos
+     cambiaron (las que llegaron y las que ya estaban abiertas). */
   async aplicar() {
     const tareas = [];
-    const traer = (clave, poner) => tareas.push(Nube.bajar(clave).then(b => { if (!b) return 0; poner(b); return 1; }));
-    const yaEsta = clave => Archivos.vistos.get(clave);
+    let puestas = 0;
     Datos.unidades.forEach(u => {
-      ['foto', 'licencia'].forEach(tipo => {
-        if (!u[tipo + 'Info']) return;
-        const v = yaEsta(tipo + ':' + u.id);
-        if (v) u[tipo] = v.url; else traer(tipo + ':' + u.id, b => this.colgar(u, tipo, b));
-      });
-      (u.registro || []).forEach(f => {
-        const v = yaEsta(Registro.clave(u, f));
-        if (v) f.url = v.url; else traer(Registro.clave(u, f), b => Registro.colgar(u, f, b));
-      });
-      ['vin', 'registro'].forEach(t => {
-        const d = u.docs[t];
-        if (d && d.archivoId && !yaEsta(d.archivoId)) traer(Nube.claveDe(d.archivoId), b => Archivos.registrar(d.archivoId, b, d.archivo, Nube.meta(Nube.claveDe(d.archivoId)).antes));
-      });
+      const fi = u.fotoInfo;
+      if (!fi) return;
+      const tipo = fi.mini ? 'mini' : 'foto', clave = tipo + ':' + u.id, v = Archivos.vigente(clave, fi.ts);
+      if (v) { if (u[tipo] !== v.url) { u[tipo] = v.url; puestas++; } return; }
+      tareas.push(Archivos.traer(clave).then(b => {
+        if (!b) return 0;
+        if (tipo === 'mini') u.mini = Archivos.registrar(clave, b, 'Miniatura', undefined, fi.ts); else this.colgar(u, 'foto', b);
+        return 1;
+      }));
     });
-    Datos.mantenimientos.forEach(m => (m.fotosData || []).forEach(f => {
-      if (f.id && !yaEsta(f.id)) traer(Nube.claveDe(f.id), b => Archivos.registrar(f.id, b, 'Foto del correctivo'));
-    }));
-    const n = (await Promise.all(tareas)).reduce((a, b) => a + b, 0);
-    return n;
+    return (await Promise.all(tareas)).reduce((a, b) => a + b, puestas);
+  },
+  /* Lo de una unidad que se ve al abrir su ficha o su hoja de vida: la foto
+     grande, la tarjeta, el VIN, la tarjeta de registro y el registro
+     fotográfico. Devuelve cuántos cambiaron (0 si ya estaban puestos). */
+  async traerUnidad(u) {
+    const tareas = [], pedir = (clave, poner) => tareas.push(Archivos.traer(clave).then(b => { if (!b) return 0; poner(b); return 1; }));
+    let puestos = 0;
+    ['foto', 'licencia'].forEach(tipo => {
+      const info = u[tipo + 'Info'];
+      if (!info) return;
+      const v = Archivos.vigente(tipo + ':' + u.id, info.ts);
+      if (!v) pedir(tipo + ':' + u.id, b => this.colgar(u, tipo, b));
+      else if (u[tipo] !== v.url) { u[tipo] = v.url; puestos++; }
+    });
+    (u.registro || []).forEach(f => {
+      const v = Archivos.vistos.get(Registro.clave(u, f));
+      if (!v) pedir(Registro.clave(u, f), b => Registro.colgar(u, f, b));
+      else if (f.url !== v.url) { f.url = v.url; puestos++; }
+    });
+    ['vin', 'registro'].forEach(t => {
+      const d = u.docs[t];
+      if (d && d.archivoId && !Archivos.vistos.get(d.archivoId))
+        pedir(Nube.claveDe(d.archivoId), b => Archivos.registrar(d.archivoId, b, d.archivo, Nube.meta(Nube.claveDe(d.archivoId)).antes));
+    });
+    return (await Promise.all(tareas)).reduce((a, b) => a + b, puestos);
+  },
+  /* Las fotos de un arreglo, para verlas o sacar su PDF */
+  async traerArreglo(m) {
+    const tareas = (m.fotosData || []).filter(f => f.id && !Archivos.vistos.has(f.id))
+      .map(f => Archivos.traer(Nube.claveDe(f.id)).then(b => { if (!b) return 0; Archivos.registrar(f.id, b, 'Foto del correctivo'); return 1; }));
+    return (await Promise.all(tareas)).reduce((a, b) => a + b, 0);
   }
 };
 
 /* El registro fotográfico de cada unidad: fotos que salen en la hoja de vida
    impresa, cada una con lo que muestra. Van al depósito como la foto y la
-   tarjeta, pero con la compresión ligera de las fotos de documentos. Cada una
+   tarjeta, achicadas a 1.600 px (ver Politica). Cada una
    con su clave «registro:<unidad>:<foto>»; lo que muestra va en la tabla
    «fotos». */
 const Registro = {
@@ -3518,8 +3602,8 @@ const Registro = {
       const ok = await Archivos.original(file);
       if (!ok) continue;
       let blob = ok;
-      try { if (Politica.de(ok) === 'foto') blob = (await Compresor.foto(ok)).blob; } catch (e) { blob = ok; }
-      const f = this.mostrar(u, 'f' + marca(), blob, { nombre: file.name, fecha: hoyISO, hora: ahora(), ts: marca() });
+      try { blob = (await Compresor.imagen(ok, 'registro')).blob; } catch (e) { blob = ok; }
+      const f = this.mostrar(u, 'f' + marca(), blob, { nombre: blob.name || file.name, fecha: hoyISO, hora: ahora(), ts: marca() });
       await this.guardar(u, f);
       n++;
       antes += file.size;
@@ -3555,7 +3639,7 @@ const Persistencia = {
   /* Los datos tal cual, menos las imágenes de cada unidad (para la copia de
      seguridad) */
   texto() {
-    const aparte = ['foto', 'licencia', 'fotoInfo', 'licenciaInfo', 'registro'];
+    const aparte = ['foto', 'mini', 'licencia', 'fotoInfo', 'licenciaInfo', 'registro'];
     return JSON.stringify({ version: 1, datos: Datos, config: Config }, function (k, v) {
       return this && this.tipo && 'placa' in this && aparte.includes(k) ? undefined : v;
     });
@@ -3570,6 +3654,7 @@ const Persistencia = {
       if (u.comp) ver(u.comp.archivoId);
       (u.compHist || []).forEach(h => h && ver(h.archivoId));
       if (u.fotoInfo) usados.add('foto:' + u.id);
+      if (u.fotoInfo && u.fotoInfo.mini) usados.add('mini:' + u.id);
       if (u.licenciaInfo) usados.add('licencia:' + u.id);
       (u.registro || []).forEach(f => usados.add(Registro.clave(u, f)));
     });
@@ -3597,7 +3682,7 @@ const Borrar = {
   unidades(ids) {
     const fuera = new Set(ids), otra = x => !fuera.has(x.unidad);
     Datos.unidades.filter(u => fuera.has(u.id)).forEach(u =>
-      [u.foto, u.licencia].concat((u.registro || []).map(f => f.url)).forEach(url => { if (url) URL.revokeObjectURL(url); }));
+      [u.foto, u.mini, u.licencia].concat((u.registro || []).map(f => f.url)).forEach(url => { if (url) URL.revokeObjectURL(url); }));
     Datos.unidades = Datos.unidades.filter(x => !fuera.has(x.id));
     ['mantenimientos', 'inspecciones', 'accidentes', 'ocs', 'actividad', 'lecturas'].forEach(k => { Datos[k] = (Datos[k] || []).filter(otra); });
     return Persistencia.limpiar();
@@ -3648,6 +3733,126 @@ const Copia = {
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     Prefs.set('ultimaCopia', hoyISO);
     return Object.keys(copia.archivos).length;
+  }
+};
+
+/* Cuánto ocupa el proyecto en el plan gratis de Supabase: 1 GB de archivos y
+   500 MB de base, compartidos con las otras plataformas (Juan no paga plan,
+   26/10/2026). También vuelve a comprimir lo que se subió antes de la política
+   de archivos de hoy. Necesita el SQL 012 (public.flota_espacio). */
+const Espacio = {
+  ARCHIVOS: 1073741824,
+  BASE: 524288000,
+  datos: null,
+  error: null,
+  async traer() {
+    try {
+      this.datos = await Nube.pedir('rpc/flota_espacio', { method: 'POST', publico: true, body: '{}' });
+      this.error = null;
+    } catch (e) { this.datos = null; this.error = e; }
+  },
+  montar() {
+    if (!$('#cfgEspacio')) return;
+    $('#cfgEspacio').innerHTML = '<div class="flex aic g8 txt-2"><span class="spin"></span>Midiendo el espacio…</div>';
+    this.traer().then(() => this.pintar());
+  },
+  barra(txt, usado, limite, tope) {
+    const p = Math.min(100, usado / limite * 100), color = p >= 90 ? 'var(--dang-500)' : p >= 70 ? 'var(--warn-500)' : 'var(--ok-500)';
+    return '<div class="mb12"><div class="flex aic jcsb" style="gap:8px;flex-wrap:wrap;margin-bottom:6px"><b>' + esc(txt) + '</b><span class="txt-2 fs12">' +
+      esc(Peso.txt(usado) + ' de ' + tope) + ' · ' + (p < 1 && usado > 0 ? 'menos de 1' : Math.round(p)) + ' %</span></div>' +
+      '<div class="bar"><i style="width:' + Math.max(p, usado > 0 ? 0.5 : 0).toFixed(1) + '%;background:' + color + '"></i></div></div>';
+  },
+  pintar() {
+    const caja = $('#cfgEspacio');
+    if (!caja) return;
+    const d = this.datos;
+    if (!d) {
+      const falta = this.error && (this.error.status === 404 || this.error.codigo === 'PGRST202');
+      caja.innerHTML = '<div class="alert a-info mb0">' + Icon('info') + '<div>' + (falta ? 'Para medir el espacio hay que correr en Supabase el SQL <b>012</b>.'
+        : 'No se pudo medir el espacio. Revise el internet y vuelva a abrir Configuración.') + '</div></div>';
+      return;
+    }
+    const cand = this.candidatos(), peso = cand.reduce((s, c) => s + (c.tam || 0), 0);
+    const puede = Cuenta.admin || Cuenta.acciones.includes('editar');
+    caja.innerHTML = this.barra('Archivos', d.archivos || 0, this.ARCHIVOS, '1 GB') +
+      '<div class="txt-3 fs12 mb12" style="margin-top:-6px">De eso, esta plataforma ocupa ' + esc(Peso.txt(d.flota || 0)) + '.</div>' +
+      this.barra('Base de datos', d.base || 0, this.BASE, '500 MB') +
+      (cand.length && puede ? '<div class="alert a-warn mb0">' + Icon('warn') + '<div><b>' + (cand.length === 1 ? 'Una foto se subió' : cand.length + ' fotos se subieron') +
+        ' antes de la compresión</b> y ' + (cand.length === 1 ? 'ocupa ' : 'ocupan ') + esc(Peso.txt(peso)) + '.' +
+        '<div class="mt8"><button class="btn btn-sm btn-primary" data-act="comprimirSubido">' + Icon('refresh', '', 12) +
+        (cand.length === 1 ? 'Comprimirla ahora' : 'Comprimirlas ahora') + '</button></div></div></div>' : '');
+  },
+  /* Lo que pesa de más una foto ya comprimida con cada perfil: si pesa más (o
+     no es JPEG), se subió antes de la compresión */
+  TOPES: { registro: 700 * 1024, documento: 1300 * 1024 },
+  /* Las fotos que se subieron antes de la compresión: la foto de una unidad
+     sin miniatura, la tarjeta sin la marca de la política, y lo demás que la
+     nube reporta grande (y que algo de la plataforma usa) si no es JPEG o
+     pesa más que su tope. Las que ya se intentaron en este equipo no se repiten. */
+  candidatos() {
+    const hechos = new Set(Prefs.get('comprimidos') || []), lista = [], arreglo = new Set();
+    Datos.mantenimientos.forEach(m => (m.fotosData || []).forEach(f => { if (f.id) arreglo.add(Nube.claveDe(f.id)); }));
+    ((this.datos || {}).grandes || []).forEach(o => {
+      const clave = String(o.ruta).replace(/\//g, ':'), tipo = clave.split(':')[0], resto = clave.slice(tipo.length + 1);
+      if (hechos.has(clave) || !Nube.conocido(clave) || tipo === 'mini' || tipo === 'foto') return;
+      if (tipo === 'licencia') {
+        const u = Q.unidad(resto);
+        if (u && u.licenciaInfo && u.licenciaInfo.pol !== 2) lista.push({ clave, tam: o.tam, perfil: 'documento' });
+        return;
+      }
+      const perfil = tipo === 'registro' || arreglo.has(clave) ? 'registro' : 'documento';
+      if (!/^image\/jpe?g$/i.test(o.tipo || '') || o.tam > this.TOPES[perfil]) lista.push({ clave, tam: o.tam, perfil });
+    });
+    Datos.unidades.forEach(u => {
+      if (u.fotoInfo && !u.fotoInfo.mini && !hechos.has('foto:' + u.id) && !lista.some(c => c.clave === 'foto:' + u.id))
+        lista.push({ clave: 'foto:' + u.id, tam: u.fotoInfo.tam || 0, perfil: 'unidad' });
+    });
+    return lista;
+  },
+  /* Baja cada una, la comprime con su perfil y la vuelve a subir con la misma
+     clave. La foto de la unidad y la tarjeta pasan por Guardadas.poner (la
+     foto recibe su miniatura); lo demás solo se reemplaza si baja de peso. */
+  async comprimir(el) {
+    const lista = this.candidatos();
+    if (!lista.length) return;
+    const hechos = new Set(Prefs.get('comprimidos') || []), antesBtn = el.innerHTML;
+    let n = 0, antes = 0, despues = 0;
+    el.disabled = true;
+    for (let i = 0; i < lista.length; i++) {
+      const c = lista[i], tipo = c.clave.slice(0, c.clave.indexOf(':')), resto = c.clave.slice(c.clave.indexOf(':') + 1);
+      el.innerHTML = '<span class="spin"></span>Comprimiendo ' + (i + 1) + ' de ' + lista.length + '…';
+      hechos.add(c.clave);
+      try {
+        const blob = await Nube.bajar(c.clave);
+        if (!blob || !/^image\//.test(blob.type)) continue;
+        const u = tipo === 'foto' || tipo === 'licencia' ? Q.unidad(resto) : null, previo = u && u[tipo + 'Info'];
+        const archivo = new File([blob], (previo && previo.nombre) || 'foto.jpg', { type: blob.type });
+        if (u && previo) {
+          const info = await Guardadas.poner(u, tipo, archivo, previo.origen, previo);
+          antes += blob.size; despues += info.tam; n++;
+          continue;
+        }
+        const r = await Compresor.imagen(archivo, c.perfil);
+        if (r.blob.size > blob.size * 0.9) continue;
+        Nube.subir(c.clave, r.blob, { antes: Nube.meta(c.clave).antes || blob.size });
+        const id = tipo === 'archivo' ? resto : c.clave, v = Archivos.vistos.get(id);
+        if (v) {
+          const url = Archivos.registrar(id, r.blob, v.nombre, v.antes);
+          if (tipo === 'registro') Datos.unidades.forEach(x => (x.registro || []).forEach(f => { if (Registro.clave(x, f) === c.clave) f.url = url; }));
+        }
+        antes += blob.size; despues += r.blob.size; n++;
+      } catch (e) { /* sigue con las demás */ }
+    }
+    Prefs.set('comprimidos', Array.from(hechos));
+    el.disabled = false;
+    el.innerHTML = antesBtn;
+    Sincro.tocar();
+    Toast.show(n ? (n === 1 ? 'Se comprimió una foto' : 'Se comprimieron ' + n + ' fotos') + ': ' + esc(Peso.txt(antes) + ' → ' + Peso.txt(despues)) + '.'
+      : 'Esas fotos ya estaban livianas: no se cambió nada.');
+    /* La nube tarda un momento en subirlas: después se vuelve a medir */
+    await Nube.esperar();
+    await this.traer();
+    this.pintar();
   }
 };
 
@@ -4831,7 +5036,7 @@ const Vistas = {
     /* Mientras se selecciona, el clic marca la unidad en vez de abrirla */
     return '<article class="uc' + (sel ? ' selecting' + (on ? ' sel' : '') : '') + '" ' +
         (sel ? 'data-act="selUnidad" data-u="' + u.id + '" aria-pressed="' + on + '"' : 'data-ir="unidad/' + u.id + '"') + ' tabindex="0">' +
-      '<div class="uc-ph">' + UI.foto(u) + (sel ? '<span class="uc-ck">' + UI.ck(on, 13) + '</span>' : '') +
+      '<div class="uc-ph">' + UI.foto(u, true) + (sel ? '<span class="uc-ck">' + UI.ck(on, 13) + '</span>' : '') +
         '<span class="uc-tag">' + Icon(TIPOS[u.tipo].icono, '', 12) + esc(u.clase) + '</span>' +
         (e.k !== 'nr' ? '<span class="uc-est">' + UI.pill(e.k, e.txt) + '</span>' : '') + '</div>' +
       '<div class="uc-b"><div class="uc-l1">' + UI.placa(u) + '<span class="uc-anio">' + esc(u.modelo || '') + '</span></div>' +
@@ -4870,7 +5075,7 @@ const Vistas = {
       '<b' + (k && k !== 'ok' ? ' class="tx-' + k + '"' : '') + ' title="' + attr(v) + '">' + esc(v) + '</b>' +
       '<span title="' + attr(s || '') + '">' + (s ? esc(s) : '&nbsp;') + '</span></div>';
     let compV, compS, compK;
-    if (!Config.comparendos.includes(u.tipo)) { compV = 'No aplica'; compS = 'No tiene placa'; }
+    if (!Config.comparendos.includes(u.tipo)) { compV = 'No aplica'; compS = u.tipo === 'canoa' ? 'No tiene placa' : 'No se revisa en comparendos'; }
     else if (u.comp.estado === 'sin') { compV = 'Sin comparendos'; compS = 'Revisado este mes'; compK = 'ok'; }
     else if (u.comp.estado === 'con') { compV = 'Con comparendo'; compS = u.comp.infraccion; compK = 'bad'; }
     else { compV = 'Sin revisar'; compS = 'Se revisa a comienzo de mes'; compK = 'warn'; }
@@ -4882,11 +5087,11 @@ const Vistas = {
       '<div class="crumbs"><a data-ir="flota">Flota</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
       '<section class="uh">' +
         '<div class="uh-ph">' + UI.foto(u) +
-          '<button class="uh-btn uh-foto" data-act="cambiarFoto" data-u="' + u.id + '" title="' + (u.foto ? 'Cambiar la foto' : 'Poner una foto') + '" aria-label="' +
-            (u.foto ? 'Cambiar la foto' : 'Poner una foto') + '">' + Icon(u.foto ? 'edit' : 'camera', '', 15) + '</button>' +
+          '<button class="uh-btn uh-foto" data-act="cambiarFoto" data-u="' + u.id + '" title="' + (u.fotoInfo ? 'Cambiar la foto' : 'Poner una foto') + '" aria-label="' +
+            (u.fotoInfo ? 'Cambiar la foto' : 'Poner una foto') + '">' + Icon(u.fotoInfo ? 'edit' : 'camera', '', 15) + '</button>' +
           (conLicencia ? '<button class="uh-btn uh-lic" data-act="verLicencia" data-u="' + u.id + '" aria-label="Licencia de tránsito" title="' +
-            (u.licencia ? 'Ver la licencia de tránsito' : 'Licencia de tránsito: falta adjuntarla') + '">' + Icon('idcard', '', 16) +
-            (u.licencia ? '' : '<span class="lic-dot"></span>') + '</button>' : '') + '</div>' +
+            (u.licenciaInfo ? 'Ver la licencia de tránsito' : 'Licencia de tránsito: falta adjuntarla') + '">' + Icon('idcard', '', 16) +
+            (u.licenciaInfo ? '' : '<span class="lic-dot"></span>') + '</button>' : '') + '</div>' +
         '<div class="uh-b">' +
           '<div class="uh-top">' + UI.placa(u, 'xl') + '<span class="pill p-gray np">' + Icon(TIPOS[u.tipo].icono, '', 12) + esc(TIPOS[u.tipo].nombre) + '</span>' +
             (e.k !== 'nr' ? UI.pill(e.k, e.txt) : '') + '</div>' +
@@ -4914,7 +5119,13 @@ const Vistas = {
       '<div class="tabs">' + tabs.map(t => '<div class="tab' + (UIState.tab === t[0] ? ' active' : '') + '" data-act="tab" data-tab="' + t[0] + '">' + t[1] +
         (t[2] ? '<span class="tb-count">' + t[2] + '</span>' : '') + '</div>').join('') + '</div>' +
       '<div id="tabBody">' + this['tab_' + UIState.tab](u) + '</div>';
-    return { titulo: UI.placaTxt(u), sub: TIPOS[u.tipo].nombre + ' · ' + UI.nombre(u), html };
+    /* La foto grande, la tarjeta y el registro fotográfico se bajan al abrir la
+       ficha; cuando llegan, se vuelve a pintar */
+    const despues = () => Guardadas.traerUnidad(u).then(n => {
+      const r = Router.actual();
+      if (n && r.vista === 'unidad' && r.id === u.id) Router.pintar(true);
+    });
+    return { titulo: UI.placaTxt(u), sub: TIPOS[u.tipo].nombre + ' · ' + UI.nombre(u), html, despues };
   },
   /* La hoja de vida de la unidad, por las secciones del formato de su tipo.
      Cada sección dice si está completa o cuántos datos le faltan; lo que
@@ -5029,7 +5240,8 @@ const Vistas = {
     const acc = Datos.accidentes.filter(a => a.unidad === u.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
     let comp;
     if (!Config.comparendos.includes(u.tipo)) {
-      comp = UI.card('Comparendos', UI.empty('ticket', 'No aplica', 'Las canoas no tienen placa, así que no se revisan en comparendos. Si eso cambia, se ajusta en Configuración.'));
+      comp = UI.card('Comparendos', UI.empty('ticket', 'No aplica', (u.tipo === 'canoa' ? 'Las canoas no tienen placa, así que no se revisan en comparendos.'
+        : 'Este tipo de unidad no se revisa en comparendos.') + ' Si eso cambia, se ajusta en Configuración.'));
     } else {
       const filas = [[Fecha.mes(), u.comp]].concat((u.compHist || []).map((h, i) => [Fecha.mes(Comparendos.fechaDe(h, i + 1)), h]));
       comp = UI.card('Revisión mensual de comparendos', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Mes</th><th>Resultado</th><th>Detalle</th><th>Soporte</th></tr></thead><tbody>' +
@@ -5167,8 +5379,8 @@ const Ventanas = {
         '<div id="mdAviso"></div>',
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarDocumento">' + Icon('save', '', 14) + 'Guardar</button>'
     });
-    /* La tarjeta de propiedad de una unidad se guarda tal cual; lo demás, con
-       compresión ligera. La lista del archivo lo dice antes de guardar. */
+    /* La tarjeta de propiedad de una unidad se guarda como documento, a 2.000 px;
+       lo demás, según la política. La lista del archivo lo dice antes de guardar. */
     const destino = () => ($('#mdTit', m).value.startsWith('u:') && $('#mdTipo', m).value === 'tarjeta' ? 'licencia' : 'documento');
     /* Un comparendo o un accidente no va en «Otros documentos»: si el nombre
        del archivo lo dice, se avisa y se ofrece llevarlo a su pestaña con el
@@ -5235,7 +5447,7 @@ const Ventanas = {
         Dz.html('nuDz', 'Foto de la unidad', 'Arrastre la foto aquí o haga clic para buscarla', 'image/*', false) +
         '<div id="nuPrev"></div>';
       $$('.tsel', m).forEach(b => b.addEventListener('click', () => { tipo = b.dataset.tipo; m._foto = null; pintar(); }));
-      /* La foto de la unidad va tal cual, sin comprimir */
+      /* La foto se comprime al crear la unidad (ver Guardadas.poner) */
       Dz.bind('nuDz', files => Archivos.original(files[0]).then(f => {
         if (!f) return;
         m._foto = f;
@@ -5367,31 +5579,42 @@ const Ventanas = {
       cuerpo: '<div id="licCuerpo"></div>',
       pie: '<button class="btn" data-act="cerrarModal">Cerrar</button>'
     });
+    let fallo = false;
     const pintar = () => {
       const tarjeta = u.docs.tarjeta, info = u.licenciaInfo || {}, esPdf = /pdf/i.test(info.mime || '');
+      /* Está en la nube pero todavía no se ha bajado a este equipo */
+      if (u.licenciaInfo && !u.licencia) {
+        $('#licCuerpo', m).innerHTML = fallo
+          ? '<div class="alert a-warn">' + Icon('warn') + '<div>No se pudo bajar la tarjeta. Revise el internet e intente otra vez.</div></div>'
+          : '<div class="flex aic g8 txt-2" style="justify-content:center;padding:48px 16px"><span class="spin"></span>Bajando la tarjeta de la nube…</div>';
+        return;
+      }
       $('#licCuerpo', m).innerHTML = u.licencia
         ? '<div class="lic-vista">' + (esPdf ? '<iframe class="lic-pdf" src="' + attr(u.licencia) + '" title="Tarjeta de propiedad"></iframe>'
             : '<img src="' + attr(u.licencia) + '" alt="Frente de la licencia de tránsito de ' + attr(UI.placaTxt(u)) + '">') + '</div>' +
           '<div class="flex aic jcsb mt12" style="gap:12px;flex-wrap:wrap"><span class="txt-3 fs12">Adjuntada el ' + esc(Fecha.larga(info.fecha)) +
-            (info.tam ? ' · ' + Peso.txt(info.tam) + ', tal cual, sin comprimir' : '') + ' · también está en Documentos como tarjeta de propiedad</span>' +
+            (info.tam ? ' · ' + Peso.txt(info.tam) : '') + ' · también está en Documentos como tarjeta de propiedad</span>' +
           '<label class="btn btn-sm" style="cursor:pointer">' + Icon('refresh', '', 12) + 'Cambiar<input type="file" accept="image/*,application/pdf" hidden id="licInp"></label></div>'
         : UI.empty('idcard', 'Todavía no se ha adjuntado', 'Tómele una foto al frente de la licencia de tránsito, o escanéela, y súbala aquí. ' +
-            'Se guarda tal cual, sin comprimir, y queda también en Documentos como tarjeta de propiedad.') +
+            'Se guarda a 2.000 px, para que se lea bien, y queda también en Documentos como tarjeta de propiedad.') +
           Dz.html('licDz', 'Arrastre aquí la foto o el PDF del frente de la licencia', 'O haga clic para buscarlo en el equipo', 'image/*,application/pdf', false) +
           (tarjeta && tarjeta.archivo ? '<div class="alert a-info mt12">' + Icon('info') + '<div>Hoy, en Documentos, la tarjeta de propiedad es ' +
             UI.file(tarjeta.archivo, tarjeta.archivoId) + '. Lo que adjunte aquí la reemplaza.</div></div>' : '');
-      /* Tal cual: la licencia tiene que verse con la calidad con que se adjuntó */
+      /* Como documento: a 2.000 px, para que los números se sigan leyendo */
       const recibir = f => Archivos.original(f).then(ok => {
         if (!ok) return;
-        Guardadas.poner(u, 'licencia', ok, 'boton');
-        pintar();
-        Router.pintar(true);
-        Toast.show('Tarjeta de propiedad de <b>' + esc(UI.placaTxt(u)) + '</b> guardada tal cual, sin comprimir. Ya quedó en Documentos.');
+        Guardadas.poner(u, 'licencia', ok, 'boton').then(i => {
+          if (document.body.contains(m)) pintar();
+          Router.pintar(true);
+          Toast.show('Tarjeta de propiedad de <b>' + esc(UI.placaTxt(u)) + '</b> guardada' +
+            (i.tam < i.antes ? ' (' + esc(Peso.txt(i.antes) + ' → ' + Peso.txt(i.tam)) + ')' : '') + '. Ya quedó en Documentos.');
+        });
       });
       if (u.licencia) $('#licInp', m).addEventListener('change', e => { const f = e.target.files[0]; if (f) recibir(f); });
       else Dz.bind('licDz', files => recibir(files[0]));
     };
     pintar();
+    if (u.licenciaInfo && !u.licencia) Guardadas.traerUnidad(u).then(() => { fallo = !u.licencia; if (document.body.contains(m)) pintar(); });
   }
 };
 
@@ -5459,7 +5682,7 @@ const Acciones = {
     if (!us.length) return;
     const ids = new Set(us.map(u => u.id)), de = k => Datos[k].filter(x => ids.has(x.unidad)).length;
     const docs = us.reduce((n, u) => n + Object.values(u.docs || {}).filter(d => d && d.archivo).length + (u.otros || []).length, 0);
-    const fotos = us.reduce((n, u) => n + (u.foto ? 1 : 0) + (u.registro || []).length, 0);
+    const fotos = us.reduce((n, u) => n + (u.fotoInfo ? 1 : 0) + (u.registro || []).length, 0);
     const partes = [[docs, 'documento(s)'], [de('mantenimientos'), 'mantenimiento(s)'], [de('inspecciones'), 'inspección(es)'], [de('ocs'), 'orden(es) de compra'],
       [de('accidentes'), 'accidente(s)'], [fotos, 'foto(s)']].filter(p => p[0]).map(p => p[0] + ' ' + p[1]);
     const cuantas = us.length === 1 ? '1 unidad' : us.length + ' unidades';
@@ -5564,6 +5787,7 @@ const Acciones = {
     if (Router.actual().vista === 'documentos') Router.pintar(true); else Router.ir('documentos');
   },
   verArchivo(el) { Ventanas.visor(el.dataset.nombre, el.dataset.id); },
+  comprimirSubido(el) { Espacio.comprimir(el); },
   cambiarFoto(el) {
     const u = Q.unidad(el.dataset.u), inp = $('#filePick');
     inp.accept = 'image/*';
@@ -5572,12 +5796,15 @@ const Acciones = {
     inp.onchange = () => {
       const f = inp.files[0];
       if (!f) return;
-      /* Tal cual, sin comprimir: la foto de la unidad conserva su calidad */
+      /* Se comprime al guardar: a 1.600 px, con su miniatura para las listas */
       Archivos.original(f).then(ok => {
         if (!ok) return;
-        Guardadas.poner(u, 'foto', ok);
-        Router.pintar(true);
-        Toast.show('Foto de <b>' + esc(UI.placaTxt(u)) + '</b> guardada tal cual, sin comprimir.');
+        Toast.show('Comprimiendo la foto…');
+        Guardadas.poner(u, 'foto', ok).then(info => {
+          Router.pintar(true);
+          Toast.show('Foto de <b>' + esc(UI.placaTxt(u)) + '</b> guardada' +
+            (info.tam < info.antes ? ': ' + esc(Peso.txt(info.antes) + ' → ' + Peso.txt(info.tam)) : '') + '.');
+        });
       });
     };
     inp.click();
@@ -5682,17 +5909,18 @@ const Acciones = {
     const quien = p[0] === 'u' ? Q.unidad(p[1]) : Q.conductor(p[1]);
     const f = m._archivo;
     /* La tarjeta de propiedad de una unidad es la misma licencia del botón de
-       la foto: se guarda tal cual y queda en los dos sitios */
+       la foto: se comprime como documento y queda en los dos sitios */
     if (p[0] === 'u' && t === 'tarjeta' && f) {
       const ok = await Archivos.original(f);
       if (!ok) return;
-      await Guardadas.poner(quien, 'licencia', ok, 'documentos');
+      const info = await Archivos.conBoton(el, () => Guardadas.poner(quien, 'licencia', ok, 'documentos'));
       Modal.cerrarTodo();
-      Toast.show('Tarjeta de propiedad de <b>' + esc(UI.placaTxt(quien)) + '</b> guardada tal cual, sin comprimir. También se ve en el botón de la licencia.');
+      Toast.show('Tarjeta de propiedad de <b>' + esc(UI.placaTxt(quien)) + '</b> guardada' +
+        (info.tam < info.antes ? ' (' + esc(Peso.txt(info.antes) + ' → ' + Peso.txt(info.tam)) + ')' : '') + '. También se ve en el botón de la licencia.');
       Router.pintar(true);
       return;
     }
-    /* Lo demás se comprime poco, según la política de archivos */
+    /* Lo demás se comprime según la política de archivos */
     const a = f ? await Archivos.conBoton(el, () => Archivos.preparar(f)) : null;
     const nombre = a ? a.nombre : (t === 'otro' ? 'Documento' : DOC_TIPOS[t].nombre) + ' ' + (p[0] === 'u' ? quien.placa : quien.nombre) + '.pdf';
     const vence = DOC_TIPOS[t] && DOC_TIPOS[t].vence ? $('#mdVence', m).value : undefined;
@@ -5726,10 +5954,10 @@ const Acciones = {
       id: 'n' + Date.now(), tipo, clase: v('nuClase'), placa,
       marca: tipo === 'canoa' ? '' : v('nuMarca'), linea: v('nuLinea'), alias: tipo === 'canoa' ? (v('nuMarca') || placa) : '',
       modelo: v('nuModelo'), color: v('nuColor'), conductor: v('nuCond') || null, foto: null,
-      ficha: {}, docs: {}, otros: [], insp: null, comp: { estado: tipo === 'canoa' ? 'na' : 'pend', mes: Comparendos.mes() }, compHist: []
+      ficha: {}, docs: {}, otros: [], insp: null, comp: Comparendos.nueva({ tipo }), compHist: []
     };
     Datos.unidades.push(u);
-    if (m._foto) Guardadas.poner(u, 'foto', m._foto);
+    if (m._foto) Guardadas.poner(u, 'foto', m._foto).then(() => { const r = Router.actual(); if (r.vista === 'unidad' && r.id === u.id) Router.pintar(true); });
     if (u.conductor) Actividad.registrar(u, 'conductor', tipo === 'maquinaria' ? 'Cambio de operador' : 'Cambio de conductor', 'Se asignó a ' + Q.conductor(u.conductor).nombre);
     Modal.cerrar(m);
     Toast.show('Unidad creada: <b>' + esc(UI.placaTxt(u)) + '</b>');
@@ -6207,11 +6435,15 @@ Object.assign(Vistas, {
       UI.card('Planos de mantenimiento', '<div id="cfgPlanos"></div>',
         { cls: 'mb16', sub: 'Las partes de cada dibujo, la parte de cada pregunta del preoperacional y el dibujo de cada clase' }) +
       UI.card('Política de archivos', '<ul class="ul-check ul-pol">' + [
-          ['Foto de la unidad y tarjeta de propiedad', 'Se guardan tal cual se adjuntan, sin comprimir, con toda su calidad.'],
-          ['PDF y fotos de los demás documentos', 'Compresión ligera: se busca bajar entre el 20 y el 30 % del peso sin tocar la resolución, para que se sigan leyendo igual.'],
-          ['Lo que se guarda tal cual', 'Los PDF con firma digital (comprimirlos invalidaría la firma), las imágenes PNG y lo que no baje de peso sin perder calidad.']
+          ['Foto de la unidad', 'Se achica a 1.600 px y se guarda en JPEG (calidad 82 %), con una miniatura de 480 px para las listas.'],
+          ['Tarjetas, VIN y documentos en foto', 'A 2.000 px y calidad 88 %, para que los números se sigan leyendo.'],
+          ['Registro fotográfico y fotos de los arreglos', 'A 1.600 px y calidad 80 %.'],
+          ['PDF', 'Compresión ligera: bajan entre el 20 y el 30 % sin tocar la resolución. Los que tienen firma digital se guardan tal cual.'],
+          ['Lo que se baja de la nube', 'Al entrar solo bajan las miniaturas; lo demás, cuando se abre, y queda guardado en este equipo para no volver a bajarlo.']
         ].map(r => '<li>' + Icon('check', '', 15) + '<div><b>' + esc(r[0]) + '.</b> ' + esc(r[1]) + '</div></li>').join('') + '</ul>',
         { sub: 'Se aplica sola al adjuntar', cls: 'mb16' }) +
+      /* Cuánto ocupa el proyecto en el plan gratis (ver Espacio) */
+      UI.card('Espacio en la nube', '<div id="cfgEspacio"></div>', { sub: 'Plan gratis de Supabase, compartido con las otras plataformas', cls: 'mb16' }) +
       /* Todo vive en la nube; la copia es para tenerlo además fuera de ella */
       (() => {
         const ultima = Prefs.get('ultimaCopia');
@@ -6236,6 +6468,7 @@ Object.assign(Vistas, {
       titulo: 'Configuración', sub: 'Documentos, avisos y empresa', html,
       despues: () => {
         PlanoCfg.montar();
+        Espacio.montar();
         $('#cfgDias').addEventListener('change', e => {
           const v = Math.max(1, Math.min(120, Math.round(+e.target.value) || 30));
           Config.diasAviso = v;
@@ -6409,8 +6642,8 @@ Object.assign(Ventanas, {
       $$('#mcFotos input', m).forEach(inp => inp.addEventListener('input', () => { m._fotos[+inp.dataset.i].txt = inp.value; }));
       $$('#mcFotos button', m).forEach(b => b.addEventListener('click', () => { m._fotos.splice(+b.dataset.i, 1); pintar(); }));
     };
-    /* Las fotos del taller son de un documento: compresión ligera */
-    Dz.bind('mcDz', files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f)))
+    /* Las fotos del taller: a 1.600 px, como las del registro fotográfico */
+    Dz.bind('mcDz', files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
       .then(lista => { lista.forEach(a => m._fotos.push({ id: a.id, src: Archivos.vistos.get(a.id).url, txt: '' })); pintar(); }));
   },
 
@@ -6726,7 +6959,7 @@ Object.assign(Acciones, {
       $$('#taFotos input', m).forEach(inp => inp.addEventListener('input', () => { m._fotos[+inp.dataset.i].txt = inp.value; }));
       $$('#taFotos button', m).forEach(b => b.addEventListener('click', () => { m._fotos.splice(+b.dataset.i, 1); pintar(); }));
     };
-    Dz.bind('taDz', files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f)))
+    Dz.bind('taDz', files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
       .then(lista => { lista.forEach(a => m._fotos.push({ id: a.id, src: Archivos.vistos.get(a.id).url, txt: '' })); pintar(); }));
     $$('#taEst button', m).forEach(b => b.addEventListener('click', () => {
       m._estado = b.dataset.v;
@@ -6737,6 +6970,12 @@ Object.assign(Acciones, {
     }));
     $('#taS', m).addEventListener('change', () => { m._aviso = false; $('#taAviso', m).innerHTML = ''; });
     pintar();
+    /* Las fotos que ya tenía se bajan al abrirlo */
+    Guardadas.traerArreglo(r).then(n => {
+      if (!n || !document.body.contains(m)) return;
+      m._fotos.forEach(f => { if (!f.src && f.id && Archivos.vistos.has(f.id)) f.src = Archivos.vistos.get(f.id).url; });
+      pintar();
+    });
   },
   guardarTerminar(el) {
     const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
@@ -6822,15 +7061,19 @@ Object.assign(Acciones, {
   hojaDeVida(el) {
     const u = Q.unidad(el.dataset.u);
     const m = Ventanas.vistaPrevia('Hoja de vida · ' + UI.placaTxt(u), Formatos.hojaDeVida(u));
-    /* Si la tarjeta o el VIN se adjuntaron en PDF, su primera página se vuelve
-       imagen y la hoja se dibuja otra vez con ella */
-    const pdfs = [HojaVida.tarjeta(u), HojaVida.vin(u)].filter(t => t && t.pdf && !PdfImagen.hechas.has(t.url) && !PdfImagen.fallos.has(t.url));
-    if (!pdfs.length) return;
-    Promise.all(pdfs.map(t => PdfImagen.de(t.url).catch(() => { PdfImagen.fallos.add(t.url); }))).then(() => {
+    const redibujar = () => {
       if (!document.body.contains(m)) return;
       const html = Formatos.hojaDeVida(u);
       $('.doc-page', m).innerHTML = html;
       m._doc = '<div class="doc-page">' + html + '</div>';
+    };
+    /* La foto, la tarjeta y el registro fotográfico se bajan al abrirla. Si la
+       tarjeta o el VIN están en PDF, su primera página se vuelve imagen. La
+       hoja se dibuja otra vez con lo que llegue. */
+    Guardadas.traerUnidad(u).then(n => {
+      const pdfs = [HojaVida.tarjeta(u), HojaVida.vin(u)].filter(t => t && t.pdf && !PdfImagen.hechas.has(t.url) && !PdfImagen.fallos.has(t.url));
+      if (n) redibujar();
+      if (pdfs.length) Promise.all(pdfs.map(t => PdfImagen.de(t.url).catch(() => { PdfImagen.fallos.add(t.url); }))).then(redibujar);
     });
   },
 
@@ -6928,13 +7171,21 @@ Object.assign(Acciones, {
      se ve dónde irían. */
   pdfCorrectivo(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
-    const fotos = r.fotosData ? r.fotosData.map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || null, txt: f.txt }))
+    const fotos = () => r.fotosData ? r.fotosData.map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || null, txt: f.txt }))
       : Array.from({ length: r.fotos || 0 }, (_, i) => ({ src: null, txt: 'Foto ' + (i + 1) + ' de ' + r.fotos + ' (ejemplo)' }));
-    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.proveedor(r.prov), entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos,
+    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.proveedor(r.prov), entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos: fotos(),
       partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [] };
     const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d),
       '<button class="btn mf-left" data-act="guardarPdfCorrectivo" data-m="' + r.id + '">' + Icon('save', '', 14) + 'Guardar el PDF en la unidad</button>');
     v._numero = d.numero;
+    /* Las fotos se bajan al abrirlo; cuando llegan, el PDF se dibuja otra vez */
+    Guardadas.traerArreglo(r).then(n => {
+      if (!n || !document.body.contains(v)) return;
+      d.fotos = fotos();
+      const html = Formatos.correctivo(d);
+      $('.doc-page', v).innerHTML = html;
+      v._doc = '<div class="doc-page">' + html + '</div>';
+    });
   },
   guardarPdfCorrectivo(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
@@ -7071,7 +7322,7 @@ Object.assign(Acciones, {
   eliminarUnidad(el) {
     const u = Q.unidad(el.dataset.u), de = k => Datos[k].filter(x => x.unidad === u.id).length;
     const docs = Object.values(u.docs || {}).filter(d => d && d.archivo).length + (u.otros || []).length;
-    const fotos = (u.foto ? 1 : 0) + (u.registro || []).length;
+    const fotos = (u.fotoInfo ? 1 : 0) + (u.registro || []).length;
     const partes = [[docs, 'documento(s)'], [de('mantenimientos'), 'mantenimiento(s)'], [de('inspecciones'), 'inspección(es)'], [de('ocs'), 'orden(es) de compra'],
       [de('accidentes'), 'accidente(s)'], [fotos, 'foto(s)']].filter(p => p[0]).map(p => p[0] + ' ' + p[1]);
     Modal.abrir({
@@ -7159,6 +7410,7 @@ Object.assign(Acciones, {
     Sincro.activo = false;
     Modal.cerrarTodo();
     await Nube.salir();
+    await Cache.vaciar();
     location.reload();
   },
   nuevoConductor() { Ventanas.nuevoConductor(); },
@@ -9709,6 +9961,73 @@ if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(
 /* Un error que dice si fue la red, la sesión o el servidor */
 const errorNube = (msg, o) => Object.assign(new Error(msg), o || {});
 
+/* Lo que ya se bajó de la nube queda en este equipo (IndexedDB), para no
+   volver a bajarlo: así se gasta menos de la descarga del plan gratis y el
+   celular abre más rápido. Se guarda con su versión, y si pasa del tope se
+   borra lo que hace más tiempo no se usa. Al cerrar la sesión se vacía. Sin
+   IndexedDB (navegación privada) todo funciona igual, solo que sin guardar. */
+const Cache = {
+  TOPE: 200 * 1048576,
+  _db: null,
+  db() {
+    if (!this._db) this._db = new Promise(ok => {
+      try {
+        const q = indexedDB.open('sigf-archivos', 1);
+        q.onupgradeneeded = () => q.result.createObjectStore('a', { keyPath: 'k' });
+        q.onsuccess = () => ok(q.result);
+        q.onerror = q.onblocked = () => ok(null);
+      } catch (e) { ok(null); }
+    });
+    return this._db;
+  },
+  async leer(k) {
+    const db = await this.db();
+    if (!db) return null;
+    return new Promise(ok => {
+      try {
+        const st = db.transaction('a', 'readwrite').objectStore('a'), q = st.get(k);
+        q.onsuccess = () => {
+          const r = q.result;
+          if (r) { r.t = Date.now(); st.put(r); }
+          ok(r ? r.blob : null);
+        };
+        q.onerror = () => ok(null);
+      } catch (e) { ok(null); }
+    });
+  },
+  async poner(k, blob) {
+    const db = await this.db();
+    if (!db || !blob) return;
+    try { db.transaction('a', 'readwrite').objectStore('a').put({ k, blob, t: Date.now(), tam: blob.size }); } catch (e) { return; }
+    clearTimeout(this._recorte);
+    this._recorte = setTimeout(() => this.recortar(), 3000);
+  },
+  /* Si pasa del tope, se van primero los que hace más tiempo no se usan */
+  async recortar() {
+    const db = await this.db();
+    if (!db) return;
+    try {
+      const st = db.transaction('a', 'readwrite').objectStore('a'), q = st.getAll();
+      q.onsuccess = () => {
+        const todos = q.result.sort((a, b) => a.t - b.t);
+        let total = todos.reduce((s, r) => s + (r.tam || 0), 0);
+        for (const r of todos) { if (total <= this.TOPE) break; st.delete(r.k); total -= r.tam || 0; }
+      };
+    } catch (e) { /* sin caché: no pasa nada */ }
+  },
+  async vaciar() {
+    const db = await this.db();
+    if (!db) return;
+    await new Promise(ok => {
+      try {
+        const tx = db.transaction('a', 'readwrite');
+        tx.objectStore('a').clear();
+        tx.oncomplete = tx.onerror = tx.onabort = () => ok();
+      } catch (e) { ok(); }
+    });
+  }
+};
+
 const Nube = {
   CLAVE_SESION: 'sigf.sesion',
 
@@ -9886,10 +10205,19 @@ const Nube = {
   conocerDeDatos() {
     Persistencia.usados().forEach(k => this._conocidos.add(k));
   },
+  /* La versión de un archivo que se reemplaza con la misma clave (la foto, su
+     miniatura y la tarjeta): la marca de cuando se subió. Los demás no cambian. */
+  version(clave) {
+    const m = /^(foto|mini|licencia):(.+)$/.exec(clave), u = m && Datos.unidades.find(x => x.id === m[2]);
+    const info = u && (m[1] === 'licencia' ? u.licenciaInfo : u.fotoInfo);
+    return info && info.ts != null ? String(info.ts) : '';
+  },
   /* Subir y quitar van en una cola que se atiende de a uno y reintenta sola */
   _cola: [],
   subir(clave, blob, info) {
     this.conocer(clave, { mime: blob.type || 'application/octet-stream', tam: blob.size, antes: (info && info.antes) || blob.size });
+    /* Queda también en este equipo: no hay que volver a bajarlo */
+    Cache.poner(clave + '|' + (info && info.ts != null ? String(info.ts) : this.version(clave)), blob);
     this._cola = this._cola.filter(t => t.clave !== clave || t.enCurso);
     this._cola.push({ op: 'subir', clave, blob, intentos: 0 });
     this._trabajar();
@@ -9902,6 +10230,11 @@ const Nube = {
     this._trabajar();
   },
   pendientes() { return this._cola.length; },
+  /* Espera a que se acabe de subir lo que está en la cola (hasta dos minutos) */
+  esperar(ms) {
+    const fin = Date.now() + (ms || 120000);
+    return new Promise(ok => { const mirar = () => (!this._cola.length || Date.now() > fin ? ok() : setTimeout(mirar, 500)); mirar(); });
+  },
   async _trabajar() {
     if (this._ocupado) return;
     this._ocupado = true;
@@ -9945,12 +10278,18 @@ const Nube = {
     }
   },
   /* Baja un archivo y lo devuelve, o null si no se pudo. Si todavía está en la
-     cola para subir, se usa ese mismo. Máximo cuatro a la vez. */
+     cola para subir, se usa ese mismo; si ya está en este equipo, también.
+     Máximo cuatro a la vez. */
   _bajando: 0,
   _turnos: [],
   async bajar(clave) {
     const enCola = this._cola.find(t => t.clave === clave && t.op === 'subir');
     if (enCola) return enCola.blob;
+    const k = clave + '|' + this.version(clave), guardado = await Cache.leer(k);
+    if (guardado) {
+      if (!this._meta.has(clave)) this.conocer(clave, { mime: guardado.type, tam: guardado.size });
+      return guardado;
+    }
     if (this._bajando >= 4) await new Promise(ok => this._turnos.push(ok));
     this._bajando++;
     try {
@@ -9964,6 +10303,7 @@ const Nube = {
       if (!r || !r.ok) return null;
       const blob = await r.blob();
       if (!this._meta.has(clave)) this.conocer(clave, { mime: blob.type, tam: blob.size });
+      Cache.poner(k, blob);
       return blob;
     } catch (e) {
       return null;
@@ -9979,11 +10319,17 @@ const Nube = {
   async bajarRuta(ruta) {
     const tk = await this.token();
     if (!tk || !ruta) return null;
+    /* Los del preoperacional no cambian nunca: si ya están en este equipo, sirven */
+    const guardado = await Cache.leer('ruta:' + ruta);
+    if (guardado) return guardado;
     const url = NUBE.url + '/storage/v1/object/' + NUBE.deposito + '/' + String(ruta).split('/').map(encodeURIComponent).join('/');
     for (let intento = 1; intento <= 3; intento++) {
       try {
         const r = await this._fetch(url, { headers: { apikey: NUBE.llave, Authorization: 'Bearer ' + tk } }, 60000);
-        return r.ok ? await r.blob() : null;
+        if (!r.ok) return null;
+        const blob = await r.blob();
+        Cache.poner('ruta:' + ruta, blob);
+        return blob;
       } catch (e) {
         if (intento < 3) await new Promise(ok => setTimeout(ok, 700 * intento));
       }
@@ -10144,7 +10490,7 @@ const Mapa = {
     ((datos.archivo || {}).proveedores || []).forEach(proveedor(false));
 
     datos.unidades.forEach(u => {
-      poner('unidades', Fila.de(u, this.UNIDAD, ['docs', 'otros', 'registro', 'foto', 'licencia'],
+      poner('unidades', Fila.de(u, this.UNIDAD, ['docs', 'otros', 'registro', 'foto', 'mini', 'licencia'],
         { foto: u.fotoInfo ? Nube.rutaDe('foto:' + u.id) : null }));
       Object.keys(u.docs || {}).forEach(t => {
         const d = u.docs[t];
@@ -10212,6 +10558,7 @@ const Mapa = {
     (filas.unidades || []).forEach(r => {
       const u = Fila.a(r, this.UNIDAD);
       u.foto = null;
+      u.mini = null;
       u.docs = {};
       u.otros = [];
       const docs = de.u[u.id] || [];
@@ -10220,6 +10567,7 @@ const Mapa = {
       const fotos = (fotosDe[u.id] || []).slice().sort((a, b) => a.orden - b.orden);
       if (fotos.length) u.registro = fotos.map(x => Object.assign(Fila.a(x, this.FOTO), { blob: null, url: null }));
       if (u.fotoInfo) Nube.conocer('foto:' + u.id, { mime: u.fotoInfo.mime, tam: u.fotoInfo.tam });
+      if (u.fotoInfo && u.fotoInfo.mini) Nube.conocer('mini:' + u.id);
       if (u.licenciaInfo) Nube.conocer('licencia:' + u.id, { mime: u.licenciaInfo.mime, tam: u.licenciaInfo.tam });
       d.unidades.push(u);
     });
@@ -10541,7 +10889,7 @@ const Sesion = {
         e.currentTarget.innerHTML = '<span class="spin"></span>Comprobando…';
         listo('comprobar');
       };
-      $('#sesOtra').onclick = async () => { await Nube.salir(); listo('otra'); };
+      $('#sesOtra').onclick = async () => { await Nube.salir(); await Cache.vaciar(); listo('otra'); };
     });
   },
   /* Mientras se traen los datos, con el avance */
