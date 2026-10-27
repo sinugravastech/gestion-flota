@@ -527,6 +527,20 @@ html.arrastrando .uh-soltar{display:flex}
 .uh-sz span{font-size:11.5px;opacity:.85;line-height:1.3}
 .uh-sz.over{background:rgba(32,68,154,.9);border-style:solid;border-color:#fff}
 .lic-vista.over{outline:2px dashed var(--accent);outline-offset:3px;background:var(--accent-soft)}
+/* La lupa de las imágenes vistas en grande (ver Lupa): el marco recorta la
+   imagen acercada, que se recorre con el mouse */
+.lupa{display:inline-block;position:relative;overflow:hidden;line-height:0;max-width:100%;border-radius:8px;box-shadow:var(--sh-2);cursor:zoom-in}
+.lupa > img{box-shadow:none;border-radius:0;transition:transform .2s ease}
+.lupa.cerca{cursor:zoom-out;touch-action:none}
+.lupa.cerca > img{transition:transform .2s ease,transform-origin .06s linear}
+/* Acomodar la foto de la ficha con el lápiz (ver Encuadre) */
+.uh-ajustar{left:46px}
+.uh-ph.ajustando .uh-btn{display:none}
+.uh-ajuste{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:10px;
+  cursor:grab;touch-action:none;box-shadow:inset 0 0 0 2px var(--accent)}
+.uh-ajuste.moviendo{cursor:grabbing}
+.uh-aj-t{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:rgba(13,19,25,.72);color:#fff;font-size:11.5px;font-weight:600}
+.uh-aj-b{display:flex;gap:8px;cursor:default}
 /* Un documento al que se le puede soltar el archivo: su fila o su botón */
 .req.over{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
 table.tbl tbody tr.over td{background:var(--accent-soft)}
@@ -2254,6 +2268,8 @@ const Icon = (() => {
     info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
     trash: '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
     edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+    lapiz: '<path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+    mover: '<path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/>',
     eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
     eyeOff: '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/>',
     salir: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
@@ -2611,14 +2627,15 @@ const Config = {
    En los vehículos, los datos de la licencia de tránsito llevan el nombre que
    tienen allá: «Clase de vehículo», «Servicio» y «Cilindrada CC» (Juan,
    27/10/2026). El VIN va aparte del chasis: en la licencia son dos datos, y en
-   algunos vehículos el chasis es solo el final del VIN. Las máquinas tienen
-   otra tarjeta, la de registro, y conservan sus nombres; tampoco llevan VIN:
-   su tarjeta trae el número de serie. */
+   algunos vehículos el chasis es solo el final del VIN. El propietario también
+   sale de la licencia; varios camiones están en leasing, a nombre del banco.
+   Las máquinas tienen otra tarjeta, la de registro, y conservan sus nombres;
+   tampoco llevan VIN: su tarjeta trae el número de serie. */
 const HV_VEHICULO = maq => [
   { t: 'Información general', campos: [
     { n: 'Placa', de: 'placa' }, { n: 'Marca', de: 'marca' }, { n: 'Línea', de: 'linea' }, { n: 'Modelo', de: 'modelo' },
     { n: maq ? 'Tipo' : 'Clase de vehículo', de: 'clase' }, { n: 'Color', de: 'color' }, maq ? 'Uso del vehículo' : 'Servicio', 'N.º interno UPN',
-    'N.º de chasis', ...(maq ? [] : ['VIN']), 'N.º de motor', maq ? 'Cilindraje' : 'Cilindrada CC', 'N.º licencia de tránsito',
+    'N.º de chasis', ...(maq ? [] : ['VIN']), 'N.º de motor', maq ? 'Cilindraje' : 'Cilindrada CC', 'N.º licencia de tránsito', ...(maq ? [] : ['Propietario']),
     { n: 'SOAT', doc: 'soat' }, { n: 'Tecnomecánica', doc: 'tecno' }, 'Combustible', maq ? 'Peso operativo' : 'Capacidad',
     { n: maq ? 'Operador' : 'Conductor', de: 'conductor' }, { n: maq ? 'Horómetro' : 'Kilometraje', lectura: true }] },
   { t: 'Motor', campos: ['Modelo del motor', 'Cilindros', 'Válvulas por cilindro', 'Turbo'] },
@@ -3189,6 +3206,96 @@ const Dz = {
     el.innerHTML = files.map(f => '<div class="dz-file">' + Icon(/^image\//.test(f.type) ? 'image' : 'pdf', '', 15) +
       '<span class="f1 trunc">' + esc(f.name) + '</span><span class="txt-3 fs11 nowrap">' + Peso.txt(f.size) + ' · ' +
       esc(Politica.texto(Politica.de(f, destino))) + '</span></div>').join('');
+  }
+};
+
+/* Toda imagen adjunta que se ve en grande tiene lupa (Juan, 27/10/2026): un
+   clic acerca donde se hizo, el mouse recorre la imagen acercada y otro clic
+   la deja como estaba */
+const Lupa = {
+  html: (src, alt, cls) => '<span class="lupa" title="Clic para acercar"><img' + (cls ? ' class="' + cls + '"' : '') + ' src="' + attr(src) + '" alt="' + attr(alt) + '"></span>',
+  /* El punto del mouse en el marco, en porcentaje. El marco mide lo mismo que
+     la imagen sin acercar, y no se agranda con ella. */
+  punto(l, e) {
+    const r = l.getBoundingClientRect();
+    const x = Math.min(100, Math.max(0, (e.clientX - r.left) / r.width * 100)), y = Math.min(100, Math.max(0, (e.clientY - r.top) / r.height * 100));
+    return x.toFixed(1) + '% ' + y.toFixed(1) + '%';
+  },
+  alternar(l, e) {
+    const img = l.querySelector('img');
+    if (!img || !img.naturalWidth) return;
+    const cerca = !l.classList.contains('cerca');
+    l.classList.toggle('cerca', cerca);
+    l.title = cerca ? 'Clic para alejar' : 'Clic para acercar';
+    if (!cerca) { img.style.transform = ''; return; }
+    /* Hasta ver la foto a su tamaño real, y por lo menos al doble */
+    const z = Math.max(2, Math.min(4, img.naturalWidth / l.getBoundingClientRect().width));
+    img.style.transformOrigin = this.punto(l, e);
+    img.style.transform = 'scale(' + z.toFixed(2) + ')';
+  },
+  mover(l, e) {
+    const img = l.querySelector('img');
+    if (img) img.style.transformOrigin = this.punto(l, e);
+  }
+};
+
+/* Acomodar la foto de la ficha con el lápiz (Juan, 27/10/2026). La foto llena
+   el cuadro y se corta; arrastrándola se escoge qué parte se ve, por ejemplo
+   el frente de un camión largo. Queda en fotoInfo.pos, en porcentajes, como
+   object-position, y una foto nueva vuelve al centro. Solo cuenta en la ficha. */
+const Encuadre = {
+  pos: u => (u.fotoInfo && u.fotoInfo.pos) || { x: 50, y: 50 },
+  estilo(u) {
+    const p = u.fotoInfo && u.fotoInfo.pos;
+    return p ? ' style="object-position:' + p.x + '% ' + p.y + '%"' : '';
+  },
+  empezar(u, ph) {
+    const img = ph && ph.querySelector('img');
+    if (!u || !img || ph.classList.contains('ajustando')) return;
+    const antes = this.pos(u), pos = { x: antes.x, y: antes.y };
+    ph.classList.add('ajustando');
+    ph.insertAdjacentHTML('beforeend', '<div class="uh-ajuste"><span class="uh-aj-t">' + Icon('mover', '', 13) + 'Arrastre la foto para acomodarla</span>' +
+      '<div class="uh-aj-b"><button type="button" class="btn btn-sm" data-aj="no">Cancelar</button>' +
+      '<button type="button" class="btn btn-sm btn-primary" data-aj="si" disabled>' + Icon('save', '', 13) + 'Guardar</button></div></div>');
+    const capa = ph.querySelector('.uh-ajuste'), guardar = capa.querySelector('[data-aj="si"]');
+    const poner = () => {
+      img.style.objectPosition = pos.x + '% ' + pos.y + '%';
+      guardar.disabled = pos.x === antes.x && pos.y === antes.y;
+    };
+    const salir = () => { capa.remove(); ph.classList.remove('ajustando'); };
+    let ini = null;
+    capa.addEventListener('pointerdown', e => {
+      if (e.target.closest('.uh-aj-b') || !img.naturalWidth) return;
+      /* Lo que la foto se sale del cuadro: eso es lo que se puede mover */
+      const W = img.clientWidth, H = img.clientHeight, k = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+      ini = { x: e.clientX, y: e.clientY, px: pos.x, py: pos.y, sx: img.naturalWidth * k - W, sy: img.naturalHeight * k - H };
+      capa.setPointerCapture(e.pointerId);
+      capa.classList.add('moviendo');
+    });
+    capa.addEventListener('pointermove', e => {
+      if (!ini) return;
+      const lim = v => Math.round(Math.min(100, Math.max(0, v)) * 10) / 10;
+      /* Arrastrar a la derecha deja ver más de la izquierda */
+      if (ini.sx > 1) pos.x = lim(ini.px - (e.clientX - ini.x) / ini.sx * 100);
+      if (ini.sy > 1) pos.y = lim(ini.py - (e.clientY - ini.y) / ini.sy * 100);
+      poner();
+    });
+    const soltar = () => { ini = null; capa.classList.remove('moviendo'); };
+    capa.addEventListener('pointerup', soltar);
+    capa.addEventListener('pointercancel', soltar);
+    capa.querySelector('[data-aj="no"]').addEventListener('click', () => {
+      pos.x = antes.x;
+      pos.y = antes.y;
+      poner();
+      salir();
+    });
+    guardar.addEventListener('click', () => {
+      u.fotoInfo.pos = { x: pos.x, y: pos.y };
+      Sincro.tocar();
+      salir();
+      Router.pintar(true);
+      Toast.show('Foto de <b>' + esc(UI.placaTxt(u)) + '</b> acomodada.');
+    });
   }
 };
 
@@ -5140,9 +5247,12 @@ const Vistas = {
     const html =
       '<div class="crumbs"><a data-ir="flota">Flota</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
       '<section class="uh">' +
-        '<div class="uh-ph">' + UI.foto(u, false, ' data-act="verFoto" data-u="' + u.id + '" title="Ver la foto en grande"') +
+        '<div class="uh-ph">' + UI.foto(u, false, ' data-act="verFoto" data-u="' + u.id + '" title="Ver la foto en grande"' + Encuadre.estilo(u)) +
           '<button class="uh-btn uh-foto" data-act="cambiarFoto" data-u="' + u.id + '" title="' + (u.fotoInfo ? 'Cambiar la foto' : 'Poner una foto') + '" aria-label="' +
-            (u.fotoInfo ? 'Cambiar la foto' : 'Poner una foto') + '">' + Icon(u.fotoInfo ? 'edit' : 'camera', '', 15) + '</button>' +
+            (u.fotoInfo ? 'Cambiar la foto' : 'Poner una foto') + '">' + Icon('camera', '', 15) + '</button>' +
+          /* El lápiz acomoda qué parte de la foto se ve (ver Encuadre) */
+          (u.fotoInfo ? '<button class="uh-btn uh-ajustar" data-act="ajustarFoto" data-u="' + u.id + '" title="Acomodar la foto" aria-label="Acomodar la foto">' +
+            Icon('lapiz', '', 14) + '</button>' : '') +
           (conLicencia ? '<button class="uh-btn uh-lic" data-act="verLicencia" data-u="' + u.id + '" aria-label="Licencia de tránsito" title="' +
             (u.licenciaInfo ? 'Ver la licencia de tránsito' : 'Licencia de tránsito: falta adjuntarla') + '">' + Icon('idcard', '', 16) +
             (u.licenciaInfo ? '' : '<span class="lic-dot"></span>') + '</button>' : '') +
@@ -5544,7 +5654,7 @@ const Ventanas = {
       Modal.abrir({
         titulo: nombre, sub: esc(peso), ancho: 'xwide', sinFoco: true,
         cuerpo: '<div class="visor real">' + (pdf ? '<iframe class="visor-pdf" src="' + attr(v.url) + '" title="' + attr(nombre) + '"></iframe>'
-          : '<img class="visor-img" src="' + attr(v.url) + '" alt="' + attr(nombre) + '">') + '</div>',
+          : Lupa.html(v.url, nombre, 'visor-img')) + '</div>',
         pie: '<a class="btn" href="' + attr(v.url) + '" download="' + attr(nombre) + '">' + Icon('download', '', 14) + 'Descargar</a>' +
           (pdf ? '<button class="btn" data-act="imprimirVisor">' + Icon('print', '', 14) + 'Imprimir</button>' : '') +
           '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
@@ -5650,7 +5760,7 @@ const Ventanas = {
       }
       $('#licCuerpo', m).innerHTML = u.licencia
         ? '<div class="lic-vista">' + (esPdf ? '<iframe class="lic-pdf" src="' + attr(u.licencia) + '" title="Tarjeta de propiedad"></iframe>'
-            : '<img src="' + attr(u.licencia) + '" alt="Frente de la licencia de tránsito de ' + attr(UI.placaTxt(u)) + '">') + '</div>' +
+            : Lupa.html(u.licencia, 'Frente de la licencia de tránsito de ' + UI.placaTxt(u))) + '</div>' +
           '<div class="flex aic jcsb mt12" style="gap:12px;flex-wrap:wrap"><span class="txt-3 fs12">Adjuntada el ' + esc(Fecha.larga(info.fecha)) +
             (info.tam ? ' · ' + Peso.txt(info.tam) : '') + ' · también está en Documentos como tarjeta de propiedad</span>' +
           '<label class="btn btn-sm" style="cursor:pointer" title="O arrastre la nueva encima de la tarjeta">' + Icon('refresh', '', 12) +
@@ -5689,7 +5799,7 @@ const Ventanas = {
           : '<div class="flex aic g8 txt-2" style="justify-content:center;padding:48px 16px"><span class="spin"></span>Bajando la foto de la nube…</div>';
         return;
       }
-      $('#ftCuerpo', m).innerHTML = '<div class="lic-vista"><img src="' + attr(u.foto) + '" alt="Foto ' + attr(HojaVida.deLa(u) + ' ' + UI.placaTxt(u)) + '"></div>' +
+      $('#ftCuerpo', m).innerHTML = '<div class="lic-vista">' + Lupa.html(u.foto, 'Foto ' + HojaVida.deLa(u) + ' ' + UI.placaTxt(u)) + '</div>' +
         '<div class="flex aic jcsb mt12" style="gap:12px;flex-wrap:wrap"><span class="txt-3 fs12">' +
           (info.fecha ? 'Adjuntada el ' + esc(Fecha.larga(info.fecha)) : 'Foto ' + esc(HojaVida.deLa(u))) + (info.tam ? ' · ' + Peso.txt(info.tam) : '') + '</span>' +
         '<label class="btn btn-sm" style="cursor:pointer" title="O arrastre la nueva encima de la foto">' + Icon('refresh', '', 12) +
@@ -5868,6 +5978,7 @@ const Acciones = {
   },
   verLicencia(el) { Ventanas.licencia(Q.unidad(el.dataset.u)); },
   verFoto(el) { Ventanas.foto(Q.unidad(el.dataset.u)); },
+  ajustarFoto(el) { Encuadre.empezar(Q.unidad(el.dataset.u), el.closest('.uh-ph')); },
   filtroDocs(el) {
     UIState.docs.k = el.dataset.v;
     if (Router.actual().vista === 'documentos') Router.pintar(true); else Router.ir('documentos');
@@ -11159,6 +11270,15 @@ document.addEventListener('drop', e => {
   e.preventDefault();
   const z = Soltar.zona(e), files = Array.from(e.dataTransfer.files);
   if (z && files.length) Soltar.soltar(z, files);
+});
+/* La lupa de las imágenes vistas en grande (ver Lupa) */
+document.addEventListener('click', e => {
+  const l = e.target.closest ? e.target.closest('.lupa') : null;
+  if (l) Lupa.alternar(l, e);
+});
+document.addEventListener('pointermove', e => {
+  const l = e.target.closest ? e.target.closest('.lupa.cerca') : null;
+  if (l) Lupa.mover(l, e);
 });
 /* Lo que muestra cada foto del registro se guarda al salir del campo */
 document.addEventListener('change', e => {
