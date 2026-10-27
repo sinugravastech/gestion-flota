@@ -2608,14 +2608,17 @@ const Config = {
    «lectura» es el kilometraje u horómetro de la última lectura (Cambios de
    aceite); si la unidad no tiene lecturas, se escribe como cualquier dato.
    «fecha» se escribe con calendario.
-   El VIN va aparte del chasis: en la licencia de tránsito son dos datos, y en
-   algunos vehículos el chasis es solo el final del VIN (Juan, 27/10/2026). Las
-   máquinas no lo llevan: su tarjeta de registro trae el número de serie. */
+   En los vehículos, los datos de la licencia de tránsito llevan el nombre que
+   tienen allá: «Clase de vehículo», «Servicio» y «Cilindrada CC» (Juan,
+   27/10/2026). El VIN va aparte del chasis: en la licencia son dos datos, y en
+   algunos vehículos el chasis es solo el final del VIN. Las máquinas tienen
+   otra tarjeta, la de registro, y conservan sus nombres; tampoco llevan VIN:
+   su tarjeta trae el número de serie. */
 const HV_VEHICULO = maq => [
   { t: 'Información general', campos: [
     { n: 'Placa', de: 'placa' }, { n: 'Marca', de: 'marca' }, { n: 'Línea', de: 'linea' }, { n: 'Modelo', de: 'modelo' },
-    { n: 'Tipo', de: 'clase' }, { n: 'Color', de: 'color' }, 'Uso del vehículo', 'N.º interno UPN',
-    'N.º de chasis', ...(maq ? [] : ['VIN']), 'N.º de motor', 'Cilindraje', 'N.º licencia de tránsito',
+    { n: maq ? 'Tipo' : 'Clase de vehículo', de: 'clase' }, { n: 'Color', de: 'color' }, maq ? 'Uso del vehículo' : 'Servicio', 'N.º interno UPN',
+    'N.º de chasis', ...(maq ? [] : ['VIN']), 'N.º de motor', maq ? 'Cilindraje' : 'Cilindrada CC', 'N.º licencia de tránsito',
     { n: 'SOAT', doc: 'soat' }, { n: 'Tecnomecánica', doc: 'tecno' }, 'Combustible', maq ? 'Peso operativo' : 'Capacidad',
     { n: maq ? 'Operador' : 'Conductor', de: 'conductor' }, { n: maq ? 'Horómetro' : 'Kilometraje', lectura: true }] },
   { t: 'Motor', campos: ['Modelo del motor', 'Cilindros', 'Válvulas por cilindro', 'Turbo'] },
