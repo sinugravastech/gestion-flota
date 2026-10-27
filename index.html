@@ -978,9 +978,10 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .sst-fotos{padding:3mm}
 .sst-fila{display:flex;gap:3mm;break-inside:avoid}
 .sst-fila + .sst-fila{margin-top:3mm}
-.sst-fila .sst-fig{flex:0 0 calc(50% - 1.5mm);min-width:0}
+/* Cuántas fotos por fila (--cols) y su alto (--foto-h) los pone la hoja de vida */
+.sst-fila .sst-fig{flex:0 0 calc((100% - (var(--cols, 2) - 1) * 3mm) / var(--cols, 2));min-width:0}
 .sst-fig{margin:0;border:.6px solid #c3cfe9;break-inside:avoid;display:flex;flex-direction:column}
-.sst-img{height:62mm;display:flex;align-items:center;justify-content:center;background:#fff;padding:1mm}
+.sst-img{height:var(--foto-h, 62mm);display:flex;align-items:center;justify-content:center;background:#fff;padding:1mm}
 .sst-img img{max-width:100%;max-height:100%;object-fit:contain;display:block}
 .sst-img span{font-size:8pt;color:#50689c;text-align:center;padding:0 4mm}
 .sst-fig figcaption{background:#edf1fb;color:#193680;font-size:7.5pt;font-weight:700;text-align:center;padding:1.2mm 2mm;border-top:.6px solid #c3cfe9}
@@ -989,6 +990,29 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
    ninguna fila, foto o firma se corta por la mitad */
 .sst-sec-t,.sst-sub,.dp-sec-t{break-after:avoid}
 .dp-tbl tr,.dp-sign,.dp-foto,.sst-dot{break-inside:avoid}
+/* La hoja de vida va en dos hojas (Juan, 27/10/2026): más compacta que los
+   demás formatos y con márgenes de 8 mm arriba y abajo y 10 mm a los lados.
+   Antes de imprimir se mide (ver Imprimir.enDosHojas). */
+.doc-hv .dp-logo img{max-height:12mm}
+.doc-hv .sst-t{font-size:10.5pt;padding:1.5mm 4mm}
+.doc-hv .sst-cod div{font-size:7.5pt;padding:.5mm 1mm}
+.doc-hv .sst-banda{font-size:10pt;padding:1.3mm;margin-top:1.6mm}
+.doc-hv .sst-sec{margin-top:1.6mm}
+.doc-hv .sst-sec-t{font-size:8pt;padding:.8mm}
+.doc-hv .sst-c small{font-size:6.2pt;padding:.45mm 1mm}
+.doc-hv .sst-c span{font-size:7.8pt;padding:.7mm 1mm;min-height:4.8mm}
+.doc-hv .sst-sub{font-size:7pt;padding:.5mm}
+.doc-hv .sst-dot{gap:1.1mm 5mm;padding:1.3mm 3mm;font-size:7pt}
+.doc-hv .sst-ck i{width:3mm;height:3mm}
+.doc-hv .sst-fotos{padding-top:2mm}
+.doc-hv .sst-fila + .sst-fila{margin-top:2.5mm}
+.doc-hv .sst-fig figcaption{font-size:7pt;padding:.8mm 2mm}
+.doc-hv .dp-tbl th{padding:1mm 2mm;font-size:7pt}
+.doc-hv .dp-tbl td{padding:.8mm 2mm;font-size:8pt}
+.doc-hv .dp-sign{margin-top:11mm}
+.doc-hv .dp-foot{margin-top:4mm}
+/* Para medirla, como sale en la hoja: sin el margen de la vista previa */
+.doc-page.hv-medir{padding:0 10mm;min-height:0}
 
 /* ==========================================================================
    §UI-5  INICIO DE SESIÓN Y LA NUBE
@@ -1046,6 +1070,10 @@ html.sb-mini .sb-salir{display:none}
   .pr-marco{width:100%;border-collapse:collapse}
   .pr-marco td{padding:0}
   .pr-esp{height:12mm}
+  /* La hoja de vida aprovecha más la hoja, y su segunda parte empieza en hoja nueva */
+  .pr-marco.hv .pr-esp{height:8mm}
+  .doc-page.doc-hv{padding:0 10mm}
+  .hv-salto{break-before:page}
 }
 
 /* ==========================================================================
@@ -2628,14 +2656,15 @@ const Config = {
    tienen allá: «Clase de vehículo», «Servicio» y «Cilindrada CC» (Juan,
    27/10/2026). El VIN va aparte del chasis: en la licencia son dos datos, y en
    algunos vehículos el chasis es solo el final del VIN. El propietario también
-   sale de la licencia; varios camiones están en leasing, a nombre del banco.
+   sale de la licencia, con su identificación (NIT o cédula); varios camiones
+   están en leasing, a nombre del banco.
    Las máquinas tienen otra tarjeta, la de registro, y conservan sus nombres;
    tampoco llevan VIN: su tarjeta trae el número de serie. */
 const HV_VEHICULO = maq => [
   { t: 'Información general', campos: [
     { n: 'Placa', de: 'placa' }, { n: 'Marca', de: 'marca' }, { n: 'Línea', de: 'linea' }, { n: 'Modelo', de: 'modelo' },
     { n: maq ? 'Tipo' : 'Clase de vehículo', de: 'clase' }, { n: 'Color', de: 'color' }, maq ? 'Uso del vehículo' : 'Servicio', 'N.º interno UPN',
-    'N.º de chasis', ...(maq ? [] : ['VIN']), 'N.º de motor', maq ? 'Cilindraje' : 'Cilindrada CC', 'N.º licencia de tránsito', ...(maq ? [] : ['Propietario']),
+    'N.º de chasis', ...(maq ? [] : ['VIN']), 'N.º de motor', maq ? 'Cilindraje' : 'Cilindrada CC', 'N.º licencia de tránsito', ...(maq ? [] : ['Propietario', 'Identificación']),
     { n: 'SOAT', doc: 'soat' }, { n: 'Tecnomecánica', doc: 'tecno' }, 'Combustible', maq ? 'Peso operativo' : 'Capacidad',
     { n: maq ? 'Operador' : 'Conductor', de: 'conductor' }, { n: maq ? 'Horómetro' : 'Kilometraje', lectura: true }] },
   { t: 'Motor', campos: ['Modelo del motor', 'Cilindros', 'Válvulas por cilindro', 'Turbo'] },
@@ -4085,10 +4114,46 @@ const Toast = {
    abajo de cada hoja lo da un marco con encabezado y pie vacíos, que se
    repiten en todas las hojas cuando el documento ocupa más de una. */
 const Imprimir = {
-  doc(html) {
-    $('#printRoot').innerHTML = '<table class="pr-marco"><thead><tr><td><div class="pr-esp"></div></td></tr></thead>' +
+  /* «clase»: la del marco, para los márgenes de un formato (la hoja de vida: hv) */
+  doc(html, clase) {
+    $('#printRoot').innerHTML = '<table class="pr-marco' + (clase ? ' ' + clase : '') + '"><thead><tr><td><div class="pr-esp"></div></td></tr></thead>' +
       '<tfoot><tr><td><div class="pr-esp"></div></td></tr></tfoot><tbody><tr><td>' + html + '</td></tr></tbody></table>';
     window.print();
+  },
+  /* Lo que cabe de alto en una hoja carta con los márgenes de la hoja de vida
+     (8 mm arriba y 8 abajo), menos 5 mm por si la impresora pinta la letra un
+     poco distinto que la pantalla */
+  UTIL_HV: 279.4 - 16 - 5,
+  /* La hoja de vida, siempre en dos hojas (Juan, 27/10/2026): en la primera
+     los datos y la dotación; en la segunda las fotos, los documentos, los
+     mantenimientos y la firma. Se mide cada parte al ancho de la hoja:
+     · si en la primera hoja sobra espacio para el título de las fotos y su
+       primera fila (un remolque, por ejemplo), las fotos empiezan ahí; si no,
+       la segunda parte empieza en hoja nueva;
+     · si lo que va en la segunda hoja no cabe, las fotos se achican lo que
+       haga falta (hasta 22 mm de alto). */
+  enDosHojas(doc) {
+    const caja = document.createElement('div');
+    caja.style.cssText = 'position:fixed;left:-10000px;top:0;width:215.9mm;visibility:hidden';
+    caja.innerHTML = doc;
+    document.body.appendChild(caja);
+    try {
+      const pagina = caja.firstElementChild, h1 = caja.querySelector('.hv-hoja1'), h2 = caja.querySelector('.hv-hoja2');
+      if (!pagina || !h1 || !h2) return doc;
+      pagina.classList.add('hv-medir');
+      const mm = px => px * 25.4 / 96, alto = el => mm(el.getBoundingClientRect().height);
+      const reg = h2.querySelector('.sst-sec'), fila1 = h2.querySelector('.sst-fila');
+      const arranque = !reg ? 0 : fila1 ? mm(fila1.getBoundingClientRect().bottom - reg.getBoundingClientRect().top) : alto(reg);
+      const seguir = alto(h1) + arranque + 3 <= this.UTIL_HV;
+      const fotos = h2.querySelector('.sst-fotos'), filas = h2.querySelectorAll('.sst-fila').length;
+      const sobra = alto(h2) - (seguir ? arranque : 0) - this.UTIL_HV;
+      if (sobra > 0 && fotos && filas) {
+        fotos.style.setProperty('--foto-h', Math.max(22, alto(fotos.querySelector('.sst-img')) - sobra / filas).toFixed(1) + 'mm');
+      }
+      if (!seguir) h2.classList.add('hv-salto');
+      pagina.classList.remove('hv-medir');
+      return caja.innerHTML;
+    } finally { caja.remove(); }
   }
 };
 
@@ -5598,7 +5663,8 @@ const Ventanas = {
     /* Lo que depende del tipo: el vencimiento, la nota, el archivo y el aviso */
     const pintarVence = () => {
       const t = $('#mdTipo', m).value;
-      $('#mdVenceF', m).style.visibility = DOC_TIPOS[t] && DOC_TIPOS[t].vence ? '' : 'hidden';
+      /* Lo que no vence (la tarjeta, el VIN, la cédula…) no lleva «Vence el», ni su espacio (Juan, 27/10/2026) */
+      $('#mdVenceF', m).style.display = DOC_TIPOS[t] && DOC_TIPOS[t].vence ? '' : 'none';
       $('#mdTipoH', m).hidden = t !== 'otro';
       if (m._archivo) Dz.lista('mdDz', [m._archivo], destino());
       avisoLugar();
@@ -6319,14 +6385,21 @@ const Formatos = {
   /* La hoja de vida con el formato SST-FRT-026 del ingeniero anterior: el
      mismo encabezado, las mismas secciones y la dotación con sus casillas.
      Después van el registro fotográfico (la foto, la tarjeta, el VIN y las
-     fotos que se agreguen), los documentos y los últimos mantenimientos. */
+     fotos que se agreguen), los documentos y los últimos mantenimientos.
+     Se imprime en dos hojas (ver Imprimir.enDosHojas): en la primera los datos
+     y la dotación; en la segunda lo demás. */
   hojaDeVida(u) {
     const titulo = { carga: 'Hoja de vida vehículos', maquinaria: 'Hoja de vida maquinaria', remolque: 'Hoja de vida remolque / semirremolque',
       canoa: 'Hoja de vida patente / canoa / motocanoa' }[u.tipo];
     const req = Config.req[u.tipo] || [];
     const ms = Datos.mantenimientos.filter(m => m.unidad === u.id).sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 6);
     const sec = (t, html, cls) => '<div class="sst-sec' + (cls ? ' ' + cls : '') + '"><div class="sst-sec-t">' + esc(t) + '</div>' + html + '</div>';
-    const fotos = HojaVida.fotosImpresas(u);
+    /* Las fotos, del tamaño que deja caber todo en la segunda hoja: dos por
+       fila hasta cuatro fotos, tres hasta nueve y cuatro hasta doce. Las demás
+       se ven en la plataforma. */
+    const todas = HojaVida.fotosImpresas(u), fotos = todas.slice(0, 12);
+    const cols = fotos.length <= 4 ? 2 : fotos.length <= 9 ? 3 : 4, nFilas = Math.ceil(fotos.length / cols);
+    const altoFoto = cols === 2 ? (nFilas === 1 ? 75 : 58) : cols === 3 ? (nFilas <= 2 ? 50 : 38) : 34;
     const secciones = HojaVida.secciones(u).map(s => {
       const cols = Math.min(4, s.campos.length), resto = s.campos.length % cols;
       return sec(s.t, '<div class="sst-g" style="grid-template-columns:repeat(' + cols + ',1fr)">' + s.campos.map((c, i) =>
@@ -6338,21 +6411,22 @@ const Formatos = {
         (d ? ' · revisada el ' + Fecha.corta(d.fecha) : ' · sin revisar'),
       DOTACION.map(g => '<div class="sst-sub">' + esc(g.t) + '</div><div class="sst-dot">' + g.items.map(i =>
         '<span class="sst-ck"><i>' + (d && !(d.falta || []).includes(i) ? '✓' : '') + '</i>' + esc(i) + '</span>').join('') + '</div>').join(''));
-    return '<div class="sst-head"><div class="dp-logo">' +
+    return '<div class="hv-hoja1"><div class="sst-head"><div class="dp-logo">' +
         (MARCA.ok ? '<img src="' + MARCA.logo + '" alt="SINUGRAVAS S.A.S.">' : '<div class="lg-txt">SINUGRAVAS<small>SISTEMA DE GESTIÓN DE FLOTA</small></div>') + '</div>' +
         '<div class="sst-t">Hoja de vida y mantenimiento de parque automotor</div>' +
         '<div class="sst-cod"><div>Código: SST-FRT-026</div><div>Fecha de creación: 14-03-2024</div><div>Versión: 001</div>' +
           '<div>Impresa el ' + hoyISO.split('-').reverse().join('/') + '</div></div></div>' +
       '<div class="sst-banda">SINUGRAVAS S.A.S. · ' + esc(titulo) + '</div>' +
-      secciones + dotacion +
-      /* Las fotos van en filas de dos: la sección se puede partir entre hojas,
-         pero solo entre filas */
-      sec('Registro fotográfico', fotos.length ? '<div class="sst-fotos">' + fotos.reduce((filas, f, i) => {
+      secciones + dotacion + '</div><div class="hv-hoja2">' +
+      /* Las fotos van por filas: la sección se puede partir entre hojas, pero
+         solo entre filas */
+      sec('Registro fotográfico', fotos.length ? '<div class="sst-fotos" style="--cols:' + cols + ';--foto-h:' + altoFoto + 'mm">' + fotos.reduce((filas, f, i) => {
           const fig = '<figure class="sst-fig"><div class="sst-img">' + (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<span>' + esc(f.aviso) + '</span>') +
             '</div><figcaption>' + esc(f.txt) + '</figcaption></figure>';
-          if (i % 2 === 0) filas.push(fig); else filas[filas.length - 1] += fig;
+          if (i % cols === 0) filas.push(fig); else filas[filas.length - 1] += fig;
           return filas;
-        }, []).map(fila => '<div class="sst-fila">' + fila + '</div>').join('') + '</div>'
+        }, []).map(fila => '<div class="sst-fila">' + fila + '</div>').join('') +
+        (todas.length > fotos.length ? '<div class="sst-vacio">Hay ' + (todas.length - fotos.length) + ' foto(s) más en la plataforma.</div>' : '') + '</div>'
         : '<div class="sst-vacio">Sin fotos registradas.</div>', 'sst-libre') +
       sec('Documentos', '<table class="dp-tbl"><thead><tr><th>Documento</th><th>Archivo</th><th>Vence</th><th>Estado</th></tr></thead><tbody>' +
         (req.length ? req.map(t => {
@@ -6365,7 +6439,7 @@ const Formatos = {
           '<td>' + esc(m.trabajo) + '</td><td>' + esc((Q.proveedor(m.prov) || {}).nombre || '—') + '</td></tr>').join('')
           : '<tr><td colspan="4">Sin mantenimientos registrados.</td></tr>') + '</tbody></table>') +
       this.firmas([['Responsable de flota', 'Elaboró']]) +
-      this.pie('Hoja de vida ' + UI.placaTxt(u) + ' · SST-FRT-026');
+      this.pie('Hoja de vida ' + UI.placaTxt(u) + ' · SST-FRT-026') + '</div>';
   }
 };
 
@@ -7272,15 +7346,24 @@ Object.assign(Acciones, {
     UIState.oc = el.dataset.v;
     if (Router.actual().vista === 'compras') Router.pintar(true); else Router.ir('compras');
   },
-  imprimirVista(el) { Imprimir.doc(el.closest('.modal-bd')._doc); },
+  imprimirVista(el) {
+    const m = el.closest('.modal-bd');
+    /* La hoja de vida se acomoda en dos hojas justo antes de imprimirse */
+    if (m._hv) Imprimir.doc(Imprimir.enDosHojas(m._doc), 'hv');
+    else Imprimir.doc(m._doc);
+  },
   hojaDeVida(el) {
     const u = Q.unidad(el.dataset.u);
     const m = Ventanas.vistaPrevia('Hoja de vida · ' + UI.placaTxt(u), Formatos.hojaDeVida(u));
+    /* Con su formato compacto, también en la vista previa */
+    m._hv = true;
+    $('.doc-page', m).classList.add('doc-hv');
+    m._doc = '<div class="doc-page doc-hv">' + Formatos.hojaDeVida(u) + '</div>';
     const redibujar = () => {
       if (!document.body.contains(m)) return;
       const html = Formatos.hojaDeVida(u);
       $('.doc-page', m).innerHTML = html;
-      m._doc = '<div class="doc-page">' + html + '</div>';
+      m._doc = '<div class="doc-page doc-hv">' + html + '</div>';
     };
     /* La foto, la tarjeta y el registro fotográfico se bajan al abrirla. Si la
        tarjeta o el VIN están en PDF, su primera página se vuelve imagen. La
