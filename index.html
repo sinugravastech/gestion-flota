@@ -2932,10 +2932,11 @@ const UI = {
   },
   nombre(u) { return u.tipo === 'canoa' ? (u.alias || u.placa) : [u.marca, u.linea].filter(Boolean).join(' '); },
   /* La foto de la unidad: en las listas, la miniatura; en la ficha, la grande
-     (mientras baja, la miniatura). «mas»: otros atributos para la imagen */
+     (mientras baja, la miniatura). En todas, la parte que se escogió con el
+     lápiz de la ficha (ver Encuadre). «mas»: otros atributos para la imagen */
   foto(u, chica, mas) {
     const src = chica ? u.mini || u.foto : u.foto || u.mini;
-    return src ? '<img src="' + attr(src) + '" alt=""' + (mas || '') + '>' : '<div class="ph">' + ILUS[ilusDe(u)] + '</div>';
+    return src ? '<img src="' + attr(src) + '" alt=""' + Encuadre.estilo(u) + (mas || '') + '>' : '<div class="ph">' + ILUS[ilusDe(u)] + '</div>';
   },
   thumb(u) { return '<span class="thumb">' + this.foto(u) + '</span>'; },
   unidadCelda(u) {
@@ -3242,7 +3243,10 @@ const Lupa = {
 /* Acomodar la foto de la ficha con el lápiz (Juan, 27/10/2026). La foto llena
    el cuadro y se corta; arrastrándola se escoge qué parte se ve, por ejemplo
    el frente de un camión largo. Queda en fotoInfo.pos, en porcentajes, como
-   object-position, y una foto nueva vuelve al centro. Solo cuenta en la ficha. */
+   object-position, y una foto nueva vuelve al centro. Se usa donde la foto se
+   recorta: la ficha, las tarjetas de Flota y las miniaturas de las listas
+   (ver UI.foto). La tarjeta de Flota es más ancha que el cuadro de la ficha:
+   si la foto le cabe completa a lo ancho, allá se ve completa. */
 const Encuadre = {
   pos: u => (u.fotoInfo && u.fotoInfo.pos) || { x: 50, y: 50 },
   estilo(u) {
@@ -3605,6 +3609,11 @@ const Guardadas = {
      lo que ya se sabía de ese archivo, cuando solo se vuelve a comprimir.
      Devuelve lo que quedó (con su peso antes y después). */
   async poner(u, tipo, archivo, origen, previo) {
+    /* Mientras se comprime, la unidad está en la mano: no se cambian los datos */
+    Sincro.trabajos++;
+    try { return await this._poner(u, tipo, archivo, origen, previo); } finally { Sincro.trabajos--; }
+  },
+  async _poner(u, tipo, archivo, origen, previo) {
     let blob = archivo;
     try {
       const p = Politica.de(archivo, tipo);
@@ -3637,10 +3646,15 @@ const Guardadas = {
       Toast.show(foto ? 'La foto tiene que ser una imagen, JPG o PNG.' : 'La tarjeta tiene que ser una foto o un PDF.', 'err');
       return null;
     }
-    const ok = await Archivos.original(f);
-    if (!ok) return null;
-    if (foto) Toast.show('Comprimiendo la foto…');
-    const info = await this.poner(u, tipo, ok, origen);
+    /* Mientras tanto no se ponen los cambios de otros equipos (ver Sincro.seguro) */
+    Sincro.trabajos++;
+    let info;
+    try {
+      const ok = await Archivos.original(f);
+      if (!ok) return null;
+      if (foto) Toast.show('Comprimiendo la foto…');
+      info = await this.poner(u, tipo, ok, origen);
+    } finally { Sincro.trabajos--; }
     Router.pintar(true);
     const peso = info.tam < info.antes ? Peso.txt(info.antes) + ' → ' + Peso.txt(info.tam) : '';
     Toast.show(foto ? 'Foto de <b>' + esc(UI.placaTxt(u)) + '</b> guardada' + (peso ? ': ' + esc(peso) : '') + '.'
@@ -3656,6 +3670,18 @@ const Guardadas = {
     if (tipo === 'licencia') u.docs.tarjeta = { archivo: info.nombre || 'Tarjeta de propiedad ' + u.placa, archivoId: id,
       subido: info.fecha, hora: info.hora, ts: info.ts, desdeLicencia: true };
     Sincro.tocar();
+  },
+  /* Cuando llegan cambios de otro equipo, los datos se arman de nuevo: las
+     fotos que ya estaban en este equipo se vuelven a poner enseguida, para que
+     no parpadeen. Las nuevas las baja aplicar. */
+  reponer() {
+    Datos.unidades.forEach(u => {
+      [['foto', u.fotoInfo], ['mini', u.fotoInfo && u.fotoInfo.mini ? u.fotoInfo : null], ['licencia', u.licenciaInfo]].forEach(([tipo, info]) => {
+        const v = info && Archivos.vigente(tipo + ':' + u.id, info.ts);
+        if (v) u[tipo] = v.url;
+      });
+      (u.registro || []).forEach(f => { const v = Archivos.vistos.get(Registro.clave(u, f)); if (v) f.url = v.url; });
+    });
   },
   /* La foto o la tarjeta que llega de la nube: sus datos ya vinieron con la
      unidad, aquí solo se cuelga el archivo */
@@ -3753,20 +3779,24 @@ const Registro = {
   async subir(u, files) {
     const fotos = files.filter(x => /^image\//.test(x.type));
     if (!fotos.length) { Toast.show('Solo se pueden agregar fotos (JPG o PNG).', 'err'); return; }
-    /* Cada foto tarda un momento en comprimirse: se avisa desde el principio */
+    /* Cada foto tarda un momento en comprimirse: se avisa desde el principio.
+       Mientras tanto no se ponen los cambios de otros equipos (ver Sincro.seguro). */
     Toast.show('Agregando ' + (fotos.length === 1 ? 'la foto' : fotos.length + ' fotos') + ' al registro fotográfico…');
     let n = 0, antes = 0, despues = 0;
-    for (const file of fotos) {
-      const ok = await Archivos.original(file);
-      if (!ok) continue;
-      let blob = ok;
-      try { blob = (await Compresor.imagen(ok, 'registro')).blob; } catch (e) { blob = ok; }
-      const f = this.mostrar(u, 'f' + marca(), blob, { nombre: blob.name || file.name, fecha: hoyISO, hora: ahora(), ts: marca() });
-      await this.guardar(u, f);
-      n++;
-      antes += file.size;
-      despues += blob.size;
-    }
+    Sincro.trabajos++;
+    try {
+      for (const file of fotos) {
+        const ok = await Archivos.original(file);
+        if (!ok) continue;
+        let blob = ok;
+        try { blob = (await Compresor.imagen(ok, 'registro')).blob; } catch (e) { blob = ok; }
+        const f = this.mostrar(u, 'f' + marca(), blob, { nombre: blob.name || file.name, fecha: hoyISO, hora: ahora(), ts: marca() });
+        await this.guardar(u, f);
+        n++;
+        antes += file.size;
+        despues += blob.size;
+      }
+    } finally { Sincro.trabajos--; }
     if (!n) return;
     Toast.show((n === 1 ? 'Se agregó una foto' : 'Se agregaron ' + n + ' fotos') + ' al registro fotográfico de <b>' + esc(UI.placaTxt(u)) + '</b>.' +
       (despues < antes ? '<br>' + esc(Peso.txt(antes) + ' → ' + Peso.txt(despues) + ' (−' + Peso.ahorro(antes, despues) + ' %)') : ''));
@@ -5247,7 +5277,7 @@ const Vistas = {
     const html =
       '<div class="crumbs"><a data-ir="flota">Flota</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
       '<section class="uh">' +
-        '<div class="uh-ph">' + UI.foto(u, false, ' data-act="verFoto" data-u="' + u.id + '" title="Ver la foto en grande"' + Encuadre.estilo(u)) +
+        '<div class="uh-ph">' + UI.foto(u, false, ' data-act="verFoto" data-u="' + u.id + '" title="Ver la foto en grande"') +
           '<button class="uh-btn uh-foto" data-act="cambiarFoto" data-u="' + u.id + '" title="' + (u.fotoInfo ? 'Cambiar la foto' : 'Poner una foto') + '" aria-label="' +
             (u.fotoInfo ? 'Cambiar la foto' : 'Poner una foto') + '">' + Icon('camera', '', 15) + '</button>' +
           /* El lápiz acomoda qué parte de la foto se ve (ver Encuadre) */
@@ -5277,7 +5307,7 @@ const Vistas = {
           '</div>' +
           '<div class="uh-act">' +
             '<button class="btn btn-primary" data-act="nuevoDocumento" data-u="' + u.id + '">' + Icon('upload', '', 14) + 'Subir documento</button>' +
-            '<button class="btn" data-act="editarUnidad" data-u="' + u.id + '">' + Icon('edit', '', 14) + 'Editar</button>' +
+            /* Editar está en la tarjeta Información (Juan, 27/10/2026) */
             '<button class="btn" data-act="nuevoPreventivo" data-u="' + u.id + '">' + Icon('tool', '', 14) + 'Preventivo</button>' +
             '<button class="btn" data-act="nuevoCorrectivo" data-u="' + u.id + '">' + Icon('camera', '', 14) + 'Correctivo</button>' +
             '<button class="btn" data-act="nuevaInspeccion" data-u="' + u.id + '">' + Icon('clipboard', '', 14) + 'Inspección</button>' +
@@ -10857,11 +10887,22 @@ const Sincro = {
     await Promise.all([trabajar(), trabajar(), trabajar(), trabajar()]);
     return filas;
   },
-  /* Al entrar: todo lo de la nube a la plataforma */
+  /* Al entrar: todo lo de la nube a la plataforma. Antes se pide la hora de la
+     nube: desde ahí se le pregunta después qué cambió (ver revisar). */
   async cargar(avance) {
-    Mapa.poner(Mapa.aDatos(await this.traer(avance)));
+    const hora = await this.horaNube();
+    const filas = await this.traer(avance);
+    this.guardarCrudas(filas);
+    Mapa.poner(Mapa.aDatos(filas));
     Nube.conocerDeDatos();
     this._fijarTodo();
+    this.desde = hora;
+  },
+  /* Las filas tal como están en la nube, por tabla: a ellas se les pone lo que
+     cambia, y de ellas salen otra vez los datos */
+  crudas: {},
+  guardarCrudas(filas) {
+    this.ORDEN.forEach(t => { const k = this.CLAVE[t] || 'id'; this.crudas[t] = new Map((filas[t] || []).map(f => [f[k], f])); });
   },
   async ciclo(forzar) {
     if (!this.activo || this.ocupado) return;
@@ -10915,36 +10956,131 @@ const Sincro = {
     await this.ciclo(true);
   },
   pendiente() { return Boolean(Nube.pendientes() || this.ocupado || this.error || (this.activo && this.cambios().n)); },
-  /* Al volver a la pestaña: si en otro equipo se cambió algo, se trae. Si aquí
-     hay algo sin subir, primero se sube. */
   /* ¿Ya es otro día que cuando se abrió la plataforma? */
   diaViejo: () => Fecha.iso(new Date()) !== hoyISO,
-  async revisar() {
-    if (!this.activo || this.ocupado || this._revisando || Modal.abierto()) return;
+
+  /* ---------------- Lo que cambia en otros equipos (Juan, 27/10/2026) ----------------
+     Con la plataforma abierta se le pregunta a la nube qué cambió: cada 10 s
+     mientras alguien la usa, cada 60 s si nadie la toca hace 3 minutos, y
+     enseguida al volver a la pestaña o al tocarla otra vez. La nube devuelve
+     solo las filas que cambiaron (ver el SQL 015), y si no cambió nada la
+     respuesta pesa casi nada. Lo que llega se pone en el mismo sitio, sin
+     parpadear, y solo si no interrumpe a nadie (ver seguro). */
+  RAPIDA: 10000,
+  LENTA: 60000,
+  QUIETA: 180000,
+  desde: null,          // la hora de la nube de la última pregunta, con margen
+  sinCambios: false,    // la nube todavía no tiene el SQL 015: se revisa como antes
+  trabajos: 0,          // fotos comprimiéndose con una unidad en la mano
+  _actividad: Date.now(),
+  _toque: 0,
+  /* La hora de la nube, con 5 segundos de margen: lo que se guardó justo antes
+     también se vuelve a preguntar */
+  conMargen: t => new Date(Date.parse(t) - 5000).toISOString(),
+  /* La nube no tiene la función: la API lo dice con 404 (PGRST202), y la base
+     con 42883 */
+  faltaFuncion: e => e.status === 404 || e.codigo === 'PGRST202' || e.codigo === '42883',
+  async horaNube() {
+    try {
+      const r = await Nube._pedir('rpc/flota_cambios', { method: 'POST', publico: true, body: '{}' });
+      return r && r.ahora ? this.conMargen(r.ahora) : null;
+    } catch (e) {
+      if (this.faltaFuncion(e)) this.sinCambios = true;
+      return null;
+    }
+  },
+  /* Se ponen los cambios solo si no interrumpen: sin ventanas abiertas, sin
+     escribir en un campo de la vista, sin acomodar una foto ni arrastrar un
+     archivo, sin nada por guardar, subir o comprimir, y sin un clic, una tecla
+     o un scroll en el último medio segundo (se sentiría como un salto) */
+  seguro() {
+    const a = document.activeElement, v = $('#vista');
+    const escribiendo = Boolean(a && v && v.contains(a) && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable));
+    return !Modal.abierto() && !escribiendo && !$('.uh-ph.ajustando') && !document.documentElement.classList.contains('arrastrando') &&
+      !this.trabajos && !Nube.pendientes() && !this.ocupado && Date.now() - this._toque > 500 && !this.cambios().n;
+  },
+  async revisar(regreso) {
+    if (!this.activo || this.ocupado || this._revisando || document.hidden) return;
     if (this.cambios().n) return this.ciclo(true);
     /* Si quedó abierta de un día para otro, se recarga para que las fechas (y
        el mes de los comparendos) queden al día. Ya no hay nada sin guardar. */
-    if (this.diaViejo() && !Nube.pendientes()) { location.reload(); return; }
-    /* Como mucho cada 15 segundos, aunque se vaya y se vuelva seguido */
-    if (Date.now() - (this._revisado || 0) < 15000) return;
-    this._revisado = Date.now();
+    if (this.diaViejo() && !Nube.pendientes() && !Modal.abierto()) { location.reload(); return; }
+    /* Sin el SQL 015 se trae todo, como antes: solo al volver a la pestaña y
+       como mucho cada 15 segundos */
+    if (this.sinCambios && (!regreso || Date.now() - (this._revisado || 0) < 15000)) return;
+    if (!this.seguro()) return;
     this._revisando = true;
     try {
-      const filas = await this.traer();
-      if (this.ocupado || Modal.abierto() || this.cambios().n) return;
-      const r = Mapa.aDatos(filas), f = this._fotos(Mapa.aFilas(r.datos, r.config));
-      const igual = this.ORDEN.every(t => f[t].size === (this.ultimo[t] || new Map()).size &&
-        Array.from(f[t]).every(([id, par]) => this.ultimo[t].get(id) === par[0]));
-      if (igual) return;
-      Mapa.poner(r);
-      Nube.conocerDeDatos();
-      this._fijarTodo();
-      Comparendos.alDia();
-      Router.pintar(true);
-      Guardadas.aplicar().then(n => { if (n) Router.pintar(true); });
+      let pintar = false;
+      if (this.sinCambios) {
+        this._revisado = Date.now();
+        pintar = await this.revisarTodo();
+      } else if (!this.desde) {
+        /* No se supo la hora al entrar (sin internet): se trae todo una vez */
+        const hora = await this.horaNube();
+        if (hora && !this.sinCambios) { pintar = await this.revisarTodo(); this.desde = hora; }
+      } else {
+        const r = await Nube._pedir('rpc/flota_cambios', { method: 'POST', publico: true, body: JSON.stringify({ desde: this.desde }) });
+        if (!r || !r.ahora) return;
+        /* Llegó mientras alguien empezaba a escribir o a guardar: se pregunta
+           otra vez la próxima vuelta, desde la misma hora */
+        if (!this.seguro()) return;
+        const filas = r.filas || {}, borrados = r.borrados || [];
+        if (Object.keys(filas).length || borrados.length) pintar = this.ponerCambios(filas, borrados);
+        /* Los preoperacionales que mandan los conductores se vuelven a traer */
+        if (r.preop) { Novedades.olvidar(); Object.values(Preop.cache).forEach(c => { c.t = 0; }); pintar = true; }
+        if (r.formato && !Preop.borrador) { Preop.formato = null; pintar = true; }
+        this.desde = this.conMargen(r.ahora);
+      }
+      if (pintar) {
+        Router.pintar(true);
+        Guardadas.aplicar().then(n => { if (n && this.seguro()) Router.pintar(true); });
+      }
     } catch (e) {
-      if (e.sesion) Sesion.recuperar();
+      if (this.faltaFuncion(e)) this.sinCambios = true;
+      else if (e.sesion) Sesion.recuperar();
     } finally { this._revisando = false; }
+  },
+  /* Todo de la nube, comparado con lo que hay */
+  async revisarTodo() {
+    const filas = await this.traer();
+    if (!this.seguro()) return false;
+    this.guardarCrudas(filas);
+    return this.ponerDatos(Mapa.aDatos(filas));
+  },
+  /* Lo que cambió en la nube, sobre las filas que ya se tenían. Primero lo
+     borrado: así, una fila borrada y vuelta a crear queda. */
+  ponerCambios(filas, borrados) {
+    borrados.forEach(b => { const m = this.crudas[b.tabla]; if (m) m.delete(b.id); });
+    Object.keys(filas).forEach(t => {
+      const m = this.crudas[t], k = this.CLAVE[t] || 'id';
+      if (m) filas[t].forEach(f => m.set(f[k], f));
+    });
+    const todas = {};
+    this.ORDEN.forEach(t => { todas[t] = Array.from((this.crudas[t] || new Map()).values()); });
+    return this.ponerDatos(Mapa.aDatos(todas));
+  },
+  /* Los datos nuevos, si son distintos a los de la plataforma (lo que se guardó
+     desde aquí vuelve igual, y no se pinta). Dice si cambió algo. */
+  ponerDatos(r) {
+    const f = this._fotos(Mapa.aFilas(r.datos, r.config));
+    const igual = this.ORDEN.every(t => f[t].size === (this.ultimo[t] || new Map()).size &&
+      Array.from(f[t]).every(([id, par]) => this.ultimo[t].get(id) === par[0]));
+    if (igual) return false;
+    Mapa.poner(r);
+    Guardadas.reponer();
+    Nube.conocerDeDatos();
+    this._fijarTodo();
+    Comparendos.alDia();
+    return true;
+  },
+  /* La próxima pregunta a la nube: en «ms», y después según si alguien la usa */
+  programar(ms, regreso) {
+    clearTimeout(this._reloj);
+    this._reloj = setTimeout(async () => {
+      try { await this.revisar(regreso); } catch (e) { /* se intenta la próxima vez */ }
+      this.programar(Date.now() - this._actividad > this.QUIETA ? this.LENTA : this.RAPIDA);
+    }, ms);
   },
   vigilar() {
     this.activo = true;
@@ -10954,11 +11090,22 @@ const Sincro = {
     /* Abierta toda la noche sin tocarla: al cambiar el día se recarga sola */
     setInterval(() => { if (this.diaViejo() && !this.pendiente() && !Modal.abierto()) location.reload(); }, 10 * 60000);
     ['click', 'change', 'input', 'drop', 'keyup'].forEach(ev => document.addEventListener(ev, () => { this.sucio = true; }, true));
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') this.ciclo(true); else this.revisar(); });
-    window.addEventListener('focus', () => this.revisar());
+    /* Quién la usa: el mouse, el teclado o el dedo. Si estaba quieta y alguien
+       la toca, se pregunta enseguida. */
+    const usar = () => {
+      const quieta = Date.now() - this._actividad > this.QUIETA;
+      this._actividad = Date.now();
+      if (quieta) this.programar(800, true);
+    };
+    const tocar = () => { this._toque = Date.now(); usar(); };
+    ['pointermove', 'touchmove'].forEach(ev => window.addEventListener(ev, usar, { capture: true, passive: true }));
+    ['pointerdown', 'keydown', 'wheel', 'scroll', 'touchstart'].forEach(ev => window.addEventListener(ev, tocar, { capture: true, passive: true }));
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') this.ciclo(true); else this.programar(300, true); });
+    window.addEventListener('focus', () => this.programar(300, true));
     window.addEventListener('online', () => { this.espera = 0; this.ciclo(true); Nube._trabajar(); });
     /* Si queda algo sin subir, el navegador pregunta antes de cerrar */
     window.addEventListener('beforeunload', e => { if (this.pendiente()) { e.preventDefault(); e.returnValue = ''; } });
+    this.programar(this.RAPIDA);
   },
   /* El aviso de arriba: guardado, guardando o pendiente */
   pintarEstado() {
