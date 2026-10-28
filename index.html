@@ -527,6 +527,11 @@ html.arrastrando .uh-soltar{display:flex}
 .uh-sz span{font-size:11.5px;opacity:.85;line-height:1.3}
 .uh-sz.over{background:rgba(32,68,154,.9);border-style:solid;border-color:#fff}
 .lic-vista.over{outline:2px dashed var(--accent);outline-offset:3px;background:var(--accent-soft)}
+/* La firma del responsable de flota en Configuración, sobre blanco como en el papel */
+.firma-cfg{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.firma-cfg-img{width:260px;height:110px;border:1px dashed var(--border-strong);border-radius:10px;background:#fff;display:grid;place-items:center;padding:8px}
+.firma-cfg-img img{max-width:100%;max-height:100%;display:block}
+.firma-cfg-img.over{outline:2px dashed var(--accent);outline-offset:3px}
 /* La lupa de las imágenes vistas en grande (ver Lupa): el marco recorta la
    imagen acercada, que se recorre con el mouse */
 .lupa{display:inline-block;position:relative;overflow:hidden;line-height:0;max-width:100%;border-radius:8px;box-shadow:var(--sh-2);cursor:zoom-in}
@@ -934,10 +939,15 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .dp-foto img{width:100%;height:58mm;object-fit:cover;display:block}
 .dp-foto figcaption{font-size:8pt;padding:1.2mm 2mm;border-top:.6px solid #c3cfe9;background:#edf1fb;color:#193680}
 .dp-vacio{border:1.2px solid #193680;border-top:0;padding:3mm;font-size:8.5pt;color:#4e5d6b}
-.dp-sign{margin-top:16mm;display:flex;gap:14mm;justify-content:space-between}
+.dp-sign{margin-top:4mm;display:flex;gap:14mm;justify-content:space-between}
 .dp-sign div{flex:1;text-align:center;font-size:8pt;color:#4e5d6b}
+/* El espacio para firmar, sobre la línea: ahí va la firma del responsable de
+   flota, un poco montada sobre la línea, como firmada a mano */
+.dp-sign .dp-firma{height:14mm;display:flex;align-items:flex-end;justify-content:center}
+.dp-firma img{max-height:17mm;max-width:58mm;margin-bottom:-3mm;display:block}
 .dp-sign .ln{border-top:1px solid #1b2430;margin-bottom:1.5mm}
 .dp-sign b{display:block;font-size:8.5pt;color:#1b2430}
+.dp-sign .dp-rol{display:block;font-size:7.5pt;margin-top:.4mm}
 .dp-foot{margin-top:8mm;border-top:.8px solid #c3cfe9;padding-top:2mm;font-size:6.5pt;color:#6b7c8c;display:flex;justify-content:space-between;gap:8px}
 .dp-foot b{color:#132966}
 /* Hoja de vida con el formato SST-FRT-026 del ingeniero anterior, con los
@@ -1009,7 +1019,9 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .doc-hv .sst-fig figcaption{font-size:7pt;padding:.8mm 2mm}
 .doc-hv .dp-tbl th{padding:1mm 2mm;font-size:7pt}
 .doc-hv .dp-tbl td{padding:.8mm 2mm;font-size:8pt}
-.doc-hv .dp-sign{margin-top:11mm}
+.doc-hv .dp-sign{margin-top:3mm}
+.doc-hv .dp-sign .dp-firma{height:12mm}
+.doc-hv .dp-firma img{max-height:15mm}
 .doc-hv .dp-foot{margin-top:4mm}
 /* Para medirla, como sale en la hoja: sin el margen de la vista previa */
 .doc-page.hv-medir{padding:0 10mm;min-height:0}
@@ -2641,7 +2653,10 @@ const Config = {
   /* Los planos de mantenimiento: solo lo que se cambió en Configuración (el
      dibujo de cada clase, las partes de cada dibujo y la parte de cada
      pregunta del preoperacional). Vacío: los de siempre (ver PLANOS). */
-  planos: {}
+  planos: {},
+  /* Quien firma los formatos como responsable de flota: nombre, cédula,
+     profesión y su firma en el depósito (ver Firma). Se llena en Configuración. */
+  responsable: {}
 };
 /* La hoja de vida de cada tipo de unidad, con las secciones de los formatos
    del ingeniero anterior (código SST-FRT-026). Los vehículos de carga y la
@@ -3506,6 +3521,119 @@ const Compresor = {
   }
 };
 
+/* La firma del responsable de flota (Juan, 28/10/2026). Sus datos van en la
+   configuración (Config.responsable) y la imagen en el depósito privado,
+   nunca en este archivo, que cualquiera puede bajar de la página. Sale sobre
+   la línea de «Responsable de flota» en los formatos impresos (ver
+   Formatos.firmas) y se carga en Configuración. */
+const Firma = {
+  CLAVE: 'firma:responsable',
+  datos: () => Config.responsable || {},
+  /* La imagen ya en este equipo, si es la vigente */
+  url() {
+    const f = this.datos().firma, v = f && Archivos.vigente(this.CLAVE, f.ts);
+    return v ? v.url : null;
+  },
+  /* Se baja al entrar y cuando cambia: pesa poco, y así siempre sale al imprimir */
+  async traer() {
+    const f = this.datos().firma;
+    if (!f || this.url()) return false;
+    const b = await Archivos.traer(this.CLAVE).catch(() => null);
+    if (!b) return false;
+    Archivos.registrar(this.CLAVE, b, 'Firma del responsable de flota', undefined, f.ts);
+    return true;
+  },
+  /* La imagen que se sube: en PNG para que el fondo quede transparente, sin
+     bordes vacíos y de máximo 800 px de ancho. Si viene sobre papel blanco,
+     el blanco se quita. */
+  async preparar(file) {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 800 / bmp.width), W = Math.max(1, Math.round(bmp.width * k)), H = Math.max(1, Math.round(bmp.height * k));
+    const c = document.createElement('canvas');
+    c.width = W;
+    c.height = H;
+    const g = c.getContext('2d');
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(bmp, 0, 0, W, H);
+    if (bmp.close) bmp.close();
+    const img = g.getImageData(0, 0, W, H), d = img.data;
+    let opaca = true;
+    for (let i = 3; i < d.length; i += 4) if (d[i] < 250) { opaca = false; break; }
+    if (opaca) for (let i = 0; i < d.length; i += 4) {
+      const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      d[i + 3] = l > 225 ? 0 : l > 160 ? Math.round(255 * (225 - l) / 65) : 255;
+    }
+    let x0 = W, y0 = H, x1 = -1, y1 = -1;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (d[(y * W + x) * 4 + 3] > 16) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 < 0) throw new Error('La imagen está vacía');
+    g.putImageData(img, 0, 0);
+    const out = document.createElement('canvas');
+    out.width = x1 - x0 + 1;
+    out.height = y1 - y0 + 1;
+    out.getContext('2d').drawImage(c, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+    return new Promise(ok => out.toBlob(ok, 'image/png'));
+  },
+  /* La tarjeta de Configuración: los datos y la firma. Guardar se prende solo
+     si algo cambió. */
+  montar() {
+    const caja = $('#cfgResp');
+    if (!caja) return;
+    const r = this.datos();
+    const est = { nombre: r.nombre || '', cedula: r.cedula || '', profesion: r.profesion || '', nueva: null, quitar: false };
+    const cambio = () => est.nombre !== (r.nombre || '') || est.cedula !== (r.cedula || '') || est.profesion !== (r.profesion || '') ||
+      Boolean(est.nueva) || (est.quitar && Boolean(r.firma));
+    const campo = (id, l, v, ph) => '<div class="field"><label>' + l + '</label><input class="inp" id="' + id + '" value="' + attr(v) + '" placeholder="' + attr(ph) + '"></div>';
+    const pintar = () => {
+      const hay = Boolean(est.nueva || (!est.quitar && r.firma)), url = est.nueva ? est.nueva.url : hay ? this.url() : null;
+      caja.innerHTML = '<div class="grid g3" style="gap:0 14px">' + campo('frN', 'Nombre completo', est.nombre, 'Como sale bajo la firma') +
+          campo('frC', 'Cédula', est.cedula, 'Solo el número') + campo('frP', 'Profesión', est.profesion, 'Ej.: Ingeniero industrial') + '</div>' +
+        '<div class="field mb0"><label>Firma</label>' + (hay
+          ? '<div class="firma-cfg"><div class="firma-cfg-img" title="Arrastre aquí otra firma para cambiarla">' +
+              (url ? '<img src="' + attr(url) + '" alt="Firma">' : '<span class="spin"></span>') + '</div>' +
+            '<div class="flex g8"><label class="btn btn-sm" style="cursor:pointer">' + Icon('refresh', '', 12) + 'Cambiar' +
+              '<input type="file" accept="image/*" hidden id="frInp"></label>' +
+            '<button type="button" class="btn btn-sm btn-ghost t-dang" id="frQuitar">' + Icon('trash', '', 12) + 'Quitar</button></div></div>'
+          : Dz.html('frDz', 'Arrastre aquí la imagen de la firma', 'Mejor en PNG con fondo transparente; si es una foto sobre papel blanco, el blanco se quita solo',
+              'image/*', false)) + '</div>' +
+        '<div class="flex aic jcsb mt12" style="gap:12px;flex-wrap:wrap"><span class="txt-3 fs12">Sale sobre la línea de «Responsable de flota» en la hoja de vida, ' +
+          'el correctivo, la orden de compra y el informe de comparendos.</span>' +
+          '<button type="button" class="btn btn-primary" id="frGuardar"' + (cambio() ? '' : ' disabled') + '>' + Icon('save', '', 14) + 'Guardar</button></div>';
+      const boton = $('#frGuardar', caja);
+      [['frN', 'nombre'], ['frC', 'cedula'], ['frP', 'profesion']].forEach(([id, k]) =>
+        $('#' + id, caja).addEventListener('input', e => { est[k] = e.target.value; boton.disabled = !cambio(); }));
+      const recibir = files => {
+        const f = files[0];
+        if (!f || !/^image\//.test(f.type)) { Toast.show('La firma tiene que ser una imagen, PNG o JPG.', 'err'); return; }
+        this.preparar(f).then(blob => { est.nueva = { blob, url: URL.createObjectURL(blob) }; est.quitar = false; pintar(); })
+          .catch(() => Toast.show('No se pudo leer esa imagen. Pruebe con un PNG.', 'err'));
+      };
+      if (hay) {
+        $('#frInp', caja).addEventListener('change', e => recibir(Array.from(e.target.files)));
+        $('#frQuitar', caja).addEventListener('click', () => { est.nueva = null; est.quitar = true; pintar(); });
+        Dz.encima($('.firma-cfg-img', caja), f => recibir([f]));
+      } else Dz.bind('frDz', recibir);
+      boton.addEventListener('click', () => this.guardar(est));
+    };
+    pintar();
+    if (r.firma && !this.url()) this.traer().then(ok => { if (ok && document.body.contains(caja) && !est.nueva && !est.quitar) pintar(); });
+  },
+  guardar(est) {
+    const r = this.datos();
+    let firma = est.quitar ? null : r.firma || null;
+    if (est.nueva) {
+      firma = { ts: marca(), mime: 'image/png', tam: est.nueva.blob.size };
+      Archivos.registrar(this.CLAVE, est.nueva.blob, 'Firma del responsable de flota', undefined, firma.ts);
+      Nube.subir(this.CLAVE, est.nueva.blob, { ts: firma.ts });
+    } else if (est.quitar && r.firma) Nube.quitar(this.CLAVE);
+    Config.responsable = { nombre: est.nombre.trim(), cedula: est.cedula.trim(), profesion: est.profesion.trim(), firma };
+    Sincro.tocar();
+    Toast.show('Quedó guardado. Así sale el responsable de flota en los formatos que se imprimen.');
+    Router.pintar(true);
+  }
+};
+
 /* Archivos que se adjuntan: se preparan según la política y se pueden abrir
    en el visor mientras la página esté abierta */
 /* La primera página de un PDF como imagen, para que una tarjeta adjuntada en
@@ -3882,6 +4010,7 @@ const Persistencia = {
     Datos.accidentes.forEach(a => ver(a.archivoId));
     Datos.ocs.forEach(o => ver(o.cotizacionId));
     Datos.actividad.forEach(a => (a.adjuntos || []).forEach(x => ver(x.id)));
+    if (Firma.datos().firma) usados.add(Firma.CLAVE);
     return usados;
   },
   /* Borra del depósito los archivos que ya nada usa: los de unidades
@@ -6318,8 +6447,18 @@ const Formatos = {
     return '<div class="dp-fields">' + pares.map(p => '<div class="dp-f"><label>' + esc(p[0]) + '</label><span>' + esc(p[1]) + '</span></div>').join('') + '</div>';
   },
   sec(t, html, cls) { return '<div class="dp-sec' + (cls ? ' ' + cls : '') + '"><div class="dp-sec-t">' + esc(t) + '</div>' + html + '</div>'; },
+  /* La firma del responsable de flota sale sobre su línea, con su nombre,
+     cédula y profesión (ver Firma); las demás quedan para firmar a mano */
   firmas(lista) {
-    return '<div class="dp-sign">' + lista.map(f => '<div' + (lista.length === 1 ? ' style="max-width:75mm"' : '') + '><div class="ln"></div><b>' + esc(f[0]) + '</b>' + esc(f[1]) + '</div>').join('') + '</div>';
+    const r = Firma.datos(), img = Firma.url();
+    return '<div class="dp-sign">' + lista.map(f => {
+      const resp = f[0] === 'Responsable de flota' && r.nombre;
+      return '<div' + (lista.length === 1 ? ' style="max-width:75mm"' : '') + '><div class="dp-firma">' +
+        (resp && img ? '<img src="' + attr(img) + '" alt="Firma de ' + attr(r.nombre) + '">' : '') + '</div><div class="ln"></div>' +
+        (resp ? '<b>' + esc(r.nombre) + '</b>' + esc([r.cedula ? 'C.C. ' + r.cedula : '', r.profesion].filter(Boolean).join(' · ')) +
+            '<span class="dp-rol">' + esc(f[0] + ' · ' + f[1]) + '</span>'
+          : '<b>' + esc(f[0]) + '</b>' + esc(f[1])) + '</div>';
+    }).join('') + '</div>';
   },
   pie(txt) {
     return '<div class="dp-foot"><span><b>' + esc(txt) + '</b></span><span>Generado por el Sistema de Gestión de Flota de SINUGRAVAS S.A.S. · flota.sinugravas.com</span></div>';
@@ -6757,6 +6896,8 @@ Object.assign(Vistas, {
           '<div class="txt-3 fs12 mt8">' + (ultima ? 'Última copia descargada el ' + esc(Fecha.larga(ultima)) + '.' : 'Todavía no ha descargado ninguna copia.') + '</div>',
           { sub: 'En la nube', cls: 'mb16' });
       })() +
+      /* Quien firma los formatos (ver Firma) */
+      UI.card('Responsable de flota', '<div id="cfgResp"></div>', { cls: 'mb16', sub: 'Su firma y sus datos salen en los formatos que se imprimen' }) +
       '<div class="grid g2">' +
         UI.card('Por confirmar con el ingeniero', '<ul class="ul-check ul-q">' + [
           '¿A la maquinaria y a los remolques también se les revisan comparendos?'
@@ -6772,6 +6913,7 @@ Object.assign(Vistas, {
       despues: () => {
         PlanoCfg.montar();
         Espacio.montar();
+        Firma.montar();
         $('#cfgDias').addEventListener('change', e => {
           const v = Math.max(1, Math.min(120, Math.round(+e.target.value) || 30));
           Config.diasAviso = v;
@@ -10520,6 +10662,7 @@ const Nube = {
   /* La versión de un archivo que se reemplaza con la misma clave (la foto, su
      miniatura y la tarjeta): la marca de cuando se subió. Los demás no cambian. */
   version(clave) {
+    if (clave === Firma.CLAVE) { const f = Firma.datos().firma; return f && f.ts != null ? String(f.ts) : ''; }
     const m = /^(foto|mini|licencia):(.+)$/.exec(clave), u = m && Datos.unidades.find(x => x.id === m[2]);
     const info = u && (m[1] === 'licencia' ? u.licenciaInfo : u.fotoInfo);
     return info && info.ts != null ? String(info.ts) : '';
@@ -10838,6 +10981,8 @@ const Mapa = {
     poner('configuracion', { clave: 'documentos_obligatorios', valor: config.req });
     poner('configuracion', { clave: 'comparendos', valor: config.comparendos });
     poner('configuracion', { clave: 'planos', valor: config.planos || {} });
+    /* Solo cuando ya se llenó: crearlo vacío pediría el permiso de configurar */
+    if (Object.keys(config.responsable || {}).length) poner('configuracion', { clave: 'responsable', valor: config.responsable });
     return f;
   },
 
@@ -10904,7 +11049,8 @@ const Mapa = {
       diasAviso: cfg.dias_aviso != null ? cfg.dias_aviso : Config.diasAviso,
       req: cfg.documentos_obligatorios || Config.req,
       comparendos: cfg.comparendos || Config.comparendos,
-      planos: cfg.planos && typeof cfg.planos === 'object' ? cfg.planos : Config.planos || {}
+      planos: cfg.planos && typeof cfg.planos === 'object' ? cfg.planos : Config.planos || {},
+      responsable: cfg.responsable && typeof cfg.responsable === 'object' ? cfg.responsable : {}
     };
     return { datos: d, config };
   },
@@ -11169,6 +11315,8 @@ const Sincro = {
     Nube.conocerDeDatos();
     this._fijarTodo();
     Comparendos.alDia();
+    /* Si en otro equipo cambiaron la firma del responsable, se trae la nueva */
+    Firma.traer();
     return true;
   },
   /* La próxima pregunta a la nube: en «ms», y después según si alguien la usa */
@@ -11383,8 +11531,10 @@ const Arranque = {
     Router.pintar();
     Sincro.vigilar();
     Sincro.pintarEstado();
-    /* Las fotos llegan un instante después de los datos */
+    /* Las fotos llegan un instante después de los datos; la firma del
+       responsable, para los formatos que se imprimen */
     Guardadas.aplicar().then(n => { if (n) Router.pintar(true); });
+    Firma.traer();
   }
 };
 
