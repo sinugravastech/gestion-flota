@@ -978,8 +978,8 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .sst-fotos{padding:3mm}
 .sst-fila{display:flex;gap:3mm;break-inside:avoid}
 .sst-fila + .sst-fila{margin-top:3mm}
-/* Cuántas fotos por fila (--cols) y su alto (--foto-h) los pone la hoja de vida */
-.sst-fila .sst-fig{flex:0 0 calc((100% - (var(--cols, 2) - 1) * 3mm) / var(--cols, 2));min-width:0}
+/* Dos fotos por fila; su alto (--foto-h) lo pone la hoja de vida */
+.sst-fila .sst-fig{flex:0 0 calc(50% - 1.5mm);min-width:0}
 .sst-fig{margin:0;border:.6px solid #c3cfe9;break-inside:avoid;display:flex;flex-direction:column}
 .sst-img{height:var(--foto-h, 62mm);display:flex;align-items:center;justify-content:center;background:#fff;padding:1mm}
 .sst-img img{max-width:100%;max-height:100%;object-fit:contain;display:block}
@@ -3155,15 +3155,16 @@ const HojaVida = {
   /* Lo que sale en el registro fotográfico impreso: la foto de la unidad, la
      tarjeta y el VIN (si están en PDF, su primera página) y las fotos del
      registro */
+  /* Siempre en el mismo orden, de dos en dos (Juan, 27/10/2026): arriba la
+     foto de la unidad y la tarjeta; debajo, la segunda foto (la primera del
+     registro) y el VIN; después, las demás fotos del registro. Lo que falte
+     no deja hueco. */
   fotosImpresas(u) {
-    const out = [];
-    if (u.foto) out.push({ src: u.foto, txt: 'Foto ' + this.deLa(u) });
-    [this.tarjeta(u), this.vin(u)].forEach(t => {
-      if (t) out.push(!t.pdf ? { src: t.url, txt: t.txt } : { src: PdfImagen.hechas.get(t.url), txt: t.txt,
-        aviso: PdfImagen.fallos.has(t.url) ? 'No se pudo pasar el PDF a imagen. Revise la conexión a internet.' : 'Preparando la imagen…' });
-    });
-    (u.registro || []).forEach(f => out.push({ src: f.url, txt: f.txt || 'Foto del registro' }));
-    return out;
+    const doc = t => !t ? null : !t.pdf ? { src: t.url, txt: t.txt } : { src: PdfImagen.hechas.get(t.url), txt: t.txt,
+      aviso: PdfImagen.fallos.has(t.url) ? 'No se pudo pasar el PDF a imagen. Revise la conexión a internet.' : 'Preparando la imagen…' };
+    const reg = (u.registro || []).map(f => ({ src: f.url, txt: f.txt || 'Foto del registro' }));
+    return [u.foto ? { src: u.foto, txt: 'Foto ' + this.deLa(u) } : null, doc(this.tarjeta(u)), reg[0], doc(this.vin(u))]
+      .concat(reg.slice(1)).filter(Boolean);
   },
   /* En la ficha: las fotos del registro con lo que muestran, y un cuadro para
      agregar más (clic o arrastrando varias) */
@@ -4131,7 +4132,10 @@ const Imprimir = {
        primera fila (un remolque, por ejemplo), las fotos empiezan ahí; si no,
        la segunda parte empieza en hoja nueva;
      · si lo que va en la segunda hoja no cabe, las fotos se achican lo que
-       haga falta (hasta 22 mm de alto). */
+       haga falta, hasta 30 mm de alto; si ni así, las últimas fotos del
+       registro se quedan en la plataforma, con una nota. Las dos primeras
+       filas (la foto, la tarjeta, la segunda foto y el VIN) siempre salen:
+       si solo con ellas tampoco cabe, se achican hasta 22 mm. */
   enDosHojas(doc) {
     const caja = document.createElement('div');
     caja.style.cssText = 'position:fixed;left:-10000px;top:0;width:215.9mm;visibility:hidden';
@@ -4145,10 +4149,22 @@ const Imprimir = {
       const reg = h2.querySelector('.sst-sec'), fila1 = h2.querySelector('.sst-fila');
       const arranque = !reg ? 0 : fila1 ? mm(fila1.getBoundingClientRect().bottom - reg.getBoundingClientRect().top) : alto(reg);
       const seguir = alto(h1) + arranque + 3 <= this.UTIL_HV;
-      const fotos = h2.querySelector('.sst-fotos'), filas = h2.querySelectorAll('.sst-fila').length;
-      const sobra = alto(h2) - (seguir ? arranque : 0) - this.UTIL_HV;
-      if (sobra > 0 && fotos && filas) {
-        fotos.style.setProperty('--foto-h', Math.max(22, alto(fotos.querySelector('.sst-img')) - sobra / filas).toFixed(1) + 'mm');
+      const fotos = h2.querySelector('.sst-fotos'), filas = Array.from(h2.querySelectorAll('.sst-fila'));
+      const exceso = () => alto(h2) - (seguir ? arranque : 0) - this.UTIL_HV, sobra = exceso();
+      if (sobra > 0 && fotos && filas.length) {
+        const img = () => alto(fotos.querySelector('.sst-img')), poner = h => fotos.style.setProperty('--foto-h', h.toFixed(1) + 'mm');
+        poner(Math.max(30, img() - sobra / filas.length));
+        /* Con el espacio de la nota de las que no salen */
+        let quedan = 0;
+        while (filas.length > 2 && exceso() > -6) { const f = filas.pop(); quedan += f.querySelectorAll('.sst-fig').length; f.remove(); }
+        if (quedan) {
+          fotos.insertAdjacentHTML('beforeend', '<div class="sst-vacio">Hay ' + quedan + ' foto(s) más en la plataforma.</div>');
+          /* Las que salen aprovechan el espacio de las que no */
+          const libre = -exceso();
+          if (libre > 0) poner(Math.min([75, 58, 45, 36][filas.length - 1] || 30, img() + libre / filas.length));
+        }
+        const resto = exceso();
+        if (resto > 0) poner(Math.max(22, img() - resto / filas.length));
       }
       if (!seguir) h2.classList.add('hv-salto');
       pagina.classList.remove('hv-medir');
@@ -6394,12 +6410,11 @@ const Formatos = {
     const req = Config.req[u.tipo] || [];
     const ms = Datos.mantenimientos.filter(m => m.unidad === u.id).sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 6);
     const sec = (t, html, cls) => '<div class="sst-sec' + (cls ? ' ' + cls : '') + '"><div class="sst-sec-t">' + esc(t) + '</div>' + html + '</div>';
-    /* Las fotos, del tamaño que deja caber todo en la segunda hoja: dos por
-       fila hasta cuatro fotos, tres hasta nueve y cuatro hasta doce. Las demás
-       se ven en la plataforma. */
-    const todas = HojaVida.fotosImpresas(u), fotos = todas.slice(0, 12);
-    const cols = fotos.length <= 4 ? 2 : fotos.length <= 9 ? 3 : 4, nFilas = Math.ceil(fotos.length / cols);
-    const altoFoto = cols === 2 ? (nFilas === 1 ? 75 : 58) : cols === 3 ? (nFilas <= 2 ? 50 : 38) : 34;
+    /* Las fotos, de dos en dos y en su orden (ver HojaVida.fotosImpresas), del
+       tamaño que deja caber todo en la segunda hoja. Antes de imprimir se
+       miden otra vez (ver Imprimir.enDosHojas). */
+    const fotos = HojaVida.fotosImpresas(u), nFilas = Math.ceil(fotos.length / 2);
+    const altoFoto = [75, 58, 45, 36][nFilas - 1] || 30;
     const secciones = HojaVida.secciones(u).map(s => {
       const cols = Math.min(4, s.campos.length), resto = s.campos.length % cols;
       return sec(s.t, '<div class="sst-g" style="grid-template-columns:repeat(' + cols + ',1fr)">' + s.campos.map((c, i) =>
@@ -6420,13 +6435,12 @@ const Formatos = {
       secciones + dotacion + '</div><div class="hv-hoja2">' +
       /* Las fotos van por filas: la sección se puede partir entre hojas, pero
          solo entre filas */
-      sec('Registro fotográfico', fotos.length ? '<div class="sst-fotos" style="--cols:' + cols + ';--foto-h:' + altoFoto + 'mm">' + fotos.reduce((filas, f, i) => {
+      sec('Registro fotográfico', fotos.length ? '<div class="sst-fotos" style="--foto-h:' + altoFoto + 'mm">' + fotos.reduce((filas, f, i) => {
           const fig = '<figure class="sst-fig"><div class="sst-img">' + (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<span>' + esc(f.aviso) + '</span>') +
             '</div><figcaption>' + esc(f.txt) + '</figcaption></figure>';
-          if (i % cols === 0) filas.push(fig); else filas[filas.length - 1] += fig;
+          if (i % 2 === 0) filas.push(fig); else filas[filas.length - 1] += fig;
           return filas;
-        }, []).map(fila => '<div class="sst-fila">' + fila + '</div>').join('') +
-        (todas.length > fotos.length ? '<div class="sst-vacio">Hay ' + (todas.length - fotos.length) + ' foto(s) más en la plataforma.</div>' : '') + '</div>'
+        }, []).map(fila => '<div class="sst-fila">' + fila + '</div>').join('') + '</div>'
         : '<div class="sst-vacio">Sin fotos registradas.</div>', 'sst-libre') +
       sec('Documentos', '<table class="dp-tbl"><thead><tr><th>Documento</th><th>Archivo</th><th>Vence</th><th>Estado</th></tr></thead><tbody>' +
         (req.length ? req.map(t => {
