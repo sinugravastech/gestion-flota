@@ -113,6 +113,10 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#37454f}
 .sb-item.soon{opacity:.5}
 .sb-item.soon:hover{opacity:.9}
 .sb-foot{padding:8px 10px 10px;border-top:1px solid rgba(255,255,255,.07)}
+/* El camino de vuelta al Panel de control, donde se entra a todas las plataformas */
+.sb-panel{display:flex;align-items:center;gap:10px;padding:6px 10px;margin-bottom:6px;border-radius:var(--radius-sm);
+  color:var(--sidebar-text);font-size:12.5px;font-weight:500;transition:background var(--t-fast),color var(--t-fast)}
+.sb-panel:hover{background:rgba(255,255,255,.06);color:#dfe8ee}
 .sb-user{display:flex;align-items:center;gap:8px;padding:6px 7px;border-radius:8px;background:rgba(255,255,255,.045)}
 .sb-user-ic{flex:0 0 auto;width:24px;height:24px;border-radius:6px;display:grid;place-items:center;
   background:rgba(90,127,208,.2);color:#a9bdf0}
@@ -127,10 +131,12 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#37454f}
   html.sb-mini .sb-logo{width:28px;height:28px}
   html.sb-mini .sb-name,
   html.sb-mini .sb-item > span,
+  html.sb-mini .sb-panel > span,
   html.sb-mini .sb-user-tx,
   html.sb-mini .sb-ver{display:none}
   html.sb-mini .sb-sec{font-size:0;height:1px;padding:0;margin:9px 8px;background:rgba(255,255,255,.08)}
-  html.sb-mini .sb-item{justify-content:center;padding:9px 0}
+  html.sb-mini .sb-item,
+  html.sb-mini .sb-panel{justify-content:center;padding:9px 0}
   html.sb-mini .sb-toggle{width:20px;margin-left:0}
   html.sb-mini .sb-toggle .sb-toggle-ic{transform:none}
   html.sb-mini .sb-user{justify-content:center;background:transparent;padding:4px 0}
@@ -1057,6 +1063,9 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .ses-txt{font-size:13px;color:var(--text-2);margin-bottom:14px;line-height:1.55}
 .ses-botones{display:flex;gap:8px;flex-wrap:wrap}
 .ses-botones .btn{flex:1 1 auto;height:36px}
+.ses-panel{text-align:center;margin-top:14px}
+.ses-panel a{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600}
+.ses-panel a:hover{text-decoration:underline}
 /* En el celular, letra de 16 px en las casillas para que el teléfono no acerque la pantalla al escribir */
 @media (max-width:560px){ .ses .inp{font-size:16px} }
 .sb-salir{flex:0 0 auto;display:grid;place-items:center;width:26px;height:26px;padding:0;border:0;border-radius:6px;
@@ -4335,7 +4344,9 @@ const Shell = {
           '<div class="sb-name">SINUGRAVAS<small>Sistema de Gestión de Flota</small></div>' +
           '<button class="sb-toggle" data-act="mini" title="Contraer o expandir el menú" aria-label="Contraer el menú">' + Icon('chevR', 'sb-toggle-ic', 15) + '</button></div>' +
         '<nav class="sb-nav" id="sbnav"></nav>' +
-        '<div class="sb-foot"><div class="sb-user"><div class="sb-user-ic">' + Icon('user', '', 13) + '</div>' +
+        '<div class="sb-foot"><a class="sb-panel" href="' + attr(PANEL_URL) + '" title="Volver al Panel de control">' +
+          Icon('back', 'sb-ico', 17) + '<span>Panel de control</span></a>' +
+          '<div class="sb-user"><div class="sb-user-ic">' + Icon('user', '', 13) + '</div>' +
           '<div class="sb-user-tx"><div class="sb-user-co" title="' + attr(Cuenta.correo) + '">' + esc(Cuenta.correo || 'Sesión iniciada') + '</div>' +
           '<div class="sb-user-es">' + esc(Cuenta.rolTxt()) + '</div></div>' +
           '<button class="sb-salir" data-act="cerrarSesion" title="Cerrar sesión" aria-label="Cerrar sesión">' + Icon('salir', '', 15) + '</button></div>' +
@@ -6448,7 +6459,8 @@ const Formatos = {
   },
   sec(t, html, cls) { return '<div class="dp-sec' + (cls ? ' ' + cls : '') + '"><div class="dp-sec-t">' + esc(t) + '</div>' + html + '</div>'; },
   /* La firma del responsable de flota sale sobre su línea, con su nombre,
-     cédula y profesión (ver Firma); las demás quedan para firmar a mano */
+     cédula y profesión (ver Firma); las demás quedan para firmar a mano.
+     Bajo la firma del responsable no va «Elaboró» (Juan, 28/10/2026). */
   firmas(lista) {
     const r = Firma.datos(), img = Firma.url();
     return '<div class="dp-sign">' + lista.map(f => {
@@ -6456,12 +6468,12 @@ const Formatos = {
       return '<div' + (lista.length === 1 ? ' style="max-width:75mm"' : '') + '><div class="dp-firma">' +
         (resp && img ? '<img src="' + attr(img) + '" alt="Firma de ' + attr(r.nombre) + '">' : '') + '</div><div class="ln"></div>' +
         (resp ? '<b>' + esc(r.nombre) + '</b>' + esc([r.cedula ? 'C.C. ' + r.cedula : '', r.profesion].filter(Boolean).join(' · ')) +
-            '<span class="dp-rol">' + esc(f[0] + ' · ' + f[1]) + '</span>'
+            '<span class="dp-rol">' + esc(f[1] && f[1] !== 'Elaboró' ? f[0] + ' · ' + f[1] : f[0]) + '</span>'
           : '<b>' + esc(f[0]) + '</b>' + esc(f[1])) + '</div>';
     }).join('') + '</div>';
   },
   pie(txt) {
-    return '<div class="dp-foot"><span><b>' + esc(txt) + '</b></span><span>Generado por el Sistema de Gestión de Flota de SINUGRAVAS S.A.S. · flota.sinugravas.com</span></div>';
+    return '<div class="dp-foot"><span><b>' + esc(txt) + '</b></span><span>Generado por el Sistema de Gestión de Flota de SINUGRAVAS S.A.S.</span></div>';
   },
 
   /* El historial de una visita al taller, con una foto por cambio */
@@ -10391,6 +10403,28 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
 })();
 
 /* ==========================================================================
+   §N0  EL PASE DEL PANEL DE CONTROL — en https://panel.sinugravas.com se
+        entra una sola vez. Al darle «Entrar» a Flota, el panel la abre en
+        otra pestaña con «#pase=…»: un enlace mágico de Supabase que sirve una
+        sola vez y vence solo. Se lee aquí, antes de todo, y se borra de la
+        barra. Esa pestaña queda «del panel»: su sesión vive solo en ella (ver
+        Nube.sesion) y se acaba al cerrarla. El pase no se guarda ni se manda
+        a ningún otro lado. El formulario de los conductores no lo usa.
+   ========================================================================== */
+const PANEL_URL = 'https://panel.sinugravas.com';
+const PASE = (() => {
+  if (new URLSearchParams(location.search).has('preoperacional')) return null;
+  const m = /(?:^#|&)pase=([^&]+)/.exec(location.hash);
+  if (!m) return null;
+  /* Fuera de la barra y del historial; el enrutador ve la dirección limpia */
+  history.replaceState(null, '', location.pathname + location.search);
+  try { sessionStorage.setItem('panel.pestana', Date.now().toString(36) + Math.random().toString(36).slice(2, 10)); } catch (e) { /* sin almacenamiento: la sesión va como siempre */ }
+  try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+})();
+const PESTANA = (() => { try { return sessionStorage.getItem('panel.pestana'); } catch (e) { return null; } })();
+const DESDE_PANEL = Boolean(PESTANA);
+
+/* ==========================================================================
    §N  LA NUBE — Supabase: la sesión, las tablas del esquema «flota» y el
        depósito privado de archivos. Se habla directo con su API (fetch), sin
        librerías, para que la plataforma siga siendo un solo archivo.
@@ -10486,13 +10520,20 @@ const Nube = {
   CLAVE_SESION: 'sigf.sesion',
 
   /* ---------------- La sesión ---------------- */
+  /* Dónde vive: en este navegador (localStorage), o solo en esta pestaña
+     (sessionStorage) si llegó del Panel de control. Ahí la llave lleva el id
+     de la pestaña: cada una tiene la suya y una recarga la conserva. */
+  _almacen() {
+    return DESDE_PANEL ? [sessionStorage, this.CLAVE_SESION + '.' + PESTANA] : [localStorage, this.CLAVE_SESION];
+  },
   sesion() {
-    try { return JSON.parse(localStorage.getItem(this.CLAVE_SESION) || 'null'); } catch (e) { return null; }
+    try { const [a, k] = this._almacen(); return JSON.parse(a.getItem(k) || 'null'); } catch (e) { return null; }
   },
   guardarSesion(s) {
     try {
-      if (s) localStorage.setItem(this.CLAVE_SESION, JSON.stringify(s));
-      else localStorage.removeItem(this.CLAVE_SESION);
+      const [a, k] = this._almacen();
+      if (s) a.setItem(k, JSON.stringify(s));
+      else a.removeItem(k);
     } catch (e) { /* sin almacenamiento: la sesión dura lo que la pestaña */ }
     this._memoria = s || null;
   },
@@ -10515,6 +10556,22 @@ const Nube = {
         : 'El servidor no dejó entrar: ' + (j.error_description || j.msg || j.message || 'error ' + r.status) + '.');
     }
     this.guardarSesion(this._sesionDe(j, correo));
+  },
+  /* El pase del Panel de control se cambia por una sesión nueva. Dice 'ok',
+     'red' (no hubo conexión) o 'vencido' (ya se usó, venció o la cuenta está
+     suspendida). */
+  async canjear(pase) {
+    let r;
+    try {
+      r = await this._fetch(NUBE.url + '/auth/v1/verify', {
+        method: 'POST', headers: { apikey: NUBE.llave, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'email', token_hash: pase })
+      }, 20000);
+    } catch (e) { return 'red'; }
+    const j = r.ok ? await r.json().catch(() => null) : null;
+    if (!j || !j.access_token) return 'vencido';
+    this.guardarSesion(this._sesionDe(j));
+    return 'ok';
   },
   async refrescar() {
     const s = this.sesion() || this._memoria;
@@ -11388,6 +11445,8 @@ const Sesion = {
   },
   nota: '<div class="ses-nota">La información vive en el servidor y es la misma desde cualquier equipo.<br>' +
     'Se necesita conexión a internet y una cuenta autorizada.</div>',
+  /* El camino al Panel de control, donde se entra a todas las plataformas */
+  alPanel: '<div class="ses-panel"><a href="' + attr(PANEL_URL) + '">' + Icon('back', '', 13) + 'Panel de control</a></div>',
   /* Pide el correo y la contraseña. Termina cuando hay una sesión válida. */
   pedir(aviso) {
     return new Promise(listo => {
@@ -11404,7 +11463,7 @@ const Sesion = {
           '<div id="sesError"></div>' +
           '<button class="btn btn-primary ses-entrar" type="button" id="sesEntrar">' + Icon('shield', '', 15) + 'Entrar</button>' +
           '<div class="ses-estado" id="sesEstado"><span class="spin"></span>Comprobando el servidor…</div>' +
-        '</div></div>' + this.nota +
+        '</div></div>' + this.alPanel + this.nota +
       '</div></div>';
       const clave = $('#sesClave'), boton = $('#sesEntrar');
       const error = m => { $('#sesError').innerHTML = '<div class="alert a-err" style="padding:9px 11px;margin-bottom:12px">' + Icon('warn', '', 14) + '<div>' + esc(m) + '</div></div>'; };
@@ -11446,7 +11505,9 @@ const Sesion = {
       });
     });
   },
-  /* Entró bien, pero la cuenta todavía no tiene acceso a flota */
+  /* Entró bien, pero la cuenta no tiene acceso a flota. Su sesión ya se
+     cerró: el acceso se pide en el Panel de control y desde allá se vuelve
+     a entrar. Termina cuando escoge entrar con otra cuenta. */
   sinAcceso(acc) {
     return new Promise(listo => {
       const correo = (acc && acc.correo) || Nube.correo();
@@ -11455,18 +11516,13 @@ const Sesion = {
           '<div class="alert a-warn" style="padding:9px 11px;margin-bottom:12px">' + Icon('shield', '', 14) +
             '<div><b>Su cuenta no tiene acceso al Sistema de Gestión de Flota.</b></div></div>' +
           '<p class="ses-txt">Entró bien' + (correo ? ' como <b>' + esc(correo) + '</b>' : '') + ', pero esta cuenta todavía no está autorizada. ' +
-            'Pídale el acceso al administrador. Cuando se lo den, pulse «Volver a comprobar» y entrará sin escribir la contraseña otra vez.</p>' +
+            'Pídale el acceso al administrador en el Panel de control.</p>' +
           '<div class="ses-botones">' +
-            '<button class="btn btn-primary" type="button" id="sesComprobar">' + Icon('refresh', '', 14) + 'Volver a comprobar</button>' +
+            '<a class="btn btn-primary" href="' + attr(PANEL_URL) + '">' + Icon('back', '', 14) + 'Volver al Panel de control</a>' +
             '<button class="btn" type="button" id="sesOtra">' + Icon('salir', '', 14) + 'Entrar con otra cuenta</button></div>' +
         '</div></div>' + this.nota +
       '</div></div>';
-      $('#sesComprobar').onclick = e => {
-        e.currentTarget.disabled = true;
-        e.currentTarget.innerHTML = '<span class="spin"></span>Comprobando…';
-        listo('comprobar');
-      };
-      $('#sesOtra').onclick = async () => { await Nube.salir(); await Cache.vaciar(); listo('otra'); };
+      $('#sesOtra').onclick = async () => { await Cache.vaciar(); listo(); };
     });
   },
   /* Mientras se traen los datos, con el avance */
@@ -11508,13 +11564,25 @@ const Sesion = {
 const Arranque = {
   async iniciar() {
     try {
-      if (!(await Nube.token())) await Sesion.pedir();
+      /* Si llegó del Panel de control, el pase se cambia por la sesión y entra
+         directo. Si no sirve, el ingreso de siempre con el aviso. */
+      let aviso = '';
+      if (PASE) {
+        const r = await Nube.canjear(PASE);
+        if (r === 'red') aviso = 'No hay conexión con el servidor. Revise el internet y vuelva a entrar desde el Panel de control, o ingrese con su contraseña.';
+        else if (r !== 'ok') aviso = 'El enlace del Panel de control ya se usó o venció. Vuelva al panel y entre otra vez, o ingrese con su contraseña.';
+      }
+      if (!(await Nube.token())) await Sesion.pedir(aviso);
       for (;;) {
         let acc;
         try { acc = await Nube.miAcceso(); } catch (e) { Nube.guardarSesion(null); await Sesion.pedir(); continue; }
         Cuenta.poner(acc);
-        if (!acc || (acc.acciones || []).length) break;
-        if ((await Sesion.sinAcceso(acc)) === 'otra') await Sesion.pedir();
+        if (!acc || (acc.activo !== false && (acc.acciones || []).length)) break;
+        /* Sin acceso: se cierra esta sesión (solo la de esta pestaña o de este
+           navegador) y se dice por qué, con el camino al panel */
+        await Nube.salir();
+        await Sesion.sinAcceso(acc);
+        await Sesion.pedir();
       }
       await Sincro.cargar(Sesion.cargando());
       /* Si empezó un mes nuevo, la revisión de comparendos pasa al historial
