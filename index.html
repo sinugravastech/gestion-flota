@@ -630,6 +630,26 @@ html[data-theme="dark"] .req-ic.bad{color:var(--dang-500)}
 .btn-file:hover{color:var(--dang-700)}
 .otros-dz{padding:12px 16px}
 .reqs + .otros-dz{border-top:1px solid var(--border)}
+/* Catálogo: las listas a la izquierda y sus opciones a la derecha, como en RH */
+.cat-grid{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){ .cat-grid{grid-template-columns:minmax(0,1fr)} }
+.cat-listas{display:flex;flex-direction:column;gap:2px;padding:6px}
+.cat-l{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:0;border-radius:var(--radius-sm);
+  background:transparent;color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.cat-l:hover{background:var(--surface-2)}
+.cat-l.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.cat-l b{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--text-3);background:var(--surface-3);border-radius:20px;padding:1px 7px}
+.cat-l.on b{background:var(--surface);color:var(--accent)}
+.cat-bar,.cat-nuevo{display:flex;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.cat-bar .inp,.cat-nuevo .inp{flex:1 1 220px;height:34px}
+.cat-nuevo{background:var(--surface-2)}
+.cat-op{display:flex;align-items:center;gap:12px;padding:9px 16px;border-bottom:1px solid var(--border)}
+.cat-op:last-child{border-bottom:0}
+.cat-v{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.cat-v b{font-weight:600;font-size:13px;overflow-wrap:anywhere}
+.cat-v span{font-size:11.5px;color:var(--text-3)}
+.cat-acc{display:flex;gap:2px;flex:0 0 auto}
+.cat-vacio{padding:14px 16px}
 /* Recuadro compacto para subir: ícono y texto en una sola franja */
 .dz.dz-sm{display:flex;align-items:center;justify-content:center;gap:11px;padding:10px 14px;text-align:left;border-width:1.5px}
 .dz.dz-sm > svg{width:18px;height:18px;margin:0;flex:0 0 auto}
@@ -2665,7 +2685,10 @@ const Config = {
   planos: {},
   /* Quien firma los formatos como responsable de flota: nombre, cédula,
      profesión y su firma en el depósito (ver Firma). Se llena en Configuración. */
-  responsable: {}
+  responsable: {},
+  /* Las listas del área Catálogo que ya se cambiaron, por lista (ver Catalogo).
+     Las que no están aquí usan sus valores iniciales. */
+  catalogos: {}
 };
 /* El documento que va junto a la foto de la ficha: el botón sobre la foto, la
    mitad de la foto al arrastrar y el que la hoja de vida imprime al lado de la
@@ -2697,6 +2720,81 @@ const DocFoto = {
     const d = u.docs[this.de(u)], v = d && d.archivoId && !d.desdeLicencia ? Archivos.vistos.get(d.archivoId) : null;
     return v ? { url: v.url, pdf: /pdf/i.test(v.tipo || ''), fecha: d.subido, tam: v.tam } : null;
   }
+};
+/* El catálogo: las opciones de las listas desplegables, que Juan cambia en el
+   área Catálogo sin tocar el programa (30/10/2026). Copia el catálogo de RH de
+   Don Aseo: cada lista es una fila de la configuración («catalogo:<lista>») con
+   sus opciones en orden, y los registros guardan el texto, así que quitar o
+   cambiar una opción no daña nada. Lo de aquí son los valores iniciales; la
+   lista que ya se cambió viene de la nube (Config.catalogos) y solo esa se
+   sube, para no pedirle el permiso de configurar a quien no lo tiene. */
+const Catalogo = {
+  LISTAS: [
+    { id: 'clases.carga', titulo: 'Clases de vehículos de carga', tipo: 'carga' },
+    { id: 'clases.maquinaria', titulo: 'Clases de maquinaria', tipo: 'maquinaria' },
+    { id: 'clases.remolque', titulo: 'Clases de remolques', tipo: 'remolque' },
+    { id: 'clases.canoa', titulo: 'Clases de canoas', tipo: 'canoa' },
+    /* Una sola lista para registrar conductores y para el preoperacional */
+    { id: 'licencias', titulo: 'Categorías de licencia', inicial: ['C3', 'C2', 'C1', 'B3', 'B2', 'B1', 'A2', 'A1'] }
+  ],
+  def(id) { return this.LISTAS.find(l => l.id === id) || null; },
+  inicial(l) { return (l.tipo ? TIPOS[l.tipo].clases : l.inicial).slice(); },
+  lista(id) {
+    const c = (Config.catalogos || {})[id];
+    return Array.isArray(c) && c.length ? c.slice() : this.inicial(this.def(id));
+  },
+  clases(tipo) { return this.lista('clases.' + tipo); },
+  /* Dónde se usa, para el subtítulo */
+  usoTxt(l) {
+    return l.tipo ? 'La clase al crear una unidad y en su hoja de vida (' + TIPOS[l.tipo].plural.toLowerCase() + ')'
+      : 'La categoría al registrar un conductor y en el formulario del preoperacional';
+  },
+  /* Cuántos registros tienen una opción */
+  usos(l, valor) {
+    return l.tipo ? Datos.unidades.filter(u => u.tipo === l.tipo && u.clase === valor).length
+      : Datos.conductores.filter(c => c.cat === valor).length;
+  },
+  usosTxt(l, n) { return n + ' ' + (l.tipo ? (n === 1 ? 'unidad' : 'unidades') : (n === 1 ? 'conductor' : 'conductores')); },
+  /* «las 3 unidades que la tienen»; con «conserva», «Las 3 unidades que la tienen la conservan» */
+  quienes(l, n, conserva) {
+    const t = l.tipo ? (n === 1 ? 'la unidad que la tiene' : 'las ' + n + ' unidades que la tienen')
+      : (n === 1 ? 'el conductor que la tiene' : 'los ' + n + ' conductores que la tienen');
+    return conserva ? t.charAt(0).toUpperCase() + t.slice(1) + (n === 1 ? ' la conserva' : ' la conservan') : t;
+  },
+  /* Cambia el nombre de una opción. Con «enRegistros», también en las unidades
+     o los conductores que la tienen. El dibujo del plano de esa clase la sigue
+     (ver Config.planos.dibujo). Devuelve cuántos registros cambió. */
+  renombrar(l, i, nuevo, enRegistros) {
+    const items = this.lista(l.id), viejo = items[i];
+    let n = 0;
+    if (enRegistros) {
+      if (l.tipo) Datos.unidades.forEach(u => { if (u.tipo === l.tipo && u.clase === viejo) { u.clase = nuevo; n++; } });
+      else Datos.conductores.forEach(c => { if (c.cat === viejo) { c.cat = nuevo; n++; } });
+    }
+    const dib = l.tipo && (Config.planos || {}).dibujo, a = l.tipo + '|' + viejo, b = l.tipo + '|' + nuevo;
+    if (dib && dib[a] && !dib[b]) {
+      dib[b] = dib[a];
+      if (!Datos.unidades.some(u => u.tipo === l.tipo && u.clase === viejo)) delete dib[a];
+    }
+    items[i] = nuevo;
+    this.guardar(l, items);
+    return n;
+  },
+  /* Para comparar sin mayúsculas, tildes ni espacios de más, como en RH */
+  clave: v => sinTildes(String(v || '').trim().replace(/\s+/g, ' ')),
+  /* Como se guarda: sin espacios de más y con la primera letra en mayúscula */
+  limpio(v) { const t = String(v || '').trim().replace(/\s+/g, ' '); return t.charAt(0).toUpperCase() + t.slice(1); },
+  repetida(l, valor, menos) {
+    const k = this.clave(valor);
+    return this.lista(l.id).find(x => x !== menos && this.clave(x) === k) || null;
+  },
+  guardar(l, items) {
+    Config.catalogos = Config.catalogos || {};
+    Config.catalogos[l.id] = items;
+    Sincro.tocar();
+  },
+  /* Lo edita quien puede configurar; los demás lo ven */
+  puede: () => Cuenta.admin || Cuenta.acciones.includes('configurar') || !Cuenta.rol
 };
 /* La hoja de vida de cada tipo de unidad, con las secciones de los formatos
    del ingeniero anterior (código SST-FRT-026). Los vehículos de carga y la
@@ -4378,6 +4476,7 @@ const NAV = [
   { id: 'pronto/combustible', icono: 'fuel', txt: 'Combustible y ralentí', soon: true },
   { id: 'pronto/llantas', icono: 'disc', txt: 'Llantas y GPS', soon: true },
   { sec: 'Sistema' },
+  { id: 'catalogo', icono: 'list', txt: 'Catálogo' },
   { id: 'configuracion', icono: 'cog', txt: 'Configuración' }
 ];
 
@@ -4482,7 +4581,9 @@ const UIState = {
   /* El filtro de Cambios de aceite: todos, bad, warn, ok o nr */
   aceite: 'todos',
   docs: { k: 'todos', t: 'todos', quien: 'todos' },
-  unidadId: null, tab: 'info', act: 'todos'
+  unidadId: null, tab: 'info', act: 'todos',
+  /* El área Catálogo: la lista escogida, lo que se busca y si se está agregando */
+  catalogo: { lista: 'clases.carga', q: '', agregando: false }
 };
 
 /* Lo que calcula el dashboard. El gasto son las órdenes de compra y el valor
@@ -5180,7 +5281,7 @@ const PlanoCfg = {
       '<div class="pe-l2"><input class="inp inp-sm" data-f="d" value="' + attr(p.d || '') + '" placeholder="Qué incluye" aria-label="Qué incluye">' +
         '<input class="inp inp-sm" data-f="comp" value="' + attr((p.comp || []).join(', ')) + '" placeholder="Componentes, separados por comas" aria-label="Componentes"></div></div>';
     /* Qué dibujo usa cada clase: las del catálogo y las que tengan las unidades */
-    const clases = ORDEN.flatMap(t => Array.from(new Set(TIPOS[t].clases.concat(Datos.unidades.filter(u => u.tipo === t).map(u => u.clase).filter(Boolean)))).map(c => [t, c]));
+    const clases = ORDEN.flatMap(t => Array.from(new Set(Catalogo.clases(t).concat(Datos.unidades.filter(u => u.tipo === t).map(u => u.clase).filter(Boolean)))).map(c => [t, c]));
     const tablaClases = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tipo</th><th>Clase</th><th>Dibujo</th><th class="num">Unidades</th></tr></thead><tbody>' +
       clases.map(([t, c]) => {
         const x = t + '|' + c, actual = PLANOS[(b.dibujo || {})[x]] ? b.dibujo[x] : Plano.adivinar({ tipo: t, clase: c });
@@ -5909,7 +6010,7 @@ const Ventanas = {
         '<div class="field"><label>Tipo de unidad</label><div class="tipos-sel">' + ORDEN.map(t => '<button type="button" class="tsel' + (t === tipo ? ' on' : '') + '" data-tipo="' + t + '">' +
           Icon(TIPOS[t].icono, '', 22) + '<span>' + esc(TIPOS[t].nombre) + '</span></button>').join('') + '</div></div>' +
         '<div class="grid g2" style="gap:0 14px">' +
-          '<div class="field"><label>Clase</label><select class="inp" id="nuClase">' + TIPOS[tipo].clases.map(c => '<option>' + esc(c) + '</option>').join('') + '</select></div>' +
+          '<div class="field"><label>Clase</label><select class="inp" id="nuClase">' + Catalogo.clases(tipo).map(c => '<option>' + esc(c) + '</option>').join('') + '</select></div>' +
           campo('nuPlaca', conPlaca ? 'Placa' : 'Código interno', '', conPlaca ? (tipo === 'remolque' ? 'R12345' : 'ABC123') : (tipo === 'canoa' ? 'CAN-03' : 'MAQ-05')) +
           (tipo === 'canoa' ? campo('nuMarca', 'Nombre de la canoa', '', 'Canoa 03') : campo('nuMarca', 'Marca') + campo('nuLinea', 'Línea')) +
           (tipo === 'canoa' ? '' : campo('nuModelo', 'Modelo (año)', ' inputmode="numeric"') + campo('nuColor', 'Color')) +
@@ -5975,7 +6076,8 @@ const Ventanas = {
   /* Editar la hoja de vida en un solo formulario, por las mismas secciones en
      que se ve. Lo que sale de Documentos o de las inspecciones va con candado. */
   editarUnidad(u) {
-    const clases = TIPOS[u.tipo].clases.includes(u.clase) ? TIPOS[u.tipo].clases : TIPOS[u.tipo].clases.concat([u.clase]);
+    /* Las del catálogo; si la unidad tiene una que ya no está, se conserva */
+    const cat = Catalogo.clases(u.tipo), clases = !u.clase || cat.includes(u.clase) ? cat : cat.concat([u.clase]);
     const lista = [];
     const control = c => {
       const et = '<label>' + esc(HojaVida.etiqueta(c, u)) + '</label>';
@@ -6992,6 +7094,61 @@ Object.assign(Vistas, {
         });
       }
     };
+  },
+
+  /* --------------------------------------------------------- Catálogo */
+  /* Las opciones de las listas desplegables (ver Catalogo), como el catálogo de
+     RH: a la izquierda las listas con cuántas opciones tienen; a la derecha las
+     de la lista escogida, con cuántos registros las usan */
+  catalogo() {
+    const s = UIState.catalogo, l = Catalogo.def(s.lista) || Catalogo.LISTAS[0], puede = Catalogo.puede();
+    const items = Catalogo.lista(l.id), cambiada = JSON.stringify(items) !== JSON.stringify(Catalogo.inicial(l));
+    const btn = (act, ic, t, i, extra) => '<button type="button" class="btn btn-sm btn-ghost btn-icon' + (act === 'catQuitar' ? ' btn-del' : '') + '" data-act="' + act + '" data-l="' + l.id +
+      '" data-i="' + i + '" title="' + t + '" aria-label="' + t + '"' + (extra || '') + '>' + Icon(ic, '', 13) + '</button>';
+    const izq = '<div class="cat-listas">' + Catalogo.LISTAS.map(x => '<button type="button" class="cat-l' + (x.id === l.id ? ' on' : '') + '" data-act="catLista" data-l="' + x.id + '">' +
+      '<span>' + esc(x.titulo) + '</span><b>' + Catalogo.lista(x.id).length + '</b></button>').join('') + '</div>';
+    const nuevo = s.agregando && puede ? '<div class="cat-nuevo"><input class="inp" id="catNuevo" placeholder="Nueva opción" aria-label="Nueva opción" autocomplete="off">' +
+      '<button type="button" class="btn btn-primary btn-sm" data-act="catGuardarNueva" data-l="' + l.id + '">' + Icon('save', '', 13) + 'Guardar</button>' +
+      '<button type="button" class="btn btn-sm" data-act="catCancelar">Cancelar</button></div>' : '';
+    const filas = items.map((v, i) => {
+      const n = Catalogo.usos(l, v);
+      return '<div class="cat-op" data-k="' + attr(Catalogo.clave(v)) + '"><div class="cat-v"><b>' + esc(v) + '</b><span>' + (n ? Catalogo.usosTxt(l, n) : 'Sin uso') + '</span></div>' +
+        (puede ? '<div class="cat-acc">' + btn('catSubir', 'arriba', 'Subir', i, i ? '' : ' disabled') + btn('catBajar', 'abajo', 'Bajar', i, i < items.length - 1 ? '' : ' disabled') +
+          btn('catRenombrar', 'lapiz', 'Cambiar el nombre', i) + btn('catQuitar', 'trash', 'Quitar', i, items.length > 1 ? '' : ' disabled') + '</div>' : '') + '</div>';
+    }).join('');
+    const der = UI.card(esc(l.titulo),
+      '<div class="cat-bar"><input class="inp" id="catQ" placeholder="Buscar en la lista…" aria-label="Buscar en la lista" value="' + attr(s.q || '') + '">' +
+        (puede ? '<button type="button" class="btn btn-primary btn-sm" data-act="catAgregar">' + Icon('plus', '', 13) + 'Agregar</button>' : '') + '</div>' +
+      nuevo + '<div id="catOps">' + filas + '</div><div class="cat-vacio txt-3 fs12" id="catNada" hidden>Ninguna opción coincide con la búsqueda.</div>',
+      { flush: true, sub: esc(Catalogo.usoTxt(l)),
+        pie: puede && cambiada ? '<button type="button" class="btn btn-sm btn-ghost" data-act="catRestaurar" data-l="' + l.id + '">' + Icon('refresh', '', 12) + 'Restaurar los valores iniciales</button>'
+          : Icon('info', '', 13) + '<span>' + (puede ? 'Lo que agregue aquí sale enseguida en las listas desplegables, en todos los equipos.'
+            : 'Solo quien puede configurar cambia el catálogo. Usted puede verlo.') + '</span>' });
+    const html = UI.head('Catálogo', 'Las opciones de las listas desplegables; se cambian aquí, sin tocar el programa') +
+      '<div class="cat-grid">' + UI.card('Listas', izq, { flush: true }) + der + '</div>';
+    return {
+      titulo: 'Catálogo', sub: 'Las listas desplegables', html,
+      despues: () => {
+        /* Buscar solo esconde lo que no coincide, para no perder el foco */
+        const q = $('#catQ'), filtrar = () => {
+          s.q = q.value;
+          const k = Catalogo.clave(q.value);
+          let n = 0;
+          $$('#catOps .cat-op').forEach(f => { f.hidden = Boolean(k) && !f.dataset.k.includes(k); if (!f.hidden) n++; });
+          $('#catNada').hidden = n > 0;
+        };
+        q.addEventListener('input', filtrar);
+        filtrar();
+        const nueva = $('#catNuevo');
+        if (nueva) {
+          nueva.focus();
+          nueva.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); Acciones.catGuardarNueva($('[data-act="catGuardarNueva"]')); }
+            if (e.key === 'Escape') { e.stopPropagation(); Acciones.catCancelar(); }
+          });
+        }
+      }
+    };
   }
 });
 
@@ -7318,7 +7475,7 @@ Object.assign(Ventanas, {
       titulo: 'Nuevo conductor u operador', sub: 'Sus documentos se suben después, desde su ficha',
       cuerpo: '<div class="field"><label>Nombre completo</label><input class="inp" id="ncN"></div>' +
         '<div class="row"><div class="field"><label>Cédula</label><input class="inp" id="ncC" inputmode="numeric"></div>' +
-        '<div class="field"><label>Categoría de la licencia</label><select class="inp" id="ncK">' + ['C3', 'C2', 'C1', 'B3', 'B2', 'B1'].map(k => '<option>' + k + '</option>').join('') + '</select></div></div>' +
+        '<div class="field"><label>Categoría de la licencia</label><select class="inp" id="ncK">' + Catalogo.lista('licencias').map(k => '<option>' + esc(k) + '</option>').join('') + '</select></div></div>' +
         '<div class="field"><label>La licencia vence el</label><input class="inp" type="date" id="ncV" value="' + R(365) + '"></div>',
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarConductor">' + Icon('save', '', 14) + 'Guardar</button>'
     });
@@ -7969,6 +8126,110 @@ Object.assign(Acciones, {
     Datos.unidades.filter(u => u.tipo === tp).forEach(u => { if (el.checked && u.comp.estado === 'na') u.comp = { estado: 'pend', mes: Comparendos.mes() }; });
     Shell.nav('configuracion');
     Toast.show(TIPOS[tp].plural + (el.checked ? ' ahora se revisan' : ' ya no se revisan') + ' en comparendos.');
+  },
+
+  /* --------------------------------------------------------- Catálogo */
+  catLista(el) {
+    Object.assign(UIState.catalogo, { lista: el.dataset.l, q: '', agregando: false });
+    Router.pintar(true);
+  },
+  catAgregar() { UIState.catalogo.agregando = true; Router.pintar(true); },
+  catCancelar() { UIState.catalogo.agregando = false; Router.pintar(true); },
+  /* Sin vacíos ni repetidas (sin mirar mayúsculas ni tildes), como en RH */
+  catGuardarNueva(el) {
+    const l = Catalogo.def(el.dataset.l), inp = $('#catNuevo'), v = Catalogo.limpio(inp.value);
+    if (!v) { Toast.show('Escriba la opción nueva.', 'err'); inp.focus(); return; }
+    const ya = Catalogo.repetida(l, v);
+    if (ya) { Toast.show('<b>' + esc(ya) + '</b> ya está en la lista.', 'err'); inp.focus(); return; }
+    Catalogo.guardar(l, Catalogo.lista(l.id).concat([v]));
+    UIState.catalogo.agregando = false;
+    Router.pintar(true);
+    Toast.show('Se agregó <b>' + esc(v) + '</b> a ' + esc(l.titulo.toLowerCase()) + '.');
+  },
+  catMover(el, paso) {
+    const l = Catalogo.def(el.dataset.l), i = +el.dataset.i, items = Catalogo.lista(l.id), j = i + paso;
+    if (j < 0 || j >= items.length) return;
+    [items[i], items[j]] = [items[j], items[i]];
+    Catalogo.guardar(l, items);
+    Router.pintar(true);
+  },
+  catSubir(el) { Acciones.catMover(el, -1); },
+  catBajar(el) { Acciones.catMover(el, 1); },
+  /* Cambiar el nombre: si hay registros con esa opción, se ofrece cambiarlos
+     también (en RH eso quedó aparte). Guardar se prende solo si cambió algo. */
+  catRenombrar(el) {
+    const l = Catalogo.def(el.dataset.l), i = +el.dataset.i, viejo = Catalogo.lista(l.id)[i];
+    if (viejo == null) return;
+    const n = Catalogo.usos(l, viejo);
+    const m = Modal.abrir({
+      titulo: 'Cambiar el nombre', sub: esc(l.titulo + ' · ' + viejo),
+      cuerpo: '<div class="field"><label for="catNom">Nombre nuevo</label><input class="inp" id="catNom" value="' + attr(viejo) + '" autocomplete="off"></div>' +
+        (n ? '<label class="flex aic g8 mt8" style="cursor:pointer;font-size:13px"><input type="checkbox" id="catProp" checked>Cambiarla también en ' +
+          esc(Catalogo.quienes(l, n)) + '</label>' : ''),
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="catGuardarNombre" data-l="' + l.id + '" data-i="' + i +
+        '" data-v="' + attr(viejo) + '" disabled>' + Icon('save', '', 14) + 'Guardar</button>'
+    });
+    const inp = $('#catNom', m), g = $('[data-act="catGuardarNombre"]', m);
+    inp.addEventListener('input', () => { g.disabled = !inp.value.trim() || Catalogo.limpio(inp.value) === viejo; });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !g.disabled) Acciones.catGuardarNombre(g); });
+    setTimeout(() => { inp.focus(); inp.select(); }, 30);
+  },
+  catGuardarNombre(el) {
+    const m = el.closest('.modal-bd'), l = Catalogo.def(el.dataset.l), items = Catalogo.lista(l.id);
+    let i = +el.dataset.i;
+    /* Por si la lista cambió mientras tanto (en otro equipo, por ejemplo) */
+    if (items[i] !== el.dataset.v) i = items.indexOf(el.dataset.v);
+    if (i < 0) { Modal.cerrar(m); return; }
+    const viejo = items[i], nuevo = Catalogo.limpio($('#catNom', m).value);
+    if (!nuevo || nuevo === viejo) return;
+    const ya = Catalogo.repetida(l, nuevo, viejo);
+    if (ya) { Toast.show('<b>' + esc(ya) + '</b> ya está en la lista.', 'err'); return; }
+    const prop = $('#catProp', m), n = Catalogo.renombrar(l, i, nuevo, Boolean(prop && prop.checked));
+    Modal.cerrar(m);
+    Router.pintar(true);
+    Toast.show('<b>' + esc(viejo) + '</b> ahora se llama <b>' + esc(nuevo) + '</b>' + (n ? ', también en ' + esc(Catalogo.usosTxt(l, n)) : '') + '.');
+  },
+  /* Quitar: los registros que la tienen la conservan. Siempre queda una. */
+  catQuitar(el) {
+    const l = Catalogo.def(el.dataset.l), i = +el.dataset.i, items = Catalogo.lista(l.id), v = items[i];
+    if (v == null || items.length < 2) return;
+    const n = Catalogo.usos(l, v);
+    Modal.abrir({
+      titulo: 'Quitar ' + v, sub: esc(l.titulo), sinFoco: true,
+      cuerpo: '<div class="alert a-warn">' + Icon('warn') + '<div><b>Sale de la lista: ya no se podrá escoger.</b> ' +
+        (n ? esc(Catalogo.quienes(l, n, true)) + '; nada se daña.' : 'Ningún registro la tiene.') + '</div></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-danger" data-act="catConfirmarQuitar" data-l="' + l.id + '" data-i="' + i +
+        '" data-v="' + attr(v) + '">' + Icon('trash', '', 14) + 'Quitar</button>'
+    });
+  },
+  catConfirmarQuitar(el) {
+    const l = Catalogo.def(el.dataset.l), items = Catalogo.lista(l.id);
+    let i = +el.dataset.i;
+    if (items[i] !== el.dataset.v) i = items.indexOf(el.dataset.v);
+    Modal.cerrarTodo();
+    if (i < 0 || items.length < 2) return;
+    const v = items.splice(i, 1)[0];
+    Catalogo.guardar(l, items);
+    Router.pintar(true);
+    Toast.show('Se quitó <b>' + esc(v) + '</b> de ' + esc(l.titulo.toLowerCase()) + '.');
+  },
+  catRestaurar(el) {
+    const l = Catalogo.def(el.dataset.l);
+    Modal.abrir({
+      titulo: 'Restaurar los valores iniciales', sub: esc(l.titulo), sinFoco: true,
+      cuerpo: '<p class="txt-2 mb12">La lista vuelve a quedar así:</p><div class="flex g8" style="flex-wrap:wrap">' +
+        Catalogo.inicial(l).map(v => '<span class="chip">' + esc(v) + '</span>').join('') + '</div>' +
+        '<p class="txt-3 fs12 mt12">Las unidades y los conductores no cambian: conservan lo que tienen.</p>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="catConfirmarRestaurar" data-l="' + l.id + '">' +
+        Icon('refresh', '', 14) + 'Restaurar</button>'
+    });
+  },
+  catConfirmarRestaurar(el) {
+    const l = Catalogo.def(el.dataset.l);
+    Modal.cerrarTodo();
+    Catalogo.guardar(l, Catalogo.inicial(l));
+    Router.pintar(true);
+    Toast.show('<b>' + esc(l.titulo) + '</b> volvió a sus valores iniciales.');
   }
 });
 
@@ -9140,11 +9401,13 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
   /* ==========================================================================
      Lo que viene del sistema: el formato, las unidades y los conductores
      ========================================================================== */
-  const D = { formato: null, unidades: [], conductores: [] };
+  const D = { formato: null, unidades: [], conductores: [], categorias: [] };
   const ST = {};      // la respuesta de cada ítem
   const NOTAS = {};   // lo que escribió el conductor en cada novedad («¿Qué se ve?»)
   const TIPOS = { carga: 'Vehículo de carga', remolque: 'Remolque', maquinaria: 'Maquinaria', canoa: 'Canoa' };
-  const CATEGORIAS = ['A1', 'A2', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'];
+  /* Las categorías de licencia vienen del área Catálogo del sistema; si no
+     llegan, estas, que son las mismas con que empieza el catálogo */
+  const CATEGORIAS = ['C3', 'C2', 'C1', 'B3', 'B2', 'B1', 'A2', 'A1'];
   const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
   const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   /* Los campos del encabezado: cada uno se muestra o no, y es obligatorio o
@@ -9250,7 +9513,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     /* El conductor se escoge por el nombre; si el nombre no se muestra, por la cédula */
     const porNombre = campo('nombre').mostrar, cs = D.conductores, sin = cs.length ? '' : 'No hay conductores registrados';
     opciones($('cond'), sin || 'Seleccionar…', cs.map(c => ({ v: c.id, t: porNombre ? c.nombre : cedulaTxt(cedulaDe(c)) || 'Sin cédula · ' + c.nombre })));
-    opciones($('catLic'), '—', CATEGORIAS.map(k => ({ v: k, t: k })));
+    opciones($('catLic'), '—', (D.categorias.length ? D.categorias : CATEGORIAS).map(k => ({ v: k, t: k })));
 
     /* Lo que se muestra y lo obligatorio (con *), como quedó en el sistema */
     const ver = k => campo(k).mostrar, et = k => CAMPOS[k].nombre + (pide(k) ? ' *' : '');
@@ -10349,6 +10612,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     $('demoB').innerHTML = '<b>MODO DEMOSTRACIÓN</b><span>' + (b && b.sucio ? 'Con sus cambios sin guardar' : 'Conductores de ejemplo') + ' · No se envía nada</span>';
     return {
       formato,
+      categorias: d && d.categorias,
       unidades: d && d.unidades && d.unidades.length ? d.unidades
         : [{ id: 'demo-u', placa: 'EJE123', tipo: 'carga', clase: 'Vehículo de ejemplo', km: 125000, km_fecha: Fecha.sumar(hoy, -1) }],
       conductores: [
@@ -10379,6 +10643,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     D.formato = d.formato;
     D.unidades = d.unidades || [];
     D.conductores = d.conductores || [];
+    D.categorias = Array.isArray(d.categorias) ? d.categorias.filter(k => typeof k === 'string' && k.trim()) : [];
     pintarFormulario();
     paso = 1;
     Pantalla.ver('form');
@@ -11097,6 +11362,8 @@ const Mapa = {
     poner('configuracion', { clave: 'planos', valor: config.planos || {} });
     /* Solo cuando ya se llenó: crearlo vacío pediría el permiso de configurar */
     if (Object.keys(config.responsable || {}).length) poner('configuracion', { clave: 'responsable', valor: config.responsable });
+    /* Del catálogo, solo las listas que ya se cambiaron (ver Catalogo) */
+    Object.keys(config.catalogos || {}).forEach(id => poner('configuracion', { clave: 'catalogo:' + id, valor: config.catalogos[id] }));
     return f;
   },
 
@@ -11164,7 +11431,8 @@ const Mapa = {
       req: cfg.documentos_obligatorios || Config.req,
       comparendos: cfg.comparendos || Config.comparendos,
       planos: cfg.planos && typeof cfg.planos === 'object' ? cfg.planos : Config.planos || {},
-      responsable: cfg.responsable && typeof cfg.responsable === 'object' ? cfg.responsable : {}
+      responsable: cfg.responsable && typeof cfg.responsable === 'object' ? cfg.responsable : {},
+      catalogos: Object.fromEntries(Object.keys(cfg).filter(k => k.startsWith('catalogo:') && Array.isArray(cfg[k])).map(k => [k.slice(9), cfg[k]]))
     };
     return { datos: d, config };
   },
