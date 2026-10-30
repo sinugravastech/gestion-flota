@@ -2838,11 +2838,13 @@ const HOJA_VIDA = {
      remolque con ese nombre; antes se llamaba «N.º de chasis» (Juan,
      30/10/2026; el SQL 017 pasó el dato). «Póliza vigente» y «Estado» ya no
      van (Juan, 30/10/2026): el SQL 018 borró lo que tenían, para que no
-     salgan en «Otros datos». */
+     salgan en «Otros datos». El «Registro del remolque» se repartió en dos
+     (Juan, 30/10/2026; SQL 020): «N.º tarjeta de registro», el número de la
+     tarjeta, y «Registro INTRA», el de la placa del VIN. */
   remolque: [
     { t: 'Información general', campos: [
       { n: 'Placa', de: 'placa' }, { n: 'Línea / tipo', de: 'linea' }, { n: 'Marca', de: 'marca' }, { n: 'Modelo', de: 'modelo' },
-      { n: 'Color', de: 'color' }, 'N.º de identificación', { n: 'Clase', de: 'clase' }, 'Registro del remolque', 'Propietario', 'Identificación',
+      { n: 'Color', de: 'color' }, 'N.º de identificación', { n: 'Clase', de: 'clase' }, 'N.º tarjeta de registro', 'Registro INTRA', 'Propietario', 'Identificación',
       'Uso', 'RTM vigente'] },
     { t: 'Configuración técnica', campos: ['N.º de ejes', 'Configuración de ejes', 'Tipo de suspensión', 'Acople', 'King pin',
       'Peso bruto vehicular (PBV)', 'Tipo de carrocería', 'Capacidad', 'Capacidad técnica (t)', 'Largo', 'Ancho', 'Alto'] },
