@@ -2738,12 +2738,14 @@ const HOJA_VIDA = {
   maquinaria: HV_VEHICULO(true),
   /* «N.º de identificación» es el número que trae la tarjeta de registro del
      remolque con ese nombre; antes se llamaba «N.º de chasis» (Juan,
-     30/10/2026; el SQL 017 pasó el dato) */
+     30/10/2026; el SQL 017 pasó el dato). «Póliza vigente» y «Estado» ya no
+     van (Juan, 30/10/2026): el SQL 018 borró lo que tenían, para que no
+     salgan en «Otros datos». */
   remolque: [
     { t: 'Información general', campos: [
       { n: 'Placa', de: 'placa' }, { n: 'Línea / tipo', de: 'linea' }, { n: 'Marca', de: 'marca' }, { n: 'Modelo', de: 'modelo' },
       { n: 'Color', de: 'color' }, 'N.º de identificación', { n: 'Clase', de: 'clase' }, 'Registro del remolque', 'Propietario', 'Identificación',
-      'Uso', 'RTM vigente', 'Póliza vigente', 'Estado'] },
+      'Uso', 'RTM vigente'] },
     { t: 'Configuración técnica', campos: ['N.º de ejes', 'Configuración de ejes', 'Tipo de suspensión', 'Acople', 'King pin',
       'Peso bruto vehicular (PBV)', 'Tipo de carrocería', 'Capacidad', 'Capacidad técnica (t)', 'Largo', 'Ancho', 'Alto'] },
     { t: 'Rodamiento, suspensión y frenos', campos: ['Número de llantas', 'Dimensión de llantas', 'Material de rines', 'Tipo de freno',
