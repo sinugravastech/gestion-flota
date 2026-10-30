@@ -2736,10 +2736,13 @@ const HV_VEHICULO = maq => [
 const HOJA_VIDA = {
   carga: HV_VEHICULO(false),
   maquinaria: HV_VEHICULO(true),
+  /* «N.º de identificación» es el número que trae la tarjeta de registro del
+     remolque con ese nombre; antes se llamaba «N.º de chasis» (Juan,
+     30/10/2026; el SQL 017 pasó el dato) */
   remolque: [
     { t: 'Información general', campos: [
       { n: 'Placa', de: 'placa' }, { n: 'Línea / tipo', de: 'linea' }, { n: 'Marca', de: 'marca' }, { n: 'Modelo', de: 'modelo' },
-      { n: 'Color', de: 'color' }, 'N.º de chasis', { n: 'Clase', de: 'clase' }, 'Registro del remolque', 'Propietario', 'Identificación',
+      { n: 'Color', de: 'color' }, 'N.º de identificación', { n: 'Clase', de: 'clase' }, 'Registro del remolque', 'Propietario', 'Identificación',
       'Uso', 'RTM vigente', 'Póliza vigente', 'Estado'] },
     { t: 'Configuración técnica', campos: ['N.º de ejes', 'Configuración de ejes', 'Tipo de suspensión', 'Acople', 'King pin',
       'Peso bruto vehicular (PBV)', 'Tipo de carrocería', 'Capacidad', 'Capacidad técnica (t)', 'Largo', 'Ancho', 'Alto'] },
