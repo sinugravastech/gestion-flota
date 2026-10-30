@@ -2667,6 +2667,37 @@ const Config = {
      profesión y su firma en el depósito (ver Firma). Se llena en Configuración. */
   responsable: {}
 };
+/* El documento que va junto a la foto de la ficha: el botón sobre la foto, la
+   mitad de la foto al arrastrar y el que la hoja de vida imprime al lado de la
+   foto. Juan lo pidió en los cuatro tipos (30/10/2026): en los vehículos y la
+   maquinaria es la tarjeta de propiedad; en los remolques, la tarjeta de
+   registro, y en las canoas, la patente de navegación. Si en Configuración se
+   cambian los documentos de un tipo, se usa el que pida.
+   Lo que no vence se guarda como la «licencia» de la unidad (ver Guardadas) y
+   queda también en Documentos. Lo que vence (la patente) se sube por
+   Documentos, que pide la fecha y guarda la renovación. */
+const DocFoto = {
+  POR_TIPO: { carga: 'tarjeta', maquinaria: 'tarjeta', remolque: 'registro', canoa: 'patente' },
+  de(u) {
+    const req = Config.req[u.tipo] || [];
+    return ['tarjeta', 'registro', 'patente'].find(t => req.includes(t)) || this.POR_TIPO[u.tipo] || 'tarjeta';
+  },
+  nombre(u) { return DOC_TIPOS[this.de(u)].nombre; },
+  /* En los vehículos y la maquinaria se le dice licencia de tránsito desde el comienzo */
+  titulo(u) { return this.de(u) === 'tarjeta' ? 'Licencia de tránsito' : this.nombre(u); },
+  vence(u) { return Boolean(DOC_TIPOS[this.de(u)].vence); },
+  /* ¿Ya se adjuntó? Por el botón, o antes solo en Documentos */
+  tiene(u) {
+    const d = u.docs[this.de(u)];
+    return Boolean(u.licenciaInfo || (d && d.archivoId && !d.desdeLicencia));
+  },
+  /* El archivo de hoy, si ya está en este equipo */
+  archivo(u) {
+    if (u.licencia) { const i = u.licenciaInfo || {}; return { url: u.licencia, pdf: /pdf/i.test(i.mime || ''), fecha: i.fecha, tam: i.tam }; }
+    const d = u.docs[this.de(u)], v = d && d.archivoId && !d.desdeLicencia ? Archivos.vistos.get(d.archivoId) : null;
+    return v ? { url: v.url, pdf: /pdf/i.test(v.tipo || ''), fecha: d.subido, tam: v.tam } : null;
+  }
+};
 /* La hoja de vida de cada tipo de unidad, con las secciones de los formatos
    del ingeniero anterior (código SST-FRT-026). Los vehículos de carga y la
    maquinaria usan el mismo formato; los remolques y las canoas, el suyo.
@@ -2682,20 +2713,25 @@ const Config = {
    algunos vehículos el chasis es solo el final del VIN. El propietario también
    sale de la licencia, con su identificación (NIT o cédula); varios camiones
    están en leasing, a nombre del banco.
-   Las máquinas tienen otra tarjeta, la de registro, y conservan sus nombres;
-   tampoco llevan VIN: su tarjeta trae el número de serie. */
+   Las máquinas tienen otra tarjeta, la de registro de maquinaria, y desde el
+   30/10/2026 sus datos también llevan el nombre que tienen allá (Juan):
+   «Clase», «Tipo de maquinaria», «N.º de serie», «N.º tarjeta de registro» y
+   «Peso», con el rodaje y las medidas (alto, ancho y largo) que trae la
+   tarjeta. No llevan VIN ni carrocería: su tarjeta trae el número de serie.
+   El SQL 016 pasó los datos a esos nombres. */
 const HV_VEHICULO = maq => [
   { t: 'Información general', campos: [
     { n: 'Placa', de: 'placa' }, { n: 'Marca', de: 'marca' }, { n: 'Línea', de: 'linea' }, { n: 'Modelo', de: 'modelo' },
-    { n: maq ? 'Tipo' : 'Clase de vehículo', de: 'clase' }, { n: 'Color', de: 'color' }, maq ? 'Uso del vehículo' : 'Servicio', 'N.º interno UPN',
-    'N.º de chasis', ...(maq ? [] : ['VIN']), 'N.º de motor', maq ? 'Cilindraje' : 'Cilindrada CC', 'N.º licencia de tránsito', ...(maq ? [] : ['Propietario', 'Identificación']),
-    { n: 'SOAT', doc: 'soat' }, { n: 'Tecnomecánica', doc: 'tecno' }, 'Combustible', maq ? 'Peso operativo' : 'Capacidad',
+    { n: maq ? 'Clase' : 'Clase de vehículo', de: 'clase' }, { n: 'Color', de: 'color' }, maq ? 'Tipo de maquinaria' : 'Servicio', 'N.º interno UPN',
+    maq ? 'N.º de serie' : 'N.º de chasis', ...(maq ? [] : ['VIN']), 'N.º de motor', ...(maq ? ['Rodaje'] : []), maq ? 'Cilindraje' : 'Cilindrada CC',
+    maq ? 'N.º tarjeta de registro' : 'N.º licencia de tránsito', 'Propietario', 'Identificación',
+    { n: 'SOAT', doc: 'soat' }, { n: 'Tecnomecánica', doc: 'tecno' }, 'Combustible', maq ? 'Peso' : 'Capacidad', ...(maq ? ['Alto', 'Ancho', 'Largo'] : []),
     { n: maq ? 'Operador' : 'Conductor', de: 'conductor' }, { n: maq ? 'Horómetro' : 'Kilometraje', lectura: true }] },
   { t: 'Motor', campos: ['Modelo del motor', 'Cilindros', 'Válvulas por cilindro', 'Turbo'] },
   { t: 'Dirección, transmisión y suspensión', campos: ['Dirección', 'Transmisión', 'Velocidades', 'Suspensión delantera',
     'Suspensión trasera', 'Número de llantas', 'Dimensión de llantas', 'Material de rines'] },
   { t: 'Frenos', campos: ['Frenos delanteros', 'Frenos traseros'] },
-  { t: 'Carrocería', campos: ['Número de serie', 'Clase de carrocería', 'Tipo de carrocería'] }
+  ...(maq ? [] : [{ t: 'Carrocería', campos: ['Número de serie', 'Clase de carrocería', 'Tipo de carrocería'] }])
 ];
 const HOJA_VIDA = {
   carga: HV_VEHICULO(false),
@@ -2703,7 +2739,7 @@ const HOJA_VIDA = {
   remolque: [
     { t: 'Información general', campos: [
       { n: 'Placa', de: 'placa' }, { n: 'Línea / tipo', de: 'linea' }, { n: 'Marca', de: 'marca' }, { n: 'Modelo', de: 'modelo' },
-      { n: 'Color', de: 'color' }, 'N.º de chasis', { n: 'Clase', de: 'clase' }, 'Registro del remolque',
+      { n: 'Color', de: 'color' }, 'N.º de chasis', { n: 'Clase', de: 'clase' }, 'Registro del remolque', 'Propietario', 'Identificación',
       'Uso', 'RTM vigente', 'Póliza vigente', 'Estado'] },
     { t: 'Configuración técnica', campos: ['N.º de ejes', 'Configuración de ejes', 'Tipo de suspensión', 'Acople', 'King pin',
       'Peso bruto vehicular (PBV)', 'Tipo de carrocería', 'Capacidad', 'Capacidad técnica (t)', 'Largo', 'Ancho', 'Alto'] },
@@ -3159,17 +3195,10 @@ const HojaVida = {
   },
   /* «del vehículo», «de la máquina»…, para los textos de la foto */
   deLa: u => ({ carga: 'del vehículo', maquinaria: 'de la máquina', remolque: 'del remolque', canoa: 'de la canoa' }[u.tipo]),
-  /* La tarjeta que sale en la hoja impresa: la de propiedad (la licencia del
-     botón de la foto) o, en los remolques, la de registro de Documentos */
+  /* El documento que sale en la hoja impresa al lado de la foto (ver DocFoto) */
   tarjeta(u) {
-    if (u.tipo === 'carga' || u.tipo === 'maquinaria') {
-      return u.licencia ? { txt: 'Tarjeta de propiedad', url: u.licencia, pdf: /pdf/i.test((u.licenciaInfo || {}).mime || '') } : null;
-    }
-    if (u.tipo === 'remolque') {
-      const d = u.docs.registro, v = d && d.archivoId ? Archivos.vistos.get(d.archivoId) : null;
-      return v ? { txt: 'Tarjeta de registro', url: v.url, pdf: /pdf/i.test(v.tipo || '') } : null;
-    }
-    return null;
+    const a = DocFoto.archivo(u);
+    return a ? { txt: DocFoto.nombre(u), url: a.url, pdf: a.pdf } : null;
   },
   /* El VIN, la foto del serial del chasis, si se subió en Documentos */
   vin(u) {
@@ -3193,8 +3222,8 @@ const HojaVida = {
   /* En la ficha: las fotos del registro con lo que muestran, y un cuadro para
      agregar más (clic o arrastrando varias) */
   tarjetaRegistro(u) {
-    const fotos = u.registro || [], tarjeta = u.tipo === 'remolque' ? ' y la tarjeta de registro' : u.tipo === 'canoa' ? ''
-      : HojaVida.pide(u, 'vin') || (u.docs.vin && u.docs.vin.archivo) ? ', la tarjeta de propiedad y el VIN' : ' y la tarjeta de propiedad';
+    const fotos = u.registro || [], doc = DocFoto.nombre(u).toLowerCase();
+    const tarjeta = HojaVida.pide(u, 'vin') || (u.docs.vin && u.docs.vin.archivo) ? ', la ' + doc + ' y el VIN' : ' y la ' + doc;
     return UI.card('Registro fotográfico', '<div class="fotos rf-fotos">' + fotos.map(f =>
         '<div class="foto">' + (f.url ? '<img src="' + attr(f.url) + '" alt="' + attr(f.txt || f.nombre) + '" data-act="verArchivo" data-nombre="' + attr(f.nombre) +
           '" data-id="' + attr(Registro.clave(u, f)) + '" title="Ver la foto">' : '<div class="ph" style="height:104px" title="Bajando la foto…"><span class="spin"></span></div>') +
@@ -3755,7 +3784,8 @@ const Archivos = {
 /* Las fotos y los archivos viven en el depósito privado «flota» de Supabase.
    Cada uno tiene su clave, y de ella sale su ruta en el depósito (ver Nube):
    «foto:<unidad>», «mini:<unidad>» (su miniatura, para las listas),
-   «licencia:<unidad>» (la tarjeta de propiedad), «registro:<unidad>:<foto>»
+   «licencia:<unidad>» (el documento de la foto: la tarjeta de propiedad o la
+   de registro, ver DocFoto), «registro:<unidad>:<foto>»
    (el registro fotográfico) y «archivo:<id>» (los documentos y PDF subidos). Lo que dice cada uno (nombre, fecha…) va en las
    tablas, con lo demás (ver Mapa). */
 const Guardadas = {
@@ -3770,7 +3800,7 @@ const Guardadas = {
     Nube.quitar(clave);
     return Promise.resolve();
   },
-  /* Pone la foto o la tarjeta de propiedad en la unidad y la sube, comprimida
+  /* Pone la foto o la tarjeta (el documento de la foto) en la unidad y la sube, comprimida
      según la política: la foto a 1.600 px, con su miniatura para las listas,
      y la tarjeta a 2.000 px (si es PDF, con la compresión ligera). «previo»:
      lo que ya se sabía de ese archivo, cuando solo se vuelve a comprimir.
@@ -3790,7 +3820,7 @@ const Guardadas = {
     const ext = /\.[a-z0-9]+$/i.test(blob.name || '') ? blob.name.match(/\.[a-z0-9]+$/i)[0].toLowerCase() : /pdf/i.test(blob.type) ? '.pdf' : '.jpg';
     const info = Object.assign({ fecha: hoyISO, hora: ahora(), origen: origen || 'boton' }, previo, {
       ts: marca(), pol: 2, cambio: Boolean(u[tipo + 'Info']), mime: blob.type, tam: blob.size, antes: previo ? previo.antes || previo.tam || archivo.size : archivo.size,
-      nombre: tipo === 'licencia' ? 'Tarjeta de propiedad ' + u.placa + ext : (previo && previo.nombre) || blob.name || archivo.name });
+      nombre: tipo === 'licencia' ? DocFoto.nombre(u) + ' ' + u.placa + ext : (previo && previo.nombre) || blob.name || archivo.name });
     let mini = null;
     if (tipo === 'foto') {
       try { mini = (await Compresor.imagen(blob, 'mini')).blob; } catch (e) { mini = null; }
@@ -3808,9 +3838,15 @@ const Guardadas = {
      arrastrada a la foto de la ficha: se revisa que se pueda abrir, se guarda y
      se avisa cuánto bajó de peso. Devuelve lo que quedó, o nada. */
   async recibir(u, tipo, f, origen) {
-    const foto = tipo === 'foto';
+    const foto = tipo === 'foto', doc = foto ? '' : DocFoto.nombre(u);
     if (foto ? !/^image\//i.test(f.type) : !/^image\/|pdf/i.test(f.type) && !/\.pdf$/i.test(f.name || '')) {
-      Toast.show(foto ? 'La foto tiene que ser una imagen, JPG o PNG.' : 'La tarjeta tiene que ser una foto o un PDF.', 'err');
+      Toast.show(foto ? 'La foto tiene que ser una imagen, JPG o PNG.' : doc + ' tiene que ser una foto o un PDF.', 'err');
+      return null;
+    }
+    /* Lo que vence (la patente de las canoas) va por Documentos, con el archivo
+       ya puesto: allá se pone la fecha y queda la renovación */
+    if (!foto && DocFoto.vence(u)) {
+      Ventanas.documento({ u: u.id, t: DocFoto.de(u), archivo: f });
       return null;
     }
     /* Mientras tanto no se ponen los cambios de otros equipos (ver Sincro.seguro) */
@@ -3825,16 +3861,17 @@ const Guardadas = {
     Router.pintar(true);
     const peso = info.tam < info.antes ? Peso.txt(info.antes) + ' → ' + Peso.txt(info.tam) : '';
     Toast.show(foto ? 'Foto de <b>' + esc(UI.placaTxt(u)) + '</b> guardada' + (peso ? ': ' + esc(peso) : '') + '.'
-      : 'Tarjeta de propiedad de <b>' + esc(UI.placaTxt(u)) + '</b> guardada' + (peso ? ' (' + esc(peso) + ')' : '') + '. Ya quedó en Documentos.');
+      : esc(doc) + ' de <b>' + esc(UI.placaTxt(u)) + '</b> guardada' + (peso ? ' (' + esc(peso) + ')' : '') + '. Ya quedó en Documentos.');
     return info;
   },
-  /* Deja la imagen en la unidad. La licencia ES la tarjeta de propiedad: queda
-     también en Documentos, para no adjuntarla dos veces */
+  /* Deja la imagen en la unidad. La licencia ES el documento de la foto (la
+     tarjeta de propiedad, la de registro…, ver DocFoto): queda también en
+     Documentos, para no adjuntarlo dos veces */
   mostrar(u, tipo, archivo, info) {
     const id = tipo + ':' + u.id;
     u[tipo] = Archivos.registrar(id, archivo, info.nombre || tipo, info.antes, info.ts);
     u[tipo + 'Info'] = info;
-    if (tipo === 'licencia') u.docs.tarjeta = { archivo: info.nombre || 'Tarjeta de propiedad ' + u.placa, archivoId: id,
+    if (tipo === 'licencia' && !DocFoto.vence(u)) u.docs[DocFoto.de(u)] = { archivo: info.nombre || DocFoto.nombre(u) + ' ' + u.placa, archivoId: id,
       subido: info.fecha, hora: info.hora, ts: info.ts, desdeLicencia: true };
     Sincro.tocar();
   },
@@ -3856,15 +3893,17 @@ const Guardadas = {
     const clave = tipo + ':' + u.id, info = u[tipo + 'Info'] || {};
     u[tipo] = Archivos.registrar(clave, blob, info.nombre || tipo, info.antes || Nube.meta(clave).antes, info.ts);
   },
-  /* La tarjeta se llama «Tarjeta de propiedad» con la placa de la unidad. Si
-     la placa cambia después de adjuntarla, el nombre se pone al día. */
+  /* La tarjeta se llama como su documento («Tarjeta de propiedad»…) con la
+     placa de la unidad. Si la placa cambia después de adjuntarla, el nombre se
+     pone al día. */
   renombrarTarjeta(u) {
-    const li = u.licenciaInfo, viejo = (li && li.nombre) || '';
-    if (!/^Tarjeta de propiedad /.test(viejo)) return;
-    const nombre = 'Tarjeta de propiedad ' + u.placa + (viejo.match(/\.[a-z0-9]+$/i) || [''])[0];
+    const li = u.licenciaInfo, viejo = (li && li.nombre) || '', base = DocFoto.nombre(u) + ' ';
+    if (!viejo.startsWith(base)) return;
+    const nombre = base + u.placa + (viejo.match(/\.[a-z0-9]+$/i) || [''])[0];
     if (nombre === viejo) return;
     li.nombre = nombre;
-    if (u.docs.tarjeta && u.docs.tarjeta.desdeLicencia) u.docs.tarjeta.archivo = nombre;
+    const d = u.docs[DocFoto.de(u)];
+    if (d && d.desdeLicencia) d.archivo = nombre;
     const visto = Archivos.vistos.get('licencia:' + u.id);
     if (visto) visto.nombre = nombre;
   },
@@ -3907,9 +3946,11 @@ const Guardadas = {
       if (!v) pedir(Registro.clave(u, f), b => Registro.colgar(u, f, b));
       else if (f.url !== v.url) { f.url = v.url; puestos++; }
     });
-    ['vin', 'registro'].forEach(t => {
+    /* El VIN y el documento de la foto si se subió solo en Documentos: salen
+       en la hoja impresa (el que vino por el botón ya bajó como licencia) */
+    ['vin', DocFoto.de(u)].forEach(t => {
       const d = u.docs[t];
-      if (d && d.archivoId && !Archivos.vistos.get(d.archivoId))
+      if (d && d.archivoId && !d.desdeLicencia && !Archivos.vistos.get(d.archivoId))
         pedir(Nube.claveDe(d.archivoId), b => Archivos.registrar(d.archivoId, b, d.archivo, Nube.meta(Nube.claveDe(d.archivoId)).antes));
     });
     return (await Promise.all(tareas)).reduce((a, b) => a + b, puestos);
@@ -5491,7 +5532,8 @@ const Vistas = {
     else if (u.comp.estado === 'sin') { compV = 'Sin comparendos'; compS = 'Revisado este mes'; compK = 'ok'; }
     else if (u.comp.estado === 'con') { compV = 'Con comparendo'; compS = u.comp.infraccion; compK = 'bad'; }
     else { compV = 'Sin revisar'; compS = 'Se revisa a comienzo de mes'; compK = 'warn'; }
-    const conLicencia = (Config.req[u.tipo] || []).includes('tarjeta');
+    /* El documento junto a la foto, en los cuatro tipos (ver DocFoto) */
+    const docTit = DocFoto.titulo(u), tieneDoc = DocFoto.tiene(u);
     const tabs = [['info', 'Información'], ['actividad', 'Actividad', Actividad.de(u).length], ['docs', 'Documentos', alertas], ['mant', 'Mantenimientos', mants.length]]
       .concat(Preop.aplica(u) ? [['preop', 'Preoperacionales']] : [])
       .concat([['insp', 'Inspecciones'], ['comp', 'Comparendos y accidentes'], ['oc', 'Compras', ocs.length]]);
@@ -5504,14 +5546,14 @@ const Vistas = {
           /* El lápiz acomoda qué parte de la foto se ve (ver Encuadre) */
           (u.fotoInfo ? '<button class="uh-btn uh-ajustar" data-act="ajustarFoto" data-u="' + u.id + '" title="Acomodar la foto" aria-label="Acomodar la foto">' +
             Icon('lapiz', '', 14) + '</button>' : '') +
-          (conLicencia ? '<button class="uh-btn uh-lic" data-act="verLicencia" data-u="' + u.id + '" aria-label="Licencia de tránsito" title="' +
-            (u.licenciaInfo ? 'Ver la licencia de tránsito' : 'Licencia de tránsito: falta adjuntarla') + '">' + Icon('idcard', '', 16) +
-            (u.licenciaInfo ? '' : '<span class="lic-dot"></span>') + '</button>' : '') +
+          '<button class="uh-btn uh-lic" data-act="verLicencia" data-u="' + u.id + '" aria-label="' + attr(docTit) + '" title="' +
+            attr(tieneDoc ? 'Ver la ' + docTit.toLowerCase() : docTit + ': falta adjuntarla') + '">' + Icon('idcard', '', 16) +
+            (tieneDoc ? '' : '<span class="lic-dot"></span>') + '</button>' +
           /* Dónde se suelta la foto o la tarjeta al arrastrarlas (ver Soltar) */
           '<div class="uh-soltar"><div class="uh-sz" data-sz="foto" data-u="' + u.id + '">' + Icon('camera', '', 24) +
             '<b>Foto ' + HojaVida.deLa(u) + '</b><span>' + (u.fotoInfo ? 'Suéltela para cambiarla' : 'Suéltela aquí') + '</span></div>' +
-          (conLicencia ? '<div class="uh-sz" data-sz="licencia" data-u="' + u.id + '">' + Icon('idcard', '', 24) +
-            '<b>Tarjeta de propiedad</b><span>' + (u.licenciaInfo ? 'Suéltela para cambiarla' : 'Suéltela aquí') + '</span></div>' : '') + '</div></div>' +
+          '<div class="uh-sz" data-sz="licencia" data-u="' + u.id + '">' + Icon('idcard', '', 24) +
+            '<b>' + esc(DocFoto.nombre(u)) + '</b><span>' + (tieneDoc ? 'Suéltela para cambiarla' : 'Suéltela aquí') + '</span></div></div></div>' +
         '<div class="uh-b">' +
           '<div class="uh-top">' + UI.placa(u, 'xl') + '<span class="pill p-gray np">' + Icon(TIPOS[u.tipo].icono, '', 12) + esc(TIPOS[u.tipo].nombre) + '</span>' +
             (e.k !== 'nr' ? UI.pill(e.k, e.txt) : '') + '</div>' +
@@ -5799,9 +5841,13 @@ const Ventanas = {
         '<div id="mdAviso"></div>',
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarDocumento">' + Icon('save', '', 14) + 'Guardar</button>'
     });
-    /* La tarjeta de propiedad de una unidad se guarda como documento, a 2.000 px;
-       lo demás, según la política. La lista del archivo lo dice antes de guardar. */
-    const destino = () => ($('#mdTit', m).value.startsWith('u:') && $('#mdTipo', m).value === 'tarjeta' ? 'licencia' : 'documento');
+    /* El documento de la foto de una unidad (la tarjeta de propiedad, la de
+       registro…, ver DocFoto) se guarda como documento, a 2.000 px; lo demás,
+       según la política. La lista del archivo lo dice antes de guardar. */
+    const destino = () => {
+      const p = $('#mdTit', m).value.split(':'), u = p[0] === 'u' ? Q.unidad(p[1]) : null, t = $('#mdTipo', m).value;
+      return u && t === DocFoto.de(u) && !DocFoto.vence(u) ? 'licencia' : 'documento';
+    };
     /* Un comparendo o un accidente no va en «Otros documentos»: si el nombre
        del archivo lo dice, se avisa y se ofrece llevarlo a su pestaña con el
        mismo archivo. Es solo un aviso: si de verdad va aquí, se guarda igual. */
@@ -5993,44 +6039,48 @@ const Ventanas = {
     });
   },
 
-  /* El frente de la licencia de tránsito, en grande. Si no está, se adjunta aquí */
+  /* El documento de la foto en grande (ver DocFoto): el frente de la licencia
+     de tránsito, la tarjeta de registro o la patente. Si no está, se adjunta aquí */
   licencia(u) {
+    const t = DocFoto.de(u), nombre = DocFoto.nombre(u), bajo = nombre.toLowerCase(), esLic = t === 'tarjeta', la = esLic ? 'la tarjeta' : 'la ' + bajo;
     const m = Modal.abrir({
-      titulo: 'Licencia de tránsito · ' + UI.placaTxt(u), sub: 'Frente de la licencia de tránsito (tarjeta de propiedad)', ancho: 'wide', sinFoco: true,
+      titulo: DocFoto.titulo(u) + ' · ' + UI.placaTxt(u), sub: esLic ? 'Frente de la licencia de tránsito (tarjeta de propiedad)' : nombre + ' ' + HojaVida.deLa(u),
+      ancho: 'wide', sinFoco: true,
       cuerpo: '<div id="licCuerpo"></div>',
       pie: '<button class="btn" data-act="cerrarModal">Cerrar</button>'
     });
     let fallo = false;
     const pintar = () => {
-      const tarjeta = u.docs.tarjeta, info = u.licenciaInfo || {}, esPdf = /pdf/i.test(info.mime || '');
+      const d = u.docs[t], a = DocFoto.archivo(u);
       /* Está en la nube pero todavía no se ha bajado a este equipo */
-      if (u.licenciaInfo && !u.licencia) {
+      if (DocFoto.tiene(u) && !a) {
         $('#licCuerpo', m).innerHTML = fallo
-          ? '<div class="alert a-warn">' + Icon('warn') + '<div>No se pudo bajar la tarjeta. Revise el internet e intente otra vez.</div></div>'
-          : '<div class="flex aic g8 txt-2" style="justify-content:center;padding:48px 16px"><span class="spin"></span>Bajando la tarjeta de la nube…</div>';
+          ? '<div class="alert a-warn">' + Icon('warn') + '<div>No se pudo bajar ' + la + '. Revise el internet e intente otra vez.</div></div>'
+          : '<div class="flex aic g8 txt-2" style="justify-content:center;padding:48px 16px"><span class="spin"></span>Bajando ' + la + ' de la nube…</div>';
         return;
       }
-      $('#licCuerpo', m).innerHTML = u.licencia
-        ? '<div class="lic-vista">' + (esPdf ? '<iframe class="lic-pdf" src="' + attr(u.licencia) + '" title="Tarjeta de propiedad"></iframe>'
-            : Lupa.html(u.licencia, 'Frente de la licencia de tránsito de ' + UI.placaTxt(u))) + '</div>' +
-          '<div class="flex aic jcsb mt12" style="gap:12px;flex-wrap:wrap"><span class="txt-3 fs12">Adjuntada el ' + esc(Fecha.larga(info.fecha)) +
-            (info.tam ? ' · ' + Peso.txt(info.tam) : '') + ' · también está en Documentos como tarjeta de propiedad</span>' +
-          '<label class="btn btn-sm" style="cursor:pointer" title="O arrastre la nueva encima de la tarjeta">' + Icon('refresh', '', 12) +
+      $('#licCuerpo', m).innerHTML = a
+        ? '<div class="lic-vista">' + (a.pdf ? '<iframe class="lic-pdf" src="' + attr(a.url) + '" title="' + attr(nombre) + '"></iframe>'
+            : Lupa.html(a.url, (esLic ? 'Frente de la licencia de tránsito' : nombre) + ' de ' + UI.placaTxt(u))) + '</div>' +
+          '<div class="flex aic jcsb mt12" style="gap:12px;flex-wrap:wrap"><span class="txt-3 fs12">' + (a.fecha ? 'Adjuntada el ' + esc(Fecha.larga(a.fecha)) : 'Adjuntada') +
+            (a.tam ? ' · ' + Peso.txt(a.tam) : '') + (d && d.vence ? ' · vence el ' + esc(Fecha.corta(d.vence)) : '') + ' · también está en Documentos como ' + esc(bajo) + '</span>' +
+          '<label class="btn btn-sm" style="cursor:pointer" title="O arrastre la nueva encima de ' + la + '">' + Icon('refresh', '', 12) +
             'Cambiar<input type="file" accept="image/*,application/pdf" hidden id="licInp"></label></div>'
-        : UI.empty('idcard', 'Todavía no se ha adjuntado', 'Tómele una foto al frente de la licencia de tránsito, o escanéela, y súbala aquí. ' +
-            'Se guarda a 2.000 px, para que se lea bien, y queda también en Documentos como tarjeta de propiedad.') +
-          Dz.html('licDz', 'Arrastre aquí la foto o el PDF del frente de la licencia', 'O haga clic para buscarlo en el equipo', 'image/*,application/pdf', false) +
-          (tarjeta && tarjeta.archivo ? '<div class="alert a-info mt12">' + Icon('info') + '<div>Hoy, en Documentos, la tarjeta de propiedad es ' +
-            UI.file(tarjeta.archivo, tarjeta.archivoId) + '. Lo que adjunte aquí la reemplaza.</div></div>' : '');
-      /* Como documento: a 2.000 px, para que los números se sigan leyendo */
+        : UI.empty('idcard', 'Todavía no se ha adjuntado', 'Tómele una foto ' + (esLic ? 'al frente de la licencia de tránsito' : 'a la ' + bajo) + ', o escanéela, y súbala aquí. ' +
+            'Se guarda a 2.000 px, para que se lea bien, y queda también en Documentos como ' + bajo + (DocFoto.vence(u) ? ', con su fecha de vencimiento' : '') + '.') +
+          Dz.html('licDz', 'Arrastre aquí la foto o el PDF ' + (esLic ? 'del frente de la licencia' : 'de la ' + bajo), 'O haga clic para buscarlo en el equipo', 'image/*,application/pdf', false) +
+          (d && d.archivo ? '<div class="alert a-info mt12">' + Icon('info') + '<div>Hoy, en Documentos, la ' + esc(bajo) + ' es ' +
+            UI.file(d.archivo, d.archivoId) + '. Lo que adjunte aquí la reemplaza.</div></div>' : '');
+      /* Como documento: a 2.000 px, para que los números se sigan leyendo. Lo
+         que vence abre la ventana de Documentos para poner la fecha (ver Guardadas.recibir). */
       const recibir = f => Guardadas.recibir(u, 'licencia', f, 'boton').then(i => { if (i && document.body.contains(m)) pintar(); });
-      if (u.licencia) {
+      if (a) {
         $('#licInp', m).addEventListener('change', e => { const f = e.target.files[0]; if (f) recibir(f); });
         Dz.encima($('.lic-vista', m), recibir);
       } else Dz.bind('licDz', files => recibir(files[0]));
     };
     pintar();
-    if (u.licenciaInfo && !u.licencia) Guardadas.traerUnidad(u).then(() => { fallo = !u.licencia; if (document.body.contains(m)) pintar(); });
+    if (DocFoto.tiene(u) && !DocFoto.archivo(u)) Guardadas.traerUnidad(u).then(() => { fallo = !DocFoto.archivo(u); if (document.body.contains(m)) pintar(); });
   },
 
   /* La foto de la unidad en grande, al darle clic en la ficha: igual que la
@@ -6291,7 +6341,7 @@ const Acciones = {
       titulo: 'Eliminar ' + nombre + ' de ' + UI.placaTxt(u), sub: esc(TIPOS[u.tipo].nombre + ' · ' + UI.nombre(u)), sinFoco: true,
       cuerpo: '<div class="alert a-warn">' + Icon('warn') + '<div><b>Se quita el archivo «' + esc(d.archivo) + '».</b> ' +
           'El documento queda como «Falta» y la unidad mostrará el aviso hasta que se suba otro.</div></div>' +
-        (d.desdeLicencia ? '<p class="txt-2 fs12 mt12">Es la misma tarjeta del botón de la licencia, sobre la foto: también se quita de ahí.</p>' : ''),
+        (d.desdeLicencia || t === DocFoto.de(u) ? '<p class="txt-2 fs12 mt12">Es el mismo archivo del botón sobre la foto: también se quita de ahí.</p>' : ''),
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-danger" data-act="confirmarEliminarDoc" data-u="' + u.id + '" data-t="' + t + '">' +
         Icon('trash', '', 14) + 'Eliminar</button>'
     });
@@ -6345,15 +6395,17 @@ const Acciones = {
     const t = $('#mdTipo', m).value;
     const quien = p[0] === 'u' ? Q.unidad(p[1]) : Q.conductor(p[1]);
     const f = m._archivo;
-    /* La tarjeta de propiedad de una unidad es la misma licencia del botón de
-       la foto: se comprime como documento y queda en los dos sitios */
-    if (p[0] === 'u' && t === 'tarjeta' && f) {
+    /* El documento de la foto de una unidad (la tarjeta de propiedad, la de
+       registro…, ver DocFoto) es la misma licencia del botón de la foto: se
+       comprime como documento y queda en los dos sitios. Lo que vence (la
+       patente) sigue como los demás documentos, con su fecha y su renovación. */
+    if (p[0] === 'u' && t === DocFoto.de(quien) && !DocFoto.vence(quien) && f) {
       const ok = await Archivos.original(f);
       if (!ok) return;
       const info = await Archivos.conBoton(el, () => Guardadas.poner(quien, 'licencia', ok, 'documentos'));
       Modal.cerrarTodo();
-      Toast.show('Tarjeta de propiedad de <b>' + esc(UI.placaTxt(quien)) + '</b> guardada' +
-        (info.tam < info.antes ? ' (' + esc(Peso.txt(info.antes) + ' → ' + Peso.txt(info.tam)) + ')' : '') + '. También se ve en el botón de la licencia.');
+      Toast.show(esc(DocFoto.nombre(quien)) + ' de <b>' + esc(UI.placaTxt(quien)) + '</b> guardada' +
+        (info.tam < info.antes ? ' (' + esc(Peso.txt(info.antes) + ' → ' + Peso.txt(info.tam)) + ')' : '') + '. También se ve en el botón sobre la foto.');
       Router.pintar(true);
       return;
     }
@@ -11665,8 +11717,9 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.gsearch')) { const g = $('#gsr'); if (g) g.classList.add('hidden'); }
 });
 /* Todo lo que se sube se puede arrastrar (Juan, 27/10/2026):
-   · a la foto de la ficha: la mitad de la cámara guarda la foto y la de la
-     licencia, la tarjeta de propiedad;
+   · a la foto de la ficha: la mitad de la cámara guarda la foto y la otra,
+     el documento de la foto (la tarjeta de propiedad, la de registro o la
+     patente, ver DocFoto), en los cuatro tipos;
    · a un documento (su fila o su botón de subir): se abre «Subir documento»
      con el archivo ya puesto, para ponerle las fechas;
    · al registro fotográfico: varias fotos a la vez.
