@@ -3838,11 +3838,13 @@ const Archivos = {
     const v = this.vistos.get(id);
     return v && (ver == null || v.ver === ver) ? v : null;
   },
-  /* Baja un archivo una sola vez, aunque lo pidan varios a la vez */
+  /* Baja un archivo una sola vez, aunque lo pidan varios a la vez (si mientras
+     baja cambia la versión, la nueva se baja aparte) */
   _trayendo: new Map(),
   traer(clave) {
-    if (!this._trayendo.has(clave)) this._trayendo.set(clave, Nube.bajar(clave).finally(() => this._trayendo.delete(clave)));
-    return this._trayendo.get(clave);
+    const k = clave + '|' + Nube.version(clave);
+    if (!this._trayendo.has(k)) this._trayendo.set(k, Nube.bajar(clave).finally(() => this._trayendo.delete(k)));
+    return this._trayendo.get(k);
   },
   /* Comprueba que el navegador pueda mostrar la imagen; devuelve nada si no
      puede */
@@ -3930,6 +3932,8 @@ const Guardadas = {
     if (tipo === 'foto') {
       try { mini = (await Compresor.imagen(blob, 'mini')).blob; } catch (e) { mini = null; }
       info.mini = Boolean(mini && mini !== blob);
+      /* Lo que pesa la miniatura: con eso los otros equipos reconocen la vieja (ver Nube.bajar) */
+      if (info.mini) info.tamMini = mini.size; else delete info.tamMini;
     }
     this.mostrar(u, tipo, blob, info);
     if (info.mini) {
@@ -10786,11 +10790,32 @@ const Cache = {
       try {
         const q = indexedDB.open('sigf-archivos', 1);
         q.onupgradeneeded = () => q.result.createObjectStore('a', { keyPath: 'k' });
-        q.onsuccess = () => ok(q.result);
+        q.onsuccess = () => this.limpiarUnaVez(q.result).then(() => ok(q.result));
         q.onerror = q.onblocked = () => ok(null);
       } catch (e) { ok(null); }
     });
     return this._db;
+  },
+  /* Una sola vez en cada navegador (31/10/2026). Antes de que Nube.bajar
+     revisara el peso, una foto bajada mientras otro equipo subía la nueva
+     quedaba guardada aquí como la nueva, siendo la vieja. Se borran las copias
+     de lo que se reemplaza con la misma clave (la foto, su miniatura, la
+     tarjeta y la firma), y se vuelven a bajar cuando hagan falta. */
+  limpiarUnaVez(db) {
+    if (Prefs.get('cache.limpieza')) return Promise.resolve();
+    return new Promise(ok => {
+      try {
+        const tx = db.transaction('a', 'readwrite'), q = tx.objectStore('a').openCursor();
+        q.onsuccess = () => {
+          const c = q.result;
+          if (!c) return;
+          if (/^(foto|mini|licencia|firma):/.test(c.key)) c.delete();
+          c.continue();
+        };
+        tx.oncomplete = () => { Prefs.set('cache.limpieza', 1); ok(); };
+        tx.onerror = tx.onabort = () => ok();
+      } catch (e) { ok(); }
+    });
   },
   async leer(k) {
     const db = await this.db();
@@ -11040,13 +11065,19 @@ const Nube = {
   conocerDeDatos() {
     Persistencia.usados().forEach(k => this._conocidos.add(k));
   },
-  /* La versión de un archivo que se reemplaza con la misma clave (la foto, su
-     miniatura y la tarjeta): la marca de cuando se subió. Los demás no cambian. */
-  version(clave) {
-    if (clave === Firma.CLAVE) { const f = Firma.datos().firma; return f && f.ts != null ? String(f.ts) : ''; }
+  /* Lo que se sabe de la versión vigente de un archivo que se reemplaza con la
+     misma clave (la foto, su miniatura, la tarjeta y la firma): «ts», la marca
+     de cuando se subió, y «tam», lo que pesa (la miniatura lo tiene desde el
+     31/10/2026). Los demás archivos no cambian: null. */
+  _vigente(clave) {
+    if (clave === Firma.CLAVE) return Firma.datos().firma || null;
     const m = /^(foto|mini|licencia):(.+)$/.exec(clave), u = m && Datos.unidades.find(x => x.id === m[2]);
     const info = u && (m[1] === 'licencia' ? u.licenciaInfo : u.fotoInfo);
-    return info && info.ts != null ? String(info.ts) : '';
+    return info ? { ts: info.ts, tam: m[1] === 'mini' ? info.tamMini : info.tam } : null;
+  },
+  version(clave) {
+    const v = this._vigente(clave);
+    return v && v.ts != null ? String(v.ts) : '';
   },
   /* Subir y quitar van en una cola que se atiende de a uno y reintenta sola */
   _cola: [],
@@ -11126,6 +11157,29 @@ const Nube = {
       if (!this._meta.has(clave)) this.conocer(clave, { mime: guardado.type, tam: guardado.size });
       return guardado;
     }
+    /* Lo que se reemplaza con la misma clave (ver _vigente): la versión nueva
+       queda en los datos apenas se cambia en otro equipo, pero el archivo tarda
+       más en subir, y mientras tanto en la nube sigue el viejo (o nada, si es
+       el primero). Si el cambio es de hace poco y lo que llega no pesa lo que
+       debe, o todavía no está, no se guarda: se espera y se vuelve a pedir. Si
+       no llega, se muestra lo que hay, sin guardarlo. */
+    const v = this._vigente(clave), pesa = v && v.tam, reciente = v && Date.now() - Number(v.ts) < 30 * 60000;
+    for (let vuelta = 0; ; vuelta++) {
+      const blob = await this._bajarUna(clave, Boolean(v));
+      if (blob === null || (blob === false && !reciente)) return null;
+      if (blob && (!pesa || blob.size === pesa || !reciente)) {
+        if (!this._meta.has(clave)) this.conocer(clave, { mime: blob.type, tam: blob.size });
+        Cache.poner(k, blob);
+        return blob;
+      }
+      if (vuelta === 4) return blob || null;
+      await new Promise(ok => setTimeout(ok, 3000 * Math.pow(2, vuelta)));
+    }
+  },
+  /* Un pedido del archivo a la nube, con dos reintentos si falla la red. Lo que
+     se reemplaza con la misma clave se pide sin la copia del navegador.
+     Devuelve el archivo, false si en la nube no está, o null si no se pudo. */
+  async _bajarUna(clave, sinCopia) {
     if (this._bajando >= 4) await new Promise(ok => this._turnos.push(ok));
     this._bajando++;
     try {
@@ -11133,14 +11187,15 @@ const Nube = {
       if (!tk) return null;
       let r = null;
       for (let intento = 1; intento <= 3 && !r; intento++) {
-        try { r = await this._fetch(this._url(clave), { headers: { apikey: NUBE.llave, Authorization: 'Bearer ' + tk } }, 60000); }
-        catch (e) { if (intento < 3) await new Promise(ok => setTimeout(ok, 700 * intento)); }
+        try {
+          r = await this._fetch(this._url(clave), { cache: sinCopia ? 'no-store' : 'default',
+            headers: { apikey: NUBE.llave, Authorization: 'Bearer ' + tk } }, 60000);
+        } catch (e) { if (intento < 3) await new Promise(ok => setTimeout(ok, 700 * intento)); }
       }
-      if (!r || !r.ok) return null;
-      const blob = await r.blob();
-      if (!this._meta.has(clave)) this.conocer(clave, { mime: blob.type, tam: blob.size });
-      Cache.poner(k, blob);
-      return blob;
+      if (!r) return null;
+      /* Supabase contesta 400 (o 404) cuando el archivo no está */
+      if (!r.ok) return r.status === 400 || r.status === 404 ? false : null;
+      return await r.blob();
     } catch (e) {
       return null;
     } finally {
