@@ -2707,6 +2707,9 @@ const DOCS_UNIDAD = ['soat', 'tecno', 'tarjeta', 'vin', 'registro', 'poliza', 'p
    carga (Juan, 26/10/2026). */
 const Config = {
   diasAviso: 30,
+  /* Un kilometraje del preoperacional que sube más que esto por día queda para
+     revisar (ver KmRaro). Se cambia en Configuración. */
+  kmDia: 1000,
   req: { carga: ['soat', 'tecno', 'tarjeta', 'vin', 'poliza'], maquinaria: ['tarjeta'], remolque: ['registro'], canoa: ['patente'] },
   comparendos: ['carga'],
   /* Los planos de mantenimiento: solo lo que se cambió en Configuración (el
@@ -2979,7 +2982,7 @@ const Q = {
       unidades: Datos.unidades.length,
       docs: docs.filter(x => x.e.k === 'bad' || x.e.k === 'warn').length,
       taller: Datos.mantenimientos.filter(m => m.estado === 'taller').length,
-      aceite: Aceite.todas().filter(e => e.k === 'bad' || e.k === 'warn').length,
+      aceite: Aceite.todas().filter(e => e.k === 'bad' || e.k === 'warn').length + KmRaro.todas().length,
       insp: Datos.unidades.filter(u => Est.insp(u).k !== 'ok').length,
       comp: this.conComparendos().filter(u => u.comp.estado === 'pend').length,
       conductores: Datos.conductores.length,
@@ -4878,8 +4881,11 @@ const Aceite = {
   aplica: u => u.tipo === 'carga' || u.tipo === 'maquinaria',
   medida: u => (u.tipo === 'maquinaria' ? 'h' : 'km'),
   fmt(u, n) { return Math.round(n).toLocaleString('es-CO') + ' ' + this.medida(u); },
-  lecturas: u => (Datos.lecturas || []).filter(l => l.unidad === u.id)
+  /* Todas las lecturas de la unidad, en orden */
+  todasLecturas: u => (Datos.lecturas || []).filter(l => l.unidad === u.id)
     .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.valor - b.valor || (a.ts || 0) - (b.ts || 0)),
+  /* Las que cuentan: sin los kilometrajes raros que faltan por revisar (ver KmRaro) */
+  lecturas(u) { const r = KmRaro.de(u); return this.todasLecturas(u).filter(l => !r.has(l.id)); },
   actual(u) { const l = this.lecturas(u); return l.length ? l[l.length - 1] : null; },
   porDia(u) {
     const l = this.lecturas(u);
@@ -4913,6 +4919,50 @@ const Aceite = {
   leer(u, fecha, valor, fuente) {
     Datos.lecturas = Datos.lecturas || [];
     Datos.lecturas.push({ unidad: u.id, fecha, valor, fuente, ts: marca() });
+  }
+};
+
+/* Kilometrajes raros del preoperacional (Juan, 31/10/2026). El conductor
+   siempre puede enviar; aquí cada lectura del preoperacional se compara con la
+   última buena de su unidad. Si es menor, o si sube más de lo que se puede
+   andar en esos días (Config.kmDia por día; las máquinas, 24 horas), queda
+   para revisar y no cuenta para el cambio de aceite hasta que Juan la corrija
+   o la dé por buena (l.revisada; si la corrige, l.original guarda lo que
+   escribió el conductor). */
+const KmRaro = {
+  tope(u) { return Aceite.medida(u) === 'h' ? 24 : Config.kmDia; },
+  /* id de la lectura → { l, u, antes (la última buena), dif, dias } */
+  de(u) {
+    const r = new Map(), tope = this.tope(u);
+    let buena = null;
+    Aceite.todasLecturas(u).forEach(l => {
+      if (buena && l.fuente === 'preoperacional' && !l.revisada) {
+        const dias = Math.max(1, Math.round((Fecha.parse(l.fecha) - Fecha.parse(buena.fecha)) / 864e5)), dif = l.valor - buena.valor;
+        if (dif < 0 || dif > tope * dias) { r.set(l.id, { l, u, antes: buena, dif, dias }); return; }
+      }
+      buena = l;
+    });
+    return r;
+  },
+  todas() {
+    return Datos.unidades.filter(Aceite.aplica).reduce((t, u) => t.concat(Array.from(this.de(u).values())), [])
+      .sort((a, b) => b.l.fecha.localeCompare(a.l.fecha));
+  },
+  motivo(x) { return x.dif < 0 ? 'Bajó ' + Aceite.fmt(x.u, -x.dif) : 'Subió ' + Aceite.fmt(x.u, x.dif) + ' en ' + (x.dias === 1 ? '1 día' : x.dias + ' días'); },
+  /* Quién lo escribió: el conductor de ese preoperacional, para llamarlo */
+  nombres: new Map(),
+  _pidiendo: null,
+  pedirNombres(lista) {
+    const ids = lista.map(x => x.l.id).filter(id => /^preop-/.test(id) && !this.nombres.has(id)).map(id => id.slice(6));
+    if (!ids.length || this._pidiendo) return;
+    this._pidiendo = Nube.pedir('preoperacionales?select=id,conductor_nombre&id=in.(' + ids.map(encodeURIComponent).join(',') + ')')
+      .then(r => {
+        (r || []).forEach(p => this.nombres.set('preop-' + p.id, p.conductor_nombre || ''));
+        ids.forEach(id => { if (!this.nombres.has('preop-' + id)) this.nombres.set('preop-' + id, ''); });
+        if (Router.actual().vista === 'aceite' && Sincro.seguro()) Router.pintar(true);
+      })
+      .catch(() => {})
+      .finally(() => { this._pidiendo = null; });
   }
 };
 
@@ -5743,7 +5793,7 @@ const Vistas = {
 
     /* Cambios de aceite: cómo está la flota y los más urgentes. La línea es lo
        que va gastado del intervalo, así se comparan los km y las horas. */
-    const aceite = Aceite.todas(), na = k => aceite.filter(e => e.k === k).length;
+    const aceite = Aceite.todas(), na = k => aceite.filter(e => e.k === k).length, kmRaros = KmRaro.todas().length;
     const partes = [{ v: na('bad'), c: 'var(--dang-500)', t: 'Vencidos' }, { v: na('warn'), c: 'var(--warn-500)', t: 'Próximos' },
       { v: na('ok'), c: 'var(--brand-500)', t: 'Al día' }, { v: na('nr'), c: 'var(--ink-300)', t: 'Sin datos' }];
     const usado = e => Math.min(100, Math.max(2, Math.round((e.frecuencia - e.faltan) / e.frecuencia * 100)));
@@ -5786,7 +5836,9 @@ const Vistas = {
       '<div class="grid g3 mb16">' +
         UI.card('Documentos que vencen', vence, { flush: true, sub: 'Vencidos y en ' + Config.diasAviso + ' días',
           act: '<span class="link fs12" data-ir="documentos">Ver todos' + (proximos.length > 6 ? ' (' + proximos.length + ')' : '') + '</span>' }) +
-        UI.card('Cambios de aceite', cambios, { flush: true, sub: 'Los más urgentes', act: '<span class="link fs12" data-ir="aceite">Ver todos</span>' }) +
+        UI.card('Cambios de aceite', cambios, { flush: true, sub: 'Los más urgentes', act: '<span class="link fs12" data-ir="aceite">Ver todos</span>',
+          pie: kmRaros ? Icon('warn', '', 13) + '<span>' + (kmRaros === 1 ? 'Un kilometraje' : kmRaros + ' kilometrajes') + ' del preoperacional para revisar. ' +
+            '<span class="link" data-ir="aceite">Revisar</span></span>' : '' }) +
         UI.card('Cumplimiento del mes', cum('Inspecciones visuales al día', inspOk, u.length, 'inspecciones') +
           cum('Revisión de comparendos de ' + mesTxt, compRev, compU.length, 'comparendos') +
           cum('Dotación revisada en ' + mesTxt, dotOk, conDot.length, 'flota'), { flush: true, sub: Fecha.mes() }) +
@@ -7145,10 +7197,28 @@ Object.assign(Vistas, {
           attr(UI.placaTxt(u)) + '">' + Icon('edit', '', 13) + '</button></td></tr>';
     };
     const segs = [['todos', 'Todas', todas.length], ['bad', 'Vencidos', n('bad')], ['warn', 'Próximos', n('warn')], ['ok', 'Al día', n('ok')], ['nr', 'Sin datos', n('nr')]];
+    /* Los kilometrajes raros del preoperacional (ver KmRaro), con quién lo escribió */
+    const raras = KmRaro.todas();
+    KmRaro.pedirNombres(raras);
+    const revisar = raras.length ? UI.card('Kilometrajes para revisar', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Unidad</th><th>Fecha</th>' +
+        '<th>Escribió</th><th>La anterior</th><th>Qué pasa</th><th>Conductor</th><th></th></tr></thead><tbody>' +
+        raras.map(x => '<tr><td>' + UI.unidadCelda(x.u) + '</td><td class="nowrap">' + esc(Fecha.corta(x.l.fecha)) + '</td>' +
+          '<td class="nowrap tx-warn"><b>' + esc(Aceite.fmt(x.u, x.l.valor)) + '</b></td>' +
+          '<td class="nowrap">' + esc(Aceite.fmt(x.u, x.antes.valor)) + '<div class="dias">' + esc(Fecha.corta(x.antes.fecha)) + '</div></td>' +
+          '<td>' + esc(KmRaro.motivo(x)) + '</td><td>' + esc(KmRaro.nombres.get(x.l.id) || '—') + '</td>' +
+          '<td class="tr nowrap"><button class="btn btn-sm" data-act="kmCorregir" data-l="' + attr(x.l.id) + '">' + Icon('edit', '', 12) + 'Corregir</button> ' +
+            '<button class="btn btn-sm btn-ghost" data-act="kmBien" data-l="' + attr(x.l.id) + '">' + Icon('check', '', 12) + 'Está bien</button>' +
+            (/^preop-/.test(x.l.id) ? ' <button class="btn btn-sm btn-ghost btn-icon" data-act="verPreop" data-p="' + attr(x.l.id.slice(6)) +
+              '" title="Ver el preoperacional" aria-label="Ver el preoperacional">' + Icon('eye', '', 13) + '</button>' : '') + '</td></tr>').join('') +
+        '</tbody></table></div>',
+      { flush: true, cls: 'mb16', sub: 'Mientras no se revisen, no cuentan para el cambio de aceite',
+        pie: Icon('warn', '', 13) + '<span>Se marca cuando el kilometraje baja o sube más de ' + esc(Config.kmDia.toLocaleString('es-CO')) +
+          ' km por día (en las máquinas, más de 24 horas). El tope se cambia en Configuración.</span>' }) : '';
     const html =
       UI.head('Cambios de aceite', 'Camiones por kilometraje y maquinaria por horómetro',
         '<button class="btn" data-act="nuevaLectura">' + Icon('medidor', '', 14) + 'Registrar lectura</button>' +
         '<button class="btn btn-primary" data-act="cambioAceite">' + Icon('gota', '', 14) + 'Registrar cambio</button>') +
+      revisar +
       '<div class="grid g4 mb16">' +
         UI.kpi({ label: 'Vencidos', valor: n('bad'), icono: 'warn', color: 'var(--dang-500)', vcolor: n('bad') ? 'var(--dang-500)' : '', meta: 'Ya les tocaba el cambio', act: 'filtroAceite', v: 'bad' }) +
         UI.kpi({ label: 'Próximos', valor: n('warn'), icono: 'clock', color: 'var(--warn-500)', meta: 'Faltan 4.000 km o 40 horas, o menos', act: 'filtroAceite', v: 'warn' }) +
@@ -7326,6 +7396,9 @@ Object.assign(Vistas, {
         UI.card('Avisos y revisiones',
           '<div class="field"><label>Avisar los vencimientos con</label><div class="flex aic g8"><input class="inp" type="number" min="1" max="120" id="cfgDias" value="' +
             Config.diasAviso + '" style="width:90px"><span class="txt-2">días de anticipación</span></div></div>' +
+          '<div class="field"><label>Kilometraje raro del preoperacional</label><div class="flex aic g8"><span class="txt-2">Más de</span>' +
+            '<input class="inp" type="number" min="100" max="5000" step="50" id="cfgKmDia" value="' + Config.kmDia + '" style="width:100px"><span class="txt-2">km por día</span></div>' +
+            '<div class="hint">Si sube más que eso, o si baja, queda para revisar en Cambios de aceite. En las máquinas, más de 24 horas por día.</div></div>' +
           '<div class="field mb0"><label>Se revisan en comparendos</label>' + ORDEN.map(tp => '<label class="flex aic g8 mt8" style="cursor:pointer;font-size:13px">' +
             '<input type="checkbox" data-act="cfgComp" data-tp="' + tp + '"' + (Config.comparendos.includes(tp) ? ' checked' : '') + '>' + esc(TIPOS[tp].plural) + '</label>').join('') + '</div>') +
       '</div>' +
@@ -7376,6 +7449,13 @@ Object.assign(Vistas, {
           e.target.value = v;
           Shell.nav('configuracion');
           Toast.show('Ahora se avisa con <b>' + v + ' días</b> de anticipación.');
+        });
+        $('#cfgKmDia').addEventListener('change', e => {
+          const v = Math.max(100, Math.min(5000, Math.round(+e.target.value) || 1000));
+          Config.kmDia = v;
+          e.target.value = v;
+          Shell.nav('configuracion');
+          Toast.show('Ahora queda para revisar el kilometraje que suba más de <b>' + esc(v.toLocaleString('es-CO')) + ' km</b> por día.');
         });
       }
     };
@@ -8144,6 +8224,50 @@ Object.assign(Acciones, {
     const e = Aceite.estado(u);
     Toast.show('Lectura de <b>' + esc(UI.placaTxt(u)) + '</b>: ' + esc(Aceite.fmt(u, v)) + '.' + (e.faltan == null ? ''
       : e.faltan > 0 ? '<br>Faltan ' + esc(Aceite.fmt(u, e.faltan)) + ' para el cambio de aceite.' : '<br>Ya le tocaba el cambio de aceite.'));
+    Router.pintar(true);
+  },
+  /* Un kilometraje raro del preoperacional (ver KmRaro): se corrige con lo que
+     diga el conductor, o se da por bueno. Lo que él escribió queda guardado. */
+  kmCorregir(el) {
+    const l = (Datos.lecturas || []).find(x => x.id === el.dataset.l), u = l && Q.unidad(l.unidad);
+    if (!u) return;
+    const x = KmRaro.de(u).get(l.id), horas = Aceite.medida(u) === 'h', quien = KmRaro.nombres.get(l.id);
+    const m = Modal.abrir({
+      titulo: 'Corregir el ' + (horas ? 'horómetro' : 'kilometraje') + ' · ' + UI.placaTxt(u), ancho: 'm-hoja',
+      sub: esc('Preoperacional del ' + Fecha.larga(l.fecha) + (quien ? ' · ' + quien : '')),
+      cuerpo: '<div class="alert a-warn mb12">' + Icon('warn') + '<div>Escribió <b>' + esc(Aceite.fmt(u, l.valor)) + '</b>' +
+          (x ? '. ' + esc(KmRaro.motivo(x)) + ' desde la anterior (' + esc(Aceite.fmt(u, x.antes.valor)) + ', ' + esc(Fecha.corta(x.antes.fecha)) + ').' : '.') + '</div></div>' +
+        '<div class="field mb0"><label>' + (horas ? 'Horómetro correcto (horas)' : 'Kilometraje correcto (km)') + '</label><input class="inp" id="kcV" inputmode="numeric">' +
+          '<div class="hint">Lo que escribió el conductor queda guardado, por si hay que mirarlo después.</div></div><div id="kcAviso"></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarKm" data-l="' + attr(l.id) + '" disabled>' +
+        Icon('save', '', 14) + 'Guardar</button>'
+    });
+    const inp = $('#kcV', m), g = $('[data-act="guardarKm"]', m);
+    inp.addEventListener('input', () => { g.disabled = !Leer.pesos(inp.value); m._aviso = false; $('#kcAviso', m).innerHTML = ''; });
+  },
+  guardarKm(el) {
+    const m = el.closest('.modal-bd'), l = (Datos.lecturas || []).find(x => x.id === el.dataset.l), u = l && Q.unidad(l.unidad), v = Leer.pesos($('#kcV', m).value);
+    if (!u || !v) return;
+    /* Si lo corregido también se ve raro, se avisa, pero se deja guardar */
+    const x = KmRaro.de(u).get(l.id);
+    if (x && !m._aviso && (v < x.antes.valor || v - x.antes.valor > KmRaro.tope(u) * x.dias)) {
+      m._aviso = true;
+      $('#kcAviso', m).innerHTML = '<div class="alert a-warn mt12">' + Icon('warn') + '<div>Así también se ve raro frente a la anterior (' + esc(Aceite.fmt(u, x.antes.valor)) +
+        '). Si está bien, pulse Guardar otra vez.</div></div>';
+      return;
+    }
+    if (l.original == null) l.original = l.valor;
+    l.valor = v;
+    l.revisada = true;
+    Modal.cerrar(m);
+    Toast.show('Listo: <b>' + esc(UI.placaTxt(u)) + '</b> queda con ' + esc(Aceite.fmt(u, v)) + ' el ' + esc(Fecha.corta(l.fecha)) + '.');
+    Router.pintar(true);
+  },
+  kmBien(el) {
+    const l = (Datos.lecturas || []).find(x => x.id === el.dataset.l), u = l && Q.unidad(l.unidad);
+    if (!u) return;
+    l.revisada = true;
+    Toast.show('Listo: el ' + (Aceite.medida(u) === 'h' ? 'horómetro' : 'kilometraje') + ' de <b>' + esc(UI.placaTxt(u)) + '</b> del ' + esc(Fecha.corta(l.fecha)) + ' queda como bueno.');
     Router.pintar(true);
   },
   editarAceite(el) { Ventanas.controlAceite(Q.unidad(el.dataset.u)); },
@@ -11777,6 +11901,7 @@ const Mapa = {
     });
 
     poner('configuracion', { clave: 'dias_aviso', valor: config.diasAviso });
+    poner('configuracion', { clave: 'km_dia', valor: config.kmDia });
     poner('configuracion', { clave: 'documentos_obligatorios', valor: config.req });
     poner('configuracion', { clave: 'comparendos', valor: config.comparendos });
     poner('configuracion', { clave: 'planos', valor: config.planos || {} });
@@ -11848,6 +11973,7 @@ const Mapa = {
     (filas.configuracion || []).forEach(r => { cfg[r.clave] = r.valor; });
     const config = {
       diasAviso: cfg.dias_aviso != null ? cfg.dias_aviso : Config.diasAviso,
+      kmDia: cfg.km_dia != null ? cfg.km_dia : Config.kmDia,
       req: cfg.documentos_obligatorios || Config.req,
       comparendos: cfg.comparendos || Config.comparendos,
       planos: cfg.planos && typeof cfg.planos === 'object' ? cfg.planos : Config.planos || {},
