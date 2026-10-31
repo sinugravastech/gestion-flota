@@ -295,6 +295,20 @@ html:has(#modals > .modal-bd){overflow:hidden;padding-right:var(--barra,0px)}
 .modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--sh-3);width:100%;
   max-width:560px;animation:pop .16s cubic-bezier(.2,.8,.3,1);margin:auto 0;border:1px solid var(--border)}
 .modal.wide{max-width:860px}.modal.xwide{max-width:1040px}
+/* Una orden de Facturación vista en Flota (ver Compras) */
+.oc-datos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:6px}
+.oc-dato{border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;background:var(--surface)}
+.oc-dato .l{font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.oc-dato .v{font-size:13px;color:var(--text);font-weight:600}
+.oc-dato .m{font-size:11.5px;color:var(--text-3);margin-top:3px}
+.oc-sec{font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px}
+.oc-prov{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2)}
+.oc-prov b{font-size:14px;color:var(--text)}
+.oc-tot{display:grid;grid-template-columns:auto 130px;justify-content:end;gap:5px 18px;font-size:13px;margin:12px 0 0}
+.oc-tot dt{color:var(--text-2);text-align:right}
+.oc-tot dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.oc-tot .t{font-weight:800;font-size:15px;color:var(--text)}
+@media (max-width:560px){ .oc-datos{grid-template-columns:minmax(0,1fr)} .oc-tot{grid-template-columns:auto 110px;gap:5px 12px} }
 .modal-h{padding:15px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .modal-h h3{font-size:15px}
 .modal-h .mh-sub{font-size:11.5px;color:var(--text-3);margin-top:1px}
@@ -2952,7 +2966,6 @@ const Q = {
       aceite: Aceite.todas().filter(e => e.k === 'bad' || e.k === 'warn').length,
       insp: Datos.unidades.filter(u => Est.insp(u).k !== 'ok').length,
       comp: this.conComparendos().filter(u => u.comp.estado === 'pend').length,
-      oc: Datos.ocs.filter(o => o.estado === 'borrador').length,
       conductores: Datos.conductores.length,
       proveedores: Datos.proveedores.length
     };
@@ -3240,6 +3253,21 @@ const UI = {
           (conUnidad ? '<td>' + (u ? '<span class="mono nowrap">' + esc(this.placaTxt(u)) + '</span>' : '<span class="txt-3">General</span>') + '</td>' : '') +
           '<td class="num">' + Money.format(this.totalOC(o)) + '</td><td class="nowrap">' + o.plazo + ' días</td>' +
           '<td>' + this.pillOC(o.estado) + '</td><td class="tr txt-3">' + Icon('chevR', '', 14) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  },
+  /* Las órdenes de Facturación (ver Compras): al clic, su resumen */
+  tablaCompras(li, conUnidad) {
+    return '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Orden</th><th>Fecha</th>' + (conUnidad ? '<th>Vehículo</th>' : '') +
+      '<th>Concepto</th><th>Proveedor</th><th>Estado</th><th class="num">Valor</th><th></th></tr></thead><tbody>' +
+      li.map(o => {
+        const u = conUnidad && Q.unidad(o.flota_id), r = Compras.resumen(o);
+        return '<tr class="row-click" data-act="verCompra" data-o="' + attr(o.orden_id) + '"><td class="mono nowrap">' + esc(o.codigo) + '</td>' +
+          '<td class="nowrap">' + esc(Fecha.corta(o.fecha)) + '</td>' +
+          (conUnidad ? '<td class="nowrap">' + (u ? '<span class="mono">' + esc(this.placaTxt(u)) + '</span> <span class="txt-3">' + esc(u.clase || TIPOS[u.tipo].nombre) + '</span>'
+            : '<span class="txt-3">' + esc(o.flota_id || '—') + '</span>') + '</td>' : '') +
+          '<td class="trunc" style="max-width:280px" title="' + attr(r) + '">' + esc(r) + '</td>' +
+          '<td class="trunc" style="max-width:220px" title="' + attr(o.proveedor) + '">' + esc(o.proveedor || '—') + '</td>' +
+          '<td>' + Compras.pill(o) + '</td><td class="num">' + Money.format(o.valor) + '</td><td class="tr txt-3">' + Icon('chevR', '', 14) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
   }
 };
@@ -4474,7 +4502,7 @@ const NAV = [
   { id: 'preoperacionales', icono: 'checkSquare', txt: 'Preoperacionales' },
   { id: 'inspecciones', icono: 'clipboard', txt: 'Inspecciones', badge: 'insp', alerta: true },
   { id: 'comparendos', icono: 'ticket', txt: 'Comparendos', badge: 'comp', alerta: true },
-  { id: 'compras', icono: 'cart', txt: 'Órdenes de compra', badge: 'oc', alerta: true },
+  { id: 'compras', icono: 'cart', txt: 'Órdenes de compra' },
   { sec: 'Registros' },
   { id: 'conductores', icono: 'personas', txt: 'Conductores', badge: 'conductores' },
   { id: 'proveedores', icono: 'briefcase', txt: 'Proveedores', badge: 'proveedores' },
@@ -4527,7 +4555,6 @@ const Shell = {
       it('nuevoPreventivo', 'tool', 'Mantenimiento preventivo', 'Cambio de aceite y PDF de Navitrans') +
       it('nuevoCorrectivo', 'camera', 'Mantenimiento correctivo', 'Taller, fotos y PDF del historial') +
       it('nuevaInspeccion', 'clipboard', 'Inspección visual', 'Con el conductor, en la bodega') +
-      it('nuevaOC', 'cart', 'Orden de compra', 'Repuesto o servicio a crédito') +
       '<div class="menu-sep"></div>' +
       it('nuevaUnidad', 'truck', 'Unidad', 'Vehículo, máquina, remolque o canoa');
   },
@@ -4595,6 +4622,102 @@ const UIState = {
 /* Lo que calcula el dashboard. El gasto son las órdenes de compra y el valor
    de los mantenimientos que no se pagaron con una orden (esos ya cuentan por
    la orden). */
+/* Las órdenes de compra de los vehículos se hacen solo en Facturación, y Flota
+   las muestra (Juan, 29/10/2026): en la ficha (pestaña Compras), en «Órdenes
+   de compra» y en el gasto del Dashboard. Se piden en vivo con
+   public.facturacion_costos_flota (los SQL 209 y 210 de Facturación) y no se
+   guarda copia, ni en la nube de Flota ni en el navegador (condición del
+   panel). Si la función no está o no responde, lo demás sigue igual, solo sin
+   las compras. Las que están «en espera» no cuentan como gasto (es_gasto). */
+const Compras = {
+  lista: [],
+  /* nada (no se han pedido) · trayendo · listo · error */
+  estado: 'nada',
+  /* En Facturación cambian sin que Flota se entere: si pasó más de un minuto,
+     se vuelven a pedir */
+  FRESCO: 60000,
+  VISTAS: ['inicio', 'compras', 'unidad'],
+  ESTADOS: { ESPERANDO: ['warn', 'En espera'], CONTABILIDAD: ['info', 'En contabilidad'], PAGADA: ['ok', 'Pagada'] },
+  TIPOS: { COMPRA: 'Orden de compra', SERVICIO: 'Orden de servicio', PEDIDO: 'Orden de pedido' },
+  _cuando: 0,
+  _trayendo: null,
+  traer(forzar) {
+    if (this._trayendo) return this._trayendo;
+    if (!Nube.sesion()) return Promise.resolve(false);
+    if (!forzar && this.estado !== 'nada' && this.estado !== 'trayendo' && Date.now() - this._cuando < this.FRESCO) return Promise.resolve(false);
+    if (this.estado === 'nada') this.estado = 'trayendo';
+    this._trayendo = Nube.pedir('rpc/facturacion_costos_flota', { method: 'POST', publico: true, body: '{}' })
+      .then(r => {
+        const nueva = (Array.isArray(r) ? r : []).map(o => this.limpia(o)).filter(Boolean);
+        const cambio = this.estado !== 'listo' || estable(nueva) !== estable(this.lista);
+        this.lista = nueva;
+        this.estado = 'listo';
+        return cambio;
+      })
+      .catch(e => {
+        /* Si ya había, se siguen mostrando; si no, se avisa. Si fue la sesión,
+           no se avisa: se intenta otra vez la próxima vez que se pinte */
+        const antes = this.estado;
+        this.estado = this.lista.length ? 'listo' : e && e.sesion ? 'nada' : 'error';
+        return antes !== this.estado && this.estado !== 'nada';
+      })
+      .finally(() => { this._cuando = Date.now(); this._trayendo = null; });
+    return this._trayendo;
+  },
+  /* Lo que llega de Facturación, con cada dato en su forma: textos, números y
+     fechas «aaaa-mm-dd». Con el 209 llega lo básico; con el 210, también el
+     proveedor, los artículos y el total desglosado («completa»). */
+  limpia(o) {
+    if (!o || typeof o !== 'object' || !o.orden_id) return null;
+    const txt = v => (v == null ? '' : String(v));
+    const num = v => (isFinite(Number(v)) ? Number(v) : 0);
+    const dia = v => (/^\d{4}-\d{2}-\d{2}/.test(txt(v)) ? txt(v).slice(0, 10) : null);
+    const items = Array.isArray(o.items) ? o.items.filter(i => i && typeof i === 'object').map(i => ({
+      descripcion: txt(i.descripcion), cantidad: num(i.cantidad), unidad: txt(i.unidad), valor_unitario: num(i.valor_unitario),
+      descuento_pct: num(i.descuento_pct), valor: num(i.valor) })) : [];
+    return {
+      orden_id: txt(o.orden_id), codigo: txt(o.codigo || o.numero), tipo: txt(o.tipo), fecha: dia(o.fecha), estado: txt(o.estado),
+      es_gasto: o.es_gasto === true, flota_id: txt(o.flota_id), proveedor: txt(o.proveedor), nit: txt(o.nit), concepto: txt(o.concepto), items,
+      subtotal: num(o.subtotal), iva: num(o.iva), retencion: num(o.retencion), rete_ica: num(o.rete_ica), flete: num(o.flete),
+      total: num(o.total), valor: num(o.valor != null ? o.valor : o.total), factura_numero: txt(o.factura_numero),
+      factura_fecha: dia(o.factura_fecha), pagada_en: dia(o.pagada_en), contado: o.contado === true, completa: Array.isArray(o.items)
+    };
+  },
+  todas() { return this.lista.slice().sort((a, b) => (b.fecha || '').localeCompare(a.fecha || '') || b.codigo.localeCompare(a.codigo)); },
+  de(u) { return this.todas().filter(o => o.flota_id === u.id); },
+  /* Para el Dashboard: lo que ya cuenta como gasto, con su fecha y su vehículo */
+  gastos() { return this.lista.filter(o => o.es_gasto && o.fecha).map(o => ({ fecha: o.fecha, unidad: o.flota_id, valor: o.valor })); },
+  suma: l => l.reduce((s, o) => s + o.valor, 0),
+  pill(o) {
+    const e = this.ESTADOS[o.estado];
+    return e ? UI.pill(e[0], e[1]) : UI.pill('nr', o.estado ? o.estado.charAt(0) + o.estado.slice(1).toLowerCase() : '—');
+  },
+  resumen(o) { return o.concepto || (o.items[0] && o.items[0].descripcion) || '—'; },
+  /* Mientras llegan, o si no se pudieron traer */
+  aviso() {
+    if (this.estado === 'error') return '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>No se pudieron traer las órdenes de Facturación.</b> ' +
+      'Se vuelve a intentar sola en un minuto. Lo demás de Flota funciona igual.</div></div>';
+    if (this.estado !== 'listo') return '<div class="alert a-info mb16"><span class="spin"></span><div>Trayendo las órdenes de Facturación…</div></div>';
+    return '';
+  },
+  /* Las vistas que muestran compras las piden al pintarse («pintada»: la vista
+     acaba de pintarse con lo que había), se vuelven a pintar cuando llega algo
+     nuevo y, mientras se vean, se ponen al día cada minuto. Si llegó mientras
+     se escribía o había una ventana abierta, se pinta en la siguiente vuelta. */
+  alDia(vista, pintada) {
+    clearTimeout(this._reloj);
+    if (pintada) this._sinPintar = false;
+    if (!this.VISTAS.includes(vista)) return;
+    this._reloj = setTimeout(() => this.alDia(Router.actual().vista), this.FRESCO + 500);
+    if (document.hidden || this._esperando) return;
+    this._esperando = true;
+    this.traer().then(cambio => {
+      if (cambio) this._sinPintar = true;
+      if (this._sinPintar && this.VISTAS.includes(Router.actual().vista) && Sincro.seguro()) Router.pintar(true);
+    }).finally(() => { this._esperando = false; });
+  }
+};
+
 const Tablero = {
   PERIODOS: { mes: 'Este mes', trimestre: 'Trimestre', anio: 'Año' },
   /* Desde, hasta y nombre del período en curso, y lo mismo del anterior completo */
@@ -4609,8 +4732,10 @@ const Tablero = {
     }
     return Object.assign(r(new Date(y, mo, 1), HOY, mes(HOY)), { antes: r(new Date(y, mo - 1, 1), new Date(y, mo, 0), mes(new Date(y, mo - 1, 1))) });
   },
+  /* Lo gastado: las órdenes de Facturación que ya cuentan como gasto (ver
+     Compras) y el valor de los mantenimientos que no tienen orden */
   gastos() {
-    return Datos.ocs.map(o => ({ fecha: o.fecha, unidad: o.unidad, valor: UI.totalOC(o) }))
+    return Compras.gastos()
       .concat(Datos.mantenimientos.filter(m => m.valor && !m.oc).map(m => ({ fecha: m.fecha, unidad: m.unidad, valor: m.valor })));
   },
   en(r) { return this.gastos().filter(g => g.fecha >= r.desde && g.fecha <= r.hasta); },
@@ -5633,7 +5758,7 @@ const Vistas = {
     const e = Est.unidad(u), ins = Est.insp(u), c = Q.conductor(u.conductor);
     const mants = Datos.mantenimientos.filter(m => m.unidad === u.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
     const ult = mants[0];
-    const ocs = Datos.ocs.filter(o => o.unidad === u.id);
+    const compras = Compras.de(u);
     const req = Config.req[u.tipo] || [];
     const alertas = req.filter(t => Est.doc(u.docs[t], t).k !== 'ok').length;
     const fact = (ic, l, v, s, k) => '<div class="fact"><small>' + Icon(ic, '', 11) + esc(l) + '</small>' +
@@ -5648,7 +5773,7 @@ const Vistas = {
     const docTit = DocFoto.titulo(u), tieneDoc = DocFoto.tiene(u);
     const tabs = [['info', 'Información'], ['actividad', 'Actividad', Actividad.de(u).length], ['docs', 'Documentos', alertas], ['mant', 'Mantenimientos', mants.length]]
       .concat(Preop.aplica(u) ? [['preop', 'Preoperacionales']] : [])
-      .concat([['insp', 'Inspecciones'], ['comp', 'Comparendos y accidentes'], ['oc', 'Compras', ocs.length]]);
+      .concat([['insp', 'Inspecciones'], ['comp', 'Comparendos y accidentes'], ['oc', 'Compras', compras.length]]);
     const html =
       '<div class="crumbs"><a data-ir="flota">Flota</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
       '<section class="uh">' +
@@ -5832,11 +5957,20 @@ const Vistas = {
       { act: '<button class="btn btn-sm" data-act="nuevoAccidente" data-u="' + u.id + '">' + Icon('plus', '', 12) + 'Registrar</button>' });
     return '<div class="grid g32">' + comp + accC + '</div>';
   },
+  /* Las órdenes de Facturación de esta unidad (ver Compras): se hacen allá */
   tab_oc(u) {
-    const li = Datos.ocs.filter(o => o.unidad === u.id);
-    return UI.card('Órdenes de compra de esta unidad', li.length ? UI.tablaOC(li, false)
-      : UI.empty('cart', 'Sin órdenes de compra', 'Cuando un repuesto o servicio para esta unidad se compre a crédito, la orden aparece aquí.'),
-      { flush: true, act: '<button class="btn btn-sm btn-primary" data-act="nuevaOC" data-u="' + u.id + '">' + Icon('plus', '', 12) + 'Nueva orden</button>' });
+    const li = Compras.de(u), y = String(HOY.getFullYear());
+    if (!li.length && Compras.estado !== 'listo') return Compras.aviso();
+    const delAnio = li.filter(o => o.es_gasto && o.fecha && o.fecha.startsWith(y)), espera = li.filter(o => o.estado === 'ESPERANDO'), ult = li[0];
+    const kpis = li.length ? '<div class="grid g3 mb16">' +
+        UI.kpi({ label: 'Gastado en ' + y, valor: esc(Money.format(Compras.suma(delAnio))), icono: 'cart', meta: 'En contabilidad o pagado' }) +
+        UI.kpi({ label: 'En espera', valor: esc(Money.format(Compras.suma(espera))), icono: 'clock', color: 'var(--warn-500)',
+          meta: espera.length ? espera.length + (espera.length === 1 ? ' orden' : ' órdenes') + ', sin contar como gasto' : 'Ninguna orden en espera' }) +
+        UI.kpi({ label: 'Última compra', valor: esc(Fecha.corta(ult.fecha)), icono: 'calendar', color: 'var(--ink-400)', meta: esc(Compras.resumen(ult)) }) +
+      '</div>' : '';
+    return Compras.aviso() + kpis + UI.card('Compras de esta unidad', li.length ? UI.tablaCompras(li, false)
+      : UI.empty('cart', 'Sin compras', 'Las órdenes que se hagan en Facturación para este vehículo aparecen aquí.'),
+      { flush: true, sub: 'Vienen de Facturación' });
   },
 
   /* ------------------------------------------- Documentos y vencimientos */
@@ -6973,28 +7107,36 @@ Object.assign(Vistas, {
   },
 
   /* ---------------------------------------------------- Órdenes de compra */
+  /* Las órdenes de Facturación de todos los vehículos (ver Compras). Ya no se
+     hacen en Flota: se hacen en Facturación (Juan, 29/10/2026) */
   compras() {
-    const f = UIState.oc;
-    const todas = Datos.ocs.slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
-    const de = e => todas.filter(o => o.estado === e);
-    const suma = l => l.reduce((s, o) => s + UI.totalOC(o), 0);
-    const delMes = todas.filter(o => { const d = Fecha.parse(o.fecha); return d.getMonth() === HOY.getMonth() && d.getFullYear() === HOY.getFullYear(); });
-    const lista = todas.filter(o => f === 'todas' || o.estado === f);
-    const segs = [['todas', 'Todas', todas.length], ['borrador', 'Borradores', de('borrador').length], ['enviada', 'En facturación', de('enviada').length], ['pagada', 'Pagadas', de('pagada').length]];
+    const f = ['ESPERANDO', 'CONTABILIDAD', 'PAGADA'].includes(UIState.oc) ? UIState.oc : 'todas';
+    const todas = Compras.todas(), de = e => todas.filter(o => o.estado === e), y = String(HOY.getFullYear());
+    const mes = Fecha.iso(HOY).slice(0, 7), gasto = todas.filter(o => o.es_gasto && o.fecha);
+    const delMes = gasto.filter(o => o.fecha.startsWith(mes)), delAnio = gasto.filter(o => o.fecha.startsWith(y)), espera = de('ESPERANDO');
+    const lista = todas.filter(o => f === 'todas' || o.estado === f), vehiculos = new Set(todas.map(o => o.flota_id)).size;
+    const ordenes = n => n + (n === 1 ? ' orden' : ' órdenes');
+    const segs = [['todas', 'Todas', todas.length], ['ESPERANDO', 'En espera', espera.length], ['CONTABILIDAD', 'En contabilidad', de('CONTABILIDAD').length],
+      ['PAGADA', 'Pagadas', de('PAGADA').length]];
     const html =
-      UI.head('Órdenes de compra', 'Repuestos y servicios a crédito: la orden va a facturación con la cotización del proveedor',
-        '<button class="btn btn-primary" data-act="nuevaOC">' + Icon('plus', '', 14) + 'Nueva orden de compra</button>') +
-      '<div class="grid g4 mb16">' +
-        UI.kpi({ label: 'Borradores', valor: de('borrador').length, icono: 'edit', color: 'var(--ink-400)', meta: 'Por enviar a facturación', act: 'filtroOC', v: 'borrador' }) +
-        UI.kpi({ label: 'En facturación', valor: de('enviada').length, icono: 'send', color: 'var(--info-500)', meta: Money.format(suma(de('enviada'))) + ' por pagar', act: 'filtroOC', v: 'enviada' }) +
-        UI.kpi({ label: 'Pagadas', valor: de('pagada').length, icono: 'check', color: 'var(--ok-500)', meta: Money.format(suma(de('pagada'))), act: 'filtroOC', v: 'pagada' }) +
-        UI.kpi({ label: 'Valor del mes', valor: Money.format(suma(delMes)), icono: 'cart', meta: delMes.length + ' orden(es) en ' + Fecha.mes(null, true).toLowerCase() }) +
-      '</div>' +
-      '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroOC" data-v="' + s[0] + '">' + s[1] +
-        '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div></div>' +
-      '<div class="card">' + (lista.length ? UI.tablaOC(lista, true) : UI.empty('cart', 'Nada que mostrar', 'No hay órdenes con ese filtro.')) +
-        '<div class="card-f">' + Icon('info', '', 13) + '<span>El formato de la orden será el Excel que ya tienen; este es provisional.</span></div></div>';
-    return { titulo: 'Órdenes de compra', sub: 'Compras y servicios a crédito', html };
+      UI.head('Órdenes de compra', 'Las de Facturación, de todos los vehículos · se hacen en Facturación') +
+      Compras.aviso() +
+      (todas.length || Compras.estado === 'listo' ?
+        '<div class="grid g4 mb16">' +
+          UI.kpi({ label: 'Gastado en ' + Fecha.mes(null, true).toLowerCase(), valor: esc(Money.format(Compras.suma(delMes))), icono: 'cart', meta: 'En contabilidad o pagado' }) +
+          UI.kpi({ label: 'Gastado en ' + y, valor: esc(Money.format(Compras.suma(delAnio))), icono: 'calendar', meta: ordenes(delAnio.length) }) +
+          UI.kpi({ label: 'En espera', valor: esc(Money.format(Compras.suma(espera))), icono: 'clock', color: 'var(--warn-500)', act: 'filtroOC', v: 'ESPERANDO',
+            meta: ordenes(espera.length) + ', todavía sin contar como gasto' }) +
+          UI.kpi({ label: 'Órdenes', valor: todas.length, icono: 'file', color: 'var(--ink-400)', meta: 'De ' + vehiculos + (vehiculos === 1 ? ' vehículo' : ' vehículos') }) +
+        '</div>' +
+        '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroOC" data-v="' + s[0] + '">' + s[1] +
+          '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div></div>' +
+        '<div class="card">' + (lista.length ? UI.tablaCompras(lista, true)
+          : todas.length ? UI.empty('cart', 'Nada que mostrar', 'No hay órdenes con ese filtro.')
+          : UI.empty('cart', 'Sin órdenes todavía', 'Las órdenes que se hagan en Facturación para los vehículos de Flota aparecen aquí.')) +
+          '<div class="card-f">' + Icon('info', '', 13) + '<span>Vienen de Facturación, tal como están allá. Para hacer o cambiar una orden, se hace en Facturación.</span></div></div>'
+        : '');
+    return { titulo: 'Órdenes de compra', sub: 'Las de Facturación', html };
   },
 
   /* ----------------------------------------------------------- Conductores */
@@ -7376,6 +7518,40 @@ Object.assign(Ventanas, {
     });
     Dz.bind('acDz', files => { m._archivo = files[0]; Dz.lista('acDz', [files[0]], 'documento'); });
     if (archivo) { m._archivo = archivo; m._irComp = true; Dz.lista('acDz', [archivo], 'documento'); }
+  },
+
+  /* Una orden de Facturación, resumida (ver Compras). Solo se mira: si hay que
+     cambiarla, se cambia en Facturación. Todo lo que viene de allá va escapado. */
+  compra(o) {
+    const u = Q.unidad(o.flota_id), conDto = o.items.some(i => i.descuento_pct);
+    const cifra = n => n.toLocaleString('es-CO', { maximumFractionDigits: 2 });
+    const dato = (l, v, m) => '<div class="oc-dato"><div class="l">' + esc(l) + '</div><div class="v">' + v + '</div>' + (m ? '<div class="m">' + esc(m) + '</div>' : '') + '</div>';
+    const pago = o.estado === 'PAGADA' ? dato('Pago', o.contado ? 'De contado' : 'Pagada', o.pagada_en ? Fecha.larga(o.pagada_en) : '')
+      : dato('Pago', 'Sin pagar', o.contado ? 'De contado' : 'A crédito');
+    const linea = (t, v, signo) => (v ? '<dt>' + t + '</dt><dd>' + (signo || '') + esc(Money.format(v)) + '</dd>' : '');
+    const articulos = o.items.length ? '<div class="oc-sec">Lo que se compró</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Artículo</th>' +
+        '<th class="num">Cantidad</th><th class="num">Valor unitario</th>' + (conDto ? '<th class="num">Descuento</th>' : '') + '<th class="num">Valor</th></tr></thead><tbody>' +
+        o.items.map(i => '<tr><td>' + esc(i.descripcion) + '</td><td class="num nowrap">' + esc(cifra(i.cantidad) + (i.unidad ? ' ' + i.unidad.toLowerCase() : '')) + '</td>' +
+          '<td class="num">' + esc(Money.format(i.valor_unitario)) + '</td>' + (conDto ? '<td class="num">' + (i.descuento_pct ? esc(cifra(i.descuento_pct)) + ' %' : '—') + '</td>' : '') +
+          '<td class="num">' + esc(Money.format(i.valor)) + '</td></tr>').join('') + '</tbody></table></div>' : '';
+    /* El total como en Facturación: subtotal − retención − ReteICA + IVA + flete */
+    const totales = o.completa
+      ? linea('Subtotal', o.subtotal) + linea('Retención', o.retencion, '− ') + linea('ReteICA', o.rete_ica, '− ') + linea('IVA', o.iva) + linea('Flete', o.flete) +
+        '<dt class="t">Total</dt><dd class="t">' + esc(Money.format(o.total)) + '</dd>' +
+        (o.valor !== o.total ? '<dt>Valor de la factura</dt><dd>' + esc(Money.format(o.valor)) + '</dd>' : '')
+      : '<dt class="t">Valor</dt><dd class="t">' + esc(Money.format(o.valor)) + '</dd>';
+    Modal.abrir({
+      titulo: (Compras.TIPOS[o.tipo] || 'Orden') + ' ' + o.codigo,
+      sub: esc([u ? UI.placaTxt(u) : o.flota_id, u ? u.clase || TIPOS[u.tipo].nombre : '', Fecha.larga(o.fecha)].filter(Boolean).join(' · ')),
+      ancho: 'wide', sinFoco: true,
+      cuerpo: '<div class="oc-datos">' + dato('Estado', Compras.pill(o)) +
+          dato('Factura', o.factura_numero ? esc(o.factura_numero) : 'Todavía no llega', o.factura_fecha ? Fecha.larga(o.factura_fecha) : '') + pago + '</div>' +
+        (o.proveedor ? '<div class="oc-sec">Proveedor</div><div class="oc-prov"><b>' + esc(o.proveedor) + '</b>' + (o.nit ? '<span>NIT ' + esc(o.nit) + '</span>' : '') + '</div>' : '') +
+        '<div class="oc-sec">Concepto</div><div style="font-size:13px">' + esc(Compras.resumen(o)) + '</div>' +
+        articulos + '<dl class="oc-tot">' + totales + '</dl>' +
+        '<div class="alert a-info" style="margin-top:14px">' + Icon('info') + '<div>Viene de Facturación y se ve aquí tal como está allá. Si hay que cambiarla, se cambia en Facturación.</div></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cerrar</button>'
+    });
   },
 
   oc(o) {
@@ -8001,6 +8177,10 @@ Object.assign(Acciones, {
     Router.pintar(true);
   },
 
+  verCompra(el) {
+    const o = Compras.lista.find(x => x.orden_id === el.dataset.o);
+    if (o) Ventanas.compra(o);
+  },
   verConductor(el) { Ventanas.conductor(Q.conductor(el.dataset.c)); },
   verProveedor(el) { Ventanas.proveedor(Q.proveedor(el.dataset.p)); },
 
@@ -12020,6 +12200,8 @@ const Router = {
     $('#sidebar').classList.remove('open');
     $('#scrim').classList.remove('on');
     window.scrollTo(0, mantener ? y : 0);
+    /* Las órdenes de Facturación, en las vistas que las muestran */
+    Compras.alDia(v, true);
   }
 };
 
