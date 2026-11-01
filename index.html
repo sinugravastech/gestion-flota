@@ -2710,6 +2710,12 @@ const Config = {
   /* Un kilometraje del preoperacional que sube más que esto por día queda para
      revisar (ver KmRaro). Se cambia en Configuración. */
   kmDia: 1000,
+  /* El rendimiento normal del combustible, en km por galón: el tanqueo que
+     rinda menos o más es raro y no entra en los promedios (ver Tanqueos). Se
+     cambia en Configuración. */
+  rendimiento: { min: 3, max: 12 },
+  /* Las placas de Distracom que no casan con una unidad, como Juan las asignó */
+  placasDistracom: {},
   req: { carga: ['soat', 'tecno', 'tarjeta', 'vin', 'poliza'], maquinaria: ['tarjeta'], remolque: ['registro'], canoa: ['patente'] },
   comparendos: ['carga'],
   /* Los planos de mantenimiento: solo lo que se cambió en Configuración (el
@@ -2916,7 +2922,7 @@ const DOTACION = [
    ========================================================================== */
 const Datos = {
   conductores: [], proveedores: [], unidades: [], mantenimientos: [], ocs: [], accidentes: [],
-  inspecciones: [], informes: [], lecturas: [], actividad: [],
+  inspecciones: [], informes: [], lecturas: [], actividad: [], tanqueos: [],
   /* Los conductores y proveedores que se eliminan pasan aquí: ya no salen en
      las listas, pero el historial sigue mostrando su nombre */
   archivo: { conductores: [], proveedores: [] }
@@ -4538,11 +4544,11 @@ const NAV = [
   { id: 'inspecciones', icono: 'clipboard', txt: 'Inspecciones', badge: 'insp', alerta: true },
   { id: 'comparendos', icono: 'ticket', txt: 'Comparendos', badge: 'comp', alerta: true },
   { id: 'compras', icono: 'cart', txt: 'Órdenes de compra' },
+  { id: 'combustible', icono: 'fuel', txt: 'Combustible' },
   { sec: 'Registros' },
   { id: 'conductores', icono: 'personas', txt: 'Conductores', badge: 'conductores' },
   { id: 'proveedores', icono: 'briefcase', txt: 'Proveedores', badge: 'proveedores' },
   { sec: 'Próximamente' },
-  { id: 'pronto/combustible', icono: 'fuel', txt: 'Combustible y ralentí', soon: true },
   { id: 'pronto/llantas', icono: 'disc', txt: 'Llantas y GPS', soon: true },
   { sec: 'Sistema' },
   { id: 'catalogo', icono: 'list', txt: 'Catálogo' },
@@ -4748,15 +4754,16 @@ const Compras = {
      ya no llegan y lo que cuenta. Las ajenas y las que faltan cuentan como si
      no estuvieran, para que el vehículo no pierda su gasto. Eso solo se decide
      con una lista que llegó bien y trae órdenes («fiable»): mientras no la
-     haya, o si falló, ningún arreglo se marca y el que tiene órdenes no cuenta
-     su valor, para que un error de red no cambie el Dashboard (panel). */
+     haya, o si falló, ningún arreglo se marca y el que tiene órdenes cuenta su
+     propio valor como estimado, igual que con una orden esperando cotización
+     (panel). */
   deArreglo(m) {
     const ids = m.ordenes || [], fiable = this.estado === 'listo' && this.lista.length > 0;
     const halladas = ids.map(id => this.porId(id)).filter(Boolean);
     const esta = halladas.filter(o => o.flota_id === m.unidad), gasto = esta.filter(o => o.es_gasto);
-    const deOrden = gasto.length > 0 || (ids.length > 0 && !fiable);
+    const deOrden = gasto.length > 0;
     return { ids, fiable, esta, ajenas: fiable ? halladas.filter(o => o.flota_id !== m.unidad) : [], faltan: fiable ? ids.length - halladas.length : 0,
-      deOrden, valor: gasto.length ? this.suma(gasto) : deOrden ? 0 : m.valor || 0 };
+      deOrden, valor: deOrden ? this.suma(gasto) : m.valor || 0 };
   },
   /* ¿Hay que revisarle las órdenes? Alguna ya no llega o es de otro vehículo */
   malas(m) { const c = this.deArreglo(m); return c.faltan + c.ajenas.length; },
@@ -4862,14 +4869,130 @@ const Tablero = {
     return Object.assign(r(new Date(y, mo, 1), HOY, mes(HOY)), { antes: r(new Date(y, mo - 1, 1), new Date(y, mo, 0), mes(new Date(y, mo - 1, 1))) });
   },
   /* Lo gastado: las órdenes de Facturación que ya cuentan como gasto (ver
-     Compras) y el valor de los mantenimientos mientras ninguna de sus órdenes
-     cuente */
+     Compras), el valor de los mantenimientos mientras ninguna de sus órdenes
+     cuente y el combustible de Distracom (ver Tanqueos) */
   gastos() {
     return Compras.gastos()
-      .concat(Datos.mantenimientos.filter(m => m.valor && !m.oc && !Compras.deArreglo(m).deOrden).map(m => ({ fecha: m.fecha, unidad: m.unidad, valor: m.valor })));
+      .concat(Datos.mantenimientos.filter(m => m.valor && !m.oc && !Compras.deArreglo(m).deOrden).map(m => ({ fecha: m.fecha, unidad: m.unidad, valor: m.valor })))
+      .concat(Tanqueos.gastos());
   },
   en(r) { return this.gastos().filter(g => g.fecha >= r.desde && g.fecha <= r.hasta); },
   suma: l => l.reduce((s, g) => s + g.valor, 0)
+};
+
+/* El combustible, solo con los tanqueos de Distracom (Juan, 31/10/2026). Juan
+   carga el informe «Detalle Tanqueo A Tanqueo» de Fleet Control (CSV) tal como
+   sale (ver el SQL 023). El id sale de la fecha, la placa, el producto, los
+   galones, el valor y la estación, así que cargar dos veces lo mismo, o una
+   semana y después el mes, no repite. Si el mismo archivo trae dos filas
+   iguales (pasa: dos cobros iguales el mismo día), van las dos («…-2»).
+   El rendimiento de un tanqueo es como lo da Distracom: los km desde el
+   tanqueo anterior ÷ los galones que entraron. Fuera del rango normal
+   (Config.rendimiento) es raro y no entra en los promedios. La urea es gasto,
+   pero no cuenta en el rendimiento. */
+const Tanqueos = {
+  ETIQUETAS: { placa: ['Placa'], fecha: ['Fecha'], km: ['Kilometraje'], rec: ['Kilometraje Recorrido'], producto: ['Producto'],
+    galones: ['Galonaje Factura'], valor: ['Valor Factura'], estacion: ['Estacion', 'Estación'], total: ['Total:'] },
+  lista() { return Datos.tanqueos || []; },
+  norm: p => String(p || '').toUpperCase().replace(/[^A-Z0-9]/g, ''),
+  esUrea: t => /UREA/i.test(t.producto),
+  /* La unidad de una placa de Distracom: la que tiene esa placa en Flota, o la
+     que Juan le asignó */
+  unidadDe(placa) {
+    const p = this.norm(placa), u = Datos.unidades.find(x => this.norm(x.placa) === p);
+    if (u) return u.id;
+    const a = (Config.placasDistracom || {})[p];
+    return a && Q.unidad(a) ? a : null;
+  },
+  /* Un CSV con comillas, como lo escribe Fleet Control */
+  csv(texto) {
+    const filas = [];
+    let fila = [], campo = '', comillas = false;
+    for (let i = 0; i < texto.length; i++) {
+      const c = texto[i];
+      if (comillas) {
+        if (c !== '"') campo += c;
+        else if (texto[i + 1] === '"') { campo += '"'; i++; }
+        else comillas = false;
+      } else if (c === '"') comillas = true;
+      else if (c === ',') { fila.push(campo); campo = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && texto[i + 1] === '\n') i++;
+        fila.push(campo); filas.push(fila); fila = []; campo = '';
+      } else campo += c;
+    }
+    if (campo || fila.length) { fila.push(campo); filas.push(fila); }
+    return filas;
+  },
+  /* «1.115.424» o «102,09»: punto de miles y coma decimal. «--» es vacío. */
+  num(v) {
+    const s = String(v == null ? '' : v).trim();
+    if (!s || /^-+$/.test(s)) return null;
+    const n = Number(s.replace(/\./g, '').replace(',', '.'));
+    return isFinite(n) ? n : null;
+  },
+  /* «01/10/2026», con la hora o sin ella → «2026-10-01» */
+  dia(v) {
+    const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(String(v || '').trim());
+    return m ? m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0') : null;
+  },
+  /* Lee el archivo. Cada fila repite las etiquetas («Placa, X, Fecha, X…»), y la
+     primera trae los nombres técnicos del informe. Devuelve los tanqueos, el
+     total que trae el archivo y las filas que no se entendieron. */
+  leer(texto, archivo) {
+    const out = [], malas = [], vistos = new Map();
+    let total = null;
+    this.csv(texto.replace(/^﻿/, '')).forEach((f, i) => {
+      if (!f.some(x => x.trim())) return;
+      const v = {};
+      for (let j = 0; j < f.length - 1; j++) {
+        const e = f[j].trim(), k = Object.keys(this.ETIQUETAS).find(k => this.ETIQUETAS[k].includes(e));
+        if (k && v[k] === undefined) v[k] = f[j + 1];
+      }
+      if (v.placa === undefined) { if (i > 0) malas.push(i + 1); return; }
+      const t = { placa: this.norm(v.placa), fecha: this.dia(v.fecha), producto: String(v.producto || '').trim().toUpperCase(),
+        galones: this.num(v.galones), valor: this.num(v.valor), km: this.num(v.km), rec: this.num(v.rec), estacion: String(v.estacion || '').trim(), archivo };
+      if (!t.placa || !t.fecha || t.galones == null || t.valor == null || t.galones < 0 || t.valor < 0) { malas.push(i + 1); return; }
+      if (total == null && v.total !== undefined) total = this.num(v.total);
+      const base = ['dc', t.fecha.replace(/-/g, ''), t.placa, t.producto.charAt(0) || 'X', Math.round(t.galones * 1000), Math.round(t.valor),
+        t.estacion.replace(/^DISTRACOM\s+/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')].join('-');
+      const n = (vistos.get(base) || 0) + 1;
+      vistos.set(base, n);
+      t.id = n > 1 ? base + '-' + n : base;
+      out.push(t);
+    });
+    return { tanqueos: out, total, malas, iguales: Array.from(vistos.values()).reduce((s, n) => s + n - 1, 0) };
+  },
+  /* km por galón de un tanqueo de combustible (la urea no cuenta) */
+  rinde(t) { return this.esUrea(t) || t.rec == null || !(t.galones > 0) ? null : t.rec / t.galones; },
+  raro(t) { const r = this.rinde(t); return r != null && (r < Config.rendimiento.min || r > Config.rendimiento.max); },
+  /* Un grupo de tanqueos: cuántos, cuánto costaron, galones de combustible y
+     de urea, y el rendimiento con los que no son raros */
+  resumen(l) {
+    const r = { n: l.length, valor: 0, galones: 0, urea: 0, valorUrea: 0, km: 0, galRinde: 0, raros: 0 };
+    l.forEach(t => {
+      r.valor += t.valor;
+      if (this.esUrea(t)) { r.urea += t.galones; r.valorUrea += t.valor; return; }
+      r.galones += t.galones;
+      if (this.rinde(t) == null) return;
+      if (this.raro(t)) { r.raros++; return; }
+      r.km += t.rec;
+      r.galRinde += t.galones;
+    });
+    r.rinde = r.galRinde ? r.km / r.galRinde : null;
+    return r;
+  },
+  de(u) { return this.lista().filter(t => t.unidad === u.id); },
+  delMes: (l, mes) => l.filter(t => t.fecha.slice(0, 7) === mes),
+  meses() { return Array.from(new Set(this.lista().map(t => t.fecha.slice(0, 7)))).sort().reverse(); },
+  /* Para el Dashboard: el gasto en combustible, con su fecha y su vehículo */
+  gastos() { return this.lista().map(t => ({ fecha: t.fecha, unidad: t.unidad, valor: t.valor, cat: 'combustible' })); },
+  rindeTxt: k => (k == null ? '—' : k.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' km/gal'),
+  galTxt: g => g.toLocaleString('es-CO', { maximumFractionDigits: g < 100 ? 1 : 0 }) + ' gal',
+  mesTxt: m => Fecha.mes(Fecha.parse(m + '-01')),
+  prodTxt: t => (/UREA/i.test(t.producto) ? 'Urea' : /DIESEL|ACPM/i.test(t.producto) ? 'Diésel' : t.producto.charAt(0) + t.producto.slice(1).toLowerCase()),
+  /* La placa de un tanqueo, con su unidad si la tiene */
+  placaTxt(t) { const u = t.unidad && Q.unidad(t.unidad); return u ? UI.placaTxt(u) : t.placa; }
 };
 
 /* Cambios de aceite, con la regla del ingeniero: el próximo cambio es el
@@ -5806,12 +5929,27 @@ const Vistas = {
           '<span class="rk-v' + (e.k === 'bad' ? ' tx-bad' : '') + '">' + esc(e.faltan > 0 ? Aceite.fmt(e.u, e.faltan) : 'pasó ' + Aceite.fmt(e.u, -e.faltan)) + '</span></div>').join('') + '</div>'
       : UI.empty('gota', 'Sin unidades con control', 'Los camiones y la maquinaria salen aquí cuando tengan su control de aceite.');
 
-    /* Lo que llega cuando se registren el combustible, las llantas y el GPS */
+    /* Los que más combustible gastaron en el período (ver Tanqueos) */
+    const porC = {};
+    Tanqueos.lista().forEach(t => { if (t.unidad && t.fecha >= per.desde && t.fecha <= per.hasta) (porC[t.unidad] = porC[t.unidad] || []).push(t); });
+    const topC = Object.keys(porC).map(id => ({ u: Q.unidad(id), r: Tanqueos.resumen(porC[id]) })).filter(x => x.u && x.r.galones)
+      .sort((a, b) => b.r.galones - a.r.galones).slice(0, 5);
+    const consumo = UI.card('Mayor consumo de combustible', topC.length ? '<div class="rk-lista">' + topC.map(x =>
+        '<div class="rk" data-act="irUnidad" data-u="' + x.u.id + '" data-tab="comb" title="' + attr(UI.placaTxt(x.u) + ': ' + Tanqueos.galTxt(x.r.galones) + ' · ' +
+          Tanqueos.rindeTxt(x.r.rinde) + ' · ' + Money.format(x.r.valor)) + '">' +
+          '<span class="rk-l">' + esc(UI.placaTxt(x.u)) + '</span><span class="rk-t"><i style="width:' + Math.round(x.r.galones / topC[0].r.galones * 100) + '%"></i></span>' +
+          '<span class="rk-v">' + esc(Tanqueos.galTxt(x.r.galones)) + '</span></div>').join('') + '</div>'
+      : UI.empty('fuel', 'Sin tanqueos en este período', 'Se llena con el informe de Distracom, en Combustible.'),
+      { flush: true, sub: 'Galones de Distracom · ' + esc(Tablero.PERIODOS[p].toLowerCase()), act: '<span class="link fs12" data-ir="combustible">Ver todo</span>' });
+
+    /* Lo que llega cuando se registren las llantas y el GPS */
     const pronto = (titulo, sub, nota, ir, anchos) => UI.card(titulo, '<div class="rk-lista">' + anchos.map(w =>
         '<div class="rk"><span class="rk-l">— — —</span><span class="rk-t"><i style="width:' + w + '%"></i></span><span class="rk-v txt-3">—</span></div>').join('') + '</div>',
       { flush: true, cls: 'pronto-c', sub, pie: Icon('clock', '', 13) + '<span>' + nota + ' <span class="link" data-ir="' + ir + '">Ver qué viene</span></span>' });
 
     const html =
+      /* Si no llegaron las órdenes de Facturación, que se sepa (panel) */
+      (Compras.estado === 'error' ? Compras.aviso() : '') +
       UI.head('Dashboard', esc(Fecha.larga(hoyISO)) + ' · ' + u.length + ' unidades',
         '<div class="seg">' + Object.keys(Tablero.PERIODOS).map(k => '<button class="' + (p === k ? 'on' : '') + '" data-act="periodoDash" data-v="' + k + '">' +
           esc(Tablero.PERIODOS[k]) + '</button>').join('') + '</div>') +
@@ -5829,7 +5967,7 @@ const Vistas = {
       '</div>' +
       '<div class="grid g2 mb16">' +
         UI.card('Vehículos que más gasto llevan', ranking,
-          { flush: true, sub: 'Compras y mantenimientos · ' + esc(Tablero.PERIODOS[p].toLowerCase()),
+          { flush: true, sub: 'Compras, mantenimientos y combustible · ' + esc(Tablero.PERIODOS[p].toLowerCase()),
             pie: general ? Icon('cart', '', 13) + '<span>Además, ' + esc(Money.compacto(general)) + ' en compras generales, sin un vehículo.</span>' : '' }) +
         UI.card('Gasto por mes', columnas, { sub: p === 'anio' ? 'Los meses de ' + y : 'Últimos seis meses', act: '<span class="link fs12" data-ir="compras">Ver compras</span>' }) +
       '</div>' +
@@ -5844,9 +5982,9 @@ const Vistas = {
           cum('Dotación revisada en ' + mesTxt, dotOk, conDot.length, 'flota'), { flush: true, sub: Fecha.mes() }) +
       '</div>' +
       '<div class="grid g3">' +
-        pronto('Mayor consumo de combustible', 'Galones y kilómetros por galón', 'Cuando se registre el combustible.', 'pronto/combustible', [88, 64, 47, 30]) +
+        consumo +
         pronto('Mayor gasto en llantas', 'Por vehículo', 'Cuando se registren las llantas.', 'pronto/llantas', [80, 57, 41, 26]) +
-        pronto('Más tiempo en ralentí', 'Horas encendido y quieto', 'Cuando se conecte el GPS.', 'pronto/combustible', [84, 61, 39, 22]) +
+        pronto('Más tiempo en ralentí', 'Horas encendido y quieto', 'Cuando se conecte el GPS.', 'pronto/llantas', [84, 61, 39, 22]) +
       '</div>';
     return { titulo: 'Dashboard', sub: 'El balance de la operación', html };
   },
@@ -5951,7 +6089,8 @@ const Vistas = {
     const docTit = DocFoto.titulo(u), tieneDoc = DocFoto.tiene(u);
     const tabs = [['info', 'Información'], ['actividad', 'Actividad', Actividad.de(u).length], ['docs', 'Documentos', alertas], ['mant', 'Mantenimientos', mants.length]]
       .concat(Preop.aplica(u) ? [['preop', 'Preoperacionales']] : [])
-      .concat([['insp', 'Inspecciones'], ['comp', 'Comparendos y accidentes'], ['oc', 'Compras', compras.length]]);
+      .concat([['insp', 'Inspecciones'], ['comp', 'Comparendos y accidentes'], ['oc', 'Compras', compras.length]])
+      .concat(Tanqueos.de(u).length ? [['comb', 'Combustible', Tanqueos.de(u).length]] : []);
     const html =
       '<div class="crumbs"><a data-ir="flota">Flota</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
       '<section class="uh">' +
@@ -6150,6 +6289,44 @@ const Vistas = {
       : UI.empty('cart', 'Sin compras', 'Las órdenes que se hagan en Facturación para este vehículo aparecen aquí.'),
       { flush: true, sub: 'Vienen de Facturación' });
   },
+  /* El combustible de esta unidad: sus tanqueos de Distracom (ver Tanqueos) */
+  tab_comb(u) {
+    const l = Tanqueos.de(u).slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id.localeCompare(a.id));
+    if (!l.length) return UI.card('Combustible', UI.empty('fuel', 'Sin tanqueos', 'Los tanqueos de Distracom de este vehículo salen aquí cuando se carga el informe en Combustible.'));
+    const y = String(HOY.getFullYear()), mes = l[0].fecha.slice(0, 7);
+    const rm = Tanqueos.resumen(Tanqueos.delMes(l, mes)), ra = Tanqueos.resumen(l.filter(t => t.fecha.startsWith(y)));
+    const meses = Array.from(new Set(l.map(t => t.fecha.slice(0, 7))));
+    const n = v => (v ? esc(Math.round(v).toLocaleString('es-CO')) : '—');
+    const raros = k => (k ? '<div class="dias d-warn">' + k + (k === 1 ? ' raro' : ' raros') + '</div>' : '');
+    const kpis = '<div class="grid g4 mb16">' +
+        UI.kpi({ label: 'Gasto de ' + Tanqueos.mesTxt(mes).toLowerCase(), valor: esc(Money.format(rm.valor)), icono: 'fuel', meta: rm.n + (rm.n === 1 ? ' tanqueo' : ' tanqueos') }) +
+        UI.kpi({ label: 'Rendimiento del mes', valor: esc(Tanqueos.rindeTxt(rm.rinde)), icono: 'medidor', color: 'var(--info-500)',
+          meta: esc(Tanqueos.galTxt(rm.galones)) + ' de combustible' }) +
+        UI.kpi({ label: 'Gasto de ' + y, valor: esc(Money.format(ra.valor)), icono: 'calendar', color: 'var(--ink-400)',
+          meta: esc(Tanqueos.galTxt(ra.galones)) + (ra.urea ? ' · urea ' + esc(Tanqueos.galTxt(ra.urea)) : '') }) +
+        UI.kpi({ label: 'Rendimiento de ' + y, valor: esc(Tanqueos.rindeTxt(ra.rinde)), icono: 'medidor', color: ra.raros ? 'var(--warn-500)' : 'var(--ok-500)',
+          meta: ra.raros ? ra.raros + (ra.raros === 1 ? ' tanqueo raro, fuera del promedio' : ' tanqueos raros, fuera del promedio') : 'Sin tanqueos raros' }) +
+      '</div>';
+    const porMes = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Mes</th><th class="num">Tanqueos</th><th class="num">Combustible</th><th class="num">Urea</th>' +
+        '<th class="num">Valor</th><th class="num">Km</th><th class="num">Rendimiento</th></tr></thead><tbody>' +
+      meses.map(ms => {
+        const r = Tanqueos.resumen(Tanqueos.delMes(l, ms));
+        return '<tr><td class="nowrap">' + esc(Tanqueos.mesTxt(ms)) + '</td><td class="num">' + r.n + '</td><td class="num nowrap">' + esc(Tanqueos.galTxt(r.galones)) + '</td>' +
+          '<td class="num nowrap">' + (r.urea ? esc(Tanqueos.galTxt(r.urea)) : '—') + '</td><td class="num nowrap">' + esc(Money.format(r.valor)) + '</td>' +
+          '<td class="num nowrap">' + n(r.km) + '</td><td class="num nowrap">' + esc(Tanqueos.rindeTxt(r.rinde)) + raros(r.raros) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    const lista = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Producto</th><th>Estación</th><th class="num">Galones</th><th class="num">Valor</th>' +
+        '<th class="num">Kilometraje</th><th class="num">Km recorridos</th><th class="num">Rendimiento</th></tr></thead><tbody>' +
+      l.slice(0, 120).map(t => {
+        const k = Tanqueos.rinde(t), raro = Tanqueos.raro(t);
+        return '<tr><td class="nowrap">' + esc(Fecha.corta(t.fecha)) + '</td><td>' + esc(Tanqueos.prodTxt(t)) + '</td><td>' + esc(t.estacion.replace(/^DISTRACOM\s+/i, '')) + '</td>' +
+          '<td class="num nowrap">' + esc(Tanqueos.galTxt(t.galones)) + '</td><td class="num nowrap">' + esc(Money.format(t.valor)) + '</td>' +
+          '<td class="num nowrap">' + (t.km != null ? n(t.km) : '—') + '</td><td class="num nowrap">' + (t.rec != null ? esc(Math.round(t.rec).toLocaleString('es-CO')) : '—') + '</td>' +
+          '<td class="num nowrap' + (raro ? ' tx-warn" title="Fuera de lo normal: no entra en los promedios' : '') + '">' + (k == null ? '—' : esc(Tanqueos.rindeTxt(k)) + (raro ? ' · raro' : '')) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    return kpis + UI.card('Por mes', porMes, { flush: true, cls: 'mb16', sub: 'Rendimiento: km desde el tanqueo anterior ÷ galones, sin los raros' }) +
+      UI.card('Tanqueos', lista, { flush: true, sub: l.length > 120 ? 'Los últimos 120 de ' + l.length : l.length + (l.length === 1 ? ' tanqueo de Distracom' : ' tanqueos de Distracom') });
+  },
 
   /* ------------------------------------------- Documentos y vencimientos */
   documentos() {
@@ -6219,7 +6396,7 @@ const Vistas = {
         lista: ['Consumo de combustible por unidad', 'Tiempo en ralentí', 'Lo que defina el ingeniero'] },
       llantas: { icono: 'disc', t: 'Llantas y GPS',
         p: 'También llegan más adelante, cuando se conozcan esos procesos.',
-        lista: ['Gastos de llantas por unidad', 'GPS'] }
+        lista: ['Gastos de llantas por unidad', 'GPS: recorridos y tiempo en ralentí'] }
     };
     const x = P[id] || P.combustible;
     return {
@@ -6887,7 +7064,9 @@ Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
   /* Mantenimientos: la pestaña (por vehículo o historial) y el tipo de unidad */
   mantTab: 'vehiculos', mantTipo: 'todos',
   /* El plano de una unidad: la parte y la llanta escogidas, el color y el período */
-  plano: { u: null, sel: null, llanta: null, modo: 'arreglos', periodo: '12' } });
+  plano: { u: null, sel: null, llanta: null, modo: 'arreglos', periodo: '12' },
+  /* Combustible: el mes escogido («aaaa-mm»); si no, el último con tanqueos */
+  combMes: null });
 Money.compacto = n => n >= 1e6 ? '$' + (n / 1e6).toFixed(1).replace('.', ',') + ' M' : n >= 1e3 ? '$' + Math.round(n / 1e3) + ' mil' : Money.format(n);
 const iniciales2 = n => { const p = String(n).split(/\s+/).filter(Boolean); return (p.length > 1 ? p[0][0] + p[1][0] : String(n).slice(0, 2)).toUpperCase(); };
 
@@ -7346,6 +7525,77 @@ Object.assign(Vistas, {
     return { titulo: 'Órdenes de compra', sub: 'Las de Facturación', html };
   },
 
+  /* ------------------------------------------------------------ Combustible
+     Solo con los tanqueos de Distracom (Juan, 31/10/2026, ver Tanqueos) */
+  combustible() {
+    const todos = Tanqueos.lista(), meses = Tanqueos.meses(), titulo = 'Combustible', sub = 'Tanqueos de Distracom';
+    const head = UI.head('Combustible', 'Tanqueos de Distracom · el informe «Detalle Tanqueo A Tanqueo» de Fleet Control',
+      '<button class="btn btn-primary" data-act="cargarDistracom">' + Icon('upload', '', 14) + 'Cargar archivo de Distracom</button>');
+    if (Sincro.sinTanqueos) return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') +
+      '<div><b>Todavía no se puede cargar.</b> Falta correr en Supabase el SQL 023, que crea dónde guardar los tanqueos.</div></div>' };
+    if (!todos.length) return { titulo, sub, html: head + '<div class="card">' + UI.empty('fuel', 'Todavía no hay tanqueos',
+      'En Fleet Control, en Informes, descargue «Detalle Tanqueo A Tanqueo» en CSV y cárguelo aquí tal como sale. Puede ser un mes, una semana o varios meses: ' +
+      'lo que ya estaba cargado no se suma dos veces.') + '</div>' };
+    const mes = meses.includes(UIState.combMes) ? UIState.combMes : meses[0];
+    const delMes = Tanqueos.delMes(todos, mes), r = Tanqueos.resumen(delMes);
+    const n = v => (v ? esc(Math.round(v).toLocaleString('es-CO')) : '—');
+    /* Por vehículo: las placas sin unidad van aparte */
+    const grupos = {};
+    delMes.forEach(t => { const k = t.unidad || 'p:' + t.placa; (grupos[k] = grupos[k] || []).push(t); });
+    const filas = Object.keys(grupos).map(k => ({ u: grupos[k][0].unidad && Q.unidad(grupos[k][0].unidad), placa: grupos[k][0].placa, r: Tanqueos.resumen(grupos[k]) }))
+      .sort((a, b) => b.r.valor - a.r.valor);
+    /* Los doce meses del año escogido */
+    const y = +mes.slice(0, 4), mm = Array.from({ length: 12 }, (_, i) => y + '-' + String(i + 1).padStart(2, '0'));
+    const vals = mm.map(x => Tanqueos.resumen(Tanqueos.delMes(todos, x)).valor), tope = Math.max.apply(null, vals.concat([1]));
+    const columnas = '<div class="cols">' + mm.map((x, i) => '<div class="col" title="' + attr(Tanqueos.mesTxt(x) + ': ' + Money.format(vals[i])) + '">' +
+        (vals[i] && x === mes ? '<span>' + esc(Money.compacto(vals[i])) + '</span>' : '') +
+        (vals[i] ? '<i style="height:' + Math.max(2, Math.round(vals[i] / tope * 100)) + '%' + (x === mes ? '' : ';opacity:.55') + '"></i>' : '') + '</div>').join('') + '</div>' +
+      '<div class="cols-x">' + mm.map(x => '<span>' + esc(Fecha.parse(x + '-01').toLocaleDateString('es-CO', { month: 'short' }).replace('.', '')) + '</span>').join('') + '</div>';
+    const sinU = Array.from(new Set(todos.filter(t => !t.unidad).map(t => t.placa)));
+    const archivos = {};
+    todos.forEach(t => {
+      const a = archivos[t.archivo] || (archivos[t.archivo] = { n: 0, desde: t.fecha, hasta: t.fecha });
+      a.n++;
+      if (t.fecha < a.desde) a.desde = t.fecha;
+      if (t.fecha > a.hasta) a.hasta = t.fecha;
+    });
+    const html = head +
+      (sinU.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (sinU.length === 1 ? 'Una placa de Distracom no tiene vehículo' :
+        sinU.length + ' placas de Distracom no tienen vehículo') + ':</b> ' + sinU.map(p => '<span class="mono">' + esc(p) + '</span> <span class="link" data-act="asignarPlaca" data-p="' +
+        attr(p) + '">Asignar</span>').join(' · ') + '. Mientras tanto, su gasto cuenta como general.</div></div>' : '') +
+      '<div class="toolbar"><label class="flex aic g8"><span class="txt-2 fs12">Mes</span><select class="inp" id="combMes" style="width:auto">' +
+        meses.map(x => '<option value="' + x + '"' + (x === mes ? ' selected' : '') + '>' + esc(Tanqueos.mesTxt(x)) + '</option>').join('') + '</select></label></div>' +
+      '<div class="grid g4 mb16">' +
+        UI.kpi({ label: 'Gasto en combustible', valor: esc(Money.format(r.valor)), icono: 'fuel',
+          meta: r.n + (r.n === 1 ? ' tanqueo' : ' tanqueos') + ' en ' + esc(Tanqueos.mesTxt(mes).toLowerCase()) }) +
+        UI.kpi({ label: 'Galones de combustible', valor: esc(Tanqueos.galTxt(r.galones)), icono: 'gota', color: 'var(--info-500)',
+          meta: r.urea ? 'Y ' + esc(Tanqueos.galTxt(r.urea)) + ' de urea (' + esc(Money.format(r.valorUrea)) + ')' : 'Sin urea' }) +
+        UI.kpi({ label: 'Rendimiento de la flota', valor: esc(Tanqueos.rindeTxt(r.rinde)), icono: 'medidor', color: 'var(--ok-500)', meta: 'Km desde el tanqueo anterior ÷ galones' }) +
+        UI.kpi({ label: 'Tanqueos raros', valor: r.raros, icono: 'warn', color: r.raros ? 'var(--warn-500)' : 'var(--ink-400)',
+          meta: 'Rinden menos de ' + esc(Config.rendimiento.min) + ' o más de ' + esc(Config.rendimiento.max) + ' km/gal: no entran en los promedios' }) +
+      '</div>' +
+      UI.card('Por vehículo · ' + Tanqueos.mesTxt(mes), '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th><th class="num">Tanqueos</th>' +
+          '<th class="num">Combustible</th><th class="num">Urea</th><th class="num">Valor</th><th class="num">Km</th><th class="num">Rendimiento</th></tr></thead><tbody>' +
+        filas.map(f => '<tr' + (f.u ? ' class="row-click" data-act="irUnidad" data-u="' + f.u.id + '" data-tab="comb"' : '') + '><td>' +
+            (f.u ? UI.unidadCelda(f.u) : '<span class="mono">' + esc(f.placa) + '</span> <span class="txt-3 fs12">sin vehículo</span>') + '</td>' +
+          '<td class="num">' + f.r.n + '</td><td class="num nowrap">' + esc(Tanqueos.galTxt(f.r.galones)) + '</td>' +
+          '<td class="num nowrap">' + (f.r.urea ? esc(Tanqueos.galTxt(f.r.urea)) : '—') + '</td><td class="num nowrap">' + esc(Money.format(f.r.valor)) + '</td>' +
+          '<td class="num nowrap">' + n(f.r.km) + '</td><td class="num nowrap">' + esc(Tanqueos.rindeTxt(f.r.rinde)) +
+            (f.r.raros ? '<div class="dias d-warn">' + f.r.raros + (f.r.raros === 1 ? ' raro' : ' raros') + '</div>' : '') + '</td></tr>').join('') +
+        '</tbody></table></div>', { flush: true, cls: 'mb16', sub: 'Clic en un vehículo para ver sus tanqueos' }) +
+      '<div class="grid g2">' +
+        UI.card('Gasto por mes · ' + y, columnas, { sub: 'Combustible y urea de Distracom' }) +
+        UI.card('Archivos cargados', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Archivo</th><th>Fechas</th><th class="num">Tanqueos</th></tr></thead><tbody>' +
+          Object.keys(archivos).sort((a, b) => archivos[b].hasta.localeCompare(archivos[a].hasta)).map(a => '<tr><td class="trunc" style="max-width:240px" title="' + attr(a) + '">' +
+            esc(a || '—') + '</td><td class="nowrap">' + esc(Fecha.corta(archivos[a].desde) + ' a ' + Fecha.corta(archivos[a].hasta)) + '</td><td class="num">' + archivos[a].n + '</td></tr>').join('') +
+          '</tbody></table></div>', { flush: true }) +
+      '</div>';
+    return { titulo, sub, html, despues: () => {
+      const s = $('#combMes');
+      if (s) s.addEventListener('change', () => { UIState.combMes = s.value; Router.pintar(true); });
+    } };
+  },
+
   /* ----------------------------------------------------------- Conductores */
   conductores() {
     const html =
@@ -7399,6 +7649,10 @@ Object.assign(Vistas, {
           '<div class="field"><label>Kilometraje raro del preoperacional</label><div class="flex aic g8"><span class="txt-2">Más de</span>' +
             '<input class="inp" type="number" min="100" max="5000" step="50" id="cfgKmDia" value="' + Config.kmDia + '" style="width:100px"><span class="txt-2">km por día</span></div>' +
             '<div class="hint">Si sube más que eso, o si baja, queda para revisar en Cambios de aceite. En las máquinas, más de 24 horas por día.</div></div>' +
+          '<div class="field"><label>Rendimiento normal del combustible</label><div class="flex aic g8"><span class="txt-2">Entre</span>' +
+            '<input class="inp" type="number" min="1" max="40" step="0.5" id="cfgRinMin" value="' + Config.rendimiento.min + '" style="width:80px"><span class="txt-2">y</span>' +
+            '<input class="inp" type="number" min="1" max="40" step="0.5" id="cfgRinMax" value="' + Config.rendimiento.max + '" style="width:80px"><span class="txt-2">km por galón</span></div>' +
+            '<div class="hint">Un tanqueo de Distracom que rinda menos o más se marca como raro y no entra en los promedios de Combustible.</div></div>' +
           '<div class="field mb0"><label>Se revisan en comparendos</label>' + ORDEN.map(tp => '<label class="flex aic g8 mt8" style="cursor:pointer;font-size:13px">' +
             '<input type="checkbox" data-act="cfgComp" data-tp="' + tp + '"' + (Config.comparendos.includes(tp) ? ' checked' : '') + '>' + esc(TIPOS[tp].plural) + '</label>').join('') + '</div>') +
       '</div>' +
@@ -7457,6 +7711,19 @@ Object.assign(Vistas, {
           Shell.nav('configuracion');
           Toast.show('Ahora queda para revisar el kilometraje que suba más de <b>' + esc(v.toLocaleString('es-CO')) + ' km</b> por día.');
         });
+        ['#cfgRinMin', '#cfgRinMax'].forEach(sel => $(sel).addEventListener('change', () => {
+          const lee = (s, def) => { const v = Math.round(+$(s).value * 2) / 2; return v >= 1 && v <= 40 ? v : def; };
+          const min = lee('#cfgRinMin', Config.rendimiento.min), max = lee('#cfgRinMax', Config.rendimiento.max);
+          if (min >= max) {
+            Toast.show('El mínimo tiene que ser menor que el máximo.', 'err');
+            $('#cfgRinMin').value = Config.rendimiento.min;
+            $('#cfgRinMax').value = Config.rendimiento.max;
+            return;
+          }
+          Config.rendimiento = { min, max };
+          Shell.nav('configuracion');
+          Toast.show('Ahora el rendimiento normal va de <b>' + esc(min) + '</b> a <b>' + esc(max) + ' km por galón</b>.');
+        }));
       }
     };
   },
@@ -7790,6 +8057,58 @@ Object.assign(Ventanas, {
     /* Guardar se prende solo si se escogió otro arreglo */
     const sel = $('#cmA', m), g = $('[data-act="guardarArregloOrden"]', m);
     if (sel && g) sel.addEventListener('change', () => { g.disabled = sel.value === (ar ? ar.id : ''); });
+  },
+
+  /* Cargar el informe de Distracom (ver Tanqueos): se escoge o se arrastra el
+     CSV, se ve qué trae y nada se guarda hasta «Guardar» */
+  cargaDistracom() {
+    const m = Modal.abrir({
+      titulo: 'Cargar tanqueos de Distracom', sub: 'El informe «Detalle Tanqueo A Tanqueo» de Fleet Control, en CSV y tal como sale', ancho: 'wide', sinFoco: true,
+      cuerpo: Dz.html('tqDz', 'Escoja o arrastre el archivo', 'El CSV que descarga de Fleet Control, sin editarlo', '.csv,text/csv', false) + '<div id="tqPrev"></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarTanqueos" disabled>' + Icon('save', '', 14) + 'Guardar</button>'
+    });
+    Dz.bind('tqDz', files => this.previaDistracom(m, files[0]));
+  },
+  async previaDistracom(m, f) {
+    const caja = $('#tqPrev', m), g = $('[data-act="guardarTanqueos"]', m), aviso = (k, ic, t) => '<div class="alert a-' + k + ' mt12">' + Icon(ic) + '<div>' + t + '</div></div>';
+    g.disabled = true;
+    g.innerHTML = Icon('save', '', 14) + 'Guardar';
+    m._nuevos = null;
+    /* El archivo solo se lee: no se guarda en ninguna parte */
+    $('#tqDzF', m).innerHTML = '<div class="dz-file">' + Icon('file', '', 15) + '<span class="f1 trunc">' + esc(f.name) + '</span><span class="txt-3 fs11 nowrap">' +
+      Peso.txt(f.size) + ' · solo se lee, no se guarda</span></div>';
+    if (!/\.csv$/i.test(f.name)) {
+      caja.innerHTML = aviso('warn', 'warn', '<b>Ese archivo no es un CSV.</b> En Fleet Control, descargue «Detalle Tanqueo A Tanqueo» en CSV y cárguelo tal como sale.');
+      return;
+    }
+    const r = Tanqueos.leer(await f.text(), f.name);
+    if (!document.body.contains(m)) return;
+    if (!r.tanqueos.length) {
+      caja.innerHTML = aviso('warn', 'warn', '<b>No se encontraron tanqueos en el archivo.</b> ¿Es el informe «Detalle Tanqueo A Tanqueo» de Fleet Control?');
+      return;
+    }
+    const ya = new Set(Tanqueos.lista().map(t => t.id)), nuevos = r.tanqueos.filter(t => !ya.has(t.id));
+    const suma = r.tanqueos.reduce((s, t) => s + t.valor, 0), res = Tanqueos.resumen(r.tanqueos), fechas = r.tanqueos.map(t => t.fecha).sort();
+    const placas = Array.from(new Set(r.tanqueos.map(t => t.placa))), sinU = placas.filter(p => !Tanqueos.unidadDe(p));
+    const dato = (l, v, s) => '<div class="oc-dato"><div class="l">' + esc(l) + '</div><div class="v">' + esc(v) + '</div>' + (s ? '<div class="m">' + esc(s) + '</div>' : '') + '</div>';
+    caja.innerHTML = '<div class="oc-datos mt12">' +
+        dato('Fechas', Fecha.corta(fechas[0]) + ' a ' + Fecha.corta(fechas[fechas.length - 1]), r.tanqueos.length + ' tanqueos · ' + placas.length + (placas.length === 1 ? ' vehículo' : ' vehículos')) +
+        dato('Galones', Tanqueos.galTxt(res.galones), res.urea ? 'Y ' + Tanqueos.galTxt(res.urea) + ' de urea' : '') +
+        dato('Valor', Money.format(suma), '') + '</div>' +
+      (r.total == null ? '' : Math.abs(suma - r.total) < 1 ? aviso('ok', 'check', 'La suma de los tanqueos cuadra con el total que trae el archivo.')
+        : aviso('warn', 'warn', '<b>La suma de los tanqueos (' + esc(Money.format(suma)) + ') no cuadra con el total del archivo (' + esc(Money.format(r.total)) + ').</b> Revise que el archivo esté completo.')) +
+      (nuevos.length < r.tanqueos.length ? aviso('info', 'info', (r.tanqueos.length - nuevos.length) + ' de estos tanqueos ya estaban cargados y no se repiten. ' +
+        (nuevos.length ? 'Se guardan los ' + nuevos.length + ' nuevos.' : 'No hay nada nuevo.')) : '') +
+      (r.iguales ? aviso('info', 'info', 'El archivo trae ' + r.iguales + (r.iguales === 1 ? ' tanqueo igual a otro' : ' tanqueos iguales a otros') +
+        ' el mismo día (misma placa, estación, galones y valor). Se guardan todos, como vienen.') : '') +
+      (r.malas.length ? aviso('warn', 'warn', r.malas.length + (r.malas.length === 1 ? ' fila no se entendió' : ' filas no se entendieron') + ' (fila ' +
+        r.malas.slice(0, 8).join(', ') + (r.malas.length > 8 ? '…' : '') + ') y no se cargan.') : '') +
+      (sinU.length ? '<div class="oc-sec">Placas que no están en Flota</div>' + sinU.map(p => '<div class="field"><label class="mono">' + esc(p) + '</label>' +
+        '<select class="inp" data-placa="' + attr(p) + '"><option value="">Sin vehículo (cuenta como gasto general)</option>' + Opc.unidades('') + '</select></div>').join('') +
+        '<div class="hint">Lo que asigne aquí queda guardado para las próximas cargas.</div>' : '');
+    m._nuevos = nuevos;
+    g.disabled = !nuevos.length;
+    g.innerHTML = Icon('save', '', 14) + (nuevos.length ? 'Guardar ' + nuevos.length + (nuevos.length === 1 ? ' tanqueo' : ' tanqueos') : 'Nada nuevo');
   },
 
   oc(o) {
@@ -8486,6 +8805,49 @@ Object.assign(Acciones, {
     if (!r || !Compras.deArreglo(r).fiable) return;
     Compras.ponerOrdenes(r, (r.ordenes || []).filter(id => { const o = Compras.porId(id); return o && o.flota_id === r.unidad; }));
     Toast.show('Listo: el arreglo quedó sin esa orden. Sigue contando su propio valor.');
+    Router.pintar(true);
+  },
+  /* Los tanqueos de Distracom (ver Tanqueos) */
+  cargarDistracom() {
+    if (Sincro.sinTanqueos) { Toast.show('Todavía no se puede: falta correr en Supabase el SQL 023.', 'warn'); return; }
+    Ventanas.cargaDistracom();
+  },
+  guardarTanqueos(el) {
+    const m = el.closest('.modal-bd'), nuevos = (m && m._nuevos) || [];
+    if (!nuevos.length) return;
+    /* Las placas que se asignaron quedan para las próximas cargas */
+    const asignadas = {};
+    $$('select[data-placa]', m).forEach(s => { if (s.value) asignadas[s.dataset.placa] = s.value; });
+    if (Object.keys(asignadas).length) Config.placasDistracom = Object.assign({}, Config.placasDistracom, asignadas);
+    Datos.tanqueos = Datos.tanqueos || [];
+    nuevos.forEach(t => Datos.tanqueos.push(Object.assign({}, t, { unidad: Tanqueos.unidadDe(t.placa) })));
+    const fechas = nuevos.map(t => t.fecha).sort();
+    Modal.cerrar(m);
+    Toast.show('Listo: se guardaron <b>' + nuevos.length + (nuevos.length === 1 ? ' tanqueo' : ' tanqueos') + '</b> de Distracom, del ' + esc(Fecha.corta(fechas[0])) +
+      ' al ' + esc(Fecha.corta(fechas[fechas.length - 1])) + '.');
+    UIState.combMes = fechas[fechas.length - 1].slice(0, 7);
+    if (Router.actual().vista === 'combustible') Router.pintar(true); else Router.ir('combustible');
+  },
+  /* Una placa de Distracom que no está en Flota: se asigna una vez a su unidad */
+  asignarPlaca(el) {
+    const p = el.dataset.p, n = Tanqueos.lista().filter(t => t.placa === p).length;
+    const m = Modal.abrir({
+      titulo: 'Asignar la placa ' + p, ancho: 'm-hoja', sub: 'Así la escribe Distracom. Sus tanqueos, los de ahora y los que lleguen, van al vehículo que escoja.',
+      cuerpo: '<div class="field mb0"><label>Vehículo</label><select class="inp" id="apU"><option value="">Escoja el vehículo</option>' + Opc.unidades('') + '</select>' +
+        '<div class="hint">' + n + (n === 1 ? ' tanqueo tiene' : ' tanqueos tienen') + ' esta placa.</div></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarPlaca" data-p="' + attr(p) + '" disabled>' +
+        Icon('save', '', 14) + 'Guardar</button>'
+    });
+    const s = $('#apU', m), g = $('[data-act="guardarPlaca"]', m);
+    s.addEventListener('change', () => { g.disabled = !s.value; });
+  },
+  guardarPlaca(el) {
+    const m = el.closest('.modal-bd'), p = el.dataset.p, u = Q.unidad($('#apU', m).value);
+    if (!u) return;
+    Config.placasDistracom = Object.assign({}, Config.placasDistracom, { [p]: u.id });
+    Tanqueos.lista().forEach(t => { if (t.placa === p) t.unidad = u.id; });
+    Modal.cerrar(m);
+    Toast.show('Listo: los tanqueos de <b>' + esc(p) + '</b> quedan en <b>' + esc(UI.placaTxt(u)) + '</b>.');
     Router.pintar(true);
   },
   verConductor(el) { Ventanas.conductor(Q.conductor(el.dataset.c)); },
@@ -11764,6 +12126,7 @@ const Fila = {
 };
 const aNulo = v => (v === '' || v == null ? null : v);
 const aTexto = v => (v == null ? '' : String(v));
+const aNumero = v => (v === '' || v == null || !isFinite(+v) ? null : +v);
 const rutaDeId = id => Nube.rutaDe(Nube.claveDe(id));
 const idDeRuta = r => (r == null ? r : r.startsWith('archivo/') ? r.slice(8) : r.replace(/\//g, ':'));
 /* JSON con las llaves en orden, para comparar sin que importe cómo vinieron */
@@ -11792,7 +12155,9 @@ const Mapa = {
     lecturas: { id: null, unidad_id: null, fecha: null, valor: null, fuente: 'manual', extra: {} },
     actividad: { id: null, unidad_id: null, fecha: null, hora: '', tipo: null, titulo: '', detalle: '', adjuntos: [], documento_id: null, extra: {} },
     informes_comparendos: { id: null, mes: null, enviado: null, con_comparendo: 0, extra: {} },
-    configuracion: { clave: null, valor: null }
+    configuracion: { clave: null, valor: null },
+    tanqueos: { id: null, unidad_id: null, placa: '', fecha: null, producto: '', galones: 0, valor: 0, km: null, km_recorrido: null, estacion: '',
+      archivo: '', extra: {} }
   },
   CONDUCTOR: [['id', 'id'], ['nombre', 'nombre', '', aTexto], ['corto', 'corto', '', aTexto], ['cedula', 'cedula', '', aTexto],
     ['cat', 'categoria', '', aTexto]],
@@ -11827,6 +12192,10 @@ const Mapa = {
   LECT: [['id', 'id'], ['unidad', 'unidad_id'], ['fecha', 'fecha'], ['valor', 'valor'], ['fuente', 'fuente', 'manual']],
   ACTIV: [['id', 'id'], ['unidad', 'unidad_id'], ['fecha', 'fecha'], ['hora', 'hora', '', aTexto], ['tipo', 'tipo'],
     ['titulo', 'titulo', '', aTexto], ['det', 'detalle', '', aTexto], ['adjuntos', 'adjuntos', [], x => x || []]],
+  /* Un tanqueo de Distracom (ver Tanqueos y el SQL 023) */
+  TANQ: [['id', 'id'], ['unidad', 'unidad_id', null, aNulo], ['placa', 'placa', '', aTexto], ['fecha', 'fecha'], ['producto', 'producto', '', aTexto],
+    ['galones', 'galones', 0, x => +x || 0, x => +x || 0], ['valor', 'valor', 0, x => +x || 0, x => +x || 0], ['km', 'km', null, aNumero, aNumero],
+    ['rec', 'km_recorrido', null, aNumero, aNumero], ['estacion', 'estacion', '', aTexto], ['archivo', 'archivo', '', aTexto]],
 
   /* Lo que se sabe del archivo de un documento, para sus columnas */
   _archivo(id) {
@@ -11886,6 +12255,7 @@ const Mapa = {
     datos.ocs.forEach(o => poner('ordenes_compra', Fila.de(o, this.OC)));
     (datos.lecturas || []).forEach(l => poner('lecturas', Fila.de(l, this.LECT)));
     (datos.actividad || []).forEach(a => poner('actividad', Fila.de(a, this.ACTIV)));
+    (datos.tanqueos || []).forEach(t => poner('tanqueos', Fila.de(t, this.TANQ)));
 
     /* Los informes de comparendos: el del mes en curso («enviado» hoy) y los
        de los meses anteriores, cada uno con su mes */
@@ -11902,6 +12272,8 @@ const Mapa = {
 
     poner('configuracion', { clave: 'dias_aviso', valor: config.diasAviso });
     poner('configuracion', { clave: 'km_dia', valor: config.kmDia });
+    poner('configuracion', { clave: 'rendimiento', valor: config.rendimiento });
+    if (Object.keys(config.placasDistracom || {}).length) poner('configuracion', { clave: 'distracom_placas', valor: config.placasDistracom });
     poner('configuracion', { clave: 'documentos_obligatorios', valor: config.req });
     poner('configuracion', { clave: 'comparendos', valor: config.comparendos });
     poner('configuracion', { clave: 'planos', valor: config.planos || {} });
@@ -11915,7 +12287,7 @@ const Mapa = {
   /* Las filas de cada tabla → Datos y Config (sin ponerlos todavía) */
   aDatos(filas) {
     const d = { conductores: [], proveedores: [], unidades: [], mantenimientos: [], ocs: [], accidentes: [], inspecciones: [],
-      informes: [], lecturas: [], actividad: [], archivo: { conductores: [], proveedores: [] } };
+      informes: [], lecturas: [], actividad: [], tanqueos: [], archivo: { conductores: [], proveedores: [] } };
     const de = { u: {}, c: {}, p: {} };
     (filas.documentos || []).forEach(r => {
       const k = r.unidad_id ? de.u : r.conductor_id ? de.c : de.p, id = r.unidad_id || r.conductor_id || r.proveedor_id;
@@ -11960,6 +12332,7 @@ const Mapa = {
     (filas.ordenes_compra || []).forEach(r => d.ocs.push(Fila.a(r, this.OC)));
     (filas.lecturas || []).forEach(r => d.lecturas.push(Fila.a(r, this.LECT)));
     (filas.actividad || []).forEach(r => d.actividad.push(Fila.a(r, this.ACTIV)));
+    (filas.tanqueos || []).forEach(r => d.tanqueos.push(Fila.a(r, this.TANQ)));
 
     const hoy = Fecha.parse(mesISO(HOY));
     (filas.informes_comparendos || []).forEach(r => {
@@ -11974,6 +12347,8 @@ const Mapa = {
     const config = {
       diasAviso: cfg.dias_aviso != null ? cfg.dias_aviso : Config.diasAviso,
       kmDia: cfg.km_dia != null ? cfg.km_dia : Config.kmDia,
+      rendimiento: cfg.rendimiento && typeof cfg.rendimiento === 'object' && cfg.rendimiento.min < cfg.rendimiento.max ? cfg.rendimiento : Config.rendimiento,
+      placasDistracom: cfg.distracom_placas && typeof cfg.distracom_placas === 'object' ? cfg.distracom_placas : {},
       req: cfg.documentos_obligatorios || Config.req,
       comparendos: cfg.comparendos || Config.comparendos,
       planos: cfg.planos && typeof cfg.planos === 'object' ? cfg.planos : Config.planos || {},
@@ -11998,7 +12373,9 @@ const mesISO = d => Fecha.iso(new Date(d.getFullYear(), d.getMonth(), 1));
    ========================================================================== */
 const Sincro = {
   ORDEN: ['conductores', 'proveedores', 'unidades', 'documentos', 'fotos', 'mantenimientos', 'inspecciones', 'accidentes',
-    'ordenes_compra', 'lecturas', 'actividad', 'informes_comparendos', 'configuracion'],
+    'ordenes_compra', 'lecturas', 'actividad', 'informes_comparendos', 'configuracion', 'tanqueos'],
+  /* Sin el SQL 023 no existe la tabla de los tanqueos: lo demás sigue igual */
+  sinTanqueos: false,
   CLAVE: { configuracion: 'clave' },
   ultimo: {},
   activo: false,
@@ -12050,7 +12427,14 @@ const Sincro = {
     const trabajar = async () => {
       while (cola.length) {
         const t = cola.shift();
-        filas[t] = await Nube.leerTodo(t, this.CLAVE[t]);
+        try {
+          filas[t] = await Nube.leerTodo(t, this.CLAVE[t]);
+          if (t === 'tanqueos') this.sinTanqueos = false;
+        } catch (e) {
+          if (t !== 'tanqueos' || !(e.status === 404 || /PGRST205|42P01/.test(e.codigo || ''))) throw e;
+          filas[t] = [];
+          this.sinTanqueos = true;
+        }
         listas++;
         if (avance) avance(listas, this.ORDEN.length);
       }
