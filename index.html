@@ -228,6 +228,9 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#37454f}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kpi-v small{font-size:13px;font-weight:600;color:var(--text-3);letter-spacing:0}
 .kpi-m{font-size:11.5px;color:var(--text-3);margin-top:3px}
+/* El signo de aviso junto al número de una ficha (las posibles irregularidades) */
+.kpi-aviso{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;margin-left:8px;vertical-align:3px;
+  background:var(--warn-50);color:var(--warn-700);font-size:13px;font-weight:800;letter-spacing:0}
 .kpi.clickable{cursor:pointer;transition:var(--t-fast)}
 .kpi.clickable:hover{border-color:var(--border-strong);box-shadow:var(--sh-2);transform:translateY(-1px)}
 
@@ -241,6 +244,11 @@ table.tbl tbody tr:hover{background:var(--surface-2)}
 table.tbl tbody tr.row-click{cursor:pointer}
 table.tbl tbody tr:last-child td{border-bottom:none}
 table.tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Las flechitas para ordenar una tabla: tenues, y marcada la de la columna escogida */
+table.tbl th.ord{cursor:pointer}
+table.tbl th.ord:hover,table.tbl th.ord.on{color:var(--text-2)}
+.ord-f{vertical-align:-1px;margin-right:3px;opacity:.4}
+th.ord:hover .ord-f,th.ord.on .ord-f{opacity:1}
 table.tbl tfoot td{padding:9px 12px;border-top:2px solid var(--border-strong);font-weight:700;background:var(--surface-2)}
 .card > .tbl-wrap table.tbl tr:first-child th:first-child{border-top-left-radius:var(--radius-lg)}
 .tbl-wrap{overflow-x:auto}
@@ -2381,7 +2389,9 @@ const Icon = (() => {
     print: '<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>',
     back: '<path d="M19 12H5M12 19l-7-7 7-7"/>',
     chevD: '<path d="M6 9l6 6 6-6"/>',
+    chevU: '<path d="M18 15l-6-6-6 6"/>',
     chevR: '<path d="M9 18l6-6-6-6"/>',
+    ordenar: '<path d="M7 15l5 5 5-5M7 9l5-5 5 5"/>',
     save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
     file: '<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/>',
     pdf: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
@@ -7152,8 +7162,9 @@ Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
   mantTab: 'vehiculos', mantTipo: 'todos',
   /* El plano de una unidad: la parte y la llanta escogidas, el color y el período */
   plano: { u: null, sel: null, llanta: null, modo: 'arreglos', periodo: '12' },
-  /* Combustible: el mes escogido («aaaa-mm»); si no, el último con tanqueos */
-  combMes: null });
+  /* Combustible: el mes escogido («aaaa-mm»); si no, el último con tanqueos.
+     Y el orden de la tabla por vehículo, que al recargar vuelve al valor */
+  combMes: null, combOrden: { k: 'valor', asc: false } });
 Money.compacto = n => n >= 1e6 ? '$' + (n / 1e6).toFixed(1).replace('.', ',') + ' M' : n >= 1e3 ? '$' + Math.round(n / 1e3) + ' mil' : Money.format(n);
 const iniciales2 = n => { const p = String(n).split(/\s+/).filter(Boolean); return (p.length > 1 ? p[0][0] + p[1][0] : String(n).slice(0, 2)).toUpperCase(); };
 
@@ -7626,11 +7637,19 @@ Object.assign(Vistas, {
     const mes = meses.includes(UIState.combMes) ? UIState.combMes : meses[0];
     const delMes = Tanqueos.delMes(todos, mes), r = Tanqueos.resumen(delMes);
     const n = v => (v ? esc(Math.round(v).toLocaleString('es-CO')) : '—');
-    /* Por vehículo: las placas sin unidad van aparte */
+    /* Por vehículo: las placas sin unidad van aparte. Las flechitas de cada
+       columna la ordenan; por defecto, el que más gastó (Juan, 01/11/2026) */
     const grupos = {};
     delMes.forEach(t => { const k = t.unidad || 'p:' + t.placa; (grupos[k] = grupos[k] || []).push(t); });
+    const cols = [['n', 'Tanqueos', r => r.n], ['comb', 'Combustible', r => r.galones], ['urea', 'Urea', r => r.urea || null], ['valor', 'Valor', r => r.valor],
+      ['km', 'Km', r => r.km || null], ['rinde', 'Rendimiento', r => r.rinde]];
+    const ord = UIState.combOrden, col = cols.find(c => c[0] === ord.k) || cols[3];
+    /* Lo que sale con raya (—) va al final, se ordene como se ordene */
     const filas = Object.keys(grupos).map(k => ({ u: grupos[k][0].unidad && Q.unidad(grupos[k][0].unidad), placa: grupos[k][0].placa, r: Tanqueos.resumen(grupos[k]) }))
-      .sort((a, b) => b.r.valor - a.r.valor);
+      .sort((a, b) => {
+        const x = col[2](a.r), z = col[2](b.r);
+        return (x == null) - (z == null) || (x == null ? 0 : ord.asc ? x - z : z - x) || b.r.valor - a.r.valor;
+      });
     /* Los doce meses del año escogido */
     const y = +mes.slice(0, 4), mm = Array.from({ length: 12 }, (_, i) => y + '-' + String(i + 1).padStart(2, '0'));
     const vals = mm.map(x => Tanqueos.resumen(Tanqueos.delMes(todos, x)).valor), tope = Math.max.apply(null, vals.concat([1]));
@@ -7646,13 +7665,10 @@ Object.assign(Vistas, {
       if (t.fecha < a.desde) a.desde = t.fecha;
       if (t.fecha > a.hasta) a.hasta = t.fecha;
     });
-    /* El apartado de alertas: se abre en una ventana (ver Tanqueos.irregularidades) */
-    const irr = Tanqueos.irregularidades();
-    const alertas = '<div class="alert ' + (irr.pendientes ? 'a-warn' : 'a-ok') + ' mb16" data-act="verIrregularidades" role="button" tabindex="0">' +
-      Icon(irr.pendientes ? 'warn' : 'check') + '<div><b>Alertas por doble cobro y cosas extrañas' + (irr.pendientes ? ': ' + irr.pendientes : '') + '</b>' +
-      (irr.enJuego ? ' · posibles dobles cobros por ' + esc(Money.format(irr.enJuego)) : irr.pendientes ? '' : ' · nada pendiente') +
-      ' <span class="link">Ver</span></div></div>';
-    const html = head + alertas +
+    /* Las posibles irregularidades (ver Tanqueos.irregularidades) van en su
+       ficha, que abre la ventana con el detalle (Juan, 01/11/2026) */
+    const irr = Tanqueos.irregularidades(), dob = irr.dobles.filter(x => !x.revisado).length;
+    const html = head +
       (sinU.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (sinU.length === 1 ? 'Una placa de Distracom no tiene vehículo' :
         sinU.length + ' placas de Distracom no tienen vehículo') + ':</b> ' + sinU.map(p => '<span class="mono">' + esc(p) + '</span> <span class="link" data-act="asignarPlaca" data-p="' +
         attr(p) + '">Asignar</span>').join(' · ') + '. Mientras tanto, su gasto cuenta como general.</div></div>' : '') +
@@ -7663,12 +7679,18 @@ Object.assign(Vistas, {
           meta: r.n + (r.n === 1 ? ' tanqueo' : ' tanqueos') + ' en ' + esc(Tanqueos.mesTxt(mes).toLowerCase()) }) +
         UI.kpi({ label: 'Galones de combustible', valor: esc(Tanqueos.galTxt(r.galones)), icono: 'gota', color: 'var(--info-500)',
           meta: r.urea ? 'Y ' + esc(Tanqueos.galTxt(r.urea)) + ' de urea (' + esc(Money.format(r.valorUrea)) + ')' : 'Sin urea' }) +
-        UI.kpi({ label: 'Rendimiento de la flota', valor: esc(Tanqueos.rindeTxt(r.rinde)), icono: 'medidor', color: 'var(--ok-500)', meta: 'Km desde el tanqueo anterior ÷ galones' }) +
-        UI.kpi({ label: 'Tanqueos raros', valor: r.raros, icono: 'warn', color: r.raros ? 'var(--warn-500)' : 'var(--ink-400)',
-          meta: 'Rinden menos de ' + esc(Config.rendimiento.min) + ' o más de ' + esc(Config.rendimiento.max) + ' km/gal: no entran en los promedios' }) +
+        UI.kpi({ label: 'Rendimiento de la flota', valor: esc(Tanqueos.rindeTxt(r.rinde)), icono: 'medidor', color: 'var(--ok-500)',
+          meta: r.raros ? 'Sin contar ' + r.raros + (r.raros === 1 ? ' tanqueo raro' : ' tanqueos raros') + ' (fuera de ' + esc(Config.rendimiento.min) + ' a ' +
+            esc(Config.rendimiento.max) + ' km/gal)' : 'Km desde el tanqueo anterior ÷ galones' }) +
+        UI.kpi({ label: 'Posibles irregularidades', icono: 'warn', color: irr.pendientes ? 'var(--warn-500)' : 'var(--ink-400)', act: 'verIrregularidades',
+          valor: irr.pendientes + (irr.pendientes ? '<span class="kpi-aviso" title="Hay cosas por revisar">!</span>' : ''),
+          meta: !irr.pendientes ? 'Nada pendiente, de todos los meses' : 'De todos los meses' + (dob ? ' · ' + dob + (dob === 1 ? ' posible doble cobro' : ' posibles dobles cobros') +
+            ' por ' + esc(Money.format(irr.enJuego)) : '') + ' · <span class="link">Ver</span>' }) +
       '</div>' +
-      UI.card('Por vehículo · ' + Tanqueos.mesTxt(mes), '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th><th class="num">Tanqueos</th>' +
-          '<th class="num">Combustible</th><th class="num">Urea</th><th class="num">Valor</th><th class="num">Km</th><th class="num">Rendimiento</th></tr></thead><tbody>' +
+      UI.card('Por vehículo · ' + Tanqueos.mesTxt(mes), '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th>' +
+          cols.map(c => '<th class="num ord' + (c === col ? ' on' : '') + '" data-act="ordenComb" data-k="' + c[0] + '" aria-sort="' +
+            (c === col ? (ord.asc ? 'ascending' : 'descending') : 'none') + '" title="Ordenar por ' + c[1].toLowerCase() + '">' +
+            Icon(c === col ? (ord.asc ? 'chevU' : 'chevD') : 'ordenar', 'ord-f', 11) + c[1] + '</th>').join('') + '</tr></thead><tbody>' +
         filas.map(f => '<tr' + (f.u ? ' class="row-click" data-act="irUnidad" data-u="' + f.u.id + '" data-tab="comb"' : '') + '><td>' +
             (f.u ? UI.unidadCelda(f.u) : '<span class="mono">' + esc(f.placa) + '</span> <span class="txt-3 fs12">sin vehículo</span>') + '</td>' +
           '<td class="num">' + f.r.n + '</td><td class="num nowrap">' + esc(Tanqueos.galTxt(f.r.galones)) + '</td>' +
@@ -8232,9 +8254,8 @@ Object.assign(Ventanas, {
     g.innerHTML = Icon('save', '', 14) + (nuevos.length ? 'Guardar ' + nuevos.length + (nuevos.length === 1 ? ' tanqueo' : ' tanqueos') : 'Nada nuevo');
   },
 
-  /* Alertas por doble cobro y cosas extrañas del combustible (ver
-     Tanqueos.irregularidades), en una ventana sobre el área. Con «todas»,
-     también las que ya se revisaron. */
+  /* Las posibles irregularidades del combustible (ver Tanqueos.irregularidades),
+     en una ventana sobre el área. Con «todas», también las que ya se revisaron. */
   irregularidades(todas) {
     const x = Tanqueos.irregularidades(), veh = t => esc(Tanqueos.placaTxt(t)), dia = t => esc(Fecha.corta(t.fecha));
     const dobles = x.dobles.filter(i => todas || !i.revisado), km = x.km.filter(i => todas || !i.t.revisado);
@@ -8246,7 +8267,7 @@ Object.assign(Ventanas, {
     const sec = (t, sub, cuerpo) => '<div class="oc-sec">' + esc(t) + '</div><div class="hint mb8">' + sub + '</div>' + cuerpo;
     const vacio = t => '<div class="txt-3" style="font-size:13px">' + t + '</div>';
     Modal.abrir({
-      titulo: 'Alertas por doble cobro y cosas extrañas', sub: 'Lo que conviene revisar con Distracom o con el conductor', ancho: 'wide', sinFoco: true,
+      titulo: 'Posibles irregularidades', sub: 'Lo que conviene revisar con Distracom o con el conductor, de todos los meses cargados', ancho: 'wide', sinFoco: true,
       cuerpo:
         sec('Posibles dobles cobros', 'La misma placa, el mismo día, la misma estación y el mismo producto, con 0 km entre una compra y la otra.' +
             (x.enJuego ? ' En juego: <b>' + esc(Money.format(x.enJuego)) + '</b>.' : ''),
@@ -8993,10 +9014,18 @@ Object.assign(Acciones, {
     UIState.combMes = fechas[fechas.length - 1].slice(0, 7);
     if (Router.actual().vista === 'combustible') Router.pintar(true); else Router.ir('combustible');
   },
-  /* Alertas por doble cobro y cosas extrañas (ver Tanqueos.irregularidades) */
+  /* Las posibles irregularidades (ver Tanqueos.irregularidades) */
   verIrregularidades(el) {
     Modal.cerrarTodo();
     Ventanas.irregularidades(Boolean(el && el.dataset && el.dataset.todas));
+  },
+  /* Las flechitas de la tabla por vehículo de Combustible: la primera vez de
+     mayor a menor y otro clic la voltea. Queda solo en memoria: al recargar,
+     vuelve al valor (Juan, 01/11/2026) */
+  ordenComb(el) {
+    const o = UIState.combOrden, k = el.dataset.k;
+    UIState.combOrden = { k, asc: o.k === k ? !o.asc : false };
+    Router.pintar(true);
   },
   /* «Revisado»: Juan ya lo miró con Distracom o con el conductor, y deja de salir */
   tanqueoRevisado(el) {
