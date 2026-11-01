@@ -7534,8 +7534,8 @@ Object.assign(Vistas, {
     if (Sincro.sinTanqueos) return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') +
       '<div><b>Todavía no se puede cargar.</b> Falta correr en Supabase el SQL 023, que crea dónde guardar los tanqueos.</div></div>' };
     if (!todos.length) return { titulo, sub, html: head + '<div class="card">' + UI.empty('fuel', 'Todavía no hay tanqueos',
-      'En Fleet Control, en Informes, descargue «Detalle Tanqueo A Tanqueo» en CSV y cárguelo aquí tal como sale. Puede ser un mes, una semana o varios meses: ' +
-      'lo que ya estaba cargado no se suma dos veces.') + '</div>' };
+      'En Fleet Control, en Informes, descargue «Detalle Tanqueo A Tanqueo» en CSV y cárguelo aquí tal como sale. Se pueden cargar uno o varios archivos a la vez, ' +
+      'cada uno de un mes o de una semana: lo que ya estaba cargado no se suma dos veces.') + '</div>' };
     const mes = meses.includes(UIState.combMes) ? UIState.combMes : meses[0];
     const delMes = Tanqueos.delMes(todos, mes), r = Tanqueos.resumen(delMes);
     const n = v => (v ? esc(Math.round(v).toLocaleString('es-CO')) : '—');
@@ -8059,50 +8059,78 @@ Object.assign(Ventanas, {
     if (sel && g) sel.addEventListener('change', () => { g.disabled = sel.value === (ar ? ar.id : ''); });
   },
 
-  /* Cargar el informe de Distracom (ver Tanqueos): se escoge o se arrastra el
-     CSV, se ve qué trae y nada se guarda hasta «Guardar» */
+  /* Cargar el informe de Distracom (ver Tanqueos): se escogen o se arrastran uno
+     o varios CSV (Fleet Control da máximo un mes por archivo), se ve qué trae
+     cada uno y nada se guarda hasta «Guardar» */
   cargaDistracom() {
     const m = Modal.abrir({
       titulo: 'Cargar tanqueos de Distracom', sub: 'El informe «Detalle Tanqueo A Tanqueo» de Fleet Control, en CSV y tal como sale', ancho: 'wide', sinFoco: true,
-      cuerpo: Dz.html('tqDz', 'Escoja o arrastre el archivo', 'El CSV que descarga de Fleet Control, sin editarlo', '.csv,text/csv', false) + '<div id="tqPrev"></div>',
+      cuerpo: Dz.html('tqDz', 'Escoja o arrastre los archivos', 'Uno o varios CSV de Fleet Control, sin editarlos: un mes, una semana o todos los meses juntos',
+        '.csv,text/csv', true) + '<div id="tqPrev"></div>',
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarTanqueos" disabled>' + Icon('save', '', 14) + 'Guardar</button>'
     });
-    Dz.bind('tqDz', files => this.previaDistracom(m, files[0]));
+    Dz.bind('tqDz', files => this.previaDistracom(m, files));
   },
-  async previaDistracom(m, f) {
+  async previaDistracom(m, files) {
     const caja = $('#tqPrev', m), g = $('[data-act="guardarTanqueos"]', m), aviso = (k, ic, t) => '<div class="alert a-' + k + ' mt12">' + Icon(ic) + '<div>' + t + '</div></div>';
+    files = [].concat(files);
     g.disabled = true;
     g.innerHTML = Icon('save', '', 14) + 'Guardar';
     m._nuevos = null;
-    /* El archivo solo se lee: no se guarda en ninguna parte */
-    $('#tqDzF', m).innerHTML = '<div class="dz-file">' + Icon('file', '', 15) + '<span class="f1 trunc">' + esc(f.name) + '</span><span class="txt-3 fs11 nowrap">' +
-      Peso.txt(f.size) + ' · solo se lee, no se guarda</span></div>';
-    if (!/\.csv$/i.test(f.name)) {
-      caja.innerHTML = aviso('warn', 'warn', '<b>Ese archivo no es un CSV.</b> En Fleet Control, descargue «Detalle Tanqueo A Tanqueo» en CSV y cárguelo tal como sale.');
-      return;
-    }
-    const r = Tanqueos.leer(await f.text(), f.name);
+    /* Los archivos solo se leen: no se guardan en ninguna parte */
+    $('#tqDzF', m).innerHTML = files.map(f => '<div class="dz-file">' + Icon('file', '', 15) + '<span class="f1 trunc">' + esc(f.name) + '</span>' +
+      '<span class="txt-3 fs11 nowrap">' + Peso.txt(f.size) + ' · solo se lee, no se guarda</span></div>').join('');
+    const csv = files.filter(f => /\.csv$/i.test(f.name)), otros = files.filter(f => !/\.csv$/i.test(f.name)), leidos = [];
+    for (const f of csv) leidos.push({ f, r: Tanqueos.leer(await f.text(), f.name) });
     if (!document.body.contains(m)) return;
-    if (!r.tanqueos.length) {
-      caja.innerHTML = aviso('warn', 'warn', '<b>No se encontraron tanqueos en el archivo.</b> ¿Es el informe «Detalle Tanqueo A Tanqueo» de Fleet Control?');
+    const noCsv = otros.length ? aviso('warn', 'warn', '<b>' + (otros.length === 1 ? 'Un archivo no es CSV y no se lee' : otros.length + ' archivos no son CSV y no se leen') + ':</b> ' +
+      otros.map(f => esc(f.name)).join(', ') + '. En Fleet Control, descargue «Detalle Tanqueo A Tanqueo» en CSV y cárguelo tal como sale.') : '';
+    /* Todos juntos, sin repetir: el mismo tanqueo en dos archivos (una semana y el mes) va una sola vez */
+    const porId = new Map();
+    leidos.forEach(x => x.r.tanqueos.forEach(t => { if (!porId.has(t.id)) porId.set(t.id, t); }));
+    const todos = Array.from(porId.values()), enDos = leidos.reduce((s, x) => s + x.r.tanqueos.length, 0) - todos.length;
+    if (!todos.length) {
+      caja.innerHTML = noCsv + (csv.length ? aviso('warn', 'warn', '<b>No se encontraron tanqueos' + (csv.length === 1 ? ' en el archivo' : ' en los archivos') +
+        '.</b> ¿Es el informe «Detalle Tanqueo A Tanqueo» de Fleet Control?') : '');
       return;
     }
-    const ya = new Set(Tanqueos.lista().map(t => t.id)), nuevos = r.tanqueos.filter(t => !ya.has(t.id));
-    const suma = r.tanqueos.reduce((s, t) => s + t.valor, 0), res = Tanqueos.resumen(r.tanqueos), fechas = r.tanqueos.map(t => t.fecha).sort();
-    const placas = Array.from(new Set(r.tanqueos.map(t => t.placa))), sinU = placas.filter(p => !Tanqueos.unidadDe(p));
+    const ya = new Set(Tanqueos.lista().map(t => t.id)), nuevos = todos.filter(t => !ya.has(t.id));
+    const suma = todos.reduce((s, t) => s + t.valor, 0), res = Tanqueos.resumen(todos), fechas = todos.map(t => t.fecha).sort();
+    const placas = Array.from(new Set(todos.map(t => t.placa))), sinU = placas.filter(p => !Tanqueos.unidadDe(p));
+    const iguales = leidos.reduce((s, x) => s + x.r.iguales, 0), malas = leidos.filter(x => x.r.malas.length);
     const dato = (l, v, s) => '<div class="oc-dato"><div class="l">' + esc(l) + '</div><div class="v">' + esc(v) + '</div>' + (s ? '<div class="m">' + esc(s) + '</div>' : '') + '</div>';
-    caja.innerHTML = '<div class="oc-datos mt12">' +
-        dato('Fechas', Fecha.corta(fechas[0]) + ' a ' + Fecha.corta(fechas[fechas.length - 1]), r.tanqueos.length + ' tanqueos · ' + placas.length + (placas.length === 1 ? ' vehículo' : ' vehículos')) +
+    /* Cada archivo con su total: así se ve si alguno llegó incompleto */
+    const sumaDe = x => x.r.tanqueos.reduce((a, t) => a + t.valor, 0);
+    const cuadra = x => (x.r.total == null || !x.r.tanqueos.length ? null : Math.abs(sumaDe(x) - x.r.total) < 1);
+    const noCuadran = leidos.filter(x => cuadra(x) === false);
+    const porArchivo = leidos.length > 1 ? '<div class="oc-sec">Archivos</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Archivo</th><th>Fechas</th>' +
+        '<th class="num">Tanqueos</th><th class="num">Valor</th><th>Total</th></tr></thead><tbody>' +
+      leidos.map(x => {
+        const fs = x.r.tanqueos.map(t => t.fecha).sort(), c = cuadra(x);
+        return '<tr><td class="trunc" style="max-width:220px" title="' + attr(x.f.name) + '">' + esc(x.f.name) + '</td>' +
+          '<td class="nowrap">' + (fs.length ? esc(Fecha.corta(fs[0]) + ' a ' + Fecha.corta(fs[fs.length - 1])) : '—') + '</td>' +
+          '<td class="num">' + x.r.tanqueos.length + '</td><td class="num nowrap">' + esc(Money.format(sumaDe(x))) + '</td><td class="nowrap">' +
+          (!fs.length ? '<span class="tx-warn">Sin tanqueos</span>' : c === null ? '—' : c ? '<span class="tx-ok">Cuadra</span>' : '<span class="tx-warn">No cuadra</span>') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '';
+    caja.innerHTML = noCsv + '<div class="oc-datos mt12">' +
+        dato('Fechas', Fecha.corta(fechas[0]) + ' a ' + Fecha.corta(fechas[fechas.length - 1]), todos.length + ' tanqueos · ' + placas.length + (placas.length === 1 ? ' vehículo' : ' vehículos')) +
         dato('Galones', Tanqueos.galTxt(res.galones), res.urea ? 'Y ' + Tanqueos.galTxt(res.urea) + ' de urea' : '') +
-        dato('Valor', Money.format(suma), '') + '</div>' +
-      (r.total == null ? '' : Math.abs(suma - r.total) < 1 ? aviso('ok', 'check', 'La suma de los tanqueos cuadra con el total que trae el archivo.')
-        : aviso('warn', 'warn', '<b>La suma de los tanqueos (' + esc(Money.format(suma)) + ') no cuadra con el total del archivo (' + esc(Money.format(r.total)) + ').</b> Revise que el archivo esté completo.')) +
-      (nuevos.length < r.tanqueos.length ? aviso('info', 'info', (r.tanqueos.length - nuevos.length) + ' de estos tanqueos ya estaban cargados y no se repiten. ' +
+        dato('Valor', Money.format(suma), leidos.length > 1 ? leidos.length + ' archivos' : '') + '</div>' +
+      (noCuadran.length ? aviso('warn', 'warn', '<b>' + (noCuadran.length === 1 ? 'Un archivo no cuadra' : noCuadran.length + ' archivos no cuadran') + ' con el total que trae' +
+          (noCuadran.length === 1 ? '' : 'n') + ':</b> ' + noCuadran.map(x => esc(x.f.name)).join(', ') + '. Revise que esté' + (noCuadran.length === 1 ? '' : 'n') + ' completo' +
+          (noCuadran.length === 1 ? '' : 's') + '.')
+        : leidos.some(x => cuadra(x)) ? aviso('ok', 'check', leidos.length === 1 ? 'La suma de los tanqueos cuadra con el total que trae el archivo.'
+          : 'Cada archivo cuadra con el total que trae.') : '') +
+      porArchivo +
+      (enDos ? aviso('info', 'info', enDos + (enDos === 1 ? ' tanqueo viene en más de un archivo (por ejemplo, una semana y el mes) y va una sola vez.'
+        : ' tanqueos vienen en más de un archivo (por ejemplo, una semana y el mes) y van una sola vez.')) : '') +
+      (nuevos.length < todos.length ? aviso('info', 'info', (todos.length - nuevos.length) + ' de estos tanqueos ya estaban cargados y no se repiten. ' +
         (nuevos.length ? 'Se guardan los ' + nuevos.length + ' nuevos.' : 'No hay nada nuevo.')) : '') +
-      (r.iguales ? aviso('info', 'info', 'El archivo trae ' + r.iguales + (r.iguales === 1 ? ' tanqueo igual a otro' : ' tanqueos iguales a otros') +
+      (iguales ? aviso('info', 'info', (leidos.length === 1 ? 'El archivo trae ' : 'Los archivos traen ') + iguales + (iguales === 1 ? ' tanqueo igual a otro' : ' tanqueos iguales a otros') +
         ' el mismo día (misma placa, estación, galones y valor). Se guardan todos, como vienen.') : '') +
-      (r.malas.length ? aviso('warn', 'warn', r.malas.length + (r.malas.length === 1 ? ' fila no se entendió' : ' filas no se entendieron') + ' (fila ' +
-        r.malas.slice(0, 8).join(', ') + (r.malas.length > 8 ? '…' : '') + ') y no se cargan.') : '') +
+      (malas.length ? aviso('warn', 'warn', malas.map(x => (leidos.length > 1 ? esc(x.f.name) + ': ' : '') + x.r.malas.length +
+        (x.r.malas.length === 1 ? ' fila no se entendió' : ' filas no se entendieron') + ' (fila ' + x.r.malas.slice(0, 8).join(', ') + (x.r.malas.length > 8 ? '…' : '') + ')').join(' · ') +
+        '. No se cargan.') : '') +
       (sinU.length ? '<div class="oc-sec">Placas que no están en Flota</div>' + sinU.map(p => '<div class="field"><label class="mono">' + esc(p) + '</label>' +
         '<select class="inp" data-placa="' + attr(p) + '"><option value="">Sin vehículo (cuenta como gasto general)</option>' + Opc.unidades('') + '</select></div>').join('') +
         '<div class="hint">Lo que asigne aquí queda guardado para las próximas cargas.</div>' : '');
