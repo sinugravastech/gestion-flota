@@ -317,7 +317,8 @@ html:has(#modals > .modal-bd){overflow:hidden;padding-right:var(--barra,0px)}
 .oc-op .t>.n{font-size:11px;color:var(--warn-700);white-space:normal}
 .oc-op .v{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text-2)}
 .oc-vacia{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:12.5px;color:var(--text-3)}
-.chip[data-act]{cursor:pointer}
+.chip[data-act],.alert[data-act]{cursor:pointer}
+.alert[data-act]:hover{filter:brightness(.98)}
 .chip[data-act]:hover{border-color:var(--border-strong);color:var(--text)}
 @media (max-width:560px){ .oc-datos{grid-template-columns:minmax(0,1fr)} .oc-tot{grid-template-columns:auto 110px;gap:5px 12px}
   .oc-op{flex-wrap:wrap;row-gap:4px} .oc-op .t{flex:1 1 calc(100% - 30px)} }
@@ -763,6 +764,10 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 html[data-theme="dark"] .rk-t i,html[data-theme="dark"] .col i{background:var(--brand-400)}
 /* Cambios de aceite: la barra lleva el color del estado, con su leyenda */
 .rk-t i.k-warn{background:var(--warn-500)}
+/* El promedio de la flota, como una línea punteada sobre las barras */
+.rk-t.con-prom{position:relative}
+.rk-prom{position:absolute;top:-3px;bottom:-3px;border-left:1.5px dashed var(--text-3);pointer-events:none}
+.rk-ley{display:inline-block;width:12px;border-top:1.5px dashed var(--text-3);vertical-align:middle;margin-right:6px}
 .rk-t i.k-bad{background:var(--dang-500)}
 .ac-ley{display:flex;gap:14px;padding:8px 16px 12px;font-size:11px;color:var(--text-3)}
 .ac-ley span{display:inline-flex;align-items:center;gap:5px}
@@ -2711,9 +2716,10 @@ const Config = {
      revisar (ver KmRaro). Se cambia en Configuración. */
   kmDia: 1000,
   /* El rendimiento normal del combustible, en km por galón: el tanqueo que
-     rinda menos o más es raro y no entra en los promedios (ver Tanqueos). Se
-     cambia en Configuración. */
-  rendimiento: { min: 3, max: 12 },
+     rinda menos o más es raro y no entra en los promedios (ver Tanqueos). Hasta
+     18, porque la SNW865, una volqueta más pequeña, rinde de 12 a 14 (Juan,
+     01/11/2026). Se cambia en Configuración. */
+  rendimiento: { min: 3, max: 18 },
   /* Las placas de Distracom que no casan con una unidad, como Juan las asignó */
   placasDistracom: {},
   req: { carga: ['soat', 'tecno', 'tarjeta', 'vin', 'poliza'], maquinaria: ['tarjeta'], remolque: ['registro'], canoa: ['patente'] },
@@ -4992,7 +4998,63 @@ const Tanqueos = {
   mesTxt: m => Fecha.mes(Fecha.parse(m + '-01')),
   prodTxt: t => (/UREA/i.test(t.producto) ? 'Urea' : /DIESEL|ACPM/i.test(t.producto) ? 'Diésel' : t.producto.charAt(0) + t.producto.slice(1).toLowerCase()),
   /* La placa de un tanqueo, con su unidad si la tiene */
-  placaTxt(t) { const u = t.unidad && Q.unidad(t.unidad); return u ? UI.placaTxt(u) : t.placa; }
+  placaTxt(t) { const u = t.unidad && Q.unidad(t.unidad); return u ? UI.placaTxt(u) : t.placa; },
+  /* Lo que conviene revisar con Distracom o con el conductor (Juan, 01/11/2026):
+     - Posible doble cobro: la misma placa, el mismo día, la misma estación y el
+       mismo producto, con 0 km desde la compra anterior. Si las dos compras son
+       idénticas es muy probable; si no, puede ser un segundo tanque.
+     - Kilometraje mal digitado: en 0, o un número que se sale de los de antes y
+       después (baja y vuelve, o sube y vuelve). No es un cobro, pero daña el
+       rendimiento.
+     - Rendimiento fuera de lo normal una y otra vez en el mismo vehículo, en
+       los últimos 90 días de datos.
+     Lo que Juan marca como revisado (t.revisado) deja de salir. */
+  irregularidades() {
+    const l = this.lista(), clave = t => t.unidad || 'p:' + t.placa, dobles = [], km = [], rinde = [];
+    const grupos = {};
+    l.forEach(t => { const k = [clave(t), t.fecha, t.estacion, t.producto].join('|'); (grupos[k] = grupos[k] || []).push(t); });
+    Object.keys(grupos).forEach(k => {
+      const g = grupos[k].slice().sort((a, b) => (a.km || 0) - (b.km || 0) || (b.rec || 0) - (a.rec || 0));
+      for (let i = 1; i < g.length; i++) {
+        const a = g[i - 1], b = g[i];
+        if (b.rec === 0 || (a.km != null && a.km === b.km)) {
+          dobles.push({ a, b, igual: Math.abs(a.galones - b.galones) < 0.005 && Math.abs(a.valor - b.valor) < 1, revisado: Boolean(a.revisado && b.revisado) });
+        }
+      }
+    });
+    const porV = {};
+    l.forEach(t => { (porV[clave(t)] = porV[clave(t)] || []).push(t); });
+    const ultimo = l.reduce((m, t) => (t.fecha > m ? t.fecha : m), ''), desde = ultimo ? Fecha.iso(new Date(Fecha.parse(ultimo).getTime() - 90 * 864e5)) : '';
+    Object.keys(porV).forEach(k => {
+      const v = porV[k].slice().sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.km || 0) - (b.km || 0));
+      v.filter(t => t.km === 0).forEach(t => km.push({ t, que: 'Quedó en 0' }));
+      /* Cada kilometraje tiene que quedar entre el de antes y el de después; si
+         esos dos cuadran entre sí y este se sale, el equivocado es este (y no
+         sus vecinos) */
+      const c = v.filter(t => t.km), malo = new Set();
+      for (let i = 1; i < c.length - 1; i++) {
+        const a = c[i - 1], t = c[i], d = c[i + 1];
+        if (d.km >= a.km && (t.km > d.km || t.km < a.km)) {
+          malo.add(i);
+          km.push({ t, antes: a, que: t.km > d.km ? 'Más alto que el de antes y el de después' : 'Más bajo que el de antes y el de después' });
+        }
+      }
+      /* Si baja y sigue así, no es un dedazo: puede que hayan cambiado el odómetro */
+      for (let i = 1; i < c.length; i++) {
+        if (c[i].km < c[i - 1].km && !malo.has(i) && !malo.has(i - 1)) {
+          km.push({ t: c[i], antes: c[i - 1], que: i === c.length - 1 ? 'Más bajo que el anterior' : 'Bajó y siguió así: ¿cambiaron el odómetro?' });
+        }
+      }
+      const f = v.filter(t => t.fecha >= desde && this.rinde(t) != null), r = f.filter(t => this.raro(t));
+      if (r.length >= 3 && r.length / f.length >= 0.2) rinde.push({ t: v[0], raros: r.length, n: f.length });
+    });
+    dobles.sort((x, y) => y.b.fecha.localeCompare(x.b.fecha));
+    km.sort((x, y) => y.t.fecha.localeCompare(x.t.fecha));
+    rinde.sort((x, y) => y.raros - x.raros);
+    const pend = dobles.filter(x => !x.revisado);
+    return { dobles, km, rinde, enJuego: pend.reduce((s, x) => s + x.b.valor, 0),
+      pendientes: pend.length + km.filter(x => !x.t.revisado).length + rinde.length };
+  }
 };
 
 /* Cambios de aceite, con la regla del ingeniero: el próximo cambio es el
@@ -5940,7 +6002,32 @@ const Vistas = {
           '<span class="rk-l">' + esc(UI.placaTxt(x.u)) + '</span><span class="rk-t"><i style="width:' + Math.round(x.r.galones / topC[0].r.galones * 100) + '%"></i></span>' +
           '<span class="rk-v">' + esc(Tanqueos.galTxt(x.r.galones)) + '</span></div>').join('') + '</div>'
       : UI.empty('fuel', 'Sin tanqueos en este período', 'Se llena con el informe de Distracom, en Combustible.'),
-      { flush: true, sub: 'Galones de Distracom · ' + esc(Tablero.PERIODOS[p].toLowerCase()), act: '<span class="link fs12" data-ir="combustible">Ver todo</span>' });
+      { flush: true, sub: 'Galones de Distracom · ' + esc(p === 'mes' ? Fecha.mes(HOY).toLowerCase() : p === 'anio' ? String(HOY.getFullYear()) : 'este trimestre'),
+        act: '<span class="link fs12" data-ir="combustible">Ver todo</span>' });
+
+    /* El rendimiento de cada vehículo que sale en los tanqueos, de mayor a
+       menor, con el promedio de la flota (Juan, 01/11/2026: todos, mientras la
+       flota sea pequeña). En amarillo, los que rinden menos que el promedio;
+       los que no tienen cómo medirse en el período, al final. */
+    const perTxt = p === 'mes' ? Fecha.mes(HOY).toLowerCase() : p === 'anio' ? String(HOY.getFullYear()) : 'este trimestre';
+    const delPer = Tanqueos.lista().filter(t => t.fecha >= per.desde && t.fecha <= per.hasta), flota = Tanqueos.resumen(delPer);
+    const vehs = Array.from(new Set(Tanqueos.lista().map(t => t.unidad || 'p:' + t.placa))).map(k => {
+      const l = delPer.filter(t => (t.unidad || 'p:' + t.placa) === k), t0 = Tanqueos.lista().find(t => (t.unidad || 'p:' + t.placa) === k);
+      return { u: t0.unidad && Q.unidad(t0.unidad), placa: t0.placa, r: Tanqueos.resumen(l).rinde };
+    }).sort((a, b) => (b.r == null ? -1 : b.r) - (a.r == null ? -1 : a.r));
+    const topeR = Math.max.apply(null, vehs.map(v => v.r || 0).concat([1]));
+    const prom = flota.rinde, enProm = prom ? Math.round(prom / topeR * 100) : null;
+    const rendimiento = UI.card('Rendimiento por vehículo', vehs.length ? '<div class="rk-lista">' + vehs.map(v => {
+        const nom = v.u ? UI.placaTxt(v.u) : v.placa, bajo = v.r != null && prom && v.r < prom;
+        return '<div class="rk"' + (v.u ? ' data-act="irUnidad" data-u="' + v.u.id + '" data-tab="comb"' : '') + ' title="' + attr(nom + ': ' + Tanqueos.rindeTxt(v.r)) + '">' +
+          '<span class="rk-l">' + esc(nom) + '</span><span class="rk-t con-prom">' +
+            (v.r != null ? '<i' + (bajo ? ' class="k-warn"' : '') + ' style="width:' + Math.max(2, Math.round(v.r / topeR * 100)) + '%"></i>' : '') +
+            (enProm != null ? '<b class="rk-prom" style="left:' + enProm + '%"></b>' : '') + '</span>' +
+          '<span class="rk-v' + (bajo ? ' tx-warn' : v.r == null ? ' txt-3' : '') + '">' + (v.r != null ? esc(v.r.toLocaleString('es-CO', { maximumFractionDigits: 1 })) : 'Sin datos') + '</span></div>';
+      }).join('') + '</div>'
+      : UI.empty('fuel', 'Sin tanqueos todavía', 'Se llena con el informe de Distracom, en Combustible.'),
+      { flush: true, sub: 'Km por galón · ' + esc(perTxt), act: '<span class="link fs12" data-ir="combustible">Ver todo</span>',
+        pie: prom ? '<span><span class="rk-ley"></span>Promedio de la flota: ' + esc(Tanqueos.rindeTxt(prom)) + ' · en amarillo, los que rinden menos</span>' : '' });
 
     /* Lo que llega cuando se registren las llantas y el GPS */
     const pronto = (titulo, sub, nota, ir, anchos) => UI.card(titulo, '<div class="rk-lista">' + anchos.map(w =>
@@ -5981,8 +6068,8 @@ const Vistas = {
           cum('Revisión de comparendos de ' + mesTxt, compRev, compU.length, 'comparendos') +
           cum('Dotación revisada en ' + mesTxt, dotOk, conDot.length, 'flota'), { flush: true, sub: Fecha.mes() }) +
       '</div>' +
-      '<div class="grid g3">' +
-        consumo +
+      '<div class="grid g2 mb16">' + consumo + rendimiento + '</div>' +
+      '<div class="grid g2">' +
         pronto('Mayor gasto en llantas', 'Por vehículo', 'Cuando se registren las llantas.', 'pronto/llantas', [80, 57, 41, 26]) +
         pronto('Más tiempo en ralentí', 'Horas encendido y quieto', 'Cuando se conecte el GPS.', 'pronto/llantas', [84, 61, 39, 22]) +
       '</div>';
@@ -7559,7 +7646,13 @@ Object.assign(Vistas, {
       if (t.fecha < a.desde) a.desde = t.fecha;
       if (t.fecha > a.hasta) a.hasta = t.fecha;
     });
-    const html = head +
+    /* El apartado de alertas: se abre en una ventana (ver Tanqueos.irregularidades) */
+    const irr = Tanqueos.irregularidades();
+    const alertas = '<div class="alert ' + (irr.pendientes ? 'a-warn' : 'a-ok') + ' mb16" data-act="verIrregularidades" role="button" tabindex="0">' +
+      Icon(irr.pendientes ? 'warn' : 'check') + '<div><b>Alertas por doble cobro y cosas extrañas' + (irr.pendientes ? ': ' + irr.pendientes : '') + '</b>' +
+      (irr.enJuego ? ' · posibles dobles cobros por ' + esc(Money.format(irr.enJuego)) : irr.pendientes ? '' : ' · nada pendiente') +
+      ' <span class="link">Ver</span></div></div>';
+    const html = head + alertas +
       (sinU.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (sinU.length === 1 ? 'Una placa de Distracom no tiene vehículo' :
         sinU.length + ' placas de Distracom no tienen vehículo') + ':</b> ' + sinU.map(p => '<span class="mono">' + esc(p) + '</span> <span class="link" data-act="asignarPlaca" data-p="' +
         attr(p) + '">Asignar</span>').join(' · ') + '. Mientras tanto, su gasto cuenta como general.</div></div>' : '') +
@@ -8137,6 +8230,50 @@ Object.assign(Ventanas, {
     m._nuevos = nuevos;
     g.disabled = !nuevos.length;
     g.innerHTML = Icon('save', '', 14) + (nuevos.length ? 'Guardar ' + nuevos.length + (nuevos.length === 1 ? ' tanqueo' : ' tanqueos') : 'Nada nuevo');
+  },
+
+  /* Alertas por doble cobro y cosas extrañas del combustible (ver
+     Tanqueos.irregularidades), en una ventana sobre el área. Con «todas»,
+     también las que ya se revisaron. */
+  irregularidades(todas) {
+    const x = Tanqueos.irregularidades(), veh = t => esc(Tanqueos.placaTxt(t)), dia = t => esc(Fecha.corta(t.fecha));
+    const dobles = x.dobles.filter(i => todas || !i.revisado), km = x.km.filter(i => todas || !i.t.revisado);
+    const revisados = x.dobles.filter(i => i.revisado).length + x.km.filter(i => i.t.revisado).length;
+    /* Los galones exactos, con sus decimales: así se comparan con la tirilla */
+    const compra = t => esc(t.galones.toLocaleString('es-CO', { maximumFractionDigits: 3 })) + ' gal · ' + esc(Money.format(t.valor));
+    const boton = (ids, rev) => rev ? '<span class="txt-3 fs12">Revisado</span>'
+      : '<button class="btn btn-sm" data-act="tanqueoRevisado" data-ids="' + attr(ids.join(',')) + '">' + Icon('check', '', 12) + 'Revisado</button>';
+    const sec = (t, sub, cuerpo) => '<div class="oc-sec">' + esc(t) + '</div><div class="hint mb8">' + sub + '</div>' + cuerpo;
+    const vacio = t => '<div class="txt-3" style="font-size:13px">' + t + '</div>';
+    Modal.abrir({
+      titulo: 'Alertas por doble cobro y cosas extrañas', sub: 'Lo que conviene revisar con Distracom o con el conductor', ancho: 'wide', sinFoco: true,
+      cuerpo:
+        sec('Posibles dobles cobros', 'La misma placa, el mismo día, la misma estación y el mismo producto, con 0 km entre una compra y la otra.' +
+            (x.enJuego ? ' En juego: <b>' + esc(Money.format(x.enJuego)) + '</b>.' : ''),
+          dobles.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Vehículo</th><th>Qué</th><th>Las dos compras</th><th></th><th></th></tr></thead><tbody>' +
+            dobles.map(i => '<tr><td class="nowrap">' + dia(i.b) + '</td><td class="nowrap mono">' + veh(i.b) + '</td>' +
+              '<td>' + esc(Tanqueos.prodTxt(i.b)) + '<div class="dias">' + esc(i.b.estacion.replace(/^DISTRACOM\s+/i, '')) + '</div></td>' +
+              '<td class="nowrap">' + compra(i.a) + '<br>' + compra(i.b) + '</td>' +
+              '<td>' + (i.igual ? UI.pill('warn', 'Muy probable') : UI.pill('nr', '¿Dos tanques?')) + '</td>' +
+              '<td class="tr">' + boton([i.a.id, i.b.id], i.revisado) + '</td></tr>').join('') + '</tbody></table></div>'
+            : vacio('Ninguno.')) +
+        sec('Kilometraje mal digitado', 'No es un cobro, pero hace que el rendimiento salga raro.',
+          km.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Vehículo</th><th>Escribieron</th><th>El anterior</th><th>Qué pasa</th><th></th></tr></thead><tbody>' +
+            km.map(i => '<tr><td class="nowrap">' + dia(i.t) + '</td><td class="nowrap mono">' + veh(i.t) + '</td>' +
+              '<td class="num nowrap">' + esc(Math.round(i.t.km).toLocaleString('es-CO')) + ' km</td>' +
+              '<td class="num nowrap">' + (i.antes ? esc(Math.round(i.antes.km).toLocaleString('es-CO')) + ' km<div class="dias">' + dia(i.antes) + '</div>' : '—') + '</td>' +
+              '<td>' + esc(i.que) + '</td><td class="tr">' + boton([i.t.id], i.t.revisado) + '</td></tr>').join('') + '</tbody></table></div>'
+            : vacio('Nada.')) +
+        sec('Rendimiento fuera de lo normal', 'Vehículos con muchos tanqueos que rinden menos de ' + esc(Config.rendimiento.min) + ' o más de ' + esc(Config.rendimiento.max) +
+            ' km/gal en los últimos 90 días. Puede que tanqueen en otra parte o que no llenen el tanque.',
+          x.rinde.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th><th class="num">Tanqueos raros</th></tr></thead><tbody>' +
+            x.rinde.map(i => '<tr><td class="nowrap mono">' + veh(i.t) + '</td><td class="num">' + i.raros + ' de ' + i.n + '</td></tr>').join('') + '</tbody></table></div>'
+            : vacio('Nada.')) +
+        '<div class="alert a-info" style="margin-top:14px">' + Icon('info') + '<div><b>Cómo revisarlo:</b> en Fleet Control, compare la hora y el tiquete de cada compra; ' +
+          'en «Cartera», si se cobraron las dos. Pregúntele al conductor cuántas veces tanqueó y si el camión tiene dos tanques. Si fue un error, pídale a Distracom las tirillas y una nota crédito.</div></div>' +
+        (revisados && !todas ? '<div class="mt12 fs12"><span class="link" data-act="verIrregularidades" data-todas="1">Ver también los ya revisados (' + revisados + ')</span></div>' : ''),
+      pie: '<button class="btn" data-act="cerrarModal">Cerrar</button>'
+    });
   },
 
   oc(o) {
@@ -8855,6 +8992,20 @@ Object.assign(Acciones, {
       ' al ' + esc(Fecha.corta(fechas[fechas.length - 1])) + '.');
     UIState.combMes = fechas[fechas.length - 1].slice(0, 7);
     if (Router.actual().vista === 'combustible') Router.pintar(true); else Router.ir('combustible');
+  },
+  /* Alertas por doble cobro y cosas extrañas (ver Tanqueos.irregularidades) */
+  verIrregularidades(el) {
+    Modal.cerrarTodo();
+    Ventanas.irregularidades(Boolean(el && el.dataset && el.dataset.todas));
+  },
+  /* «Revisado»: Juan ya lo miró con Distracom o con el conductor, y deja de salir */
+  tanqueoRevisado(el) {
+    const ids = (el.dataset.ids || '').split(',');
+    Tanqueos.lista().forEach(t => { if (ids.includes(t.id)) t.revisado = true; });
+    Modal.cerrarTodo();
+    Toast.show('Listo: queda como revisado.');
+    Router.pintar(true);
+    Ventanas.irregularidades(false);
   },
   /* Una placa de Distracom que no está en Flota: se asigna una vez a su unidad */
   asignarPlaca(el) {
