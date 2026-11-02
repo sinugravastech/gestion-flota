@@ -1000,20 +1000,6 @@ html[data-theme="dark"] .mx-si{color:var(--ok-500)}
 .ej-l label{display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;padding:2px 0;min-width:0}
 .ej-l label span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* Proveedores */
-.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
-.pc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--sh-1);padding:16px;
-  cursor:pointer;transition:transform var(--t),box-shadow var(--t),border-color var(--t)}
-.pc:hover{transform:translateY(-1px);box-shadow:var(--sh-2);border-color:var(--border-strong)}
-.pc-top{display:flex;gap:12px;align-items:center}
-.pc-logo{flex:0 0 auto;width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);
-  color:var(--accent);font-weight:800;font-size:14px}
-.pc-n{font-size:14px;font-weight:650}
-.pc-s{font-size:12px;color:var(--text-3)}
-.pc-stats{display:flex;gap:18px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
-.pc-stats b{display:block;font-size:17px;font-weight:700;letter-spacing:-.02em}
-.pc-stats span{font-size:11px;color:var(--text-3)}
-
 /* Barra del mes (inspecciones, comparendos) */
 .mes{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
 .mes-n{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1}
@@ -3082,6 +3068,14 @@ const Q = {
   /* Las unidades de un conductor, sin remolques: el remolque va con su camión */
   unidadesDe: id => Datos.unidades.filter(u => u.conductor === id && u.tipo !== 'remolque'),
   proveedor: id => Datos.proveedores.find(p => p.id === id) || ((Datos.archivo || {}).proveedores || []).find(p => p.id === id),
+  /* El proveedor de un mantenimiento: el de Facturación, con su nombre de hoy
+     o con el que se guardó si la lista no llega; en los de antes, el de Flota
+     (ver ProvFact) */
+  provDe(m) {
+    if (!m.provFact) return Q.proveedor(m.prov);
+    const x = ProvFact.porId(m.provFact);
+    return x ? { nombre: x.nombre, nit: x.nit, servicio: x.categoria } : { nombre: m.provNombre || '—', nit: m.provNit || '', servicio: '' };
+  },
   conComparendos: () => Datos.unidades.filter(u => Config.comparendos.includes(u.tipo)),
   /* Las unidades que dejan ver los filtros de la flota */
   flota() {
@@ -3109,8 +3103,7 @@ const Q = {
       aceite: Aceite.todas().filter(e => e.k === 'bad' || e.k === 'warn').length + KmRaro.todas().length,
       insp: Datos.unidades.filter(u => Est.insp(u).k !== 'ok').length,
       comp: this.conComparendos().filter(u => u.comp.estado === 'pend').length,
-      conductores: Datos.conductores.length,
-      proveedores: Datos.proveedores.length
+      conductores: Datos.conductores.length
     };
   }
 };
@@ -3167,7 +3160,7 @@ const Actividad = {
   diaRevision(d) { const f = Fecha.iso(new Date(d.getFullYear(), d.getMonth(), 3)); return f > hoyISO ? hoyISO : f; },
   de(u) {
     const ev = [];
-    const prov = id => (Q.proveedor(id) || {}).nombre || '—';
+    const prov = m => (Q.provDe(m) || {}).nombre || '—';
     const adj = (n, id) => (n ? [{ n, id }] : []);
     /* Los cambios de conductor. Lo que quedó guardado de antes (ediciones,
        fotos, documentos) ya no se muestra. */
@@ -3175,7 +3168,7 @@ const Actividad = {
     Datos.mantenimientos.filter(m => m.unidad === u.id).forEach(m => ev.push({
       fecha: m.fecha, hora: m.hora, ts: m.ts, tipo: m.tipo,
       titulo: (m.tipo === 'preventivo' ? 'Mantenimiento preventivo: ' : 'Mantenimiento correctivo: ') + m.trabajo,
-      det: [prov(m.prov), m.lectura, Compras.valorTxt(m), m.tipo === 'correctivo' ? (m.estado === 'taller' ? 'sigue en el taller' : m.salida ? 'salió el ' + Fecha.corta(m.salida) : '') : '',
+      det: [prov(m), m.lectura, Compras.valorTxt(m), m.tipo === 'correctivo' ? (m.estado === 'taller' ? 'sigue en el taller' : m.salida ? 'salió el ' + Fecha.corta(m.salida) : '') : '',
         m.fotos ? m.fotos + ' fotos' : ''].filter(Boolean).join(' · '),
       adjuntos: adj(m.adjunto, m.adjuntoId) }));
     Datos.inspecciones.filter(i => i.unidad === u.id).forEach(i => {
@@ -3382,7 +3375,7 @@ const UI = {
   },
   /* Un mantenimiento en la línea de tiempo */
   itemMant(m, conUnidad) {
-    const p = Q.proveedor(m.prov), u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', valor = Compras.deArreglo(m).valor;
+    const p = Q.provDe(m), u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', valor = Compras.deArreglo(m).valor;
     return '<div class="tl-i" style="--c:' + (prev ? 'var(--info-500)' : 'var(--warn-500)') + '"><span class="tl-dot">' + Icon(prev ? 'tool' : 'camera', '', 10) + '</span>' +
       '<div class="tl-h">' + this.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + '<b>' + esc(m.trabajo) + '</b>' +
         (m.estado === 'taller' ? this.pill('bad', 'En taller') : '') + '</div>' +
@@ -4393,11 +4386,6 @@ const Borrar = {
     Datos.unidades.forEach(x => { if (fuera.has(x.remolque)) x.remolque = null; });
     ['mantenimientos', 'inspecciones', 'accidentes', 'ocs', 'actividad', 'lecturas'].forEach(k => { Datos[k] = (Datos[k] || []).filter(otra); });
     return Persistencia.limpiar();
-  },
-  proveedor(id) {
-    const p = Q.proveedor(id);
-    Datos.proveedores = Datos.proveedores.filter(x => x.id !== id);
-    Datos.archivo.proveedores.push(p);
   }
 };
 
@@ -4669,7 +4657,6 @@ const NAV = [
   { id: 'compras', icono: 'cart', txt: 'Órdenes de compra' },
   { sec: 'Registros' },
   { id: 'conductores', icono: 'personas', txt: 'Conductores', badge: 'conductores' },
-  { id: 'proveedores', icono: 'briefcase', txt: 'Proveedores', badge: 'proveedores' },
   { sec: 'Próximamente' },
   { id: 'pronto/llantas', icono: 'disc', txt: 'Llantas y GPS', soon: true },
   { sec: 'Sistema' },
@@ -4738,6 +4725,98 @@ const UIState = {
   unidadId: null, tab: 'info', act: 'todos',
   /* El área Catálogo: la lista escogida, lo que se busca y si se está agregando */
   catalogo: { lista: 'clases.carga', q: '', agregando: false }
+};
+
+/* Los proveedores son de Facturación (Juan, 02/11/2026; su SQL 211): Flota
+   ya no tiene área de proveedores. Para los mantenimientos se lee la lista con
+   public.facturacion_proveedores(), en vivo y sin guardar copia, como las
+   órdenes. Trae todas las fichas: en un mantenimiento nuevo solo se escogen
+   las activas, y una fusionada lleva a la que quedó (fusionado_con ya viene
+   resuelto). Cada mantenimiento guarda el id de Facturación y, por si un día
+   la lista no llega, el nombre y el NIT de ese momento (provFact, provNombre
+   y provNit, en extra). Los de antes siguen con su proveedor de Flota. Si la
+   lista no llega, los formularios ofrecen los proveedores que tenía Flota. */
+const ProvFact = {
+  lista: [],
+  /* nada · trayendo · listo · error */
+  estado: 'nada',
+  FRESCO: 300000,
+  _cuando: 0,
+  _trayendo: null,
+  traer(forzar) {
+    if (this._trayendo) return this._trayendo;
+    if (!Nube.sesion()) return Promise.resolve(false);
+    if (!forzar && this.estado !== 'nada' && this.estado !== 'trayendo' && Date.now() - this._cuando < this.FRESCO) return Promise.resolve(false);
+    if (this.estado === 'nada') this.estado = 'trayendo';
+    this._trayendo = Nube.pedir('rpc/facturacion_proveedores', { method: 'POST', publico: true, body: '{}' })
+      .then(r => {
+        const nueva = (Array.isArray(r) ? r : []).map(x => this.limpia(x)).filter(Boolean);
+        const cambio = this.estado !== 'listo' || estable(nueva) !== estable(this.lista);
+        this.lista = nueva;
+        this.estado = 'listo';
+        return cambio;
+      })
+      /* Si ya había, se sigue con esa; si no, los formularios ofrecen los de
+         antes de Flota. Si fue la sesión, se intenta otra vez la próxima vez */
+      .catch(e => {
+        this.estado = this.lista.length ? 'listo' : e && e.sesion ? 'nada' : 'error';
+        return false;
+      })
+      .finally(() => { this._cuando = Date.now(); this._trayendo = null; });
+    return this._trayendo;
+  },
+  limpia(x) {
+    if (!x || typeof x !== 'object' || !x.id || !x.nombre) return null;
+    const txt = v => (v == null ? '' : String(v));
+    return { id: txt(x.id), nombre: txt(x.nombre), nit: txt(x.nit), categoria: txt(x.categoria), activo: x.activo !== false,
+      fusionado_con: x.fusionado_con ? txt(x.fusionado_con) : null };
+  },
+  /* La ficha de un id; si se fusionó, la que quedó */
+  porId(id) {
+    if (this._mapaDe !== this.lista) { this._mapa = new Map(this.lista.map(x => [x.id, x])); this._mapaDe = this.lista; }
+    const x = this._mapa.get(id);
+    return x && x.fusionado_con ? this._mapa.get(x.fusionado_con) || x : x || null;
+  },
+  /* Las opciones de un formulario: «f:» las de Facturación activas y, si la
+     lista no llegó, «v:» los proveedores que tenía Flota */
+  opciones(sel) {
+    if (this.estado === 'listo' && this.lista.length) {
+      return this.lista.filter(x => x.activo).map(x => '<option value="f:' + attr(x.id) + '"' + (sel === 'f:' + x.id ? ' selected' : '') + '>' +
+        esc(x.nombre + (x.categoria ? ' · ' + x.categoria : '')) + '</option>').join('');
+    }
+    return Datos.proveedores.map(x => '<option value="v:' + attr(x.id) + '"' + (sel === 'v:' + x.id ? ' selected' : '') + '>' +
+      esc(x.nombre + (x.servicio ? ' · ' + x.servicio : '')) + '</option>').join('');
+  },
+  /* Lo escogido en el formulario: { id, nombre, nit, fact } o null */
+  leer(v) {
+    v = String(v || '');
+    if (v.startsWith('f:')) { const x = this.porId(v.slice(2)); return x ? { id: x.id, nombre: x.nombre, nit: x.nit, fact: true } : null; }
+    if (v.startsWith('v:')) { const x = Q.proveedor(v.slice(2)); return x ? { id: x.id, nombre: x.nombre, nit: x.nit || '', fact: false } : null; }
+    return null;
+  },
+  /* Lo que se guarda en el mantenimiento */
+  poner(r, x) {
+    r.prov = x && !x.fact ? x.id : null;
+    if (x && x.fact) { r.provFact = x.id; r.provNombre = x.nombre; r.provNit = x.nit || undefined; }
+    else { delete r.provFact; delete r.provNombre; delete r.provNit; }
+  },
+  /* Para proponer en un preventivo nuevo: el del último preventivo */
+  ultimoPreventivo() {
+    const m = Datos.mantenimientos.filter(x => x.tipo === 'preventivo' && x.provFact).sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''))[0];
+    const x = m && this.porId(m.provFact);
+    return x && x.activo ? 'f:' + x.id : '';
+  },
+  /* Cuando llega la lista con un formulario abierto, se ponen las opciones
+     nuevas, con lo escogido o con lo que se propone (propuesta(), ya con la
+     lista). Si ya escogió uno de los de antes de Flota, se deja como está. */
+  alAbrir(m, id, propuesta) {
+    this.traer().then(cambio => {
+      const s = $('#' + id, m);
+      if (!cambio || !s || !document.body.contains(m) || s.value.startsWith('v:')) return;
+      const antes = s.value || (propuesta ? propuesta() : ''), vacio = s.querySelector('option[value=""]');
+      s.innerHTML = (vacio ? vacio.outerHTML : '') + this.opciones(antes);
+    });
+  }
 };
 
 /* Lo que calcula el dashboard. El gasto son las órdenes de compra y el valor
@@ -5588,7 +5667,7 @@ const Plano = {
   },
   /* Un arreglo en la historia de una parte */
   itemTl(u, m, k, marcar) {
-    const prev = m.tipo === 'preventivo', prov = Q.proveedor(m.prov), c = this.costo(m), otras = (m.partes || []).filter(r => r.k !== k);
+    const prev = m.tipo === 'preventivo', prov = Q.provDe(m), c = this.costo(m), otras = (m.partes || []).filter(r => r.k !== k);
     return '<div class="pm-tl-i"><div class="pm-tl-f"><span>' + esc(Fecha.corta(m.fecha)) + '</span>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') +
         (m.estado === 'taller' ? UI.pill('bad', 'En taller') : '') + '<span class="v">' + (c ? esc(Money.format(c)) : '—') + '</span></div>' +
       '<div class="pm-tl-t">' + esc(m.trabajo || 'Sin descripción') + (m.componente ? '<span> · ' + esc(m.componente) + '</span>' : '') + '</div>' +
@@ -7423,7 +7502,6 @@ Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
      Y el orden de la tabla por vehículo, que al recargar vuelve al valor */
   combMes: null, combOrden: { k: 'valor', asc: false } });
 Money.compacto = n => n >= 1e6 ? '$' + (n / 1e6).toFixed(1).replace('.', ',') + ' M' : n >= 1e3 ? '$' + Math.round(n / 1e3) + ' mil' : Money.format(n);
-const iniciales2 = n => { const p = String(n).split(/\s+/).filter(Boolean); return (p.length > 1 ? p[0][0] + p[1][0] : String(n).slice(0, 2)).toUpperCase(); };
 
 /* Consecutivos de los formatos */
 const Num = {
@@ -7618,7 +7696,7 @@ const Formatos = {
         }).join('') : '<tr><td colspan="4">Este tipo de unidad no tiene documentos obligatorios.</td></tr>') + '</tbody></table>') +
       sec('Últimos mantenimientos', '<table class="dp-tbl"><thead><tr><th style="width:26mm">Fecha</th><th style="width:24mm">Tipo</th><th>Trabajo</th><th>Proveedor</th></tr></thead><tbody>' +
         (ms.length ? ms.map(m => '<tr><td>' + esc(Fecha.corta(m.fecha)) + '</td><td>' + (m.tipo === 'preventivo' ? 'Preventivo' : 'Correctivo') + '</td>' +
-          '<td>' + esc(m.trabajo) + '</td><td>' + esc((Q.proveedor(m.prov) || {}).nombre || '—') + '</td></tr>').join('')
+          '<td>' + esc(m.trabajo) + '</td><td>' + esc((Q.provDe(m) || {}).nombre || '—') + '</td></tr>').join('')
           : '<tr><td colspan="4">Sin mantenimientos registrados.</td></tr>') + '</tbody></table>') +
       this.firmas([['Responsable de flota', 'Elaboró']]) +
       this.pie('Hoja de vida ' + UI.placaTxt(u) + ' · SST-FRT-026') + '</div>';
@@ -7658,7 +7736,7 @@ Object.assign(Vistas, {
         UI.kpi({ label: 'En el taller ahora', valor: taller.length, icono: 'warn', color: 'var(--dang-500)', vcolor: taller.length ? 'var(--dang-500)' : '',
           meta: esc(taller.map(m => UI.placaTxt(Q.unidad(m.unidad))).join(' · ') || 'Ninguna'), act: 'filtroMant', v: 'taller' }) +
         UI.kpi({ label: 'Último cambio de aceite', valor: ultPrev ? esc(Fecha.hace(ultPrev.fecha)) : '—', icono: 'clock',
-          meta: ultPrev ? esc([UI.placaTxt(Q.unidad(ultPrev.unidad)), (Q.proveedor(ultPrev.prov) || {}).nombre].filter(Boolean).join(' · ')) : '' }) +
+          meta: ultPrev ? esc([UI.placaTxt(Q.unidad(ultPrev.unidad)), (Q.provDe(ultPrev) || {}).nombre].filter(Boolean).join(' · ')) : '' }) +
       '</div>' +
       '<div class="alert a-info mb16 solo-web">' + Icon('info') + '<div><b>Así queda guardado.</b> El PDF de inspección rápida que manda Navitrans por WhatsApp se sube con «Preventivo». ' +
         'En un correctivo, las fotos de cada cambio se juntan en un PDF con el historial de la visita al taller.</div></div>' +
@@ -7669,7 +7747,7 @@ Object.assign(Vistas, {
         '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div></div>' +
       '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Trabajo</th><th>Proveedor o taller</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
         lista.map(m => {
-          const u = Q.unidad(m.unidad), p = Q.proveedor(m.prov), prev = m.tipo === 'preventivo', c = Compras.deArreglo(m);
+          const u = Q.unidad(m.unidad), p = Q.provDe(m), prev = m.tipo === 'preventivo', c = Compras.deArreglo(m);
           return '<tr class="row-click" data-act="irUnidad" data-u="' + u.id + '" data-tab="mant">' +
             '<td class="nowrap">' + esc(Fecha.corta(m.fecha)) + '<div class="dias">' + esc(Fecha.hace(m.fecha)) + '</div></td>' +
             '<td>' + UI.unidadCelda(u) + '</td>' +
@@ -8011,21 +8089,6 @@ Object.assign(Vistas, {
     return { titulo: 'Conductores', sub: 'Conductores y operadores', html };
   },
 
-  /* ----------------------------------------------------------- Proveedores */
-  proveedores() {
-    const html =
-      UI.head('Proveedores', 'Quiénes son, qué servicios prestan y los PDF que traen',
-        '<button class="btn btn-primary" data-act="nuevoProveedor">' + Icon('plus', '', 14) + 'Nuevo proveedor</button>') +
-      '<div class="pgrid">' + Datos.proveedores.map(p => {
-        const ms = Datos.mantenimientos.filter(m => m.prov === p.id), os = Datos.ocs.filter(o => o.prov === p.id);
-        return '<div class="pc" data-act="verProveedor" data-p="' + p.id + '"><div class="pc-top"><div class="pc-logo">' + esc(iniciales2(p.nombre)) + '</div>' +
-          '<div class="f1"><div class="pc-n">' + esc(p.nombre) + '</div><div class="pc-s">' + esc(p.servicio) + '</div></div></div>' +
-          '<div class="pc-stats"><div><b>' + ms.length + '</b><span>servicios</span></div><div><b>' + os.length + '</b><span>órdenes</span></div>' +
-          '<div><b>' + esc(Money.compacto(os.reduce((s, o) => s + UI.totalOC(o), 0))) + '</b><span>en órdenes</span></div></div></div>';
-      }).join('') + '</div>';
-    return { titulo: 'Proveedores', sub: 'Proveedores y talleres', html };
-  },
-
   /* --------------------------------------------------------- Configuración */
   configuracion() {
     const mx = DOCS_UNIDAD;
@@ -8201,7 +8264,8 @@ Object.assign(Ventanas, {
       cuerpo:
         '<div class="row"><div class="field"><label>Unidad</label><select class="inp" id="mpU">' + Opc.unidades(o.u) + '</select></div>' +
         '<div class="field"><label>Fecha</label><input class="inp" type="date" id="mpF" value="' + hoyISO + '"></div></div>' +
-        '<div class="row"><div class="field"><label>Proveedor</label><select class="inp" id="mpP">' + Opc.proveedores('p1') + '</select></div>' +
+        '<div class="row"><div class="field"><label>Proveedor</label><select class="inp" id="mpP"><option value="">Sin proveedor</option>' +
+          ProvFact.opciones(ProvFact.ultimoPreventivo()) + '</select></div>' +
         '<div class="field"><label>Kilometraje u horómetro</label><input class="inp" id="mpL" placeholder="Ej.: 183.500 km">' +
           '<div class="hint">En un cambio de aceite, desde aquí se cuenta el próximo.</div></div></div>' +
         '<div class="row"><div class="field" style="flex:2 1 220px"><label>Trabajo</label><input class="inp" id="mpT" value="Cambio de aceite y filtros"></div>' +
@@ -8214,6 +8278,7 @@ Object.assign(Ventanas, {
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarPreventivo">' + Icon('save', '', 14) + 'Guardar</button>'
     });
     Dz.bind('mpDz', files => { m._archivo = files[0]; Dz.lista('mpDz', [files[0]], 'documento'); });
+    ProvFact.alAbrir(m, 'mpP', () => ProvFact.ultimoPreventivo());
     /* Se propone la última lectura de la unidad, mientras no se escriba otra */
     let propuesta = '';
     const proponer = () => {
@@ -8305,7 +8370,7 @@ Object.assign(Ventanas, {
           '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" id="mcT" rows="2" placeholder="El arreglo: qué se cambió o se reparó"></textarea></div>' +
           '<div class="row"><div class="field"><label>Entró al taller</label><input class="inp" type="date" id="mcE" value="' + hoyISO + '"></div>' +
             '<div class="field" id="mcLC"><label>Kilometraje</label><input class="inp" id="mcL"></div></div>' +
-          '<div class="row"><div class="field"><label>Taller o proveedor</label><select class="inp" id="mcP"><option value="">Sin taller registrado</option>' + Opc.proveedores('') + '</select></div>' +
+          '<div class="row"><div class="field"><label>Taller o proveedor</label><select class="inp" id="mcP"><option value="">Sin taller registrado</option>' + ProvFact.opciones('') + '</select></div>' +
             '<div class="field"><label>Valor</label><input class="inp" id="mcV" inputmode="numeric" placeholder="Ej.: 2.160.000"></div></div>' +
           '<div class="field"><label>Órdenes de Facturación <span class="txt-3">(si tiene)</span></label><div class="oc-lista" id="mcO"></div>' +
             '<div class="hint">Márquela si el arreglo tiene orden. El valor de arriba cuenta hasta que la orden pase a contabilidad; desde ahí cuenta la orden.</div></div>' +
@@ -8323,6 +8388,7 @@ Object.assign(Ventanas, {
     });
     m._fotos = [];
     m._estado = 'cerrado';
+    ProvFact.alAbrir(m, 'mcP');
     /* Desde una novedad: su parte, su pregunta como componente y lo que reportó el conductor */
     const nov = o.nov ? Novedades.de(u0).find(n => n.i === o.nov) : null;
     PlanoForm.poner(m, u0, { partes: [o.p || (nov && nov.parte)].filter(Boolean), llantas: o.pos ? [o.pos] : [], novs: nov ? [nov] : [] });
@@ -8745,46 +8811,6 @@ Object.assign(Ventanas, {
     });
     const s = $('#ctK', m), g = $('[data-act="guardarCategoria"]', m);
     s.addEventListener('change', () => { g.disabled = s.value === (c.cat || ''); });
-  },
-
-  proveedor(p) {
-    const ms = Datos.mantenimientos.filter(m => m.prov === p.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
-    const os = Datos.ocs.filter(o => o.prov === p.id);
-    const pdfs = ms.filter(m => m.adjunto).map(m => ({ nombre: m.adjunto, id: m.adjuntoId, cat: m.tipo === 'preventivo' ? 'Inspección rápida' : 'Correctivo', fecha: m.fecha }))
-      .concat(p.pdfs || []);
-    const m = Modal.abrir({
-      titulo: p.nombre, sub: esc(p.servicio), ancho: 'xwide', sinFoco: true,
-      cuerpo: '<div class="grid g23 mb16">' +
-          UI.card('Datos', UI.dl([['NIT', p.nit || 'Por completar'], ['Servicio', p.servicio], ['Contacto', p.contacto || 'Por completar'],
-            ['Servicios registrados', String(ms.length)], ['Órdenes de compra', os.length + ' · ' + Money.format(os.reduce((s, o) => s + UI.totalOC(o), 0))]])) +
-          UI.card('PDF de sus servicios', (pdfs.length ? '<div class="docgrid mb12">' + pdfs.map(d => '<div class="doc" data-act="verArchivo" data-nombre="' + attr(d.nombre) + '"' + (d.id ? ' data-id="' + attr(d.id) + '"' : '') + '>' +
-              '<div class="doc-th">' + Icon('pdf', '', 24) + '<span class="dt-ext">PDF</span></div><div class="doc-i"><div class="dn" title="' + attr(d.nombre) + '">' + esc(d.nombre) + '</div>' +
-              '<div class="dm">' + esc(d.cat) + ' · ' + esc(Fecha.corta(d.fecha)) + '</div></div></div>').join('') + '</div>' : '') +
-            Dz.html('pvDz', 'Subir un PDF de servicio', 'Arrástrelo aquí o haga clic para buscarlo', 'application/pdf,image/*', false), { sub: pdfs.length + ' archivo(s)' }) +
-        '</div>' +
-        UI.card('Órdenes de compra', os.length ? UI.tablaOC(os, true) : UI.empty('cart', 'Sin órdenes de compra', ''), { flush: true }),
-      pie: '<button class="btn btn-ghost t-dang mf-left" data-act="eliminarProveedor" data-p="' + p.id + '">' + Icon('trash', '', 14) + 'Eliminar</button>' +
-        '<button class="btn" data-act="cerrarModal">Cerrar</button>'
-    });
-    Dz.bind('pvDz', async files => {
-      Dz.lista('pvDz', [files[0]], 'documento');
-      const a = await Archivos.preparar(files[0]);
-      (p.pdfs = p.pdfs || []).push({ nombre: a.nombre, id: a.id, cat: 'Servicio', fecha: hoyISO });
-      Modal.cerrar(m);
-      Ventanas.proveedor(p);
-      Toast.show('PDF guardado en <b>' + esc(p.nombre) + '</b>.<br>' + esc(Archivos.resumen(a)));
-    });
-  },
-
-  nuevoProveedor() {
-    Modal.abrir({
-      titulo: 'Nuevo proveedor', sub: 'Taller, repuestos, lubricantes u otro servicio',
-      cuerpo: '<div class="field"><label>Nombre</label><input class="inp" id="npN"></div>' +
-        '<div class="row"><div class="field"><label>NIT</label><input class="inp" id="npT"></div>' +
-        '<div class="field"><label>Contacto</label><input class="inp" id="npC"></div></div>' +
-        '<div class="field"><label>Qué servicio presta</label><input class="inp" id="npS" placeholder="Ej.: Taller mecánico diésel"></div>',
-      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarProveedor">' + Icon('save', '', 14) + 'Guardar</button>'
-    });
   }
 });
 
@@ -8793,7 +8819,7 @@ const Leer = {
   correctivo(m) {
     const u = PlanoForm.u(m), taller = m._estado === 'taller';
     return {
-      numero: Num.mc(), unidad: u, prov: Q.proveedor($('#mcP', m).value),
+      numero: Num.mc(), unidad: u, prov: ProvFact.leer($('#mcP', m).value),
       entrada: $('#mcE', m).value || hoyISO, salida: taller ? '' : $('#mcS', m).value || $('#mcE', m).value || hoyISO,
       trabajo: $('#mcT', m).value.trim(), fotos: m._fotos.slice(), valor: Leer.pesos($('#mcV', m).value), ordenes: Compras.leer($('#mcO', m)),
       componente: $('#mcC', m).value.trim(), falla: $('#mcF', m).value.trim(), lectura: Aceite.aplica(u) ? $('#mcL', m).value.trim() : '',
@@ -9060,10 +9086,11 @@ Object.assign(Acciones, {
     const fecha = $('#mpF', m).value || hoyISO, trabajo = $('#mpT', m).value.trim() || 'Cambio de aceite', lectura = $('#mpL', m).value.trim();
     const partes = PlanoForm.escogidas(m);
     const r = {
-      id: 'mt' + Date.now(), unidad: u.id, tipo: 'preventivo', fecha, prov: $('#mpP', m).value, trabajo, lectura, valor: Leer.pesos($('#mpV', m).value) || undefined,
+      id: 'mt' + Date.now(), unidad: u.id, tipo: 'preventivo', fecha, trabajo, lectura, valor: Leer.pesos($('#mpV', m).value) || undefined,
       adjunto: a ? a.nombre : 'Inspección rápida ' + u.placa + '.pdf', adjuntoId: a ? a.id : undefined, estado: 'cerrado', hora: ahora(), ts: marca(),
       partes: partes.length ? partes : undefined
     };
+    ProvFact.poner(r, ProvFact.leer($('#mpP', m).value));
     Compras.ponerOrdenes(r, Compras.leer($('#mpO', m)));
     Datos.mantenimientos.push(r);
     /* Si fue un cambio de aceite, su kilometraje u horómetro es el nuevo punto
@@ -9174,7 +9201,7 @@ Object.assign(Acciones, {
       return;
     }
     const r = {
-      id: 'mt' + Date.now(), unidad: d.unidad.id, tipo: 'correctivo', fecha: d.entrada, salida: d.salida || undefined, prov: d.prov ? d.prov.id : null,
+      id: 'mt' + Date.now(), unidad: d.unidad.id, tipo: 'correctivo', fecha: d.entrada, salida: d.salida || undefined,
       /* De cada foto se guarda su archivo (por su id) y lo que muestra */
       trabajo: d.trabajo, fotos: d.fotos.length, fotosData: d.fotos.map(f => ({ id: f.id, txt: f.txt })), numero: d.numero, adjunto: 'Correctivo ' + d.numero + '.pdf',
       valor: d.valor || undefined, lectura: d.lectura || undefined, estado: d.salida ? 'cerrado' : 'taller', hora: ahora(), ts: marca(),
@@ -9182,6 +9209,7 @@ Object.assign(Acciones, {
       partes: d.partes.length ? d.partes : undefined, componente: d.componente || undefined, falla: d.falla || undefined,
       llantas: d.llantas.length ? d.llantas : undefined, novedades: d.novedades.length ? d.novedades : undefined
     };
+    ProvFact.poner(r, d.prov);
     Compras.ponerOrdenes(r, d.ordenes);
     Datos.mantenimientos.push(r);
     Modal.cerrar(m);
@@ -9195,7 +9223,7 @@ Object.assign(Acciones, {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     const fotos = () => r.fotosData ? r.fotosData.map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || null, txt: f.txt }))
       : Array.from({ length: r.fotos || 0 }, (_, i) => ({ src: null, txt: 'Foto ' + (i + 1) + ' de ' + r.fotos + ' (ejemplo)' }));
-    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.proveedor(r.prov), entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos: fotos(),
+    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.provDe(r), entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos: fotos(),
       partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [] };
     const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d),
       '<button class="btn mf-left" data-act="guardarPdfCorrectivo" data-m="' + r.id + '">' + Icon('save', '', 14) + 'Guardar el PDF en la unidad</button>');
@@ -9429,7 +9457,6 @@ Object.assign(Acciones, {
     Router.pintar(true);
   },
   verConductor(el) { Ventanas.conductor(Q.conductor(el.dataset.c)); },
-  verProveedor(el) { Ventanas.proveedor(Q.proveedor(el.dataset.p)); },
 
   /* ---------------------------------------------------- Eliminar de verdad */
   eliminarUnidad(el) {
@@ -9506,22 +9533,6 @@ Object.assign(Acciones, {
     Router.pintar(true);
     if (ficha) Ventanas.conductor(c);
   },
-  eliminarProveedor(el) {
-    const p = Q.proveedor(el.dataset.p);
-    Modal.abrir({
-      titulo: 'Eliminar ' + p.nombre, sub: 'Proveedor', sinFoco: true,
-      cuerpo: '<div class="alert a-warn">' + Icon('warn') + '<div><b>Deja de salir en las listas.</b> Sus mantenimientos y órdenes de compra se conservan con su nombre.</div></div>',
-      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-danger" data-act="confirmarEliminarProveedor" data-p="' + p.id + '">' +
-        Icon('trash', '', 14) + 'Eliminar</button>'
-    });
-  },
-  confirmarEliminarProveedor(el) {
-    const p = Q.proveedor(el.dataset.p);
-    Modal.cerrarTodo();
-    Borrar.proveedor(p.id);
-    Toast.show('Se eliminó a <b>' + esc(p.nombre) + '</b> de los proveedores.');
-    Router.pintar(true);
-  },
 
   async descargarCopia(el) {
     if (el.disabled) return;
@@ -9558,15 +9569,6 @@ Object.assign(Acciones, {
     await Nube.salir();
     await Cache.vaciar();
     location.reload();
-  },
-  nuevoProveedor() { Ventanas.nuevoProveedor(); },
-  guardarProveedor(el) {
-    const m = el.closest('.modal-bd'), nombre = $('#npN', m).value.trim();
-    if (!nombre) { Toast.show('Escriba el nombre del proveedor.', 'err'); return; }
-    Datos.proveedores.push({ id: 'p' + Date.now(), nombre, nit: $('#npT', m).value.trim(), contacto: $('#npC', m).value.trim(), servicio: $('#npS', m).value.trim() || 'Servicio' });
-    Modal.cerrar(m);
-    Toast.show('Proveedor <b>' + esc(nombre) + '</b> creado.');
-    Router.pintar(true);
   },
 
   cfgDoc(el) {
@@ -13606,6 +13608,11 @@ const Router = {
     window.scrollTo(0, mantener ? y : 0);
     /* Las órdenes de Facturación, en las vistas que las muestran */
     Compras.alDia(v, true);
+    /* Los proveedores de Facturación, para los formularios de mantenimiento y
+       el historial: si llegan con cambios, se pinta otra vez */
+    if (v === 'mantenimientos' || v === 'unidad') {
+      ProvFact.traer().then(cambio => { if (cambio && Router.actual().vista === v && Sincro.seguro()) Router.pintar(true); });
+    }
   }
 };
 
