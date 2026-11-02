@@ -398,12 +398,14 @@ html[data-theme="dark"] .a-info{color:var(--info-500)}
   background:var(--surface);overflow:hidden;transition:border-color var(--t-fast),box-shadow var(--t-fast)}
 .fbusca:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .fbusca > svg{flex:0 0 auto;margin:0 7px 0 10px;color:var(--text-3)}
-.fbusca input{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;font:inherit;font-size:12.5px;color:var(--text)}
-.fbusca select{flex:0 0 auto;max-width:165px;height:100%;border:0;border-left:1px solid var(--border);outline:0;background:var(--surface-2);
+.fbusca input{flex:1;min-width:0;width:0;height:100%;border:0;outline:0;background:transparent;font:inherit;font-size:12.5px;color:var(--text)}
+.fbusca select{flex:0 0 auto;max-width:205px;height:100%;border:0;border-left:1px solid var(--border);outline:0;background:var(--surface-2);
   font:inherit;font-size:12px;font-weight:600;color:var(--text-2);padding:0 8px;cursor:pointer}
 .seg-ic button{height:34px;padding:0 9px}
 .ftipos{margin-bottom:16px}
-@media(max-width:860px){.fbusca{width:100%;order:-1}.ph-actions:has(.fbusca){flex:1 1 100%;margin-left:0}}
+/* En el celular, la caja primero y a lo ancho, y las pestañas de tipos en dos
+   renglones, para que se vean todas */
+@media(max-width:860px){.fbusca{width:100%;order:-1}.ph-actions:has(.fbusca){flex:1 1 100%;margin-left:0}.ftipos{flex-wrap:wrap}}
 .search-inline{position:relative}
 .search-inline > svg{position:absolute;left:9px;top:8.5px;color:var(--text-3);pointer-events:none}
 .search-inline .inp{padding-left:30px;width:230px}
@@ -459,12 +461,15 @@ html[data-theme="dark"] .placa{background:#0e1419;color:#e6edf3;border-color:#5b
 .uc-ph{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--surface-3)}
 .uc-ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s ease}
 .uc:hover .uc-ph img{transform:scale(1.03)}
-.uc-tag{position:absolute;top:9px;left:9px;display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;
+.uc-tag{position:absolute;top:9px;left:9px;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:20px;
   background:rgba(255,255,255,.92);color:var(--ink-800);font-size:10.5px;font-weight:700;letter-spacing:.02em;
   backdrop-filter:blur(4px);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 html[data-theme="dark"] .uc-tag{background:rgba(13,19,25,.8);color:#dfe8ee}
+/* El aviso, a la misma altura y del mismo alto que la etiqueta del tipo (Juan,
+   02/11/2026): en flex no queda en un renglón de texto que lo bajaba 3 px */
+.uc-est,.uc-est > span{display:flex}
 .uc-est{position:absolute;top:9px;right:9px}
-.uc-est .pill{box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.uc-est .pill{height:22px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .uc-b{padding:12px 14px 11px;flex:1}
 .uc-l1{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .uc-anio{font-size:11.5px;color:var(--text-3);font-weight:600;font-variant-numeric:tabular-nums}
@@ -4600,7 +4605,7 @@ const Imprimir = {
 };
 
 /* ==========================================================================
-   §7  CARCASA — barra lateral, barra superior y buscador
+   §7  CARCASA — barra lateral y barra superior
    ========================================================================== */
 const NAV = [
   { sec: 'Operación' },
@@ -4609,11 +4614,11 @@ const NAV = [
   { id: 'documentos', icono: 'shield', txt: 'Documentos', badge: 'docs', alerta: true },
   { id: 'mantenimientos', icono: 'tool', txt: 'Mantenimientos', badge: 'taller', alerta: true },
   { id: 'aceite', icono: 'gota', txt: 'Cambios de aceite', badge: 'aceite', alerta: true },
+  { id: 'combustible', icono: 'fuel', txt: 'Combustible' },
   { id: 'preoperacionales', icono: 'checkSquare', txt: 'Preoperacionales' },
   { id: 'inspecciones', icono: 'clipboard', txt: 'Inspecciones', badge: 'insp', alerta: true },
   { id: 'comparendos', icono: 'ticket', txt: 'Comparendos', badge: 'comp', alerta: true },
   { id: 'compras', icono: 'cart', txt: 'Órdenes de compra' },
-  { id: 'combustible', icono: 'fuel', txt: 'Combustible' },
   { sec: 'Registros' },
   { id: 'conductores', icono: 'personas', txt: 'Conductores', badge: 'conductores' },
   { id: 'proveedores', icono: 'briefcase', txt: 'Proveedores', badge: 'proveedores' },
