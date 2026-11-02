@@ -807,7 +807,9 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 .rk-lista{padding:8px 0}
 .cols{display:flex;align-items:flex-end;gap:10px;height:168px;border-bottom:1px solid var(--border-strong);padding:20px 0 0}
 .col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
-.col i{display:block;width:100%;max-width:38px;background:var(--brand-500);border-radius:4px 4px 0 0}
+/* La barra no se achica por el número de arriba, que cabe en el relleno de
+   .cols: si no, las más altas quedaban todas del mismo alto (Juan, 02/11/2026) */
+.col i{display:block;flex-shrink:0;width:100%;max-width:38px;background:var(--brand-500);border-radius:4px 4px 0 0}
 .col span{font-size:10.5px;font-weight:650;color:var(--text-2);margin-bottom:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .cols-x{display:flex;gap:10px;padding-top:6px}
 .cols-x span{flex:1;min-width:0;text-align:center;font-size:11px;color:var(--text-3)}
@@ -827,7 +829,20 @@ html[data-theme="dark"] .rk-t i,html[data-theme="dark"] .col i{background:var(--
 html[data-theme="dark"] .col i.proy{background:transparent;border-color:var(--brand-400)}
 html[data-theme="dark"] .col i.proy b{background:var(--brand-400)}
 html[data-theme="dark"] .col-proy span,html[data-theme="dark"] .cols-x span.proy{color:var(--brand-300)}
-@media(max-width:760px){.hc-res{grid-template-columns:repeat(2,minmax(0,1fr))}.cols-c{gap:4px}.cols-c .col span{display:none}}
+/* Más alto y más angosto (Juan, 02/11/2026): el gráfico a la izquierda y las
+   cifras a la derecha; el mes más alto, más fuerte, y la línea del promedio */
+.hc{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:26px;align-items:start}
+.hc .hc-res{grid-template-columns:minmax(0,1fr);gap:18px;margin:0;padding-left:24px;border-left:1px solid var(--border)}
+.cols-c{height:250px;position:relative}
+.cols-c .col i{max-width:46px}
+.cols-c .col-max i{background:var(--brand-700)}
+.cols-c .col-max span{color:var(--text);font-weight:800}
+html[data-theme="dark"] .cols-c .col-max i{background:var(--brand-200)}
+.hc-area{position:absolute;left:0;right:0;top:20px;bottom:0;pointer-events:none}
+.hc-prom{position:absolute;left:0;right:0;border-top:1.5px dashed var(--text-3)}
+.hc-ley-prom{display:inline-block;width:14px;border-top:1.5px dashed var(--text-3);margin-right:6px;vertical-align:3px}
+@media(max-width:860px){.hc{grid-template-columns:minmax(0,1fr);gap:14px}.hc .hc-res{order:-1;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding-left:0;border-left:0}}
+@media(max-width:760px){.hc .hc-res{grid-template-columns:repeat(2,minmax(0,1fr))}.cols-c{gap:4px;height:200px}.cols-c .col span{display:none}}
 /* Cambios de aceite: la barra lleva el color del estado, con su leyenda */
 .rk-t i.k-warn{background:var(--warn-500)}
 /* El promedio de la flota, como una línea punteada sobre las barras */
@@ -6089,6 +6104,7 @@ const Vistas = {
     const completos = Object.keys(porMesC).filter(m => m < mesHoy).sort().map(m => ({ mes: m, valor: porMesC[m].valor }));
     const delAnio = completos.filter(x => x.mes.slice(0, 4) === anio), proy = Tanqueos.proyeccion(completos, mesHoy);
     const vaMes = (porMesC[mesHoy] || { valor: 0 }).valor;
+    const promMes = delAnio.length ? delAnio.reduce((s, x) => s + x.valor, 0) / delAnio.length : 0;
     let historico;
     /* En enero, sin meses del año ni tanqueos del mes, igual va la proyección
        con los meses del año anterior */
@@ -6104,31 +6120,35 @@ const Vistas = {
       const res = (l, v, d) => '<div><small>' + esc(l) + '</small><b>' + v + '</b>' + (d ? '<span>' + d + '</span>' : '') + '</div>';
       const totalAnio = delAnio.reduce((s, x) => s + x.valor, 0), va = vaMes ? 'lo que va de ' + esc(mesLargo(mesHoy).toLowerCase()) : '';
       const vaTxt = vaMes ? 'van ' + Money.compacto(vaMes) : 'sin tanqueos del mes todavía';
-      historico = '<div class="hc-res">' +
+      const vaTitulo = vaMes ? 'van ' + Money.format(vaMes) : vaTxt;   // en el title, con el mismo formato de la proyección
+      const cifras = '<div class="hc-res">' +
           res('Gastado en ' + anio, totalAnio + vaMes ? esc(Money.compacto(totalAnio + vaMes)) : '—', delAnio.length
             ? delAnio.length + (delAnio.length === 1 ? ' mes completo' : ' meses completos') + (va ? ' y ' + va : '')
             : va ? va.charAt(0).toUpperCase() + va.slice(1) : 'Sin tanqueos todavía') +
-          res('Promedio por mes', delAnio.length ? esc(Money.compacto(totalAnio / delAnio.length)) : '—', 'De los meses completos') +
+          res('Promedio por mes', promMes ? esc(Money.compacto(promMes)) : '—', 'De los meses completos') +
           res('Mes más alto', alto ? esc(mesLargo(alto.mes)) : '—', alto ? esc(Money.compacto(alto.valor)) : '') +
           res('Proyección de ' + mesLargo(mesHoy).toLowerCase(), proy ? '≈ ' + esc(Money.compacto(proy.valor)) : '—',
             proy ? (proy.margen != null ? '± ' + esc(Money.compacto(proy.margen)) + ' · ' : '') + esc(vaTxt) : 'Sin tanqueos en los 6 meses anteriores') +
-        '</div>' +
-        '<div class="cols cols-c">' + mesesC.map(m => {
+        '</div>';
+      const barras = '<div class="cols cols-c">' + mesesC.map(m => {
           const x = porMesC[m];
           if (m === mesHoy) {
-            if (!proy) return '<div class="col col-proy" title="' + attr(mesLargo(m) + ': ' + vaTxt) + '">' + (vaMes ? '<i style="height:' + pct(vaMes) + '%"></i>' : '') + '</div>';
+            if (!proy) return '<div class="col col-proy" title="' + attr(mesLargo(m) + ': ' + vaTitulo) + '">' + (vaMes ? '<i style="height:' + pct(vaMes) + '%"></i>' : '') + '</div>';
             return '<div class="col col-proy" title="' + attr(mesLargo(m) + ': proyección ' + Money.format(proy.valor) + (proy.margen != null ? ' (± ' + Money.format(proy.margen) + ')' : '') +
-                ' · ' + vaTxt) + '"><span>≈ ' + esc(Money.compacto(proy.valor)) + '</span>' +
+                ' · ' + vaTitulo) + '"><span>≈ ' + esc(Money.compacto(proy.valor)) + '</span>' +
               '<i class="proy" style="height:' + pct(proy.valor) + '%">' + (vaMes ? '<b style="height:' + Math.min(100, Math.round(vaMes / proy.valor * 100)) + '%"></b>' : '') + '</i></div>';
           }
           return '<div class="col' + (alto && m === alto.mes ? ' col-max' : '') + '" title="' + attr(mesLargo(m) + ': ' + (x ? Money.format(x.valor) + ' · ' + Tanqueos.galTxt(x.gal) : 'sin tanqueos')) + '">' +
             (x ? '<span>' + esc(Money.compacto(x.valor)) + '</span><i style="height:' + pct(x.valor) + '%"></i>' : '') + '</div>';
-        }).join('') + '</div>' +
+        }).join('') +
+        (promMes ? '<div class="hc-area"><i class="hc-prom" style="bottom:' + (promMes / topeH * 100).toFixed(1) + '%" title="' + attr('Promedio por mes: ' + Money.format(promMes)) + '"></i></div>' : '') + '</div>' +
         '<div class="cols-x">' + mesesC.map(m => '<span' + (m === mesHoy ? ' class="proy"' : '') + '>' + esc(nomMes(m)) + '</span>').join('') + '</div>';
+      historico = '<div class="hc"><div class="hc-graf">' + barras + '</div>' + cifras + '</div>';
     }
     const historicoC = UI.card('Gasto en combustible por mes', historico, { sub: 'Distracom · ' + anio, act: '<span class="link fs12" data-ir="combustible">Ver todo</span>',
-      pie: proy ? '<span><span class="hc-ley"></span>La punteada es la proyección: el promedio por día ' +
-        (proy.meses === 1 ? 'del último mes' : 'de los últimos ' + proy.meses + ' meses') + ' con tanqueos, por los días del mes. Por dentro, lo que va del mes.</span>' : '' });
+      pie: proy || promMes ? '<span>' + (proy ? '<span class="hc-ley"></span>La punteada es la proyección: el promedio por día ' +
+        (proy.meses === 1 ? 'del último mes' : 'de los últimos ' + proy.meses + ' meses') + ' con tanqueos, por los días del mes. Por dentro, lo que va del mes.' : '') +
+        (promMes ? (proy ? ' ' : '') + '<span class="hc-ley-prom"></span>La línea es el promedio por mes.' : '') + '</span>' : '' });
 
     /* El rendimiento de cada vehículo que sale en los tanqueos, de mayor a
        menor, con el promedio de la flota (Juan, 01/11/2026: todos, mientras la
