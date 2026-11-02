@@ -4278,16 +4278,6 @@ const Borrar = {
     ['mantenimientos', 'inspecciones', 'accidentes', 'ocs', 'actividad', 'lecturas'].forEach(k => { Datos[k] = (Datos[k] || []).filter(otra); });
     return Persistencia.limpiar();
   },
-  conductor(id) {
-    const c = Q.conductor(id);
-    Datos.conductores = Datos.conductores.filter(x => x.id !== id);
-    Datos.archivo.conductores.push(c);
-    Datos.unidades.filter(u => u.conductor === id).forEach(u => {
-      u.conductor = null;
-      Actividad.registrar(u, 'conductor', u.tipo === 'maquinaria' ? 'Cambio de operador' : 'Cambio de conductor',
-        'Se quitó a ' + c.nombre + ', que se eliminó de la plataforma');
-    });
-  },
   proveedor(id) {
     const p = Q.proveedor(id);
     Datos.proveedores = Datos.proveedores.filter(x => x.id !== id);
@@ -6145,7 +6135,9 @@ const Vistas = {
       '<div class="uc-b"><div class="uc-l1">' + UI.placa(u) + '<span class="uc-anio">' + esc(u.modelo || '') + '</span></div>' +
         '<div class="uc-mm">' + esc(UI.nombre(u)) + '</div>' +
         '<div class="uc-docs">' + this.chipsDocs(u) + '</div></div>' +
-      '<div class="uc-f"><span>' + Icon('user', '', 12) + esc(UI.corto(c)) + '</span>' +
+      '<div class="uc-f">' + (ConductoresRH.aviso(c, u)
+        ? '<span class="tx-warn" title="' + attr(c.nombre + ' · ' + ConductoresRH.aviso(c, u)) + '">' + Icon('warn', '', 12) + esc(UI.corto(c)) + '</span>'
+        : '<span>' + Icon('user', '', 12) + esc(UI.corto(c)) + '</span>') +
         '<span class="' + (ins.k !== 'ok' ? 'tx-' + ins.k : '') + '" title="Última inspección visual">' + Icon('clipboard', '', 12) + esc(u.insp ? Fecha.hace(u.insp) : 'Sin inspección') + '</span></div>' +
     '</article>';
   },
@@ -6157,7 +6149,8 @@ const Vistas = {
         const e = Est.unidad(u), i = Est.insp(u), c = Q.conductor(u.conductor), on = Boolean(sel && sel.has(u.id));
         return '<tr class="row-click' + (on ? ' sel' : '') + '" ' + (sel ? 'data-act="selUnidad" data-u="' + u.id + '" aria-pressed="' + on + '"' : 'data-ir="unidad/' + u.id + '"') + '>' +
           (sel ? '<td class="td-ck">' + UI.ck(on, 11) + '</td>' : '') + '<td>' + UI.unidadCelda(u) + '</td><td>' + esc(TIPOS[u.tipo].nombre) + '</td>' +
-          '<td>' + esc(c ? c.nombre : 'Sin asignar') + '</td><td><div class="uc-docs" style="margin:0">' + this.chipsDocs(u) + '</div></td>' +
+          '<td>' + esc(c ? c.nombre : 'Sin asignar') + (ConductoresRH.aviso(c, u) ? '<div class="dias d-warn">' + esc(ConductoresRH.aviso(c, u)) + '</div>' : '') + '</td>' +
+          '<td><div class="uc-docs" style="margin:0">' + this.chipsDocs(u) + '</div></td>' +
           '<td class="nowrap">' + esc(u.insp ? Fecha.corta(u.insp) : '—') + '<div class="dias d-' + i.k + '">' + esc(Fecha.hace(u.insp)) + '</div></td>' +
           '<td>' + UI.pill(e.k, e.txt) + '</td></tr>';
       }).join('') + '</tbody></table></div></div>';
@@ -6168,7 +6161,7 @@ const Vistas = {
     const u = Q.unidad(id);
     if (!u) return { titulo: 'Unidad', html: '<div class="card">' + UI.empty('truck', 'No se encontró la unidad', '<span class="link" data-ir="flota">Volver a la flota</span>') + '</div>' };
     if (UIState.unidadId !== id) { UIState.unidadId = id; UIState.tab = 'info'; UIState.act = 'todos'; }
-    const e = Est.unidad(u), ins = Est.insp(u), c = Q.conductor(u.conductor);
+    const e = Est.unidad(u), ins = Est.insp(u), c = Q.conductor(u.conductor), ret = ConductoresRH.aviso(c, u);
     const mants = Datos.mantenimientos.filter(m => m.unidad === u.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
     const ult = mants[0];
     const compras = Compras.de(u);
@@ -6213,8 +6206,9 @@ const Vistas = {
           '<div class="facts">' +
             '<div class="fact editable" data-act="cambiarConductor" data-u="' + u.id + '" title="Cambiar el conductor u operador">' +
               '<small>' + Icon('user', '', 11) + 'Conductor u operador</small>' +
-              '<div class="fact-sel"><span>' + esc(c ? c.nombre : 'Sin asignar') + '</span>' + Icon('chevD', '', 13) + '</div>' +
-              '<span>' + (c ? 'Licencia ' + esc(c.cat) : 'Clic para asignar') + '</span></div>' +
+              '<div class="fact-sel"><span' + (ret ? ' class="tx-warn"' : '') + '>' + esc(c ? c.nombre : 'Sin asignar') + '</span>' + Icon('chevD', '', 13) + '</div>' +
+              '<span' + (ret ? ' class="tx-warn"' : '') + '>' + (ret ? esc(ret) : c ? (c.cat ? 'Licencia ' + esc(c.cat) : 'Sin categoría de licencia') : 'Clic para asignar') +
+              '</span></div>' +
             fact('clipboard', 'Última inspección', u.insp ? Fecha.corta(u.insp) : 'Sin registro', u.insp ? Fecha.hace(u.insp) : '', ins.k) +
             fact('tool', 'Último mantenimiento', ult ? Fecha.corta(ult.fecha) : 'Sin registros', ult ? (ult.tipo === 'preventivo' ? 'Preventivo · ' : 'Correctivo · ') + ult.trabajo : '') +
             fact('ticket', 'Comparendos del mes', compV, compS, compK) +
@@ -6519,8 +6513,8 @@ const Ventanas = {
     const sel = o.u ? 'u:' + o.u : o.c ? 'c:' + o.c : 'u:' + Datos.unidades[0].id;
     const optsTit = '<optgroup label="Unidades">' + Datos.unidades.map(u => '<option value="u:' + u.id + '"' + (sel === 'u:' + u.id ? ' selected' : '') + '>' +
         esc(UI.placaTxt(u) + ' · ' + u.clase + ' ' + UI.nombre(u)) + '</option>').join('') + '</optgroup>' +
-      '<optgroup label="Conductores y operadores">' + Datos.conductores.map(c => '<option value="c:' + c.id + '"' + (sel === 'c:' + c.id ? ' selected' : '') + '>' +
-        esc(c.nombre) + '</option>').join('') + '</optgroup>';
+      '<optgroup label="Conductores y operadores">' + ConductoresRH.lista().map(c => '<option value="c:' + c.id + '"' + (sel === 'c:' + c.id ? ' selected' : '') + '>' +
+        esc(c.nombre + ' · ' + ConductoresRH.tipoTxt(c)) + '</option>').join('') + '</optgroup>';
     const m = Modal.abrir({
       titulo: 'Subir documento', sub: fijo ? 'Queda en Otros documentos de ' + UI.placaTxt(fijo) : 'Queda en la hoja de la unidad o del conductor',
       cuerpo: (fijo
@@ -6606,8 +6600,7 @@ const Ventanas = {
           campo('nuPlaca', conPlaca ? 'Placa' : 'Código interno', '', conPlaca ? (tipo === 'remolque' ? 'R12345' : 'ABC123') : (tipo === 'canoa' ? 'CAN-03' : 'MAQ-05')) +
           (tipo === 'canoa' ? campo('nuMarca', 'Nombre de la canoa', '', 'Canoa 03') : campo('nuMarca', 'Marca') + campo('nuLinea', 'Línea')) +
           (tipo === 'canoa' ? '' : campo('nuModelo', 'Modelo (año)', ' inputmode="numeric"') + campo('nuColor', 'Color')) +
-          '<div class="field"><label>Conductor u operador</label><select class="inp" id="nuCond"><option value="">Sin asignar</option>' +
-            Datos.conductores.map(c => '<option value="' + c.id + '">' + esc(c.nombre) + '</option>').join('') + '</select></div>' +
+          '<div class="field"><label>Conductor u operador</label><select class="inp" id="nuCond">' + Opc.conductores('', 'Sin asignar', false, tipo) + '</select></div>' +
         '</div>' +
         Dz.html('nuDz', 'Foto de la unidad', 'Arrastre la foto aquí o haga clic para buscarla', 'image/*', false) +
         '<div id="nuPrev"></div>';
@@ -6680,7 +6673,7 @@ const Ventanas = {
       lista.push(c);
       if (c.de === 'clase') return '<div class="field">' + et + '<select class="inp" id="' + id + '">' +
         clases.map(x => '<option' + (x === u.clase ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select></div>';
-      if (c.de === 'conductor') return '<div class="field">' + et + '<select class="inp" id="' + id + '">' + Opc.conductores(u.conductor || '', 'Sin asignar') + '</select></div>';
+      if (c.de === 'conductor') return '<div class="field">' + et + '<select class="inp" id="' + id + '">' + Opc.conductores(u.conductor || '', 'Sin asignar', true, u.tipo) + '</select></div>';
       const v = c.de ? u[c.de] : (u.ficha || {})[HojaVida.nombre(c)];
       return '<div class="field">' + et + '<input class="inp" id="' + id + '"' + (c.fecha ? ' type="date"' : '') + (c.de === 'modelo' ? ' inputmode="numeric"' : '') +
         ' value="' + attr(v == null ? '' : v) + '"></div>';
@@ -6723,10 +6716,11 @@ const Ventanas = {
     Modal.abrir({
       titulo: 'Cambiar ' + quien, sub: esc(UI.placaTxt(u) + ' · ' + u.clase + ' ' + UI.nombre(u)),
       cuerpo:
-        '<div class="alert a-info mb16">' + Icon('user') + '<div>Hoy está asignado: <b>' + esc(c ? c.nombre : 'nadie') + '</b>. ' +
+        '<div class="alert a-info mb16">' + Icon('user') + '<div>Hoy está asignado: <b>' + esc(c ? c.nombre : 'nadie') + '</b>' +
+          (ConductoresRH.retirado(c) ? ', que ya se retiró en Recursos Humanos' : ConductoresRH.aviso(c, u) ? ', a quien en Recursos Humanos le cambiaron el cargo' : '') + '. ' +
           'El cambio queda registrado en la actividad de la unidad.</div></div>' +
         '<div class="field"><label>Nuevo ' + quien + '</label><select class="inp" id="cdN"><option value="">Sin asignar</option>' +
-          Datos.conductores.map(x => {
+          ConductoresRH.lista(u.tipo).map(x => {
             const otras = enOtras(x.id);
             return '<option value="' + x.id + '"' + (x.id === u.conductor ? ' selected' : '') + '>' +
               esc(x.nombre + (otras.length ? ' (también en ' + otras.join(', ') + ')' : '')) + '</option>';
@@ -7188,9 +7182,15 @@ const Opc = {
   proveedores(sel) {
     return Datos.proveedores.map(p => '<option value="' + p.id + '"' + (sel === p.id ? ' selected' : '') + '>' + esc(p.nombre + ' · ' + p.servicio) + '</option>').join('');
   },
-  conductores(sel, vacio) {
+  /* Los de Recursos Humanos que le sirven a ese tipo de unidad (ver
+     ConductoresRH). Con «conRetirado», también el que ya está escogido aunque
+     se haya retirado o tenga otro cargo: así, guardar otra cosa de la unidad
+     no lo quita sin querer */
+  conductores(sel, vacio, conRetirado, tipoUnidad) {
+    const l = ConductoresRH.lista(tipoUnidad), x = conRetirado && sel && !l.some(c => c.id === sel) ? Q.conductor(sel) : null;
     return (vacio ? '<option value="">' + esc(vacio) + '</option>' : '') +
-      Datos.conductores.map(c => '<option value="' + c.id + '"' + (sel === c.id ? ' selected' : '') + '>' + esc(c.nombre) + '</option>').join('');
+      (x ? '<option value="' + x.id + '" selected>' + esc(x.nombre + (ConductoresRH.retirado(x) ? ' (retirado en RH)' : ' (cambió de cargo en RH)')) + '</option>' : '') +
+      l.map(c => '<option value="' + c.id + '"' + (sel === c.id ? ' selected' : '') + '>' + esc(c.nombre) + '</option>').join('');
   }
 };
 
@@ -7711,22 +7711,36 @@ Object.assign(Vistas, {
     } };
   },
 
-  /* ----------------------------------------------------------- Conductores */
+  /* ----------------------------------------------------------- Conductores
+     Salen de Recursos Humanos (Juan, 01/11/2026, ver ConductoresRH): aquí no
+     se crean ni se retiran */
   conductores() {
+    const lista = ConductoresRH.lista(), r = ConductoresRH.ultimo, dudosos = (r && r.ok && r.dudosos) || [];
+    const aviso = (t, d) => '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + t + '</b> ' + d + '</div></div>';
     const html =
-      UI.head('Conductores y operadores', Datos.conductores.length + ' personas · licencias y documentos',
-        '<button class="btn btn-primary" data-act="nuevoConductor">' + Icon('plus', '', 14) + 'Nuevo conductor</button>') +
-      '<div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Persona</th><th>Licencia</th><th>Vence</th><th>Estado de la licencia</th><th>Cédula</th><th>Unidad asignada</th></tr></thead><tbody>' +
-        Datos.conductores.map(c => {
+      UI.head('Conductores y operadores', lista.length + (lista.length === 1 ? ' persona' : ' personas') + ' · vienen de Recursos Humanos',
+        ConductoresRH.puede() ? '<button class="btn" data-act="traerConductoresRH">' + Icon('refresh', '', 14) + 'Traer de RH</button>' : '') +
+      (ConductoresRH.falta ? aviso('Todavía no se pueden traer de Recursos Humanos.', 'Falta correr en Supabase el SQL 024.')
+        : r && !r.ok && r.aviso ? aviso('No se trajeron los conductores.', esc(r.aviso)) : '') +
+      (dudosos.length ? aviso((dudosos.length === 1 ? 'Una persona de Recursos Humanos no se pudo traer' : dudosos.length + ' personas de Recursos Humanos no se pudieron traer') + ':',
+        dudosos.map(x => esc(x.nombre || 'Sin nombre') + ' <span class="txt-3">(' + esc(x.por) + ')</span>').join(' · ') +
+        '. Se corrige en Recursos Humanos y se vuelve a traer.') : '') +
+      '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Persona</th><th>Cargo</th><th>Licencia</th><th>Vence</th>' +
+          '<th>Estado de la licencia</th><th>Cédula</th><th>Unidad asignada</th></tr></thead><tbody>' +
+        lista.map(c => {
           const l = Est.doc(c.docs.licencia, 'licencia'), ce = Est.doc(c.docs.cedula, 'cedula');
           const us = Datos.unidades.filter(u => u.conductor === c.id);
           return '<tr class="row-click" data-act="verConductor" data-c="' + c.id + '"><td>' + UI.persona(c) + '</td>' +
-            '<td><span class="chip">' + Icon('idcard', '', 12) + 'Categoría ' + esc(c.cat) + '</span></td>' +
+            '<td class="nowrap">' + esc(ConductoresRH.tipoTxt(c)) + '</td>' +
+            '<td>' + (c.cat ? '<span class="chip">' + Icon('idcard', '', 12) + 'Categoría ' + esc(c.cat) + '</span>' : '<span class="txt-3 nowrap">Sin categoría</span>') + '</td>' +
             '<td class="nowrap">' + (c.docs.licencia && c.docs.licencia.vence ? esc(Fecha.corta(c.docs.licencia.vence)) + '<div class="dias d-' + l.k + '">' + esc(l.det) + '</div>' : '—') + '</td>' +
             '<td>' + UI.pill(l.k, l.k === 'ok' ? 'Vigente' : l.txt) + '</td>' +
             '<td>' + UI.pill(ce.k, ce.k === 'ok' ? 'Subida' : ce.txt) + '</td>' +
             '<td>' + (us.length ? us.map(u => UI.placa(u)).join(' ') : '<span class="txt-3">Sin asignar</span>') + '</td></tr>';
-        }).join('') + '</tbody></table></div></div>';
+        }).join('') + '</tbody></table></div>'
+        : UI.empty('personas', 'Todavía no hay conductores', 'Se agregan en Recursos Humanos y llegan solos al entrar a Flota, o con «Traer de RH».')) +
+        '<div class="card-f">' + Icon('info', '', 13) + '<span>Los conductores se agregan y se retiran en Recursos Humanos. ' +
+          'Aquí se manejan la categoría de la licencia, los documentos y la unidad asignada.</span></div></div>';
     return { titulo: 'Conductores', sub: 'Conductores y operadores', html };
   },
 
@@ -8078,7 +8092,7 @@ Object.assign(Ventanas, {
       cuerpo:
         '<div class="row"><div class="field"><label>Unidad</label><select class="inp" id="miU">' + Opc.unidades(u0.id) + '</select></div>' +
         '<div class="field"><label>Fecha</label><input class="inp" type="date" id="miF" value="' + hoyISO + '"></div></div>' +
-        '<div class="field"><label>Conductor que acompañó</label><select class="inp" id="miC">' + Opc.conductores(u0.conductor || '', 'Sin conductor') + '</select></div>' +
+        '<div class="field"><label>Conductor que acompañó</label><select class="inp" id="miC">' + Opc.conductores(u0.conductor || '', 'Sin conductor', false, u0.tipo) + '</select></div>' +
         '<div class="field"><label>Resultado</label><div class="seg" id="miR"><button type="button" class="on" data-v="sin">' + Icon('check', '', 13) + 'Sin novedad</button>' +
           '<button type="button" data-v="con">' + Icon('warn', '', 13) + 'Con novedades</button></div></div>' +
         '<div class="field"><label>Observaciones</label><textarea class="inp" id="miO" placeholder="Lo que se vio en la inspección"></textarea></div>' +
@@ -8091,7 +8105,11 @@ Object.assign(Ventanas, {
       m._res = b.dataset.v;
       $$('#miR button', m).forEach(x => x.classList.toggle('on', x === b));
     }));
-    $('#miU', m).addEventListener('change', e => { const u = Q.unidad(e.target.value); $('#miC', m).value = u && u.conductor ? u.conductor : ''; });
+    /* Al cambiar de unidad, los conductores de su tipo, con el suyo escogido */
+    $('#miU', m).addEventListener('change', e => {
+      const u = Q.unidad(e.target.value);
+      if (u) $('#miC', m).innerHTML = Opc.conductores(u.conductor || '', 'Sin conductor', false, u.tipo);
+    });
     Dz.bind('miDz', files => { m._fotos = files; Dz.lista('miDz', files); });
   },
 
@@ -8352,18 +8370,27 @@ Object.assign(Ventanas, {
         '<div class="req-a">' + UI.pill(s.k, s.txt) + (tiene ? UI.file(d.archivo, d.archivoId) : '') +
           '<button class="btn btn-sm' + (s.k === 'ok' ? '' : ' btn-primary') + '" data-act="nuevoDocumento" data-c="' + c.id + '" data-t="' + t + '">' + (tiene ? 'Renovar' : 'Subir') + '</button></div></div>';
     };
-    Modal.abrir({
-      titulo: c.nombre, sub: 'CC ' + esc(c.cedula) + ' · Licencia categoría ' + esc(c.cat), ancho: 'wide', sinFoco: true,
+    /* La categoría la maneja Flota: los conductores llegan de Recursos Humanos sin ella */
+    const cats = Catalogo.lista('licencias'), opcCat = (c.cat && !cats.includes(c.cat) ? [c.cat] : []).concat(cats);
+    const m = Modal.abrir({
+      titulo: c.nombre, sub: 'CC ' + esc(c.cedula) + ' · ' + (c.cat ? 'Licencia categoría ' + esc(c.cat) : 'Sin categoría de licencia'), ancho: 'wide', sinFoco: true,
       cuerpo: '<div class="flex aic g12 mb16"><span class="av lg">' + esc(UI.iniciales(c.nombre)) + '</span>' +
-          '<div class="f1"><div style="font-size:16px;font-weight:650">' + esc(c.nombre) + '</div><div class="txt-3 fs12">Conductor u operador</div></div>' +
+          '<div class="f1"><div style="font-size:16px;font-weight:650">' + esc(c.nombre) + '</div><div class="txt-3 fs12">' +
+            esc(ConductoresRH.tipoTxt(c)) + ' · ' + (ConductoresRH.retirado(c) ? 'retirado en Recursos Humanos' : 'viene de Recursos Humanos') + '</div></div>' +
           UI.pill(l.k, l.k === 'ok' ? 'Licencia vigente' : 'Licencia: ' + l.txt.toLowerCase()) + '</div>' +
+        '<div class="field mb16"><label for="cfK">Categoría de la licencia</label><div class="flex aic g8">' +
+          '<select class="inp" id="cfK" style="width:auto">' + (c.cat ? '' : '<option value="">Sin escoger</option>') +
+            opcCat.map(k => '<option' + (k === c.cat ? ' selected' : '') + '>' + esc(k) + '</option>').join('') + '</select>' +
+          '<button class="btn btn-sm btn-primary" data-act="guardarCategoria" data-c="' + c.id + '" disabled>' + Icon('save', '', 13) + 'Guardar</button></div></div>' +
         '<div class="card mb16"><div class="card-h"><h3>Documentos</h3></div><div class="reqs">' + fila('licencia') + fila('cedula') + '</div></div>' +
         UI.card('Unidades asignadas', us.length ? '<div class="mlist">' + us.map(u => '<div class="mrow" data-ir="unidad/' + u.id + '">' + UI.thumb(u) +
           '<div class="mrow-t"><b class="mono">' + esc(UI.placaTxt(u)) + '</b><span>' + esc(u.clase + ' · ' + UI.nombre(u)) + '</span></div>' +
           '<div class="mrow-r">' + Icon('chevR', '', 14) + '</div></div>').join('') + '</div>' : UI.empty('truck', 'Sin unidad asignada', ''), { flush: true }),
-      pie: '<button class="btn btn-ghost t-dang mf-left" data-act="eliminarConductor" data-c="' + c.id + '">' + Icon('trash', '', 14) + 'Eliminar</button>' +
+      pie: '<span class="txt-3 fs12 mf-left">El nombre, la cédula y si está activo se cambian en Recursos Humanos.</span>' +
         '<button class="btn" data-act="cerrarModal">Cerrar</button>'
     });
+    const s = $('#cfK', m), g = $('[data-act="guardarCategoria"]', m);
+    s.addEventListener('change', () => { g.disabled = s.value === (c.cat || ''); });
   },
 
   proveedor(p) {
@@ -8392,17 +8419,6 @@ Object.assign(Ventanas, {
       Modal.cerrar(m);
       Ventanas.proveedor(p);
       Toast.show('PDF guardado en <b>' + esc(p.nombre) + '</b>.<br>' + esc(Archivos.resumen(a)));
-    });
-  },
-
-  nuevoConductor() {
-    Modal.abrir({
-      titulo: 'Nuevo conductor u operador', sub: 'Sus documentos se suben después, desde su ficha',
-      cuerpo: '<div class="field"><label>Nombre completo</label><input class="inp" id="ncN"></div>' +
-        '<div class="row"><div class="field"><label>Cédula</label><input class="inp" id="ncC" inputmode="numeric"></div>' +
-        '<div class="field"><label>Categoría de la licencia</label><select class="inp" id="ncK">' + Catalogo.lista('licencias').map(k => '<option>' + esc(k) + '</option>').join('') + '</select></div></div>' +
-        '<div class="field"><label>La licencia vence el</label><input class="inp" type="date" id="ncV" value="' + R(365) + '"></div>',
-      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarConductor">' + Icon('save', '', 14) + 'Guardar</button>'
     });
   },
 
@@ -9085,22 +9101,38 @@ Object.assign(Acciones, {
     Router.ir('flota');
     Toast.show('Se eliminó <b>' + esc(UI.placaTxt(u)) + '</b> con todo lo suyo.');
   },
-  eliminarConductor(el) {
-    const c = Q.conductor(el.dataset.c), us = Datos.unidades.filter(u => u.conductor === c.id);
-    Modal.abrir({
-      titulo: 'Eliminar a ' + c.nombre, sub: 'Conductor u operador', sinFoco: true,
-      cuerpo: '<div class="alert a-warn">' + Icon('warn') + '<div><b>Deja de salir en las listas.</b> ' +
-        (us.length ? 'Las unidades donde está asignado (' + esc(us.map(u => UI.placaTxt(u)).join(', ')) + ') quedan sin conductor, y eso queda en su actividad. ' : '') +
-        'Su nombre se conserva en el historial.</div></div>',
-      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-danger" data-act="confirmarEliminarConductor" data-c="' + c.id + '">' +
-        Icon('trash', '', 14) + 'Eliminar</button>'
-    });
+  /* «Traer de RH»: lo pendiente se guarda primero, la nube pone a Flota al día
+     con Recursos Humanos y lo que cambió se trae enseguida (ver ConductoresRH) */
+  async traerConductoresRH(el) {
+    if (el.disabled) return;
+    el.disabled = true;
+    try {
+      await Sincro.ahora();
+      const r = await ConductoresRH.traer();
+      if (!r) {
+        Toast.show(ConductoresRH.falta ? 'Todavía no se puede: falta correr en Supabase el SQL 024.'
+          : 'No se pudo hablar con Recursos Humanos. Intente otra vez en un momento.', 'warn');
+      } else if (!r.ok) {
+        Toast.show(esc(r.aviso || 'No se cambió nada.'), 'warn');
+      } else if (ConductoresRH.cambio(r)) {
+        await ConductoresRH.alDia();
+        Toast.show('Recursos Humanos: ' + esc(ConductoresRH.resumen(r)) + '.');
+      } else {
+        Toast.show('Ya estaba todo al día con Recursos Humanos.');
+      }
+    } catch (e) {
+      Toast.show('No se pudo traer lo que cambió: ' + esc(e.message) + '. Vuelve solo en unos segundos.', 'warn');
+    } finally {
+      Router.pintar(true);
+    }
   },
-  confirmarEliminarConductor(el) {
-    const c = Q.conductor(el.dataset.c);
-    Modal.cerrarTodo();
-    Borrar.conductor(c.id);
-    Toast.show('Se eliminó a <b>' + esc(c.nombre) + '</b>.');
+  /* La categoría de la licencia: la maneja Flota (los conductores llegan de RH sin ella) */
+  guardarCategoria(el) {
+    const c = Q.conductor(el.dataset.c), m = el.closest('.modal-bd'), v = $('#cfK', m).value;
+    if (!c || v === (c.cat || '')) return;
+    c.cat = v;
+    Modal.cerrar(m);
+    Toast.show('Listo: la licencia de <b>' + esc(c.nombre) + '</b> queda en categoría <b>' + esc(v) + '</b>.');
     Router.pintar(true);
   },
   eliminarProveedor(el) {
@@ -9155,16 +9187,6 @@ Object.assign(Acciones, {
     await Nube.salir();
     await Cache.vaciar();
     location.reload();
-  },
-  nuevoConductor() { Ventanas.nuevoConductor(); },
-  guardarConductor(el) {
-    const m = el.closest('.modal-bd'), nombre = $('#ncN', m).value.trim();
-    if (!nombre) { Toast.show('Escriba el nombre.', 'err'); return; }
-    Datos.conductores.push({ id: 'd' + Date.now(), nombre, cedula: $('#ncC', m).value.trim() || '—', cat: $('#ncK', m).value,
-      docs: { licencia: { vence: $('#ncV', m).value || undefined }, cedula: {} } });
-    Modal.cerrar(m);
-    Toast.show('<b>' + esc(nombre) + '</b> quedó registrado. Falta subir su licencia y su cédula.');
-    Router.pintar(true);
   },
   nuevoProveedor() { Ventanas.nuevoProveedor(); },
   guardarProveedor(el) {
@@ -12301,6 +12323,63 @@ const Cuenta = {
   }
 };
 
+/* Los conductores salen de Recursos Humanos (Juan, 01/11/2026, SQL 024). RH
+   manda en el nombre, la cédula y si está activo; Flota guarda lo suyo: la
+   categoría de la licencia, los documentos y la unidad asignada. La nube los
+   pone al día con public.flota_conductores_de_rh(), que se llama al entrar y
+   con «Traer de RH», y solo si se puede editar. */
+const ConductoresRH = {
+  ultimo: null,    // la última respuesta de la nube
+  falta: false,    // la nube todavía no tiene el SQL 024
+  puede: () => Cuenta.admin || Cuenta.acciones.includes('editar') || !Cuenta.rol,
+  /* Nunca lanza: si no se pudo, devuelve null y la plataforma sigue igual */
+  async traer() {
+    if (!this.puede()) return null;
+    try {
+      const r = await Nube._pedir('rpc/flota_conductores_de_rh', { method: 'POST', publico: true, body: '{}' });
+      this.falta = false;
+      return (this.ultimo = r || null);
+    } catch (e) {
+      if (Sincro.faltaFuncion(e)) this.falta = true;
+      else if (!e.sesion && !e.red) console.error('No se pudieron traer los conductores de Recursos Humanos:', e);
+      return null;
+    }
+  },
+  /* ¿Cambió algo en la nube? */
+  cambio: r => Boolean(r && r.ok && (r.creados || r.enlazados || r.cambiados || r.desactivados)),
+  /* Lo que cambió, en una frase */
+  resumen(r) {
+    const n = (k, uno, varios) => (r[k] ? r[k] + ' ' + (r[k] === 1 ? uno : varios) : '');
+    return [n('creados', 'conductor nuevo', 'conductores nuevos'), n('cambiados', 'actualizado', 'actualizados'),
+      n('desactivados', 'retirado', 'retirados'), n('enlazados', 'enlazado', 'enlazados')].filter(Boolean).join(' · ');
+  },
+  /* Lo que cambió la función, ya en la plataforma */
+  async alDia() {
+    Sincro.ponerCambios({ conductores: await Nube.leerTodo('conductores') }, []);
+  },
+  /* Cada persona trae su tipo, que RH saca del cargo, y cada unidad escoge
+     solo de los suyos (Juan, 01/11/2026). Los remolques, de los conductores. */
+  TIPO: { carga: 'conductor', remolque: 'conductor', maquinaria: 'maquinaria', canoa: 'canoa' },
+  TXT: { conductor: 'Conductor', maquinaria: 'Operador de maquinaria', canoa: 'Operario de canoa' },
+  tipoTxt(c) { return this.TXT[c && c.rhTipo] || 'Sin cargo de RH'; },
+  /* Los de las listas: activos y de RH, por nombre. Con el tipo de una
+     unidad, solo los que le sirven. */
+  lista(tipoUnidad) {
+    const t = tipoUnidad && this.TIPO[tipoUnidad];
+    return Datos.conductores.filter(c => c.rh != null && (!t || c.rhTipo === t)).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+  },
+  /* Retirado en RH pero todavía asignado: la unidad lo avisa hasta que se
+     escoja otro (Juan, 01/11/2026) */
+  retirado: c => Boolean(c) && !Datos.conductores.includes(c),
+  /* Lo que la unidad avisa de su conductor: que se retiró o que en RH le
+     cambiaron el cargo a otro tipo. Si no hay nada que avisar, '' */
+  aviso(c, u) {
+    if (!c) return '';
+    if (this.retirado(c)) return 'Retirado en RH: asigne otro';
+    return u && c.rhTipo && this.TIPO[u.tipo] && c.rhTipo !== this.TIPO[u.tipo] ? 'Cambió de cargo en RH: asigne otro' : '';
+  }
+};
+
 /* ==========================================================================
    §N2  MAPA — cómo va cada cosa de la plataforma a su tabla y de vuelta.
         Lo que tiene columna va en su columna; lo demás (la hora, las marcas
@@ -12346,7 +12425,7 @@ const Mapa = {
   /* Las columnas de cada tabla, en orden, con su valor si falta: todas las
      filas de una tabla van con las mismas columnas, como pide Supabase */
   MOLDE: {
-    conductores: { id: null, nombre: '', corto: '', cedula: '', categoria: '', activo: true, extra: {} },
+    conductores: { id: null, nombre: '', corto: '', cedula: '', categoria: '', activo: true, rh_id: null, tipo: '', extra: {} },
     proveedores: { id: null, nombre: '', servicio: '', nit: '', contacto: '', activo: true, extra: {} },
     unidades: { id: null, tipo: null, clase: '', placa: null, alias: '', marca: '', linea: '', modelo: '', color: '', conductor_id: null,
       ficha: {}, dotacion: [], aceite: {}, comparendo: { estado: 'pend' }, comparendos_hist: [], ultima_inspeccion: null,
@@ -12368,7 +12447,7 @@ const Mapa = {
       archivo: '', extra: {} }
   },
   CONDUCTOR: [['id', 'id'], ['nombre', 'nombre', '', aTexto], ['corto', 'corto', '', aTexto], ['cedula', 'cedula', '', aTexto],
-    ['cat', 'categoria', '', aTexto]],
+    ['cat', 'categoria', '', aTexto], ['rh', 'rh_id', null, aNumero, aNumero], ['rhTipo', 'tipo', '', aTexto]],
   PROVEEDOR: [['id', 'id'], ['nombre', 'nombre', '', aTexto], ['servicio', 'servicio', '', aTexto], ['nit', 'nit', '', aTexto],
     ['contacto', 'contacto', '', aTexto]],
   UNIDAD: [['id', 'id'], ['tipo', 'tipo'], ['clase', 'clase', '', aTexto], ['placa', 'placa'], ['alias', 'alias', '', aTexto],
@@ -13047,6 +13126,9 @@ const Arranque = {
         await Sesion.sinAcceso(acc);
         await Sesion.pedir();
       }
+      /* Los conductores, al día con Recursos Humanos antes de traer todo (ver
+         ConductoresRH). Si RH se demora, se sigue sin esperarlo. */
+      await Promise.race([ConductoresRH.traer(), new Promise(ok => setTimeout(ok, 8000))]);
       await Sincro.cargar(Sesion.cargando());
       /* Si empezó un mes nuevo, la revisión de comparendos pasa al historial
          (y la sincronización lo sube) */
@@ -13066,6 +13148,7 @@ const Arranque = {
        responsable, para los formatos que se imprimen */
     Guardadas.aplicar().then(n => { if (n) Router.pintar(true); });
     Firma.traer();
+    if (ConductoresRH.cambio(ConductoresRH.ultimo)) Toast.show('Recursos Humanos: ' + esc(ConductoresRH.resumen(ConductoresRH.ultimo)) + '.');
   }
 };
 
