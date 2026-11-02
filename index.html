@@ -255,6 +255,10 @@ html[data-theme="dark"] .p-blue{color:var(--info-500)}
   border-radius:var(--radius-sm);font-size:13px;transition:var(--t-fast)}
 .inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 textarea.inp{height:auto;min-height:72px;padding:8px 10px;resize:vertical;line-height:1.5}
+/* La que crece con lo que se escribe (ver Ventanas.conductor): un renglón si está vacía */
+textarea.inp.auto-alto{min-height:0;resize:none;overflow:hidden}
+/* La licencia en la tabla de Conductores: la categoría y su estado juntos */
+.lic-cel{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 select.inp{cursor:pointer;appearance:none;padding-right:28px;
   background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7c8c' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 9px center}
@@ -7984,16 +7988,20 @@ Object.assign(Vistas, {
       (dudosos.length ? aviso((dudosos.length === 1 ? 'Una persona de Recursos Humanos no se pudo traer' : dudosos.length + ' personas de Recursos Humanos no se pudieron traer') + ':',
         dudosos.map(x => esc(x.nombre || 'Sin nombre') + ' <span class="txt-3">(' + esc(x.por) + ')</span>').join(' · ') +
         '. Se corrige en Recursos Humanos y se vuelve a traer.') : '') +
-      '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Persona</th><th>Cargo</th><th>Licencia</th><th>Vence</th>' +
-          '<th>Estado de la licencia</th><th>Cédula</th><th>Unidad asignada</th></tr></thead><tbody>' +
+      /* El celular corporativo (Juan, 02/11/2026). Para que quepa sin correr la
+         tabla de lado, la categoría y el estado de la licencia van en una sola
+         columna y «Unidad asignada» pasa a «Unidad» */
+      '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Persona</th><th>Cargo</th><th>Celular corporativo</th>' +
+          '<th>Licencia</th><th>Vence</th><th>Cédula</th><th>Unidad</th></tr></thead><tbody>' +
         lista.map(c => {
           const l = Est.doc(c.docs.licencia, 'licencia'), ce = Est.doc(c.docs.cedula, 'cedula');
           const us = Q.unidadesDe(c.id);
           return '<tr class="row-click" data-act="verConductor" data-c="' + c.id + '"><td>' + UI.persona(c) + '</td>' +
             '<td class="nowrap">' + esc(ConductoresRH.tipoTxt(c)) + '</td>' +
-            '<td>' + (c.cat ? '<span class="chip">' + Icon('idcard', '', 12) + 'Categoría ' + esc(c.cat) + '</span>' : '<span class="txt-3 nowrap">Sin categoría</span>') + '</td>' +
+            '<td class="nowrap">' + (c.celCorp ? esc(c.celCorp) : '<span class="txt-3">—</span>') + '</td>' +
+            '<td><div class="lic-cel">' + (c.cat ? '<span class="chip" title="Categoría ' + attr(c.cat) + '">' + Icon('idcard', '', 12) + esc(c.cat) + '</span>' : '<span class="txt-3 nowrap">Sin categoría</span>') +
+              UI.pill(l.k, l.k === 'ok' ? 'Vigente' : l.txt) + '</div></td>' +
             '<td class="nowrap">' + (c.docs.licencia && c.docs.licencia.vence ? esc(Fecha.corta(c.docs.licencia.vence)) + '<div class="dias d-' + l.k + '">' + esc(l.det) + '</div>' : '—') + '</td>' +
-            '<td>' + UI.pill(l.k, l.k === 'ok' ? 'Vigente' : l.txt) + '</td>' +
             '<td>' + UI.pill(ce.k, ce.k === 'ok' ? 'Subida' : ce.txt) + '</td>' +
             '<td>' + (us.length ? us.map(u => UI.placa(u)).join(' ') : '<span class="txt-3">Sin asignar</span>') + '</td></tr>';
         }).join('') + '</tbody></table></div>'
@@ -8669,7 +8677,7 @@ Object.assign(Ventanas, {
                 '<button type="button" class="btn btn-icon btn-sm" id="cfVer" title="Ver la clave" aria-label="Ver la clave">' + Icon('eye', '', 14) + '</button>' +
                 '<button type="button" class="btn btn-icon btn-sm" id="cfCopiar" title="Copiar la clave" aria-label="Copiar la clave">' + Icon('copiar', '', 14) + '</button></div></div>' +
             '</div>' +
-            '<div class="rhf-campo mt12"><label class="l" for="cfNotas">Observaciones</label><textarea class="inp" id="cfNotas" rows="3">' + esc(c.notas || '') + '</textarea></div>' +
+            '<div class="rhf-campo mt12"><label class="l" for="cfNotas">Observaciones</label><textarea class="inp auto-alto" id="cfNotas" rows="1">' + esc(c.notas || '') + '</textarea></div>' +
             '<div class="flex aic g8 mt12"><button class="btn btn-sm btn-primary" data-act="guardarContacto" data-c="' + attr(c.id) + '" disabled>' + Icon('save', '', 13) + 'Guardar</button>' +
               '<span class="txt-3 fs12">El celular personal es el de Recursos Humanos, en Datos personales.</span></div>' +
           '</div></div>' +
@@ -8682,6 +8690,11 @@ Object.assign(Ventanas, {
     m.dataset.conductor = c.id;
     const corp = [['cfCel', 'celCorp'], ['cfCorreo', 'correoCorp'], ['cfClave', 'claveCorreo'], ['cfNotas', 'notas']], gc = $('[data-act="guardarContacto"]', m);
     corp.forEach(([id]) => $('#' + id, m).addEventListener('input', () => { gc.disabled = corp.every(([i, k]) => $('#' + i, m).value.trim() === (c[k] || '')); }));
+    /* Observaciones, del alto de lo que tengan: un renglón si están vacías
+       (Juan, 02/11/2026) */
+    const notas = $('#cfNotas', m), altoNotas = () => { notas.style.height = 'auto'; notas.style.height = (notas.scrollHeight + 2) + 'px'; };
+    notas.addEventListener('input', altoNotas);
+    requestAnimationFrame(altoNotas);
     $('#cfVer', m).addEventListener('click', () => {
       const x = $('#cfClave', m), ver = x.type === 'password';
       x.type = ver ? 'text' : 'password';
