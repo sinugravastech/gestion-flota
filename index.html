@@ -813,6 +813,21 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 .cols-x span{flex:1;min-width:0;text-align:center;font-size:11px;color:var(--text-3)}
 .cols-x span.fut{opacity:.45}
 html[data-theme="dark"] .rk-t i,html[data-theme="dark"] .col i{background:var(--brand-400)}
+/* Combustible por mes (ver Vistas.dashboard): las cifras arriba, la proyección
+   del mes en curso punteada y, por dentro, lo que lleva el mes */
+.hc-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:4px}
+.hc-res small{display:block;font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em}
+.hc-res b{display:block;font-size:17px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
+.hc-res span{display:block;font-size:11.5px;color:var(--text-3);margin-top:1px}
+.col i.proy{position:relative;background:transparent;border:1.5px dashed var(--brand-500);border-bottom:0;box-sizing:border-box}
+.col i.proy b{position:absolute;left:-1.5px;right:-1.5px;bottom:0;background:var(--brand-500);opacity:.5;border-radius:3px 3px 0 0}
+.col-proy span{color:var(--brand-600)}
+.cols-x span.proy{color:var(--brand-600);font-weight:650}
+.hc-ley{display:inline-block;width:14px;height:10px;border:1.5px dashed var(--brand-500);border-bottom:0;margin-right:6px;vertical-align:-1px}
+html[data-theme="dark"] .col i.proy{background:transparent;border-color:var(--brand-400)}
+html[data-theme="dark"] .col i.proy b{background:var(--brand-400)}
+html[data-theme="dark"] .col-proy span,html[data-theme="dark"] .cols-x span.proy{color:var(--brand-300)}
+@media(max-width:760px){.hc-res{grid-template-columns:repeat(2,minmax(0,1fr))}.cols-c{gap:4px}.cols-c .col span{display:none}}
 /* Cambios de aceite: la barra lleva el color del estado, con su leyenda */
 .rk-t i.k-warn{background:var(--warn-500)}
 /* El promedio de la flota, como una línea punteada sobre las barras */
@@ -5015,6 +5030,25 @@ const Tanqueos = {
     return r;
   },
   de(u) { return this.lista().filter(t => t.unidad === u.id); },
+  /* El gasto de un mes que todavía no termina (Juan, 02/11/2026): el promedio
+     del gasto por día de los tres meses completos más recientes con
+     tanqueos, dentro de los seis anteriores, por los días del mes. Por día,
+     para que febrero, con 28 días, no parezca más barato. Juan escogió este
+     promedio y no la tendencia: desde julio de 2026 el gasto subió de nivel,
+     y la recta lo seguía estirando. Un mes sin tanqueos no se cargó: se
+     salta, no cuenta como cero. El margen, con tres meses, es el de un mes
+     nuevo: la desviación estándar × √(1 + 1/3). Con uno o dos meses va sin
+     margen, y sin ninguno no hay proyección. */
+  proyeccion(meses, mes) {
+    const dias = m => new Date(+m.slice(0, 4), +m.slice(5, 7), 0).getDate();
+    const num = m => +m.slice(0, 4) * 12 + +m.slice(5, 7);
+    const l = meses.filter(x => num(x.mes) < num(mes) && num(mes) - num(x.mes) <= 6)
+      .sort((a, b) => num(a.mes) - num(b.mes)).slice(-3), n = l.length;
+    if (!n) return null;
+    const ys = l.map(x => x.valor / dias(x.mes)), my = ys.reduce((s, v) => s + v, 0) / n;
+    const de = n === 3 ? Math.sqrt(ys.reduce((s, y) => s + Math.pow(y - my, 2), 0) / (n - 1)) : null;
+    return { valor: my * dias(mes), margen: de == null ? null : de * Math.sqrt(1 + 1 / n) * dias(mes), meses: n };
+  },
   delMes: (l, mes) => l.filter(t => t.fecha.slice(0, 7) === mes),
   meses() { return Array.from(new Set(this.lista().map(t => t.fecha.slice(0, 7)))).sort().reverse(); },
   /* Para el Dashboard: el gasto en combustible, con su fecha y su vehículo */
@@ -6043,6 +6077,59 @@ const Vistas = {
       { flush: true, sub: 'Galones de Distracom · ' + esc(p === 'mes' ? Fecha.mes(HOY).toLowerCase() : p === 'anio' ? String(HOY.getFullYear()) : 'este trimestre'),
         act: '<span class="link fs12" data-ir="combustible">Ver todo</span>' });
 
+    /* El gasto en combustible de cada mes del año y la proyección del mes en
+       curso (Juan, 02/11/2026; ver Tanqueos.proyeccion). La barra punteada es
+       la proyección, y por dentro va lo que lleva el mes. */
+    const mesHoy = hoyISO.slice(0, 7), anio = mesHoy.slice(0, 4), porMesC = {};
+    Tanqueos.lista().forEach(t => {
+      const m = t.fecha.slice(0, 7), x = porMesC[m] = porMesC[m] || { valor: 0, gal: 0 };
+      x.valor += t.valor;
+      if (!Tanqueos.esUrea(t)) x.gal += t.galones;
+    });
+    const completos = Object.keys(porMesC).filter(m => m < mesHoy).sort().map(m => ({ mes: m, valor: porMesC[m].valor }));
+    const delAnio = completos.filter(x => x.mes.slice(0, 4) === anio), proy = Tanqueos.proyeccion(completos, mesHoy);
+    const vaMes = (porMesC[mesHoy] || { valor: 0 }).valor;
+    let historico;
+    /* En enero, sin meses del año ni tanqueos del mes, igual va la proyección
+       con los meses del año anterior */
+    if (!delAnio.length && !vaMes && !proy) historico = UI.empty('fuel', 'Sin tanqueos este año', 'Se llena con el informe de Distracom, en Combustible.');
+    else {
+      const mesesC = [];
+      for (let m = (delAnio[0] || { mes: mesHoy }).mes; m <= mesHoy; m = Fecha.iso(new Date(+m.slice(0, 4), +m.slice(5, 7), 1)).slice(0, 7)) mesesC.push(m);
+      const alto = delAnio.reduce((a, x) => (!a || x.valor > a.valor ? x : a), null);
+      const topeH = Math.max.apply(null, delAnio.map(x => x.valor).concat([vaMes, proy ? proy.valor + (proy.margen || 0) : 0, 1]));
+      const pct = v => Math.max(2, Math.round(v / topeH * 100));
+      const nomMes = m => Fecha.parse(m + '-01').toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
+      const mesLargo = m => Fecha.mes(Fecha.parse(m + '-01'), true);
+      const res = (l, v, d) => '<div><small>' + esc(l) + '</small><b>' + v + '</b>' + (d ? '<span>' + d + '</span>' : '') + '</div>';
+      const totalAnio = delAnio.reduce((s, x) => s + x.valor, 0), va = vaMes ? 'lo que va de ' + esc(mesLargo(mesHoy).toLowerCase()) : '';
+      const vaTxt = vaMes ? 'van ' + Money.compacto(vaMes) : 'sin tanqueos del mes todavía';
+      historico = '<div class="hc-res">' +
+          res('Gastado en ' + anio, totalAnio + vaMes ? esc(Money.compacto(totalAnio + vaMes)) : '—', delAnio.length
+            ? delAnio.length + (delAnio.length === 1 ? ' mes completo' : ' meses completos') + (va ? ' y ' + va : '')
+            : va ? va.charAt(0).toUpperCase() + va.slice(1) : 'Sin tanqueos todavía') +
+          res('Promedio por mes', delAnio.length ? esc(Money.compacto(totalAnio / delAnio.length)) : '—', 'De los meses completos') +
+          res('Mes más alto', alto ? esc(mesLargo(alto.mes)) : '—', alto ? esc(Money.compacto(alto.valor)) : '') +
+          res('Proyección de ' + mesLargo(mesHoy).toLowerCase(), proy ? '≈ ' + esc(Money.compacto(proy.valor)) : '—',
+            proy ? (proy.margen != null ? '± ' + esc(Money.compacto(proy.margen)) + ' · ' : '') + esc(vaTxt) : 'Sin tanqueos en los 6 meses anteriores') +
+        '</div>' +
+        '<div class="cols cols-c">' + mesesC.map(m => {
+          const x = porMesC[m];
+          if (m === mesHoy) {
+            if (!proy) return '<div class="col col-proy" title="' + attr(mesLargo(m) + ': ' + vaTxt) + '">' + (vaMes ? '<i style="height:' + pct(vaMes) + '%"></i>' : '') + '</div>';
+            return '<div class="col col-proy" title="' + attr(mesLargo(m) + ': proyección ' + Money.format(proy.valor) + (proy.margen != null ? ' (± ' + Money.format(proy.margen) + ')' : '') +
+                ' · ' + vaTxt) + '"><span>≈ ' + esc(Money.compacto(proy.valor)) + '</span>' +
+              '<i class="proy" style="height:' + pct(proy.valor) + '%">' + (vaMes ? '<b style="height:' + Math.min(100, Math.round(vaMes / proy.valor * 100)) + '%"></b>' : '') + '</i></div>';
+          }
+          return '<div class="col' + (alto && m === alto.mes ? ' col-max' : '') + '" title="' + attr(mesLargo(m) + ': ' + (x ? Money.format(x.valor) + ' · ' + Tanqueos.galTxt(x.gal) : 'sin tanqueos')) + '">' +
+            (x ? '<span>' + esc(Money.compacto(x.valor)) + '</span><i style="height:' + pct(x.valor) + '%"></i>' : '') + '</div>';
+        }).join('') + '</div>' +
+        '<div class="cols-x">' + mesesC.map(m => '<span' + (m === mesHoy ? ' class="proy"' : '') + '>' + esc(nomMes(m)) + '</span>').join('') + '</div>';
+    }
+    const historicoC = UI.card('Gasto en combustible por mes', historico, { sub: 'Distracom · ' + anio, act: '<span class="link fs12" data-ir="combustible">Ver todo</span>',
+      pie: proy ? '<span><span class="hc-ley"></span>La punteada es la proyección: el promedio por día ' +
+        (proy.meses === 1 ? 'del último mes' : 'de los últimos ' + proy.meses + ' meses') + ' con tanqueos, por los días del mes. Por dentro, lo que va del mes.</span>' : '' });
+
     /* El rendimiento de cada vehículo que sale en los tanqueos, de mayor a
        menor, con el promedio de la flota (Juan, 01/11/2026: todos, mientras la
        flota sea pequeña). En amarillo, los que rinden menos que el promedio;
@@ -6106,6 +6193,7 @@ const Vistas = {
           cum('Revisión de comparendos de ' + mesTxt, compRev, compU.length, 'comparendos') +
           cum('Dotación revisada en ' + mesTxt, dotOk, conDot.length, 'flota'), { flush: true, sub: Fecha.mes() }) +
       '</div>' +
+      '<div class="mb16">' + historicoC + '</div>' +
       '<div class="grid g2 mb16">' + consumo + rendimiento + '</div>' +
       '<div class="grid g2">' +
         pronto('Mayor gasto en llantas', 'Por vehículo', 'Cuando se registren las llantas.', 'pronto/llantas', [80, 57, 41, 26]) +
