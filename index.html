@@ -148,21 +148,6 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#37454f}
 .tb-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tb-sub{color:var(--text-3);font-size:11.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tb-spacer{flex:1}
-.gsearch{position:relative;width:320px;max-width:34vw}
-.gsearch input{width:100%;height:34px;padding:0 44px 0 32px;border:1px solid var(--border);
-  background:var(--surface-2);border-radius:var(--radius);font-size:13px;transition:var(--t-fast)}
-.gsearch input:focus{outline:none;border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px var(--accent-soft)}
-.gsearch .gi{position:absolute;left:9px;top:8.5px;color:var(--text-3);pointer-events:none}
-.gsearch kbd{position:absolute;right:8px;top:8px;font-size:10px;font-family:var(--mono);color:var(--text-3);
-  border:1px solid var(--border);border-radius:4px;padding:1px 4px;background:var(--surface)}
-.gsr{position:absolute;top:calc(100% + 6px);left:0;width:480px;background:var(--surface);border:1px solid var(--border-strong);
-  border-radius:var(--radius-lg);box-shadow:var(--sh-pop);max-height:70vh;overflow-y:auto;z-index:90;padding:6px}
-.gsr-g{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);padding:9px 10px 4px}
-.gsr-i{padding:7px 10px;border-radius:6px;cursor:pointer;display:flex;gap:10px;align-items:center;font-size:12.5px}
-.gsr-i:hover{background:var(--accent-soft)}
-.gsr-i .gi-m{margin-left:auto;font-size:11px;color:var(--text-3);white-space:nowrap}
-.gsr-i .gi-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gsr-i > svg{color:var(--text-3);flex:0 0 auto}
 .demo{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;
   background:var(--violet-50);color:var(--violet-500);font-size:11px;font-weight:700;white-space:nowrap;cursor:help}
 @media (max-width:1100px){ .demo span{display:none} .demo{padding:0 7px} }
@@ -171,16 +156,6 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#37454f}
 .page-head h1{font-size:20px;letter-spacing:-.02em}
 .page-head .ph-sub{color:var(--text-3);font-size:12.5px;margin-top:2px}
 .page-head .ph-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-/* Menú «Registrar» de la barra superior */
-.menu-wrap{position:relative}
-.menu-pop{position:absolute;right:0;top:calc(100% + 6px);width:290px;background:var(--surface);border:1px solid var(--border-strong);
-  border-radius:var(--radius-lg);box-shadow:var(--sh-pop);padding:6px;z-index:90;display:none}
-.menu-pop.open{display:block;animation:pop .14s cubic-bezier(.2,.8,.3,1)}
-.menu-i{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600}
-.menu-i:hover{background:var(--accent-soft)}
-.menu-i > svg{color:var(--accent);flex:0 0 auto}
-.menu-i small{display:block;color:var(--text-3);font-size:11px;font-weight:400;margin-top:1px}
-.menu-sep{height:1px;background:var(--border);margin:5px 6px}
 
 /* ==========================================================================
    §UI-2  COMPONENTES (los mismos de caja menor)
@@ -418,6 +393,17 @@ html[data-theme="dark"] .a-info{color:var(--info-500)}
 .seg button.on{background:var(--accent);color:#fff}
 .seg-n{font-size:10.5px;opacity:.6;font-variant-numeric:tabular-nums}
 .seg button.on .seg-n{opacity:.85}
+/* Flota: la búsqueda y el filtro de estado en una sola caja (ver Vistas.flota) */
+.fbusca{display:flex;align-items:center;height:34px;width:380px;max-width:100%;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  background:var(--surface);overflow:hidden;transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+.fbusca:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.fbusca > svg{flex:0 0 auto;margin:0 7px 0 10px;color:var(--text-3)}
+.fbusca input{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;font:inherit;font-size:12.5px;color:var(--text)}
+.fbusca select{flex:0 0 auto;max-width:165px;height:100%;border:0;border-left:1px solid var(--border);outline:0;background:var(--surface-2);
+  font:inherit;font-size:12px;font-weight:600;color:var(--text-2);padding:0 8px;cursor:pointer}
+.seg-ic button{height:34px;padding:0 9px}
+.ftipos{margin-bottom:16px}
+@media(max-width:860px){.fbusca{width:100%;order:-1}.ph-actions:has(.fbusca){flex:1 1 100%;margin-left:0}}
 .search-inline{position:relative}
 .search-inline > svg{position:absolute;left:9px;top:8.5px;color:var(--text-3);pointer-events:none}
 .search-inline .inp{padding-left:30px;width:230px}
@@ -444,9 +430,6 @@ html[data-theme="dark"] .tx-ok{color:var(--ok-500)!important}
   .sidebar.open{transform:none;box-shadow:var(--sh-3)}
   .main{margin-left:0}
   .content{padding:14px 14px 60px}
-  .gsearch{width:auto;flex:1;max-width:none}
-  .gsearch kbd{display:none}
-  .gsr{width:min(92vw,480px)}
   .menu-btn{display:grid!important}
   .tb-titulos{display:none}
 }
@@ -495,6 +478,9 @@ html[data-theme="dark"] .uc-tag{background:rgba(13,19,25,.8);color:#dfe8ee}
    lleva a esa unidad (ver Vistas.pieQuien y Vistas.pieEnganche) */
 .uc-f [data-act]:hover,.uc-f [data-ir]:hover{color:var(--text)}
 .uc-rel b{color:var(--accent);font-weight:650}
+/* Las iniciales, en el centro del círculo: la regla de los textos del pie lo
+   volvía flex y las corría a la izquierda (Juan, 02/11/2026) */
+.uc-f .av{display:grid;place-items:center}
 .uc-f:has(+ .uc-f2){padding-bottom:3px}
 .uc-f2{border-top:0;padding-top:0;justify-content:flex-start}
 /* Selección de unidades para eliminarlas: casilla en cada foto o fila y una
@@ -543,6 +529,9 @@ html[data-theme="dark"] table.tbl tbody tr.sel td{background:#172133}
 .fact small{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3)}
 .fact b{display:block;font-size:13px;font-weight:650;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fact > span{display:block;font-size:11.5px;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Un enlace dentro de la línea de abajo (el «Se cambia en» del remolque) va
+   en el mismo renglón */
+.fact > span b{display:inline;font-size:inherit;margin-top:0}
 /* El remolque del camión (o el camión del remolque), debajo de los datos */
 .uh-rem{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding:8px 11px;border:1px solid var(--border);border-radius:10px;
   background:var(--surface-2);font-size:13px;color:var(--text-2)}
@@ -4657,27 +4646,13 @@ const Shell = {
           '<button class="menu-btn" data-act="menu" aria-label="Abrir el menú">' + Icon('menu', '', 16) + '</button>' +
           '<div class="tb-titulos" style="min-width:0"><div class="tb-title" id="tbTitle"></div><div class="tb-sub" id="tbSub"></div></div>' +
           '<div class="tb-spacer"></div>' +
-          '<div class="gsearch"><span class="gi">' + Icon('search', '', 15) + '</span>' +
-            '<input id="gq" placeholder="Buscar placa, conductor o proveedor…" autocomplete="off"><kbd>Ctrl K</kbd>' +
-            '<div class="gsr hidden" id="gsr"></div></div>' +
           '<span class="demo nube" id="estadoNube" title="Todo quedó guardado en la nube y se ve igual desde cualquier equipo.">' +
             Icon('nube', '', 13) + '<span>Guardado en la nube</span></span>' +
           '<button class="btn btn-icon" data-act="tema" id="btnTema" title="Cambiar a tema claro u oscuro">' +
             Icon(document.documentElement.getAttribute('data-theme') === 'dark' ? 'sun' : 'moon', '', 15) + '</button>' +
-          '<div class="menu-wrap"><button class="btn btn-primary" data-act="registrar">' + Icon('plus', '', 14) + 'Registrar' + Icon('chevD', '', 12) + '</button>' +
-            '<div class="menu-pop" id="menuReg">' + this.menuRegistrar() + '</div></div>' +
         '</header>' +
         '<main class="content" id="vista"></main>' +
       '</div>';
-  },
-  menuRegistrar() {
-    const it = (act, ic, t, s) => '<div class="menu-i" data-act="' + act + '">' + Icon(ic, '', 17) + '<div>' + t + '<small>' + s + '</small></div></div>';
-    return it('nuevoDocumento', 'upload', 'Documento', 'SOAT, tecnomecánica, póliza, licencia…') +
-      it('nuevoPreventivo', 'tool', 'Mantenimiento preventivo', 'Cambio de aceite y PDF de Navitrans') +
-      it('nuevoCorrectivo', 'camera', 'Mantenimiento correctivo', 'Taller, fotos y PDF del historial') +
-      it('nuevaInspeccion', 'clipboard', 'Inspección visual', 'Con el conductor, en la bodega') +
-      '<div class="menu-sep"></div>' +
-      it('nuevaUnidad', 'truck', 'Unidad', 'Vehículo, máquina, remolque o canoa');
   },
   nav(activa) {
     const n = Q.conteos();
@@ -4693,34 +4668,6 @@ const Shell = {
     $('#tbTitle').textContent = t;
     $('#tbSub').textContent = s || '';
     document.title = t + ' · Sistema de Gestión de Flota';
-  },
-  cerrarMenus() {
-    $$('.menu-pop.open').forEach(m => m.classList.remove('open'));
-    const g = $('#gsr'); if (g) g.classList.add('hidden');
-  }
-};
-
-const Buscador = {
-  montar() {
-    const q = $('#gq');
-    q.addEventListener('input', () => this.pintar(q.value));
-    q.addEventListener('focus', () => { if (q.value.trim()) this.pintar(q.value); });
-  },
-  pintar(txt) {
-    const box = $('#gsr'), t = txt.trim().toLowerCase();
-    if (!t) { box.classList.add('hidden'); return; }
-    const us = Datos.unidades.filter(u => [u.placa, UI.placaTxt(u), u.marca, u.linea, u.clase, u.alias].join(' ').toLowerCase().includes(t)).slice(0, 6);
-    const cs = Datos.conductores.filter(c => (c.nombre + ' ' + c.cedula).toLowerCase().includes(t)).slice(0, 4);
-    const ps = Datos.proveedores.filter(p => (p.nombre + ' ' + p.servicio).toLowerCase().includes(t)).slice(0, 4);
-    let h = '';
-    if (us.length) h += '<div class="gsr-g">Unidades</div>' + us.map(u => '<div class="gsr-i" data-ir="unidad/' + u.id + '">' + UI.thumb(u) +
-      '<span class="gi-t"><b class="mono">' + esc(UI.placaTxt(u)) + '</b> · ' + esc(u.clase + ' ' + UI.nombre(u)) + '</span><span class="gi-m">' + esc(TIPOS[u.tipo].corto) + '</span></div>').join('');
-    if (cs.length) h += '<div class="gsr-g">Conductores</div>' + cs.map(c => '<div class="gsr-i" data-act="verConductor" data-c="' + c.id + '"><span class="av">' +
-      esc(UI.iniciales(c.nombre)) + '</span><span class="gi-t">' + esc(c.nombre) + '</span><span class="gi-m">CC ' + esc(c.cedula) + '</span></div>').join('');
-    if (ps.length) h += '<div class="gsr-g">Proveedores</div>' + ps.map(p => '<div class="gsr-i" data-act="verProveedor" data-p="' + p.id + '">' + Icon('briefcase', '', 16) +
-      '<span class="gi-t">' + esc(p.nombre) + '</span><span class="gi-m">' + esc(p.servicio) + '</span></div>').join('');
-    box.innerHTML = h || '<div class="empty" style="padding:18px"><p>Nada coincide con «' + esc(txt) + '».</p></div>';
-    box.classList.remove('hidden');
   }
 };
 
@@ -6169,21 +6116,21 @@ const Vistas = {
     const segTipos = [['todas', 'Todas']].concat(ORDEN.map(t => [t, TIPOS[t].corto]));
     const estados = [['todos', 'Todos los estados'], ['bad', 'Con documentos vencidos'], ['warn', 'Por vencer'], ['miss', 'Les falta un documento'], ['ok', 'Al día'], ['nr', 'Sin documentos obligatorios']];
     const html =
+      /* Todo en un solo lugar (Juan, 02/11/2026): la búsqueda con el filtro
+         de estado, la vista en fotos o en lista, seleccionar y nueva unidad;
+         los tipos, en pestañas debajo */
       UI.head('Flota', Datos.unidades.length + ' unidades · ' + (f.sel ? 'haga clic en las que quiera seleccionar' : 'haga clic en una para ver toda su información'),
-        '<div class="seg">' +
-          '<button class="' + (f.modo === 'fotos' ? 'on' : '') + '" data-act="modoFlota" data-v="fotos">' + Icon('grid', '', 13) + 'Fotos</button>' +
-          '<button class="' + (f.modo === 'lista' ? 'on' : '') + '" data-act="modoFlota" data-v="lista">' + Icon('list', '', 13) + 'Lista</button>' +
+        '<div class="fbusca">' + Icon('search', '', 14) + '<input id="fQ" placeholder="Placa, marca o clase…" value="' + attr(f.q) + '" autocomplete="off">' +
+          '<select id="fEstado" title="Filtrar por el estado de los documentos">' + estados.map(e => '<option value="' + e[0] + '"' + (f.estado === e[0] ? ' selected' : '') + '>' + e[1] + '</option>').join('') + '</select></div>' +
+        '<div class="seg seg-ic">' +
+          '<button class="' + (f.modo === 'fotos' ? 'on' : '') + '" data-act="modoFlota" data-v="fotos" title="Ver en fotos" aria-label="Ver en fotos">' + Icon('grid', '', 15) + '</button>' +
+          '<button class="' + (f.modo === 'lista' ? 'on' : '') + '" data-act="modoFlota" data-v="lista" title="Ver en lista" aria-label="Ver en lista">' + Icon('list', '', 15) + '</button>' +
         '</div>' +
         (f.sel ? '<button class="btn" data-act="seleccionarFlota">' + Icon('x', '', 14) + 'Cancelar selección</button>'
-          : '<button class="btn" data-act="seleccionarFlota">' + Icon('checkSquare', '', 14) + 'Seleccionar</button>') +
+          : '<button class="btn btn-icon" data-act="seleccionarFlota" title="Seleccionar unidades para eliminarlas" aria-label="Seleccionar unidades">' + Icon('checkSquare', '', 15) + '</button>') +
         '<button class="btn btn-primary" data-act="nuevaUnidad">' + Icon('plus', '', 14) + 'Nueva unidad</button>') +
-      '<div class="toolbar">' +
-        '<div class="seg">' + segTipos.map(s => '<button class="' + (f.tipo === s[0] ? 'on' : '') + '" data-act="tipoFlota" data-v="' + s[0] + '">' +
-          esc(s[1]) + '<span class="seg-n">' + cuenta(s[0]) + '</span></button>').join('') + '</div>' +
-        '<div class="tb-sp"></div>' +
-        '<select class="inp inp-sm" id="fEstado" style="width:auto">' + estados.map(e => '<option value="' + e[0] + '"' + (f.estado === e[0] ? ' selected' : '') + '>' + e[1] + '</option>').join('') + '</select>' +
-        '<div class="search-inline">' + Icon('search', '', 14) + '<input class="inp inp-sm" id="fQ" placeholder="Placa, marca o clase…" value="' + attr(f.q) + '"></div>' +
-      '</div>' +
+      '<div class="tabs ftipos">' + segTipos.map(s => '<div class="tab' + (f.tipo === s[0] ? ' active' : '') + '" data-act="tipoFlota" data-v="' + s[0] + '">' +
+        esc(s[1]) + '<span class="tb-count">' + cuenta(s[0]) + '</span></div>').join('') + '</div>' +
       '<div id="flotaRes"></div>';
     return {
       titulo: 'Flota', sub: 'Todas las unidades, con su foto', html,
@@ -6980,7 +6927,6 @@ const Acciones = {
     Prefs.set('mini', m);
   },
   menu() { $('#sidebar').classList.toggle('open'); $('#scrim').classList.toggle('on'); },
-  registrar() { $('#menuReg').classList.toggle('open'); },
   cerrarModal(el) { Modal.cerrar(el); },
   tab(el) {
     UIState.tab = el.dataset.tab;
@@ -6994,7 +6940,7 @@ const Acciones = {
   },
   tipoFlota(el) {
     UIState.flota.tipo = el.dataset.v;
-    $$('[data-act="tipoFlota"]').forEach(b => b.classList.toggle('on', b === el));
+    $$('[data-act="tipoFlota"]').forEach(b => b.classList.toggle('active', b === el));
     Vistas.flotaRes();
   },
   /* Seleccionar unidades de la flota para eliminarlas de una vez. Por ahora
@@ -13401,7 +13347,6 @@ const Arranque = {
     }
     $('#sesion').innerHTML = '';
     Shell.render();
-    Buscador.montar();
     Router.pintar();
     Sincro.vigilar();
     Sincro.pintarEstado();
@@ -13456,7 +13401,6 @@ document.addEventListener('click', e => {
   if (act && (!ir || ir.contains(act))) {
     /* Las casillas tienen que poder marcarse: a ellas no se les corta el clic */
     if (act.tagName !== 'INPUT') e.preventDefault();
-    if (act.dataset.act !== 'registrar') Shell.cerrarMenus();
     const fn = Acciones[act.dataset.act];
     if (fn) fn(act, e);
     else Toast.show('Esta parte llega en una próxima versión.', 'warn');
@@ -13465,13 +13409,9 @@ document.addEventListener('click', e => {
   if (ir) {
     e.preventDefault();
     Modal.cerrarTodo();
-    Shell.cerrarMenus();
-    const q = $('#gq'); if (q && ir.closest('#gsr')) q.value = '';
     Router.ir(ir.dataset.ir);
     return;
   }
-  if (!e.target.closest('.menu-wrap')) $$('.menu-pop.open').forEach(m => m.classList.remove('open'));
-  if (!e.target.closest('.gsearch')) { const g = $('#gsr'); if (g) g.classList.add('hidden'); }
 });
 /* Todo lo que se sube se puede arrastrar (Juan, 27/10/2026):
    · a la foto de la ficha: la mitad de la cámara guarda la foto y la otra,
@@ -13558,8 +13498,7 @@ document.addEventListener('change', e => {
   if (t.classList && t.classList.contains('rf-txt')) Registro.describir(Q.unidad(t.dataset.u), t.dataset.f, t.value.trim());
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if (Modal.abierto()) Modal.cerrar(); Shell.cerrarMenus(); }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); const q = $('#gq'); if (q) q.focus(); }
+  if (e.key === 'Escape' && Modal.abierto()) Modal.cerrar();
   if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('uc')) e.target.click();
 });
 /* Solo con la plataforma ya pintada: en la pantalla de entrada o en el formulario del conductor no hay vista */
