@@ -491,6 +491,12 @@ html[data-theme="dark"] .uc-tag{background:rgba(13,19,25,.8);color:#dfe8ee}
   background:var(--surface-2);font-size:11.5px;color:var(--text-3)}
 .uc-f span{display:inline-flex;align-items:center;gap:5px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .uc-f svg{flex:0 0 auto}
+/* En el pie, el conductor abre su ficha y la placa del remolque o del camión
+   lleva a esa unidad (ver Vistas.pieQuien y Vistas.pieEnganche) */
+.uc-f [data-act]:hover,.uc-f [data-ir]:hover{color:var(--text)}
+.uc-rel b{color:var(--accent);font-weight:650}
+.uc-f:has(+ .uc-f2){padding-bottom:3px}
+.uc-f2{border-top:0;padding-top:0;justify-content:flex-start}
 /* Selección de unidades para eliminarlas: casilla en cada foto o fila y una
    franja con «Seleccionar todas» y «Eliminar» */
 .ck{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--ink-400);background:var(--surface);display:inline-grid;place-items:center;flex:0 0 auto;color:#fff}
@@ -3022,6 +3028,17 @@ const Q = {
   unidad: id => Datos.unidades.find(u => u.id === id),
   /* Si se eliminó, se busca en el archivo para que el historial conserve su nombre */
   conductor: id => Datos.conductores.find(c => c.id === id) || ((Datos.archivo || {}).conductores || []).find(c => c.id === id),
+  /* Una sola regla para el conductor de un remolque (Juan, 02/11/2026): es el
+     del camión que lo arrastra, y se cambia en el camión. El que un remolque
+     tuviera guardado antes ya no se usa en ninguna parte. */
+  camionDe: u => Datos.unidades.find(x => x.remolque === u.id),
+  conductorDe(u) {
+    if (u.tipo !== 'remolque') return Q.conductor(u.conductor);
+    const cam = Q.camionDe(u);
+    return cam ? Q.conductor(cam.conductor) : undefined;
+  },
+  /* Las unidades de un conductor, sin remolques: el remolque va con su camión */
+  unidadesDe: id => Datos.unidades.filter(u => u.conductor === id && u.tipo !== 'remolque'),
   proveedor: id => Datos.proveedores.find(p => p.id === id) || ((Datos.archivo || {}).proveedores || []).find(p => p.id === id),
   conComparendos: () => Datos.unidades.filter(u => Config.comparendos.includes(u.tipo)),
   /* Las unidades que dejan ver los filtros de la flota */
@@ -3241,14 +3258,16 @@ const UI = {
     return '<div class="who">' + this.avatar(c) + '<div class="who-t"><b>' + esc(c.nombre) +
       '</b><span>CC ' + esc(c.cedula) + '</span></div></div>';
   },
-  /* La cara de un conductor: su foto de Recursos Humanos en un círculo (con
-     clic, su ficha) o sus iniciales mientras llega o si no se puede ver (ver
-     FotoRH) */
-  avatar(c, cls) {
+  /* La cara de un conductor: su foto de Recursos Humanos en un círculo o sus
+     iniciales, mientras llega o si no tiene (ver FotoRH). Con clic abre su
+     ficha, tenga foto o no (Juan, 02/11/2026). «quieto»: sin clic propio,
+     cuando ya lo tiene lo que lo rodea */
+  avatar(c, cls, quieto) {
     const ruta = c && c.fotoRh, url = FotoRH.url(ruta);
     if (ruta && !url) FotoRH.pedir([ruta]);
-    return '<span class="av' + (cls ? ' ' + cls : '') + '"' + (ruta ? ' data-foto="' + attr(ruta) + '" data-c="' + attr(c.id) + '"' : '') +
-      (url ? ' data-act="verConductor" title="Ver su ficha"' : '') + '>' + (url ? '<img src="' + attr(url) + '" alt="">' : esc(this.iniciales(c ? c.nombre : ''))) + '</span>';
+    return '<span class="av' + (cls ? ' ' + cls : '') + '"' + (ruta ? ' data-foto="' + attr(ruta) + '"' : '') +
+      (c && !quieto ? ' data-act="verConductor" data-c="' + attr(c.id) + '" title="Ver su ficha"' : '') + '>' +
+      (url ? '<img src="' + attr(url) + '" alt="">' : esc(this.iniciales(c ? c.nombre : ''))) + '</span>';
   },
   file(nombre, id) {
     return '<span class="filechip" data-act="verArchivo" data-nombre="' + attr(nombre) + '"' + (id ? ' data-id="' + attr(id) + '"' : '') + ' title="' + attr(nombre) + '">' +
@@ -3400,7 +3419,7 @@ const HojaVida = {
     if (typeof c === 'string') return (u.ficha || {})[c];
     if (c.lectura) { const l = Aceite.actual(u); if (l) return Aceite.fmt(u, l.valor); }
     if (c.de === 'placa') return UI.placaTxt(u);
-    if (c.de === 'conductor') { const x = Q.conductor(u.conductor); return x ? x.nombre : ''; }
+    if (c.de === 'conductor') { const x = Q.conductorDe(u); return x ? x.nombre : ''; }
     if (c.de) return u[c.de];
     if (c.insp) return u.insp ? Fecha.larga(u.insp) : '';
     const v = (u.ficha || {})[c.n];
@@ -6192,7 +6211,10 @@ const Vistas = {
     }).join('');
   },
   tarjeta(u) {
-    const e = Est.unidad(u), ins = Est.insp(u), c = Q.conductor(u.conductor), sel = UIState.flota.sel, on = Boolean(sel && sel.has(u.id));
+    /* El otro lado del enganche: el remolque del camión, o el camión que
+       arrastra al remolque */
+    const otro = u.tipo === 'carga' ? Q.unidad(u.remolque) : u.tipo === 'remolque' ? Q.camionDe(u) : null;
+    const e = Est.unidad(u), ins = Est.insp(u), c = Q.conductorDe(u), sel = UIState.flota.sel, on = Boolean(sel && sel.has(u.id));
     /* Mientras se selecciona, el clic marca la unidad en vez de abrirla */
     return '<article class="uc' + (sel ? ' selecting' + (on ? ' sel' : '') : '') + '" ' +
         (sel ? 'data-act="selUnidad" data-u="' + u.id + '" aria-pressed="' + on + '"' : 'data-ir="unidad/' + u.id + '"') + ' tabindex="0">' +
@@ -6202,21 +6224,38 @@ const Vistas = {
       '<div class="uc-b"><div class="uc-l1">' + UI.placa(u) + '<span class="uc-anio">' + esc(u.modelo || '') + '</span></div>' +
         '<div class="uc-mm">' + esc(UI.nombre(u)) + '</div>' +
         '<div class="uc-docs">' + this.chipsDocs(u) + '</div></div>' +
-      '<div class="uc-f">' + (ConductoresRH.aviso(c, u)
-        ? '<span class="tx-warn" title="' + attr(c.nombre + ' · ' + ConductoresRH.aviso(c, u)) + '">' + Icon('warn', '', 12) + esc(UI.corto(c)) + '</span>'
-        : '<span>' + (c && c.fotoRh && !FotoRH.malas.has(c.fotoRh) ? UI.avatar(c, 'xs') : Icon('user', '', 12)) + esc(UI.corto(c)) + '</span>') +
+      '<div class="uc-f">' + this.pieQuien(u, c, sel) +
         '<span class="' + (ins.k !== 'ok' ? 'tx-' + ins.k : '') + '" title="Última inspección visual">' + Icon('clipboard', '', 12) + esc(u.insp ? Fecha.hace(u.insp) : 'Sin inspección') + '</span></div>' +
+      this.pieEnganche(u, otro, sel) +
     '</article>';
+  },
+  /* El pie de la tarjeta (Juan, 02/11/2026): el conductor, que abre su ficha
+     con clic en su foto o en su nombre; en un remolque, el del camión que lo
+     arrastra. Mientras se seleccionan unidades, nada tiene clic */
+  pieQuien(u, c, sel) {
+    const ver = c && !sel ? ' data-act="verConductor" data-c="' + attr(c.id) + '"' : '', aviso = ConductoresRH.aviso(c, u);
+    if (aviso) return '<span class="tx-warn"' + ver + ' title="' + attr(c.nombre + ' · ' + aviso) + '">' + Icon('warn', '', 12) + esc(UI.corto(c)) + '</span>';
+    return '<span' + ver + (ver ? ' title="Ver su ficha"' : '') + '>' + (c ? UI.avatar(c, 'xs', true) : Icon('user', '', 12)) + esc(UI.corto(c)) + '</span>';
+  },
+  /* El enganche, en una línea más del pie: el remolque del camión, o el
+     camión que arrastra al remolque. Su placa lleva a esa unidad */
+  pieEnganche(u, otro, sel) {
+    if (u.tipo !== 'carga' && u.tipo !== 'remolque') return '';
+    const rem = u.tipo === 'remolque', txt = rem ? 'Lo arrastra' : 'Remolque', ic = Icon(rem ? 'truck' : 'trailer', '', 12);
+    return '<div class="uc-f uc-f2">' + (otro ? '<span class="uc-rel"' + (sel ? '' : ' data-ir="unidad/' + attr(otro.id) + '"') +
+      ' title="' + attr(txt + ' ' + UI.placaTxt(otro) + (otro.clase ? ' · ' + otro.clase : '')) + '">' + ic + txt + ' <b>' + esc(UI.placaTxt(otro)) + '</b></span>'
+      : '<span>' + ic + (rem ? 'Ningún camión' : 'Sin remolque') + '</span>') + '</div>';
   },
   flotaTabla(lista) {
     const sel = UIState.flota.sel;
     return '<div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr>' + (sel ? '<th class="td-ck"></th>' : '') +
       '<th>Unidad</th><th>Tipo</th><th>Conductor u operador</th><th>Documentos</th><th>Última inspección</th><th>Estado</th></tr></thead><tbody>' +
       lista.map(u => {
-        const e = Est.unidad(u), i = Est.insp(u), c = Q.conductor(u.conductor), on = Boolean(sel && sel.has(u.id));
+        const e = Est.unidad(u), i = Est.insp(u), c = Q.conductorDe(u), on = Boolean(sel && sel.has(u.id)), cam = u.tipo === 'remolque' && Q.camionDe(u);
         return '<tr class="row-click' + (on ? ' sel' : '') + '" ' + (sel ? 'data-act="selUnidad" data-u="' + u.id + '" aria-pressed="' + on + '"' : 'data-ir="unidad/' + u.id + '"') + '>' +
           (sel ? '<td class="td-ck">' + UI.ck(on, 11) + '</td>' : '') + '<td>' + UI.unidadCelda(u) + '</td><td>' + esc(TIPOS[u.tipo].nombre) + '</td>' +
-          '<td>' + esc(c ? c.nombre : 'Sin asignar') + (ConductoresRH.aviso(c, u) ? '<div class="dias d-warn">' + esc(ConductoresRH.aviso(c, u)) + '</div>' : '') + '</td>' +
+          '<td>' + esc(c ? c.nombre : 'Sin asignar') + (ConductoresRH.aviso(c, u) ? '<div class="dias d-warn">' + esc(ConductoresRH.aviso(c, u)) + '</div>'
+            : u.tipo === 'remolque' ? '<div class="dias">' + (cam ? 'Del camión ' + esc(UI.placaTxt(cam)) : 'Ningún camión lo arrastra') + '</div>' : '') + '</td>' +
           '<td><div class="uc-docs" style="margin:0">' + this.chipsDocs(u) + '</div></td>' +
           '<td class="nowrap">' + esc(u.insp ? Fecha.corta(u.insp) : '—') + '<div class="dias d-' + i.k + '">' + esc(Fecha.hace(u.insp)) + '</div></td>' +
           '<td>' + UI.pill(e.k, e.txt) + '</td></tr>';
@@ -6234,7 +6273,7 @@ const Vistas = {
         '<button class="btn btn-sm" data-act="cambiarRemolque" data-u="' + attr(u.id) + '">' + (r ? 'Cambiar' : 'Escoger') + '</button></div>';
     }
     if (u.tipo === 'remolque') {
-      const c = Datos.unidades.find(x => x.remolque === u.id);
+      const c = Q.camionDe(u);
       return '<div class="uh-rem">' + Icon('truck', '', 14) + '<small>Lo arrastra</small>' + (c ? ver(c) : '<span class="txt-3">Ningún camión</span>') + '</div>';
     }
     return '';
@@ -6245,7 +6284,7 @@ const Vistas = {
     const u = Q.unidad(id);
     if (!u) return { titulo: 'Unidad', html: '<div class="card">' + UI.empty('truck', 'No se encontró la unidad', '<span class="link" data-ir="flota">Volver a la flota</span>') + '</div>' };
     if (UIState.unidadId !== id) { UIState.unidadId = id; UIState.tab = 'info'; UIState.act = 'todos'; }
-    const e = Est.unidad(u), ins = Est.insp(u), c = Q.conductor(u.conductor), ret = ConductoresRH.aviso(c, u);
+    const e = Est.unidad(u), ins = Est.insp(u), c = Q.conductorDe(u), ret = ConductoresRH.aviso(c, u), cam = u.tipo === 'remolque' && Q.camionDe(u);
     const mants = Datos.mantenimientos.filter(m => m.unidad === u.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
     const ult = mants[0];
     const compras = Compras.de(u);
@@ -6288,12 +6327,19 @@ const Vistas = {
           '<div><div class="uh-h">' + esc(UI.nombre(u)) + (u.modelo ? ' · ' + esc(u.modelo) : '') + '</div>' +
             '<div class="uh-sub">' + esc([u.clase, u.color].filter(Boolean).join(' · ')) + '</div></div>' +
           '<div class="facts">' +
-            '<div class="fact editable" data-act="cambiarConductor" data-u="' + u.id + '" title="Cambiar el conductor u operador">' +
-              '<small>' + Icon('user', '', 11) + 'Conductor u operador</small>' +
-              '<div class="fact-sel">' + (c && c.fotoRh && !FotoRH.malas.has(c.fotoRh) ? UI.avatar(c, 'xs') : '') +
-                '<span' + (ret ? ' class="tx-warn"' : '') + '>' + esc(c ? c.nombre : 'Sin asignar') + '</span>' + Icon('chevD', '', 13) + '</div>' +
-              '<span' + (ret ? ' class="tx-warn"' : '') + '>' + (ret ? esc(ret) : c ? (c.cat ? 'Licencia ' + esc(c.cat) : 'Sin categoría de licencia') : 'Clic para asignar') +
-              '</span></div>' +
+            /* El del remolque es el del camión que lo arrastra: aquí solo se ve,
+               y se cambia en el camión (ver Q.conductorDe) */
+            (u.tipo === 'remolque'
+              ? '<div class="fact"><small>' + Icon('user', '', 11) + 'Conductor</small>' +
+                  '<div class="fact-sel">' + (c ? UI.avatar(c, 'xs') : '') +
+                    '<span' + (ret ? ' class="tx-warn" title="' + attr(ret) + '"' : '') + '>' + esc(c ? c.nombre : 'Sin asignar') + '</span></div>' +
+                  '<span>' + (cam ? 'Se cambia en <b class="link" data-ir="unidad/' + attr(cam.id) + '">' + esc(UI.placaTxt(cam)) + '</b>' : 'Ningún camión lo arrastra') + '</span></div>'
+              : '<div class="fact editable" data-act="cambiarConductor" data-u="' + u.id + '" title="Cambiar el conductor u operador">' +
+                  '<small>' + Icon('user', '', 11) + 'Conductor u operador</small>' +
+                  '<div class="fact-sel">' + (c ? UI.avatar(c, 'xs') : '') +
+                    '<span' + (ret ? ' class="tx-warn"' : '') + '>' + esc(c ? c.nombre : 'Sin asignar') + '</span>' + Icon('chevD', '', 13) + '</div>' +
+                  '<span' + (ret ? ' class="tx-warn"' : '') + '>' + (ret ? esc(ret) : c ? (c.cat ? 'Licencia ' + esc(c.cat) : 'Sin categoría de licencia') : 'Clic para asignar') +
+                  '</span></div>') +
             fact('clipboard', 'Última inspección', u.insp ? Fecha.corta(u.insp) : 'Sin registro', u.insp ? Fecha.hace(u.insp) : '', ins.k) +
             fact('tool', 'Último mantenimiento', ult ? Fecha.corta(ult.fecha) : 'Sin registros', ult ? (ult.tipo === 'preventivo' ? 'Preventivo · ' : 'Correctivo · ') + ult.trabajo : '') +
             fact('ticket', 'Comparendos del mes', compV, compS, compK) +
@@ -6686,7 +6732,8 @@ const Ventanas = {
           campo('nuPlaca', conPlaca ? 'Placa' : 'Código interno', '', conPlaca ? (tipo === 'remolque' ? 'R12345' : 'ABC123') : (tipo === 'canoa' ? 'CAN-03' : 'MAQ-05')) +
           (tipo === 'canoa' ? campo('nuMarca', 'Nombre de la canoa', '', 'Canoa 03') : campo('nuMarca', 'Marca') + campo('nuLinea', 'Línea')) +
           (tipo === 'canoa' ? '' : campo('nuModelo', 'Modelo (año)', ' inputmode="numeric"') + campo('nuColor', 'Color')) +
-          '<div class="field"><label>Conductor u operador</label><select class="inp" id="nuCond">' + Opc.conductores('', 'Sin asignar', false, tipo) + '</select></div>' +
+          /* El remolque no lleva conductor propio: es el del camión que lo arrastra (ver Q.conductorDe) */
+          (tipo === 'remolque' ? '' : '<div class="field"><label>Conductor u operador</label><select class="inp" id="nuCond">' + Opc.conductores('', 'Sin asignar', false, tipo) + '</select></div>') +
         '</div>' +
         Dz.html('nuDz', 'Foto de la unidad', 'Arrastre la foto aquí o haga clic para buscarla', 'image/*', false) +
         '<div id="nuPrev"></div>';
@@ -6797,7 +6844,7 @@ const Ventanas = {
   /* Cambiar el conductor u operador, de la lista de los que están registrados */
   cambioConductor(u) {
     const c = Q.conductor(u.conductor);
-    const enOtras = id => Datos.unidades.filter(x => x !== u && x.conductor === id).map(x => UI.placaTxt(x));
+    const enOtras = id => Q.unidadesDe(id).filter(x => x !== u).map(x => UI.placaTxt(x));
     const quien = u.tipo === 'maquinaria' ? 'operador' : 'conductor';
     Modal.abrir({
       titulo: 'Cambiar ' + quien, sub: esc(UI.placaTxt(u) + ' · ' + u.clase + ' ' + UI.nombre(u)),
@@ -7360,7 +7407,7 @@ const Formatos = {
 
   /* El historial de una visita al taller, con una foto por cambio */
   correctivo(d) {
-    const u = d.unidad, p = d.prov, c = Q.conductor(u.conductor), conPlaca = u.tipo === 'carga' || u.tipo === 'remolque';
+    const u = d.unidad, p = d.prov, c = Q.conductorDe(u), conPlaca = u.tipo === 'carga' || u.tipo === 'remolque';
     /* La parte que se arregló, marcada en el plano de la unidad */
     const k = Plano.clave(u), partes = d.partes || [], zonas = partes.map(x => (Plano.parte(k, x.k) || {}).zona).filter(Boolean);
     const arreglo = [['Parte del vehículo', partes.length ? partes.map(x => Plano.nombre(u, x)).join(', ') : 'Sin marcar'], ['Componente', d.componente || '—']]
@@ -7857,7 +7904,7 @@ Object.assign(Vistas, {
           '<th>Estado de la licencia</th><th>Cédula</th><th>Unidad asignada</th></tr></thead><tbody>' +
         lista.map(c => {
           const l = Est.doc(c.docs.licencia, 'licencia'), ce = Est.doc(c.docs.cedula, 'cedula');
-          const us = Datos.unidades.filter(u => u.conductor === c.id);
+          const us = Q.unidadesDe(c.id);
           return '<tr class="row-click" data-act="verConductor" data-c="' + c.id + '"><td>' + UI.persona(c) + '</td>' +
             '<td class="nowrap">' + esc(ConductoresRH.tipoTxt(c)) + '</td>' +
             '<td>' + (c.cat ? '<span class="chip">' + Icon('idcard', '', 12) + 'Categoría ' + esc(c.cat) + '</span>' : '<span class="txt-3 nowrap">Sin categoría</span>') + '</td>' +
@@ -8220,7 +8267,7 @@ Object.assign(Ventanas, {
       cuerpo:
         '<div class="row"><div class="field"><label>Unidad</label><select class="inp" id="miU">' + Opc.unidades(u0.id) + '</select></div>' +
         '<div class="field"><label>Fecha</label><input class="inp" type="date" id="miF" value="' + hoyISO + '"></div></div>' +
-        '<div class="field"><label>Conductor que acompañó</label><select class="inp" id="miC">' + Opc.conductores(u0.conductor || '', 'Sin conductor', false, u0.tipo) + '</select></div>' +
+        '<div class="field"><label>Conductor que acompañó</label><select class="inp" id="miC">' + Opc.conductores((Q.conductorDe(u0) || {}).id || '', 'Sin conductor', false, u0.tipo) + '</select></div>' +
         '<div class="field"><label>Resultado</label><div class="seg" id="miR"><button type="button" class="on" data-v="sin">' + Icon('check', '', 13) + 'Sin novedad</button>' +
           '<button type="button" data-v="con">' + Icon('warn', '', 13) + 'Con novedades</button></div></div>' +
         '<div class="field"><label>Observaciones</label><textarea class="inp" id="miO" placeholder="Lo que se vio en la inspección"></textarea></div>' +
@@ -8236,7 +8283,7 @@ Object.assign(Ventanas, {
     /* Al cambiar de unidad, los conductores de su tipo, con el suyo escogido */
     $('#miU', m).addEventListener('change', e => {
       const u = Q.unidad(e.target.value);
-      if (u) $('#miC', m).innerHTML = Opc.conductores(u.conductor || '', 'Sin conductor', false, u.tipo);
+      if (u) $('#miC', m).innerHTML = Opc.conductores((Q.conductorDe(u) || {}).id || '', 'Sin conductor', false, u.tipo);
     });
     Dz.bind('miDz', files => { m._fotos = files; Dz.lista('miDz', files); });
   },
@@ -8495,7 +8542,7 @@ Object.assign(Ventanas, {
      para ver y sin el salario. Se abre con clic en el conductor o en su foto.
      Los datos de RH se piden al abrirla y no se guardan en ninguna parte. */
   async conductor(c) {
-    const us = Datos.unidades.filter(u => u.conductor === c.id);
+    const us = Q.unidadesDe(c.id);
     const l = Est.doc(c.docs.licencia, 'licencia'), ruta = c.fotoRh, retirado = ConductoresRH.retirado(c);
     const fila = t => {
       const d = c.docs[t], s = Est.doc(d, t), tiene = d && d.archivo;
@@ -12532,8 +12579,6 @@ const FotoRH = {
     $$('[data-foto]').forEach(el => {
       if (el.dataset.foto !== ruta || !url) return;
       el.innerHTML = '<img src="' + attr(url) + '" alt="">';
-      el.dataset.act = 'verConductor';
-      el.title = 'Ver su ficha';
     });
   }
 };
