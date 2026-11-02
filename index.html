@@ -735,12 +735,45 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb .ph svg{width:84%}
 .av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);
-  color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.02em}
+  color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.02em;position:relative;overflow:hidden}
 .av.lg{width:46px;height:46px;font-size:15px}
-/* La foto de Recursos Humanos en el círculo (ver FotoRH); con clic se ve en grande */
-.av img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+/* La foto de Recursos Humanos llena el círculo (ver FotoRH). Las de RH vienen
+   en su tamaño, casi siempre verticales: sin el «absolute» la foto crecía a lo
+   alto y se salía de la fila (Juan, 02/11/2026). Se recorta un poco por encima
+   del centro, donde suele estar la cara */
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
 .av.xs{width:18px;height:18px;font-size:8px;vertical-align:middle}
-.av[data-act]{cursor:zoom-in}
+.av[data-act]{cursor:pointer}
+/* La ficha del conductor (ver Ventanas.conductor): la foto y la unidad a la
+   izquierda, la licencia, los documentos y sus datos de Recursos Humanos a la
+   derecha. En el celular, uno debajo del otro */
+.rhf{display:grid;grid-template-columns:240px minmax(0,1fr);gap:22px;align-items:start}
+.rhf-izq{position:sticky;top:0;text-align:center}
+.rhf-foto{aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:var(--accent-soft);box-shadow:var(--sh-2);display:grid;place-items:center}
+.rhf-foto .lupa{display:block;width:100%;height:100%;border-radius:0;box-shadow:none}
+.rhf-foto .lupa > img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
+.rhf-ini{font-size:64px;font-weight:700;color:var(--accent);letter-spacing:.02em}
+.rhf-nom{font-size:15px;font-weight:700;margin-top:14px;line-height:1.3}
+.rhf-sub{font-size:12px;color:var(--text-3);margin-top:3px}
+.rhf-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px}
+.rhf-und{margin-top:18px;text-align:left}
+.rhf-und .l,.rhf-cat .l{display:block;font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.rhf-und .mrow,.rhf-und .mrow:last-child{border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;margin-bottom:6px}
+.rhf-und .vacio{font-size:12.5px;color:var(--text-3)}
+.rhf-cat{padding:12px 16px;border-bottom:1px solid var(--border)}
+.rhf-der{display:grid;gap:14px;min-width:0}
+.rhf-campos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 16px}
+@media(max-width:1060px){.rhf-campos{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.rhf-campo .l{font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.rhf-campo .v{font-size:13px;font-weight:500;color:var(--text);word-break:break-word}
+.rhf-campo .v.vacio{color:var(--text-3);font-weight:400}
+.rhf-campo .v.falta{color:var(--warn-700)}
+@media(max-width:760px){
+  .rhf{grid-template-columns:minmax(0,1fr);gap:16px}
+  .rhf-izq{position:static}
+  .rhf-foto{width:min(180px,55vw);margin:0 auto}
+  .rhf-campos{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 
 /* Dashboard (antes Inicio) */
 .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
@@ -3209,13 +3242,13 @@ const UI = {
       '</b><span>CC ' + esc(c.cedula) + '</span></div></div>';
   },
   /* La cara de un conductor: su foto de Recursos Humanos en un círculo (con
-     clic, en grande) o sus iniciales mientras llega o si no se puede ver (ver
+     clic, su ficha) o sus iniciales mientras llega o si no se puede ver (ver
      FotoRH) */
   avatar(c, cls) {
     const ruta = c && c.fotoRh, url = FotoRH.url(ruta);
     if (ruta && !url) FotoRH.pedir([ruta]);
     return '<span class="av' + (cls ? ' ' + cls : '') + '"' + (ruta ? ' data-foto="' + attr(ruta) + '" data-c="' + attr(c.id) + '"' : '') +
-      (url ? ' data-act="verFotoConductor" title="Ver la foto"' : '') + '>' + (url ? '<img src="' + attr(url) + '" alt="">' : esc(this.iniciales(c ? c.nombre : ''))) + '</span>';
+      (url ? ' data-act="verConductor" title="Ver su ficha"' : '') + '>' + (url ? '<img src="' + attr(url) + '" alt="">' : esc(this.iniciales(c ? c.nombre : ''))) + '</span>';
   },
   file(nombre, id) {
     return '<span class="filechip" data-act="verArchivo" data-nombre="' + attr(nombre) + '"' + (id ? ' data-id="' + attr(id) + '"' : '') + ' title="' + attr(nombre) + '">' +
@@ -8455,9 +8488,15 @@ Object.assign(Ventanas, {
     pintar();
   },
 
-  conductor(c) {
+  /* La ficha del conductor, como la de Recursos Humanos (Juan, 02/11/2026): a
+     la izquierda su foto, con la lupa, y la unidad que maneja; a la derecha
+     lo de Flota (la categoría de la licencia y los documentos) y sus datos
+     personales, laborales y de seguridad social, como los muestra RH, solo
+     para ver y sin el salario. Se abre con clic en el conductor o en su foto.
+     Los datos de RH se piden al abrirla y no se guardan en ninguna parte. */
+  async conductor(c) {
     const us = Datos.unidades.filter(u => u.conductor === c.id);
-    const l = Est.doc(c.docs.licencia, 'licencia');
+    const l = Est.doc(c.docs.licencia, 'licencia'), ruta = c.fotoRh, retirado = ConductoresRH.retirado(c);
     const fila = t => {
       const d = c.docs[t], s = Est.doc(d, t), tiene = d && d.archivo;
       return '<div class="req"><div class="req-ic ' + s.k + '">' + Icon(t === 'licencia' ? 'idcard' : 'user', '', 16) + '</div>' +
@@ -8467,52 +8506,37 @@ Object.assign(Ventanas, {
     };
     /* La categoría la maneja Flota: los conductores llegan de Recursos Humanos sin ella */
     const cats = Catalogo.lista('licencias'), opcCat = (c.cat && !cats.includes(c.cat) ? [c.cat] : []).concat(cats);
+    const marco = url => url ? Lupa.html(url, 'Foto de ' + c.nombre) : '<span class="rhf-ini">' + esc(UI.iniciales(c.nombre)) + '</span>';
     const m = Modal.abrir({
-      titulo: c.nombre, sub: 'CC ' + esc(c.cedula) + ' · ' + (c.cat ? 'Licencia categoría ' + esc(c.cat) : 'Sin categoría de licencia'), ancho: 'wide', sinFoco: true,
-      cuerpo: '<div class="flex aic g12 mb16">' + UI.avatar(c, 'lg') +
-          '<div class="f1"><div style="font-size:16px;font-weight:650">' + esc(c.nombre) + '</div><div class="txt-3 fs12">' +
-            esc(ConductoresRH.tipoTxt(c)) + ' · ' + (ConductoresRH.retirado(c) ? 'retirado en Recursos Humanos' : 'viene de Recursos Humanos') + '</div></div>' +
-          /* Sus datos de Recursos Humanos, solo para ver (ver Ventanas.datosRH) */
-          (c.rh != null ? '<button class="btn btn-sm" data-act="verDatosRH" data-c="' + attr(c.id) + '" title="Ver sus datos de Recursos Humanos">' +
-            Icon('eye', '', 13) + 'Datos de RH</button>' : '') +
-          UI.pill(l.k, l.k === 'ok' ? 'Licencia vigente' : 'Licencia: ' + l.txt.toLowerCase()) + '</div>' +
-        '<div class="field mb16"><label for="cfK">Categoría de la licencia</label><div class="flex aic g8">' +
-          '<select class="inp" id="cfK" style="width:auto">' + (c.cat ? '' : '<option value="">Sin escoger</option>') +
-            opcCat.map(k => '<option' + (k === c.cat ? ' selected' : '') + '>' + esc(k) + '</option>').join('') + '</select>' +
-          '<button class="btn btn-sm btn-primary" data-act="guardarCategoria" data-c="' + c.id + '" disabled>' + Icon('save', '', 13) + 'Guardar</button></div></div>' +
-        '<div class="card mb16"><div class="card-h"><h3>Documentos</h3></div><div class="reqs">' + fila('licencia') + fila('cedula') + '</div></div>' +
-        UI.card('Unidades asignadas', us.length ? '<div class="mlist">' + us.map(u => '<div class="mrow" data-ir="unidad/' + u.id + '">' + UI.thumb(u) +
-          '<div class="mrow-t"><b class="mono">' + esc(UI.placaTxt(u)) + '</b><span>' + esc(u.clase + ' · ' + UI.nombre(u)) + '</span></div>' +
-          '<div class="mrow-r">' + Icon('chevR', '', 14) + '</div></div>').join('') + '</div>' : UI.empty('truck', 'Sin unidad asignada', ''), { flush: true }),
-      pie: '<span class="txt-3 fs12 mf-left">El nombre, la cédula y si está activo se cambian en Recursos Humanos.</span>' +
+      titulo: c.nombre, sub: 'CC ' + esc(c.cedula) + ' · ' + (c.cat ? 'Licencia categoría ' + esc(c.cat) : 'Sin categoría de licencia'), ancho: 'xwide', sinFoco: true,
+      cuerpo: '<div class="rhf"><div class="rhf-izq"><div class="rhf-foto" id="rfFoto">' + marco(FotoRH.url(ruta)) + '</div>' +
+          '<div class="rhf-nom">' + esc(c.nombre) + '</div><div class="rhf-sub">' + esc(ConductoresRH.tipoTxt(c)) + ' · CC ' + esc(c.cedula) + '</div>' +
+          '<div class="rhf-pills">' + UI.pill(retirado ? 'bad' : 'ok', retirado ? 'Retirado en RH' : 'Activo') +
+            UI.pill(l.k, l.k === 'ok' ? 'Licencia vigente' : 'Licencia: ' + l.txt.toLowerCase()) + '</div>' +
+          (ruta ? '' : '<div class="rhf-sub">Sin foto en Recursos Humanos</div>') +
+          '<div class="rhf-und"><div class="l">' + (us.length > 1 ? 'Unidades asignadas' : 'Unidad asignada') + '</div>' +
+            (us.length ? us.map(u => '<div class="mrow" data-ir="unidad/' + u.id + '">' + UI.thumb(u) +
+              '<div class="mrow-t"><b class="mono">' + esc(UI.placaTxt(u)) + '</b><span>' + esc(u.clase + ' · ' + UI.nombre(u)) + '</span></div>' +
+              '<div class="mrow-r">' + Icon('chevR', '', 14) + '</div></div>').join('') : '<div class="v vacio">Sin unidad asignada</div>') + '</div></div>' +
+        '<div class="rhf-der">' +
+          '<div class="card"><div class="card-h"><h3>Licencia y documentos</h3></div>' +
+            '<div class="rhf-cat rhf-campo"><label class="l" for="cfK">Categoría de la licencia</label><div class="flex aic g8">' +
+              '<select class="inp" id="cfK" style="width:auto">' + (c.cat ? '' : '<option value="">Sin escoger</option>') +
+                opcCat.map(k => '<option' + (k === c.cat ? ' selected' : '') + '>' + esc(k) + '</option>').join('') + '</select>' +
+              '<button class="btn btn-sm btn-primary" data-act="guardarCategoria" data-c="' + c.id + '" disabled>' + Icon('save', '', 13) + 'Guardar</button></div></div>' +
+            '<div class="reqs">' + fila('licencia') + fila('cedula') + '</div></div>' +
+          (c.rh != null ? '<div class="rhf-der" id="rfDatos"><div class="flex aic g8 txt-2" style="justify-content:center;padding:40px 16px"><span class="spin"></span>' +
+            'Trayendo los datos de Recursos Humanos…</div></div>' : '') + '</div></div>',
+      pie: '<span class="txt-3 fs12 mf-left">La foto, el nombre y los datos personales se cambian en Recursos Humanos.</span>' +
         '<button class="btn" data-act="cerrarModal">Cerrar</button>'
     });
     const s = $('#cfK', m), g = $('[data-act="guardarCategoria"]', m);
     s.addEventListener('change', () => { g.disabled = s.value === (c.cat || ''); });
-  },
-
-  /* La foto de Recursos Humanos en grande, con la lupa (ver FotoRH) */
-  fotoConductor(c) {
-    const url = FotoRH.url(c.fotoRh);
-    Modal.abrir({
-      titulo: c.nombre, sub: 'Foto de Recursos Humanos', ancho: 'wide', sinFoco: true,
-      cuerpo: url ? '<div class="lic-vista">' + Lupa.html(url, 'Foto de ' + c.nombre) + '</div>'
-        : '<div class="alert a-warn">' + Icon('warn') + '<div>No se pudo abrir la foto. Para verla hace falta «ver» en Recursos Humanos.</div></div>',
-      pie: '<span class="txt-3 fs12 mf-left">La foto se cambia en Recursos Humanos.</span><button class="btn" data-act="cerrarModal">Cerrar</button>'
-    });
-  },
-
-  /* Los datos de Recursos Humanos de un conductor, solo para ver (Juan,
-     02/11/2026): datos personales, laborales y de seguridad social, como los
-     muestra RH y sin el salario. Se piden al abrir la ventana y no se guardan
-     en ninguna parte. */
-  async datosRH(c) {
-    const m = Modal.abrir({
-      titulo: c.nombre, sub: 'Datos de Recursos Humanos · solo para ver', ancho: 'xwide', sinFoco: true,
-      cuerpo: '<div id="drCuerpo"><div class="flex aic g8 txt-2" style="justify-content:center;padding:40px 16px"><span class="spin"></span>' +
-        'Trayendo los datos de Recursos Humanos…</div></div>',
-      pie: '<span class="txt-3 fs12 mf-left">Se cambian en Recursos Humanos.</span><button class="btn" data-act="cerrarModal">Cerrar</button>'
-    });
+    /* La foto, si todavía no había llegado (si se abre antes que su círculo) */
+    if (ruta && !FotoRH.url(ruta) && !FotoRH.malas.has(ruta)) {
+      FotoRH.firmar(ruta).then(url => { if (url && document.body.contains(m)) $('#rfFoto', m).innerHTML = marco(url); }).catch(() => {});
+    }
+    if (c.rh == null) return;
     let r = null, error = '';
     try {
       r = await Nube._pedir('rpc/rh_conductor_ficha', { method: 'POST', publico: true, body: JSON.stringify({ p_rh_id: c.rh }) });
@@ -8520,14 +8544,17 @@ Object.assign(Ventanas, {
       error = Sincro.faltaFuncion(e) ? 'Recursos Humanos todavía no comparte estos datos con Flota.' : 'No se pudieron traer los datos: ' + e.message;
     }
     if (!document.body.contains(m)) return;
-    const caja = $('#drCuerpo', m);
+    const caja = $('#rfDatos', m);
     if (!r || !r.ok) {
       caja.innerHTML = '<div class="alert a-warn">' + Icon('warn') + '<div>' + esc(error || (r && r.aviso) || 'No se pudieron traer los datos.') + '</div></div>';
       return;
     }
-    const valor = v => (v == null || v === '' ? '<span class="txt-3">—</span>' : esc(v));
-    caja.innerHTML = '<div class="grid g3">' + (r.secciones || []).map(s => UI.card(esc(s.titulo || ''),
-      '<dl class="dl">' + (s.campos || []).map(f => '<dt>' + esc(f[0]) + '</dt><dd>' + valor(f[1]) + '</dd>').join('') + '</dl>')).join('') + '</div>';
+    /* Lo vacío, que RH manda como «Sin registrar», va más suave; lo que en RH
+       es obligatorio y falta («⚠ Sin información»), en naranja */
+    const valor = v => v == null || v === '' || v === 'Sin registrar' ? '<div class="v vacio">' + (v ? esc(v) : '—') + '</div>'
+      : '<div class="v' + (/^⚠/.test(v) ? ' falta' : '') + '">' + esc(v) + '</div>';
+    caja.innerHTML = (r.secciones || []).map(s => UI.card(esc(s.titulo || ''), '<div class="rhf-campos">' +
+      (s.campos || []).map(f => '<div class="rhf-campo"><div class="l">' + esc(f[0]) + '</div>' + valor(f[1]) + '</div>').join('') + '</div>')).join('');
   },
 
   proveedor(p) {
@@ -9212,8 +9239,6 @@ Object.assign(Acciones, {
     Router.pintar(true);
   },
   verConductor(el) { Ventanas.conductor(Q.conductor(el.dataset.c)); },
-  verFotoConductor(el) { const c = Q.conductor(el.dataset.c); if (c) Ventanas.fotoConductor(c); },
-  verDatosRH(el) { const c = Q.conductor(el.dataset.c); if (c) Ventanas.datosRH(c); },
   verProveedor(el) { Ventanas.proveedor(Q.proveedor(el.dataset.p)); },
 
   /* ---------------------------------------------------- Eliminar de verdad */
@@ -12507,8 +12532,8 @@ const FotoRH = {
     $$('[data-foto]').forEach(el => {
       if (el.dataset.foto !== ruta || !url) return;
       el.innerHTML = '<img src="' + attr(url) + '" alt="">';
-      el.dataset.act = 'verFotoConductor';
-      el.title = 'Ver la foto';
+      el.dataset.act = 'verConductor';
+      el.title = 'Ver su ficha';
     });
   }
 };
