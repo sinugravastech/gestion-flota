@@ -748,7 +748,7 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
    izquierda, la licencia, los documentos y sus datos de Recursos Humanos a la
    derecha. En el celular, uno debajo del otro */
 .rhf{display:grid;grid-template-columns:240px minmax(0,1fr);gap:22px;align-items:start}
-.rhf-izq{position:sticky;top:0;text-align:center}
+.rhf-izq{text-align:center}
 .rhf-foto{aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:var(--accent-soft);box-shadow:var(--sh-2);display:grid;place-items:center}
 .rhf-foto .lupa{display:block;width:100%;height:100%;border-radius:0;box-shadow:none}
 .rhf-foto .lupa > img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
@@ -757,10 +757,25 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 .rhf-sub{font-size:12px;color:var(--text-3);margin-top:3px}
 .rhf-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px}
 .rhf-und{margin-top:18px;text-align:left}
-.rhf-und .l,.rhf-cat .l{display:block;font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.rhf-und .l{display:block;font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
 .rhf-und .mrow,.rhf-und .mrow:last-child{border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;margin-bottom:6px}
 .rhf-und .vacio{font-size:12.5px;color:var(--text-3)}
-.rhf-cat{padding:12px 16px;border-bottom:1px solid var(--border)}
+.rhf-doc-cat{margin-left:auto;flex:0 0 auto;border:0;border-radius:20px;padding:2px 8px;font:inherit;font-size:10.5px;font-weight:700;
+  background:var(--accent-soft);color:var(--accent);cursor:pointer}
+.rhf-doc-cat.sin{background:var(--surface-3);color:var(--text-3)}
+.rhf-doc-cat:hover{filter:brightness(.95)}
+.rhf-lic .req.rhf-doc{display:block;border:1px solid var(--border);border-radius:var(--radius);padding:9px 10px;margin-top:8px}
+.rhf-doc-t{display:flex;align-items:center;gap:7px;font-size:12.5px}
+.rhf-doc-t .req-ic{flex:0 0 24px;width:24px;height:24px;border-radius:7px}
+.rhf-doc .d{display:block;font-size:11px;color:var(--text-3);margin:4px 0 7px}
+.rhf-doc-a{display:flex;align-items:center;gap:6px}
+.rhf-doc-a .btn:last-child{margin-left:auto}
+.rhf-corp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px}
+.rhf-corp .l,.rhf-campo > label.l{display:block}
+.rhf-clave{display:flex;gap:6px;align-items:center}
+.rhf-clave .inp{flex:1;min-width:0}
+@media(max-width:1060px){.rhf-corp{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.rhf-corp{grid-template-columns:minmax(0,1fr)}}
 .rhf-der{display:grid;gap:14px;min-width:0}
 .rhf-campos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 16px}
 @media(max-width:1060px){.rhf-campos{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -770,7 +785,6 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 .rhf-campo .v.falta{color:var(--warn-700)}
 @media(max-width:760px){
   .rhf{grid-template-columns:minmax(0,1fr);gap:16px}
-  .rhf-izq{position:static}
   .rhf-foto{width:min(180px,55vw);margin:0 auto}
   .rhf-campos{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -6721,6 +6735,8 @@ const Ventanas = {
           'Comparendos y accidentes de la unidad.</div></div>' +
         '<div class="row"><div class="field"><label>Fecha de expedición</label><input class="inp" type="date" id="mdExp" value="' + hoyISO + '"></div>' +
         '<div class="field" id="mdVenceF"><label>Vence el</label><input class="inp" type="date" id="mdVence" value="' + R(365) + '"></div></div>' +
+        /* La categoría, con la licencia de un conductor (Juan, 02/11/2026) */
+        '<div class="field" id="mdCatF" hidden><label for="mdCat">Categoría de la licencia</label><select class="inp" id="mdCat" style="width:auto"></select></div>' +
         Dz.html('mdDz', 'Arrastre aquí el PDF o haga clic para buscarlo', 'También sirve una foto del documento', 'application/pdf,image/*', false) +
         '<div id="mdAviso"></div>',
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarDocumento">' + Icon('save', '', 14) + 'Guardar</button>'
@@ -6751,6 +6767,7 @@ const Ventanas = {
       const t = $('#mdTipo', m).value;
       /* Lo que no vence (la tarjeta, el VIN, la cédula…) no lleva «Vence el», ni su espacio (Juan, 27/10/2026) */
       $('#mdVenceF', m).style.display = DOC_TIPOS[t] && DOC_TIPOS[t].vence ? '' : 'none';
+      $('#mdCatF', m).hidden = !($('#mdTit', m).value.startsWith('c:') && t === 'licencia');
       $('#mdTipoH', m).hidden = t !== 'otro';
       if (m._archivo) Dz.lista('mdDz', [m._archivo], destino());
       avisoLugar();
@@ -6758,6 +6775,10 @@ const Ventanas = {
     const pintarTipos = () => {
       const p = $('#mdTit', m).value.split(':');
       const tipos = p[0] === 'c' ? ['licencia', 'cedula'] : (Config.req[Q.unidad(p[1]).tipo] || []).slice();
+      /* La categoría que tiene el conductor, ya escogida */
+      const cd = p[0] === 'c' ? Q.conductor(p[1]) : null, cats = Catalogo.lista('licencias');
+      $('#mdCat', m).innerHTML = '<option value="">Sin escoger</option>' + (cd && cd.cat && !cats.includes(cd.cat) ? [cd.cat] : []).concat(cats)
+        .map(k => '<option' + (cd && k === cd.cat ? ' selected' : '') + '>' + esc(k) + '</option>').join('');
       /* «Otro documento» es solo de unidades, y no es para comparendos ni accidentes */
       $('#mdTipo', m).innerHTML = tipos.map(t => '<option value="' + t + '">' + esc(DOC_TIPOS[t].nombre) + '</option>').join('') +
         (p[0] === 'u' ? '<option value="otro">Otro documento de la unidad (características, manuales, facturas…)</option>' : '');
@@ -7350,13 +7371,17 @@ const Acciones = {
       const renueva = p[0] === 'u' && DOC_TIPOS[t].vence;
       if (renueva) Actividad.renovo(quien, t);
       quien.docs[t] = { archivo: nombre, archivoId: a ? a.id : undefined, vence, expedicion: $('#mdExp', m).value, subido: hoyISO, hora: ahora(), ts: marca() };
+      if (p[0] === 'c' && t === 'licencia') quien.cat = $('#mdCat', m).value;
       if (renueva) Actividad.renovo(quien, t);
     }
-    /* Se cierra todo: si se subió desde la ficha de un conductor, esa ventana
-       ya muestra datos viejos */
+    /* Se cierra todo, pero si se subió desde la ficha de un conductor, esa
+       ficha se vuelve a abrir con el documento nuevo (Juan, 02/11/2026: que
+       no lo saque de ahí) */
+    const fichaDe = $$('#modals .modal-bd').find(x => x.dataset.conductor), cFicha = fichaDe && Q.conductor(fichaDe.dataset.conductor);
     Modal.cerrarTodo();
     Toast.show('Documento guardado: <b>' + esc(nombre) + '</b>' + (a ? '<br>' + esc(Archivos.resumen(a)) : ''));
     Router.pintar(true);
+    if (cFicha) Ventanas.conductor(cFicha);
   },
   nuevaUnidad() { Ventanas.unidad(); },
   guardarUnidad(el) {
@@ -8603,15 +8628,18 @@ Object.assign(Ventanas, {
   async conductor(c) {
     const us = Q.unidadesDe(c.id);
     const l = Est.doc(c.docs.licencia, 'licencia'), ruta = c.fotoRh, retirado = ConductoresRH.retirado(c);
+    /* Cada documento en una fila compacta, para la columna de la izquierda. Es
+       .req para que se le pueda soltar el archivo encima (ver Soltar) */
     const fila = t => {
       const d = c.docs[t], s = Est.doc(d, t), tiene = d && d.archivo;
-      return '<div class="req"><div class="req-ic ' + s.k + '">' + Icon(t === 'licencia' ? 'idcard' : 'user', '', 16) + '</div>' +
-        '<div class="req-t"><b>' + esc(DOC_TIPOS[t].nombre) + '</b><span>' + (tiene ? (d.vence ? 'Vence el ' + esc(Fecha.larga(d.vence)) + ' · ' + esc(s.det) : 'No vence') : 'Todavía no se ha subido') + '</span></div>' +
-        '<div class="req-a">' + UI.pill(s.k, s.txt) + (tiene ? UI.file(d.archivo, d.archivoId) : '') +
+      return '<div class="req rhf-doc"><div class="rhf-doc-t"><span class="req-ic ' + s.k + '">' + Icon(t === 'licencia' ? 'idcard' : 'user', '', 14) + '</span>' +
+          '<b>' + esc(DOC_TIPOS[t].nombre) + '</b>' +
+          (t === 'licencia' ? '<button type="button" class="rhf-doc-cat' + (c.cat ? '' : ' sin') + '" data-act="cambiarCategoria" data-c="' + attr(c.id) + '" title="Cambiar la categoría">' +
+            esc(c.cat || 'Sin categoría') + '</button>' : '') + '</div>' +
+        '<span class="d">' + (tiene ? (d.vence ? 'Vence el ' + esc(Fecha.corta(d.vence)) + ' · ' + esc(s.det) : 'No vence') : 'Todavía no se ha subido') + '</span>' +
+        '<div class="rhf-doc-a">' + UI.pill(s.k, s.txt) + (tiene ? UI.fileIc(d.archivo, d.archivoId) : '') +
           '<button class="btn btn-sm' + (s.k === 'ok' ? '' : ' btn-primary') + '" data-act="nuevoDocumento" data-c="' + c.id + '" data-t="' + t + '">' + (tiene ? 'Renovar' : 'Subir') + '</button></div></div>';
     };
-    /* La categoría la maneja Flota: los conductores llegan de Recursos Humanos sin ella */
-    const cats = Catalogo.lista('licencias'), opcCat = (c.cat && !cats.includes(c.cat) ? [c.cat] : []).concat(cats);
     const marco = url => url ? Lupa.html(url, 'Foto de ' + c.nombre) : '<span class="rhf-ini">' + esc(UI.iniciales(c.nombre)) + '</span>';
     const m = Modal.abrir({
       titulo: c.nombre, sub: 'CC ' + esc(c.cedula) + ' · ' + (c.cat ? 'Licencia categoría ' + esc(c.cat) : 'Sin categoría de licencia'), ancho: 'xwide', sinFoco: true,
@@ -8623,21 +8651,48 @@ Object.assign(Ventanas, {
           '<div class="rhf-und"><div class="l">' + (us.length > 1 ? 'Unidades asignadas' : 'Unidad asignada') + '</div>' +
             (us.length ? us.map(u => '<div class="mrow" data-ir="unidad/' + u.id + '">' + UI.thumb(u) +
               '<div class="mrow-t"><b class="mono">' + esc(UI.placaTxt(u)) + '</b><span>' + esc(u.clase + ' · ' + UI.nombre(u)) + '</span></div>' +
-              '<div class="mrow-r">' + Icon('chevR', '', 14) + '</div></div>').join('') : '<div class="v vacio">Sin unidad asignada</div>') + '</div></div>' +
+              '<div class="mrow-r">' + Icon('chevR', '', 14) + '</div></div>').join('') : '<div class="v vacio">Sin unidad asignada</div>') + '</div>' +
+          /* La licencia y los documentos, debajo de la unidad (Juan, 02/11/2026) */
+          '<div class="rhf-und rhf-lic"><div class="l">Licencia y documentos</div>' + fila('licencia') + fila('cedula') + '</div></div>' +
         '<div class="rhf-der">' +
-          '<div class="card"><div class="card-h"><h3>Licencia y documentos</h3></div>' +
-            '<div class="rhf-cat rhf-campo"><label class="l" for="cfK">Categoría de la licencia</label><div class="flex aic g8">' +
-              '<select class="inp" id="cfK" style="width:auto">' + (c.cat ? '' : '<option value="">Sin escoger</option>') +
-                opcCat.map(k => '<option' + (k === c.cat ? ' selected' : '') + '>' + esc(k) + '</option>').join('') + '</select>' +
-              '<button class="btn btn-sm btn-primary" data-act="guardarCategoria" data-c="' + c.id + '" disabled>' + Icon('save', '', 13) + 'Guardar</button></div></div>' +
-            '<div class="reqs">' + fila('licencia') + fila('cedula') + '</div></div>' +
+          /* El celular y el correo corporativos que se le entregan, la clave de
+             ese correo y las observaciones (Juan, 02/11/2026). Los maneja Flota
+             (quedan en conductores.extra, que no lee el formulario público). La
+             clave va oculta: se ve con el ojo y se copia con su botón. El
+             celular personal es el de Recursos Humanos, en Datos personales. */
+          '<div class="card"><div class="card-h"><h3>Celular y correo corporativo</h3></div><div class="card-b">' +
+            '<div class="rhf-corp">' +
+              '<div class="rhf-campo"><label class="l" for="cfCel">Celular corporativo</label><input class="inp" id="cfCel" inputmode="tel" autocomplete="off" value="' + attr(c.celCorp || '') + '"></div>' +
+              '<div class="rhf-campo"><label class="l" for="cfCorreo">Correo del celular corporativo</label><input class="inp" id="cfCorreo" type="email" autocomplete="off" value="' + attr(c.correoCorp || '') + '"></div>' +
+              '<div class="rhf-campo"><label class="l" for="cfClave">Clave del correo</label><div class="rhf-clave">' +
+                '<input class="inp" id="cfClave" type="password" autocomplete="new-password" spellcheck="false" value="' + attr(c.claveCorreo || '') + '">' +
+                '<button type="button" class="btn btn-icon btn-sm" id="cfVer" title="Ver la clave" aria-label="Ver la clave">' + Icon('eye', '', 14) + '</button>' +
+                '<button type="button" class="btn btn-icon btn-sm" id="cfCopiar" title="Copiar la clave" aria-label="Copiar la clave">' + Icon('copiar', '', 14) + '</button></div></div>' +
+            '</div>' +
+            '<div class="rhf-campo mt12"><label class="l" for="cfNotas">Observaciones</label><textarea class="inp" id="cfNotas" rows="3">' + esc(c.notas || '') + '</textarea></div>' +
+            '<div class="flex aic g8 mt12"><button class="btn btn-sm btn-primary" data-act="guardarContacto" data-c="' + attr(c.id) + '" disabled>' + Icon('save', '', 13) + 'Guardar</button>' +
+              '<span class="txt-3 fs12">El celular personal es el de Recursos Humanos, en Datos personales.</span></div>' +
+          '</div></div>' +
           (c.rh != null ? '<div class="rhf-der" id="rfDatos"><div class="flex aic g8 txt-2" style="justify-content:center;padding:40px 16px"><span class="spin"></span>' +
             'Trayendo los datos de Recursos Humanos…</div></div>' : '') + '</div></div>',
       pie: '<span class="txt-3 fs12 mf-left">La foto, el nombre y los datos personales se cambian en Recursos Humanos.</span>' +
         '<button class="btn" data-act="cerrarModal">Cerrar</button>'
     });
-    const s = $('#cfK', m), g = $('[data-act="guardarCategoria"]', m);
-    s.addEventListener('change', () => { g.disabled = s.value === (c.cat || ''); });
+    /* Para volver a esta ficha después de subir un documento (ver guardarDocumento) */
+    m.dataset.conductor = c.id;
+    const corp = [['cfCel', 'celCorp'], ['cfCorreo', 'correoCorp'], ['cfClave', 'claveCorreo'], ['cfNotas', 'notas']], gc = $('[data-act="guardarContacto"]', m);
+    corp.forEach(([id]) => $('#' + id, m).addEventListener('input', () => { gc.disabled = corp.every(([i, k]) => $('#' + i, m).value.trim() === (c[k] || '')); }));
+    $('#cfVer', m).addEventListener('click', () => {
+      const x = $('#cfClave', m), ver = x.type === 'password';
+      x.type = ver ? 'text' : 'password';
+      $('#cfVer', m).innerHTML = Icon(ver ? 'eyeOff' : 'eye', '', 14);
+      $('#cfVer', m).title = ver ? 'Ocultar la clave' : 'Ver la clave';
+    });
+    $('#cfCopiar', m).addEventListener('click', () => {
+      const v = $('#cfClave', m).value;
+      if (!v) { Toast.show('No hay clave para copiar.', 'warn'); return; }
+      navigator.clipboard.writeText(v).then(() => Toast.show('Clave copiada.'), () => Toast.show('No se pudo copiar la clave.', 'err'));
+    });
     /* La foto, si todavía no había llegado (si se abre antes que su círculo) */
     if (ruta && !FotoRH.url(ruta) && !FotoRH.malas.has(ruta)) {
       FotoRH.firmar(ruta).then(url => { if (url && document.body.contains(m)) $('#rfFoto', m).innerHTML = marco(url); }).catch(() => {});
@@ -8661,6 +8716,22 @@ Object.assign(Ventanas, {
       : '<div class="v' + (/^⚠/.test(v) ? ' falta' : '') + '">' + esc(v) + '</div>';
     caja.innerHTML = (r.secciones || []).map(s => UI.card(esc(s.titulo || ''), '<div class="rhf-campos">' +
       (s.campos || []).map(f => '<div class="rhf-campo"><div class="l">' + esc(f[0]) + '</div>' + valor(f[1]) + '</div>').join('') + '</div>')).join('');
+  },
+
+  /* La categoría de la licencia la maneja Flota: los conductores llegan de
+     Recursos Humanos sin ella. Se escoge al subir la licencia, y aquí se
+     cambia sin subirla otra vez (con clic en la categoría, en la ficha) */
+  categoria(c) {
+    const cats = Catalogo.lista('licencias'), opc = (c.cat && !cats.includes(c.cat) ? [c.cat] : []).concat(cats);
+    const m = Modal.abrir({
+      titulo: 'Categoría de la licencia', sub: esc(c.nombre), sinFoco: true,
+      cuerpo: '<div class="field mb0"><label for="ctK">Categoría</label><select class="inp" id="ctK" style="width:auto">' + (c.cat ? '' : '<option value="">Sin escoger</option>') +
+        opc.map(k => '<option' + (k === c.cat ? ' selected' : '') + '>' + esc(k) + '</option>').join('') + '</select></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarCategoria" data-c="' + attr(c.id) + '" disabled>' +
+        Icon('save', '', 14) + 'Guardar</button>'
+    });
+    const s = $('#ctK', m), g = $('[data-act="guardarCategoria"]', m);
+    s.addEventListener('change', () => { g.disabled = s.value === (c.cat || ''); });
   },
 
   proveedor(p) {
@@ -9397,13 +9468,30 @@ Object.assign(Acciones, {
     }
   },
   /* La categoría de la licencia: la maneja Flota (los conductores llegan de RH sin ella) */
+  /* El celular y el correo corporativos, la clave y las observaciones del
+     conductor (ver Ventanas.conductor): se guardan y la ficha sigue abierta */
+  guardarContacto(el) {
+    const c = Q.conductor(el.dataset.c), m = el.closest('.modal-bd');
+    if (!c) return;
+    [['cfCel', 'celCorp'], ['cfCorreo', 'correoCorp'], ['cfClave', 'claveCorreo'], ['cfNotas', 'notas']].forEach(([id, k]) => {
+      const v = $('#' + id, m).value.trim();
+      if (v) c[k] = v; else delete c[k];
+    });
+    el.disabled = true;
+    Toast.show('Listo: quedaron guardados los datos corporativos de <b>' + esc(c.nombre) + '</b>.');
+    Router.pintar(true);
+  },
+  cambiarCategoria(el) { const c = Q.conductor(el.dataset.c); if (c) Ventanas.categoria(c); },
   guardarCategoria(el) {
-    const c = Q.conductor(el.dataset.c), m = el.closest('.modal-bd'), v = $('#cfK', m).value;
+    const c = Q.conductor(el.dataset.c), m = el.closest('.modal-bd'), v = $('#ctK', m).value;
     if (!c || v === (c.cat || '')) return;
     c.cat = v;
-    Modal.cerrar(m);
+    /* La ficha que estaba abierta se vuelve a abrir con la categoría nueva */
+    const ficha = $$('#modals .modal-bd').some(x => x.dataset.conductor === String(c.id));
+    Modal.cerrarTodo();
     Toast.show('Listo: la licencia de <b>' + esc(c.nombre) + '</b> queda en categoría <b>' + esc(v) + '</b>.');
     Router.pintar(true);
+    if (ficha) Ventanas.conductor(c);
   },
   eliminarProveedor(el) {
     const p = Q.proveedor(el.dataset.p);
