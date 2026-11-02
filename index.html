@@ -537,6 +537,12 @@ html[data-theme="dark"] table.tbl tbody tr.sel td{background:#172133}
 .fact small{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3)}
 .fact b{display:block;font-size:13px;font-weight:650;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fact > span{display:block;font-size:11.5px;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* El remolque del camión (o el camión del remolque), debajo de los datos */
+.uh-rem{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding:8px 11px;border:1px solid var(--border);border-radius:10px;
+  background:var(--surface-2);font-size:13px;color:var(--text-2)}
+.uh-rem small{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3)}
+.uh-rem b{font-weight:650}
+.uh-rem .btn{margin-left:auto}
 /* El conductor de la ficha: su nombre se despliega para cambiarlo */
 .fact.editable{cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
 .fact.editable:hover{border-color:var(--accent);background:var(--accent-soft)}
@@ -731,6 +737,10 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 .av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);
   color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.02em}
 .av.lg{width:46px;height:46px;font-size:15px}
+/* La foto de Recursos Humanos en el círculo (ver FotoRH); con clic se ve en grande */
+.av img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.av.xs{width:18px;height:18px;font-size:8px;vertical-align:middle}
+.av[data-act]{cursor:zoom-in}
 
 /* Dashboard (antes Inicio) */
 .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
@@ -3036,10 +3046,11 @@ const ACT = {
   comparendo: { ic: 'ticket',    c: 'var(--dang-500)',   grupo: 'comparendo' },
   accidente:  { ic: 'warn',      c: 'var(--dang-500)',   grupo: 'accidente' },
   compra:     { ic: 'cart',      c: 'var(--ink-500)',    grupo: 'compra' },
-  conductor:  { ic: 'user',      c: 'var(--violet-500)', grupo: 'conductor' }
+  conductor:  { ic: 'user',      c: 'var(--violet-500)', grupo: 'conductor' },
+  remolque:   { ic: 'trailer',   c: 'var(--info-500)',   grupo: 'remolque' }
 };
 const GRUPOS_ACT = [['mant', 'Mantenimientos'], ['inspeccion', 'Inspecciones'], ['renovacion', 'Renovaciones'], ['comparendo', 'Comparendos'],
-  ['accidente', 'Accidentes'], ['compra', 'Compras'], ['conductor', 'Conductor']];
+  ['accidente', 'Accidentes'], ['compra', 'Compras'], ['conductor', 'Conductor'], ['remolque', 'Remolque']];
 const Actividad = {
   /* Lo que se guarda aparte son los cambios de conductor y las renovaciones
      (porque el documento nuevo reemplaza al anterior); lo demás sale de sus
@@ -3194,8 +3205,17 @@ const UI = {
   iniciales(n) { const p = String(n || '').split(/\s+/).filter(Boolean); return ((p[0] || '').charAt(0) + (p[1] || '').charAt(0)).toUpperCase(); },
   corto(c) { return c ? (c.corto || c.nombre.split(/\s+/).slice(0, 2).join(' ')) : 'Sin asignar'; },
   persona(c) {
-    return '<div class="who"><span class="av">' + esc(this.iniciales(c.nombre)) + '</span><div class="who-t"><b>' + esc(c.nombre) +
+    return '<div class="who">' + this.avatar(c) + '<div class="who-t"><b>' + esc(c.nombre) +
       '</b><span>CC ' + esc(c.cedula) + '</span></div></div>';
+  },
+  /* La cara de un conductor: su foto de Recursos Humanos en un círculo (con
+     clic, en grande) o sus iniciales mientras llega o si no se puede ver (ver
+     FotoRH) */
+  avatar(c, cls) {
+    const ruta = c && c.fotoRh, url = FotoRH.url(ruta);
+    if (ruta && !url) FotoRH.pedir([ruta]);
+    return '<span class="av' + (cls ? ' ' + cls : '') + '"' + (ruta ? ' data-foto="' + attr(ruta) + '" data-c="' + attr(c.id) + '"' : '') +
+      (url ? ' data-act="verFotoConductor" title="Ver la foto"' : '') + '>' + (url ? '<img src="' + attr(url) + '" alt="">' : esc(this.iniciales(c ? c.nombre : ''))) + '</span>';
   },
   file(nombre, id) {
     return '<span class="filechip" data-act="verArchivo" data-nombre="' + attr(nombre) + '"' + (id ? ' data-id="' + attr(id) + '"' : '') + ' title="' + attr(nombre) + '">' +
@@ -4275,6 +4295,8 @@ const Borrar = {
     Datos.unidades.filter(u => fuera.has(u.id)).forEach(u =>
       [u.foto, u.mini, u.licencia].concat((u.registro || []).map(f => f.url)).forEach(url => { if (url) URL.revokeObjectURL(url); }));
     Datos.unidades = Datos.unidades.filter(x => !fuera.has(x.id));
+    /* El camión que arrastraba un remolque que se va queda sin remolque */
+    Datos.unidades.forEach(x => { if (fuera.has(x.remolque)) x.remolque = null; });
     ['mantenimientos', 'inspecciones', 'accidentes', 'ocs', 'actividad', 'lecturas'].forEach(k => { Datos[k] = (Datos[k] || []).filter(otra); });
     return Persistencia.limpiar();
   },
@@ -5550,17 +5572,22 @@ const Plano = {
    lo atendido queda en el arreglo o en la unidad. */
 const Novedades = {
   DIAS: 30,
-  filas: null, porUnidad: new Map(), t: 0, error: null, trayendo: null,
+  filas: null, porUnidad: new Map(), porRemolque: new Map(), t: 0, error: null, trayendo: null,
   listo() { return Boolean(this.filas) && !this.error; },
   pedir() {
     if (this.trayendo || (this.filas && Date.now() - this.t < 60000)) return;
-    const q = 'preoperacionales?select=id,unidad_id,fecha,recibido,conductor_nombre,respuestas,notas&fecha=gte.' + R(-this.DIAS) + '&order=recibido.desc&limit=1000';
+    const q = 'preoperacionales?select=id,unidad_id,remolque_id,fecha,recibido,conductor_nombre,respuestas,notas&fecha=gte.' + R(-this.DIAS) + '&order=recibido.desc&limit=1000';
     this.trayendo = Promise.all([Nube.pedir(q + '&regulares=gt.0'), Nube.pedir(q + '&malos=gt.0'), Preop.formato ? null : Preop.traerFormato()])
       .then(([a, b]) => {
         const vistos = new Set();
         this.filas = (a || []).concat(b || []).filter(p => !vistos.has(p.id) && vistos.add(p.id));
         this.porUnidad = new Map();
-        this.filas.forEach(p => { if (!this.porUnidad.has(p.unidad_id)) this.porUnidad.set(p.unidad_id, []); this.porUnidad.get(p.unidad_id).push(p); });
+        this.porRemolque = new Map();
+        const poner = (m, k, p) => { if (!m.has(k)) m.set(k, []); m.get(k).push(p); };
+        this.filas.forEach(p => {
+          poner(this.porUnidad, p.unidad_id, p);
+          if (p.remolque_id) poner(this.porRemolque, p.remolque_id, p);
+        });
         this.error = null;
       })
       .catch(e => { this.error = e; })
@@ -5599,14 +5626,21 @@ const Novedades = {
     (u.preopRevisadas || []).forEach(r => poner(r.i, r.f));
     return h;
   },
+  /* ¿La pregunta es del capítulo «Remolque»? Lo de ahí va al remolque que
+     arrastraba el camión ese día (Juan, 02/11/2026) */
+  delRemolque(d) { return Boolean(d && /remolque/i.test(Preop.tituloSec(d.sec))); },
   /* Las novedades sin atender de una unidad: una por pregunta, con la más
-     reciente y cuántas veces se reportó */
+     reciente y cuántas veces se reportó. Un camión no se queda con lo del
+     capítulo «Remolque» si ese día llevaba remolque; el remolque lo recibe. */
   de(u) {
     if (!this.filas || !u) return [];
     const q = this.preguntas(), ops = this.opciones(), at = this.atendidas(u), k = Plano.clave(u), por = {};
-    (this.porUnidad.get(u.id) || []).forEach(p => {
+    const fuentes = (this.porUnidad.get(u.id) || []).map(p => [p, i => !(p.remolque_id && this.delRemolque(q[i]))])
+      .concat(u.tipo === 'remolque' ? (this.porRemolque.get(u.id) || []).map(p => [p, i => this.delRemolque(q[i])]) : []);
+    fuentes.forEach(([p, sirve]) => {
       Object.keys(p.respuestas || {}).forEach(i => {
         const o = ops[p.respuestas[i]];
+        if (!sirve(i)) return;
         if (!o || (o.cuenta !== 'novedad' && o.cuenta !== 'grave') || (at[i] && p.fecha <= at[i])) return;
         const x = por[i] || (por[i] = { i, veces: 0, grave: false, p, primera: p.fecha });
         x.veces++;
@@ -6137,7 +6171,7 @@ const Vistas = {
         '<div class="uc-docs">' + this.chipsDocs(u) + '</div></div>' +
       '<div class="uc-f">' + (ConductoresRH.aviso(c, u)
         ? '<span class="tx-warn" title="' + attr(c.nombre + ' · ' + ConductoresRH.aviso(c, u)) + '">' + Icon('warn', '', 12) + esc(UI.corto(c)) + '</span>'
-        : '<span>' + Icon('user', '', 12) + esc(UI.corto(c)) + '</span>') +
+        : '<span>' + (c && c.fotoRh && !FotoRH.malas.has(c.fotoRh) ? UI.avatar(c, 'xs') : Icon('user', '', 12)) + esc(UI.corto(c)) + '</span>') +
         '<span class="' + (ins.k !== 'ok' ? 'tx-' + ins.k : '') + '" title="Última inspección visual">' + Icon('clipboard', '', 12) + esc(u.insp ? Fecha.hace(u.insp) : 'Sin inspección') + '</span></div>' +
     '</article>';
   },
@@ -6154,6 +6188,23 @@ const Vistas = {
           '<td class="nowrap">' + esc(u.insp ? Fecha.corta(u.insp) : '—') + '<div class="dias d-' + i.k + '">' + esc(Fecha.hace(u.insp)) + '</div></td>' +
           '<td>' + UI.pill(e.k, e.txt) + '</td></tr>';
       }).join('') + '</tbody></table></div></div>';
+  },
+
+  /* El remolque que arrastra un camión, o el camión que arrastra un remolque
+     (Juan, 02/11/2026): lo del capítulo «Remolque» del preoperacional del
+     camión queda en ese remolque. Se escoge desde el camión. */
+  remolqueDe(u) {
+    const ver = x => '<b class="link" data-ir="unidad/' + attr(x.id) + '">' + esc(UI.placaTxt(x)) + '</b><span class="txt-3">' + esc(x.clase || '') + '</span>';
+    if (u.tipo === 'carga') {
+      const r = Q.unidad(u.remolque);
+      return '<div class="uh-rem">' + Icon('trailer', '', 14) + '<small>Remolque</small>' + (r ? ver(r) : '<span class="txt-3">Sin remolque</span>') +
+        '<button class="btn btn-sm" data-act="cambiarRemolque" data-u="' + attr(u.id) + '">' + (r ? 'Cambiar' : 'Escoger') + '</button></div>';
+    }
+    if (u.tipo === 'remolque') {
+      const c = Datos.unidades.find(x => x.remolque === u.id);
+      return '<div class="uh-rem">' + Icon('truck', '', 14) + '<small>Lo arrastra</small>' + (c ? ver(c) : '<span class="txt-3">Ningún camión</span>') + '</div>';
+    }
+    return '';
   },
 
   /* ------------------------------------------------- Ficha de una unidad */
@@ -6206,13 +6257,15 @@ const Vistas = {
           '<div class="facts">' +
             '<div class="fact editable" data-act="cambiarConductor" data-u="' + u.id + '" title="Cambiar el conductor u operador">' +
               '<small>' + Icon('user', '', 11) + 'Conductor u operador</small>' +
-              '<div class="fact-sel"><span' + (ret ? ' class="tx-warn"' : '') + '>' + esc(c ? c.nombre : 'Sin asignar') + '</span>' + Icon('chevD', '', 13) + '</div>' +
+              '<div class="fact-sel">' + (c && c.fotoRh && !FotoRH.malas.has(c.fotoRh) ? UI.avatar(c, 'xs') : '') +
+                '<span' + (ret ? ' class="tx-warn"' : '') + '>' + esc(c ? c.nombre : 'Sin asignar') + '</span>' + Icon('chevD', '', 13) + '</div>' +
               '<span' + (ret ? ' class="tx-warn"' : '') + '>' + (ret ? esc(ret) : c ? (c.cat ? 'Licencia ' + esc(c.cat) : 'Sin categoría de licencia') : 'Clic para asignar') +
               '</span></div>' +
             fact('clipboard', 'Última inspección', u.insp ? Fecha.corta(u.insp) : 'Sin registro', u.insp ? Fecha.hace(u.insp) : '', ins.k) +
             fact('tool', 'Último mantenimiento', ult ? Fecha.corta(ult.fecha) : 'Sin registros', ult ? (ult.tipo === 'preventivo' ? 'Preventivo · ' : 'Correctivo · ') + ult.trabajo : '') +
             fact('ticket', 'Comparendos del mes', compV, compS, compK) +
           '</div>' +
+          this.remolqueDe(u) +
           '<div class="uh-act">' +
             '<button class="btn btn-primary" data-act="nuevoDocumento" data-u="' + u.id + '">' + Icon('upload', '', 14) + 'Subir documento</button>' +
             /* Editar está en la tarjeta Información (Juan, 27/10/2026) */
@@ -6732,6 +6785,29 @@ const Ventanas = {
     });
   },
 
+  /* El remolque de un camión: uno por camión. Si el escogido estaba con otro
+     camión, pasa a este y el otro queda sin remolque (Juan, 02/11/2026) */
+  cambioRemolque(u) {
+    const r0 = Q.unidad(u.remolque), con = r => Datos.unidades.find(x => x !== u && x.remolque === r.id);
+    const rs = Datos.unidades.filter(x => x.tipo === 'remolque').sort((a, b) => UI.placaTxt(a).localeCompare(UI.placaTxt(b)));
+    const m = Modal.abrir({
+      titulo: 'Remolque de ' + UI.placaTxt(u), sub: esc(u.clase + ' · ' + UI.nombre(u)),
+      cuerpo:
+        '<div class="alert a-info mb16">' + Icon('trailer') + '<div>Hoy arrastra: <b>' + esc(r0 ? UI.placaTxt(r0) : 'ninguno') + '</b>. ' +
+          'Lo que se marque en el capítulo «Remolque» del preoperacional de este camión queda en el remolque que tenga ese día.</div></div>' +
+        '<div class="field mb0"><label for="crR">Remolque</label><select class="inp" id="crR"><option value="">Sin remolque</option>' +
+          rs.map(r => {
+            const otro = con(r);
+            return '<option value="' + attr(r.id) + '"' + (r.id === u.remolque ? ' selected' : '') + '>' +
+              esc(UI.placaTxt(r) + ' · ' + (r.clase || 'Remolque') + (otro ? ' (hoy con ' + UI.placaTxt(otro) + ')' : '')) + '</option>';
+          }).join('') + '</select></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarRemolque" data-u="' + attr(u.id) + '" disabled>' +
+        Icon('save', '', 14) + 'Guardar</button>'
+    });
+    const s = $('#crR', m), g = $('[data-act="guardarRemolque"]', m);
+    s.addEventListener('change', () => { g.disabled = s.value === (u.remolque || ''); });
+  },
+
   /* El documento de la foto en grande (ver DocFoto): el frente de la licencia
      de tránsito, la tarjeta de registro o la patente. Si no está, se adjunta aquí */
   licencia(u) {
@@ -6959,6 +7035,25 @@ const Acciones = {
     Router.pintar(true);
   },
   cambiarConductor(el) { Ventanas.cambioConductor(Q.unidad(el.dataset.u)); },
+  cambiarRemolque(el) { Ventanas.cambioRemolque(Q.unidad(el.dataset.u)); },
+  /* Queda en la actividad del camión y de los remolques que cambian */
+  guardarRemolque(el) {
+    const u = Q.unidad(el.dataset.u), m = el.closest('.modal-bd'), nuevo = $('#crR', m).value || null;
+    if (!u || nuevo === (u.remolque || null)) return;
+    const antes = Q.unidad(u.remolque), r = Q.unidad(nuevo), otro = r ? Datos.unidades.find(x => x !== u && x.remolque === r.id) : null;
+    const txt = x => UI.placaTxt(x);
+    if (otro) {
+      otro.remolque = null;
+      Actividad.registrar(otro, 'remolque', 'Cambio de remolque', 'Se le quitó ' + txt(r) + ', que pasó a ' + txt(u));
+    }
+    u.remolque = nuevo;
+    Actividad.registrar(u, 'remolque', 'Cambio de remolque', (r ? 'Arrastra ' + txt(r) : 'Quedó sin remolque') + (antes ? ' (antes ' + txt(antes) + ')' : ''));
+    if (antes) Actividad.registrar(antes, 'remolque', 'Cambio de camión', 'Ya no lo arrastra ' + txt(u));
+    if (r) Actividad.registrar(r, 'remolque', 'Cambio de camión', 'Lo arrastra ' + txt(u) + (otro ? ' (antes ' + txt(otro) + ')' : ''));
+    Modal.cerrar(m);
+    Toast.show(r ? 'Listo: <b>' + esc(txt(u)) + '</b> arrastra <b>' + esc(txt(r)) + '</b>.' : 'Listo: <b>' + esc(txt(u)) + '</b> quedó sin remolque.');
+    Router.pintar(true);
+  },
   guardarCambioConductor(el) {
     const m = el.closest('.modal-bd'), u = Q.unidad(el.dataset.u);
     const nuevo = $('#cdN', m).value || null;
@@ -8374,9 +8469,12 @@ Object.assign(Ventanas, {
     const cats = Catalogo.lista('licencias'), opcCat = (c.cat && !cats.includes(c.cat) ? [c.cat] : []).concat(cats);
     const m = Modal.abrir({
       titulo: c.nombre, sub: 'CC ' + esc(c.cedula) + ' · ' + (c.cat ? 'Licencia categoría ' + esc(c.cat) : 'Sin categoría de licencia'), ancho: 'wide', sinFoco: true,
-      cuerpo: '<div class="flex aic g12 mb16"><span class="av lg">' + esc(UI.iniciales(c.nombre)) + '</span>' +
+      cuerpo: '<div class="flex aic g12 mb16">' + UI.avatar(c, 'lg') +
           '<div class="f1"><div style="font-size:16px;font-weight:650">' + esc(c.nombre) + '</div><div class="txt-3 fs12">' +
             esc(ConductoresRH.tipoTxt(c)) + ' · ' + (ConductoresRH.retirado(c) ? 'retirado en Recursos Humanos' : 'viene de Recursos Humanos') + '</div></div>' +
+          /* Sus datos de Recursos Humanos, solo para ver (ver Ventanas.datosRH) */
+          (c.rh != null ? '<button class="btn btn-sm" data-act="verDatosRH" data-c="' + attr(c.id) + '" title="Ver sus datos de Recursos Humanos">' +
+            Icon('eye', '', 13) + 'Datos de RH</button>' : '') +
           UI.pill(l.k, l.k === 'ok' ? 'Licencia vigente' : 'Licencia: ' + l.txt.toLowerCase()) + '</div>' +
         '<div class="field mb16"><label for="cfK">Categoría de la licencia</label><div class="flex aic g8">' +
           '<select class="inp" id="cfK" style="width:auto">' + (c.cat ? '' : '<option value="">Sin escoger</option>') +
@@ -8391,6 +8489,45 @@ Object.assign(Ventanas, {
     });
     const s = $('#cfK', m), g = $('[data-act="guardarCategoria"]', m);
     s.addEventListener('change', () => { g.disabled = s.value === (c.cat || ''); });
+  },
+
+  /* La foto de Recursos Humanos en grande, con la lupa (ver FotoRH) */
+  fotoConductor(c) {
+    const url = FotoRH.url(c.fotoRh);
+    Modal.abrir({
+      titulo: c.nombre, sub: 'Foto de Recursos Humanos', ancho: 'wide', sinFoco: true,
+      cuerpo: url ? '<div class="lic-vista">' + Lupa.html(url, 'Foto de ' + c.nombre) + '</div>'
+        : '<div class="alert a-warn">' + Icon('warn') + '<div>No se pudo abrir la foto. Para verla hace falta «ver» en Recursos Humanos.</div></div>',
+      pie: '<span class="txt-3 fs12 mf-left">La foto se cambia en Recursos Humanos.</span><button class="btn" data-act="cerrarModal">Cerrar</button>'
+    });
+  },
+
+  /* Los datos de Recursos Humanos de un conductor, solo para ver (Juan,
+     02/11/2026): datos personales, laborales y de seguridad social, como los
+     muestra RH y sin el salario. Se piden al abrir la ventana y no se guardan
+     en ninguna parte. */
+  async datosRH(c) {
+    const m = Modal.abrir({
+      titulo: c.nombre, sub: 'Datos de Recursos Humanos · solo para ver', ancho: 'xwide', sinFoco: true,
+      cuerpo: '<div id="drCuerpo"><div class="flex aic g8 txt-2" style="justify-content:center;padding:40px 16px"><span class="spin"></span>' +
+        'Trayendo los datos de Recursos Humanos…</div></div>',
+      pie: '<span class="txt-3 fs12 mf-left">Se cambian en Recursos Humanos.</span><button class="btn" data-act="cerrarModal">Cerrar</button>'
+    });
+    let r = null, error = '';
+    try {
+      r = await Nube._pedir('rpc/rh_conductor_ficha', { method: 'POST', publico: true, body: JSON.stringify({ p_rh_id: c.rh }) });
+    } catch (e) {
+      error = Sincro.faltaFuncion(e) ? 'Recursos Humanos todavía no comparte estos datos con Flota.' : 'No se pudieron traer los datos: ' + e.message;
+    }
+    if (!document.body.contains(m)) return;
+    const caja = $('#drCuerpo', m);
+    if (!r || !r.ok) {
+      caja.innerHTML = '<div class="alert a-warn">' + Icon('warn') + '<div>' + esc(error || (r && r.aviso) || 'No se pudieron traer los datos.') + '</div></div>';
+      return;
+    }
+    const valor = v => (v == null || v === '' ? '<span class="txt-3">—</span>' : esc(v));
+    caja.innerHTML = '<div class="grid g3">' + (r.secciones || []).map(s => UI.card(esc(s.titulo || ''),
+      '<dl class="dl">' + (s.campos || []).map(f => '<dt>' + esc(f[0]) + '</dt><dd>' + valor(f[1]) + '</dd>').join('') + '</dl>')).join('') + '</div>';
   },
 
   proveedor(p) {
@@ -9075,6 +9212,8 @@ Object.assign(Acciones, {
     Router.pintar(true);
   },
   verConductor(el) { Ventanas.conductor(Q.conductor(el.dataset.c)); },
+  verFotoConductor(el) { const c = Q.conductor(el.dataset.c); if (c) Ventanas.fotoConductor(c); },
+  verDatosRH(el) { const c = Q.conductor(el.dataset.c); if (c) Ventanas.datosRH(c); },
   verProveedor(el) { Ventanas.proveedor(Q.proveedor(el.dataset.p)); },
 
   /* ---------------------------------------------------- Eliminar de verdad */
@@ -9591,6 +9730,8 @@ const Preop = {
     const enCel = e.hora_celular ? new Date(e.hora_celular) : null;
     const izq = UI.card('Datos', dl([
         ['Vehículo', esc([u ? UI.placaTxt(u) : p.placa, p.tipo_vehiculo].filter(Boolean).join(' · ') || '—')],
+        /* El remolque que arrastraba ese día (lo pone la base, ver el SQL 026) */
+        ...(p.remolque_id ? [['Remolque', esc(Q.unidad(p.remolque_id) ? UI.placaTxt(Q.unidad(p.remolque_id)) : 'Uno que ya no está en la flota')]] : []),
         ['Fecha', esc(Fecha.larga(p.fecha))], ['Kilometraje', esc(this.km(p.kilometraje))],
         ['Conductor', esc(p.conductor_nombre || '—')], ['Documento', esc(p.documento || '—')],
         ['Licencia', esc([p.licencia, p.categoria, p.vigencia_licencia ? 'vence el ' + Fecha.larga(p.vigencia_licencia) : ''].filter(Boolean).join(' · ') || '—')],
@@ -12323,6 +12464,55 @@ const Cuenta = {
   }
 };
 
+/* La foto de cada conductor está en Recursos Humanos, en su depósito privado
+   «rh-fotos», que solo lee quien tiene «ver» en RH (Juan, 02/11/2026; SQL 027
+   y el 115 de RH). Se pide una dirección firmada que dura diez minutos, con la
+   sesión de quien mira, y se guarda solo en memoria: son fotos de personas,
+   así que nada va al navegador, a la caché ni a la copia de seguridad. Si no
+   se puede, se quedan las iniciales. */
+const FotoRH = {
+  DURA: 600,
+  urls: new Map(),       // ruta → { url, vence }
+  malas: new Set(),      // las que RH no dejó firmar: sin permiso, o la foto ya no está
+  pidiendo: new Set(),
+  url(ruta) { const x = ruta && this.urls.get(ruta); return x && x.vence > Date.now() ? x.url : ''; },
+  /* Las que falten, cada una una sola vez a la vez. Al llegar, se ponen en
+     los círculos que ya están en la pantalla (también los de las ventanas) */
+  pedir(rutas) {
+    rutas.filter(r => r && !this.url(r) && !this.malas.has(r) && !this.pidiendo.has(r)).forEach(r => {
+      this.pidiendo.add(r);
+      this.firmar(r)
+        .then(u => {
+          if (!u) { this.malas.add(r); return; }
+          this.urls.set(r, { url: u, vence: Date.now() + (this.DURA - 60) * 1000 });
+          this.aplicar(r);
+        })
+        .catch(() => {})   // sin red: se vuelve a pedir la próxima vez que se pinte
+        .finally(() => this.pidiendo.delete(r));
+    });
+  },
+  async firmar(ruta) {
+    const tk = await Nube.token();
+    if (!tk) return '';
+    const r = await Nube._fetch(NUBE.url + '/storage/v1/object/sign/rh-fotos/' + ruta.split('/').map(encodeURIComponent).join('/'), {
+      method: 'POST', headers: { apikey: NUBE.llave, Authorization: 'Bearer ' + tk, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expiresIn: this.DURA })
+    }, 15000);
+    if (!r.ok) return '';
+    const j = await r.json().catch(() => ({}));
+    return j.signedURL ? NUBE.url + '/storage/v1' + j.signedURL : '';
+  },
+  aplicar(ruta) {
+    const url = this.url(ruta);
+    $$('[data-foto]').forEach(el => {
+      if (el.dataset.foto !== ruta || !url) return;
+      el.innerHTML = '<img src="' + attr(url) + '" alt="">';
+      el.dataset.act = 'verFotoConductor';
+      el.title = 'Ver la foto';
+    });
+  }
+};
+
 /* Los conductores salen de Recursos Humanos (Juan, 01/11/2026, SQL 024). RH
    manda en el nombre, la cédula y si está activo; Flota guarda lo suyo: la
    categoría de la licencia, los documentos y la unidad asignada. La nube los
@@ -12425,11 +12615,11 @@ const Mapa = {
   /* Las columnas de cada tabla, en orden, con su valor si falta: todas las
      filas de una tabla van con las mismas columnas, como pide Supabase */
   MOLDE: {
-    conductores: { id: null, nombre: '', corto: '', cedula: '', categoria: '', activo: true, rh_id: null, tipo: '', extra: {} },
+    conductores: { id: null, nombre: '', corto: '', cedula: '', categoria: '', activo: true, rh_id: null, tipo: '', foto_path: null, extra: {} },
     proveedores: { id: null, nombre: '', servicio: '', nit: '', contacto: '', activo: true, extra: {} },
     unidades: { id: null, tipo: null, clase: '', placa: null, alias: '', marca: '', linea: '', modelo: '', color: '', conductor_id: null,
       ficha: {}, dotacion: [], aceite: {}, comparendo: { estado: 'pend' }, comparendos_hist: [], ultima_inspeccion: null,
-      foto: null, foto_info: null, extra: {} },
+      foto: null, foto_info: null, remolque_id: null, extra: {} },
     documentos: { id: null, unidad_id: null, conductor_id: null, proveedor_id: null, tipo: null, categoria: '', nombre: '', ruta: null,
       mime: null, tam: null, tam_original: null, vence: null, expedicion: null, subido: null, vigente: true, extra: {} },
     fotos: { id: null, unidad_id: null, ruta: null, nombre: '', txt: '', fecha: null, orden: 0, extra: {} },
@@ -12447,14 +12637,15 @@ const Mapa = {
       archivo: '', extra: {} }
   },
   CONDUCTOR: [['id', 'id'], ['nombre', 'nombre', '', aTexto], ['corto', 'corto', '', aTexto], ['cedula', 'cedula', '', aTexto],
-    ['cat', 'categoria', '', aTexto], ['rh', 'rh_id', null, aNumero, aNumero], ['rhTipo', 'tipo', '', aTexto]],
+    ['cat', 'categoria', '', aTexto], ['rh', 'rh_id', null, aNumero, aNumero], ['rhTipo', 'tipo', '', aTexto], ['fotoRh', 'foto_path', null, aNulo]],
   PROVEEDOR: [['id', 'id'], ['nombre', 'nombre', '', aTexto], ['servicio', 'servicio', '', aTexto], ['nit', 'nit', '', aTexto],
     ['contacto', 'contacto', '', aTexto]],
   UNIDAD: [['id', 'id'], ['tipo', 'tipo'], ['clase', 'clase', '', aTexto], ['placa', 'placa'], ['alias', 'alias', '', aTexto],
     ['marca', 'marca', '', aTexto], ['linea', 'linea', '', aTexto], ['modelo', 'modelo', '', aTexto], ['color', 'color', '', aTexto],
     ['conductor', 'conductor_id', null, aNulo], ['ficha', 'ficha', {}, x => x || {}], ['dotacion', 'dotacion', [], x => x || []],
     ['aceite', 'aceite', {}, x => x || {}], ['comp', 'comparendo', { estado: 'pend' }, x => x || { estado: 'pend' }],
-    ['compHist', 'comparendos_hist', [], x => x || []], ['insp', 'ultima_inspeccion', null, aNulo], ['fotoInfo', 'foto_info', null]],
+    ['compHist', 'comparendos_hist', [], x => x || []], ['insp', 'ultima_inspeccion', null, aNulo], ['fotoInfo', 'foto_info', null],
+    ['remolque', 'remolque_id', null, aNulo]],
   /* Un documento de unidad o de conductor: SOAT, tecnomecánica, licencia… */
   DOC: [['archivo', 'nombre', '', aTexto], ['archivoId', 'ruta', null, rutaDeId, idDeRuta], ['vence', 'vence', null, aNulo],
     ['expedicion', 'expedicion', null, aNulo], ['subido', 'subido', hoyISO, x => x || hoyISO]],
