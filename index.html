@@ -1520,6 +1520,10 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .av-c{display:block;font-size:11px;font-weight:650;color:var(--text-3);white-space:normal}
 .av-i.cierre .av-c{color:var(--ok-700)}
 .av-f{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--text-3);margin-left:6px;white-space:nowrap}
+/* Varios avances de una vez (ver AvancesForm) */
+.av-b{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;background:var(--surface-2)}
+.av-b-h{display:flex;align-items:center;justify-content:space-between;margin:-4px -4px 6px 0}
+.av-b-h b{font-size:12.5px}
 html[data-theme="dark"] .pl-taller{color:var(--dang-500)}
 .pl-btn{width:100%;justify-content:center;margin-top:10px}
 /* Las llantas vistas desde arriba */
@@ -6532,7 +6536,7 @@ const Plano = {
       /* Lo que está en el taller, arriba: se termina cuando la unidad sale */
       this.arreglos(u, '').filter(m => m.estado === 'taller').map(m => '<div class="pl-taller">' + Icon('tool', '', 16) +
         '<div class="f1"><b>En el taller desde el ' + esc(Fecha.larga(m.fecha)) + '</b><span>' + esc([m.trabajo, (m.partes || []).map(x => this.nombre(u, x)).join(', '),
-          Avances.ultima(m) ? 'última anotación: ' + Avances.cuando(Avances.ultima(m)) + (Avances.ultima(m).t ? ', ' + Avances.ultima(m).t : '') : ''].filter(Boolean).join(' · ')) + '</span></div>' +
+          Avances.ultima(m) ? 'último avance: ' + Avances.cuando(Avances.ultima(m)) + (Avances.ultima(m).t ? ', ' + Avances.ultima(m).t : '') : ''].filter(Boolean).join(' · ')) + '</span></div>' +
         '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
         '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button></div>').join('') +
       '<div class="kpis4 mant-kpis">' +
@@ -7043,8 +7047,8 @@ const Avances = {
   /* El título del arreglo en las listas: lo que se hizo o, si va por anotaciones, cuántas lleva */
   titulo(m) {
     const n = (m.notas || []).length;
-    return m.trabajo || (n ? (m.estado === 'taller' ? 'En el taller' : 'Reparación') + ' · ' + n + (n === 1 ? ' anotación' : ' anotaciones')
-      : m.estado === 'taller' ? 'En el taller, sin anotaciones todavía' : 'Sin descripción');
+    return m.trabajo || (n ? (m.estado === 'taller' ? 'En el taller' : 'Reparación') + ' · ' + n + (n === 1 ? ' avance' : ' avances')
+      : m.estado === 'taller' ? 'En el taller, sin avances todavía' : 'Sin descripción');
   },
   /* Las anotaciones, una debajo de otra, con cuántas fotos tiene cada una */
   lista(m) {
@@ -7063,6 +7067,98 @@ const Avances = {
     if (!fotos.length) return;
     r.fotosData = (r.fotosData || []).concat(fotos.map(f => ({ id: f.id, txt: f.txt, nota: n.id })));
     r.fotos = r.fotosData.length;
+  }
+};
+
+/* Varios avances de una vez (Juan, 03/11/2026: «si ya yo tengo los avances, yo
+   puedo aquí mismo… registrar varios avances enseguida»): en el registro del
+   arreglo, si sigue en el taller, y en «Anotar avance». Cada bloque con su
+   fecha, su hora, lo que se hizo y sus fotos; «Agregar otro avance» suma otro.
+   Lo escrito queda en m._av, para no perderlo al agregar o quitar un bloque */
+const AvancesForm = {
+  _k: 0,
+  bloque(f) { return { k: ++this._k, f, h: ahora(), t: '', fotos: [] }; },
+  montar(m, cont, pre, alCambiar) {
+    m._av = [this.bloque(hoyISO)];
+    m._avPre = pre;
+    m._avCont = cont;
+    m._avCambio = alCambiar || (() => {});
+    cont.addEventListener('input', e => {
+      const t = e.target, b = t.closest('[data-av]'), x = b && m._av.find(a => String(a.k) === b.dataset.av);
+      if (!x || !t.dataset.c) return;
+      x[t.dataset.c] = t.value;
+      m._avCambio();
+    });
+    cont.addEventListener('click', e => {
+      const q = e.target.closest('[data-av-quitar]'), mas = e.target.closest('[data-av-mas]');
+      if (q) {
+        m._av = m._av.filter(a => String(a.k) !== q.dataset.avQuitar);
+        if (!m._av.length) m._av.push(this.bloque(hoyISO));
+        this.pintar(m);
+        m._avCambio();
+      } else if (mas) {
+        /* El nuevo, con la fecha del anterior y la hora de ahora */
+        m._av.push(this.bloque(m._av[m._av.length - 1].f || hoyISO));
+        this.pintar(m);
+        const t = cont.querySelector('[data-av="' + m._av[m._av.length - 1].k + '"] textarea');
+        if (t) t.focus();
+      }
+    });
+    this.pintar(m);
+  },
+  pintar(m) {
+    const cont = m._avCont, pre = m._avPre, varios = m._av.length > 1;
+    cont.innerHTML = m._av.map((a, i) => '<div class="av-b" data-av="' + a.k + '">' +
+        (varios ? '<div class="av-b-h"><b>Avance ' + (i + 1) + '</b><button type="button" class="btn btn-sm btn-ghost btn-icon" data-av-quitar="' + a.k +
+          '" title="Quitar este avance" aria-label="Quitar este avance">' + Icon('x', '', 12) + '</button></div>' : '') +
+        '<div class="row"><div class="field"><label>Fecha</label><input class="inp" type="date" data-c="f" value="' + attr(a.f) + '"></div>' +
+          '<div class="field"><label>Hora</label><input class="inp" type="time" data-c="h" value="' + attr(a.h) + '"></div></div>' +
+        '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" data-c="t" rows="2" placeholder="Ej.: se desmontó la llanta y el rin estaba partido">' +
+          esc(a.t) + '</textarea></div>' +
+        '<div class="field mb0"><label>Fotos de este avance <span class="txt-3">(opcional)</span></label>' +
+          Dz.camara(pre + 'AvDz' + a.k) + Dz.html(pre + 'AvDz' + a.k, '<span class="solo-web">Arrastre aquí las fotos</span><span class="solo-cel">Escoger de la galería</span>',
+            '<span class="solo-web">A cada una se le escribe qué muestra</span>', 'image/*', true) +
+          '<div class="fotos" data-av-fotos="' + a.k + '"></div></div></div>').join('') +
+      '<button type="button" class="btn btn-sm" data-av-mas="1">' + Icon('plus', '', 12) + 'Agregar otro avance</button>';
+    /* La zona de fotos, en chiquito: con varios avances el formulario no se alarga tanto */
+    $$('.dz', cont).forEach(d => d.classList.add('dz-sm'));
+    m._av.forEach(a => {
+      this.fotos(m, a);
+      /* Las fotos, a 1.600 px, como las del registro del arreglo */
+      Dz.bind(pre + 'AvDz' + a.k, files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
+        .then(lista => { lista.forEach(x => a.fotos.push({ id: x.id, src: Archivos.vistos.get(x.id).url, txt: '' })); this.fotos(m, a); m._avCambio(); }));
+    });
+  },
+  /* Las fotos de un bloque, cada una con lo que muestra */
+  fotos(m, a) {
+    const el = m._avCont.querySelector('[data-av-fotos="' + a.k + '"]');
+    if (!el) return;
+    el.innerHTML = a.fotos.map((f, i) => '<div class="foto"><img src="' + attr(f.src) + '" alt="">' +
+      '<button type="button" data-i="' + i + '" title="Quitar la foto">' + Icon('x', '', 12) + '</button>' +
+      '<input data-i="' + i + '" value="' + attr(f.txt) + '" placeholder="¿Qué muestra?"></div>').join('');
+    $$('input', el).forEach(inp => inp.addEventListener('input', () => { a.fotos[+inp.dataset.i].txt = inp.value; }));
+    $$('button', el).forEach(b => b.addEventListener('click', () => { a.fotos.splice(+b.dataset.i, 1); this.fotos(m, a); m._avCambio(); }));
+  },
+  hay(m) { return (m._av || []).some(a => a.t.trim() || a.fotos.length); },
+  /* Los bloques con algo escrito o con fotos, listos para guardar (ver Avances) */
+  leer(m) {
+    return (m._av || []).filter(a => a.t.trim() || a.fotos.length)
+      .map(a => ({ n: Avances.nueva(a.f || hoyISO, a.h || '', a.t.trim()), fotos: a.fotos.map(f => ({ id: f.id, src: f.src, txt: f.txt })) }));
+  },
+  /* Al cambiar el estado del registro, lo escrito pasa al otro lado: «¿Qué se
+     hizo?» al primer avance; los avances, a «¿Qué se hizo?», y sus fotos, a las
+     del arreglo. Nada se pierde */
+  pasar(m, ta, alTaller) {
+    if (!m._av) return;
+    if (alTaller) {
+      if (ta.value.trim() && !m._av[0].t.trim()) { m._av[0].t = ta.value; ta.value = ''; this.pintar(m); }
+      return;
+    }
+    const txt = m._av.map(a => a.t.trim()).filter(Boolean).join('\n'), fotos = [].concat(...m._av.map(a => a.fotos));
+    if (txt && !ta.value.trim()) ta.value = txt;
+    if (fotos.length) { m._fotos.push(...fotos); if (m._pintarFotos) m._pintarFotos(); }
+    m._av = [this.bloque(hoyISO)];
+    this.pintar(m);
   }
 };
 
@@ -8872,7 +8968,7 @@ const Formatos = {
     const sueltas = fotos.filter(f => !f.nota || !notas.some(n => n.id === f.nota));
     return (d.trabajo ? '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo) + '</div>' : '') +
       (sueltas.length ? this.sec('Al entrar al taller · ' + sueltas.length + ' foto(s)', grilla(sueltas), 'dp-libre') : '') +
-      this.sec('Historial de la reparación · ' + notas.length + (notas.length === 1 ? ' anotación' : ' anotaciones'), notas.map(n => {
+      this.sec('Historial de la reparación · ' + notas.length + (notas.length === 1 ? ' avance' : ' avances'), notas.map(n => {
         const fs = fotos.filter(f => f.nota === n.id);
         return '<div class="dp-av"><div class="dp-av-h">' + esc(Avances.cuando(n)) + (n.cierre ? ' · Salió del taller' : '') + '</div>' +
           (n.t ? '<div class="dp-av-t">' + esc(n.t) + '</div>' : '') + (fs.length ? grilla(fs) : '') + '</div>';
@@ -9895,8 +9991,8 @@ Object.assign(Ventanas, {
             '<button type="button" data-v="taller">' + Icon('tool', '', 13) + 'Sigue en el taller</button></div></div>' +
           '<div class="field" id="mcTC"><label>¿Qué se hizo?</label><textarea class="inp" id="mcT" rows="2" placeholder="El arreglo: qué se cambió o se reparó"></textarea></div>' +
           '<div class="field hidden" id="mcNC"><label>Historial de la reparación</label>' +
-            '<textarea class="inp" id="mcN" rows="2" placeholder="La primera anotación, si ya se sabe algo (opcional)"></textarea>' +
-            '<div class="hint">Se puede guardar sin escribir nada. Después, con «Anotar avance», se va agregando lo que se haga, con fecha, hora y fotos.</div></div>' +
+            '<div class="hint mb12">Los avances que ya tenga, cada uno con su fecha, su hora y sus fotos. Se puede guardar sin ninguno: después se agregan con «Anotar avance».</div>' +
+            '<div id="mcAv"></div></div>' +
           '<div class="row"><div class="field"><label>Entró al taller</label><input class="inp" type="date" id="mcE" value="' + hoyISO + '"></div>' +
             '<div class="field" id="mcLC"><label>Kilometraje</label><input class="inp" id="mcL"></div></div>' +
           '<div class="row"><div class="field"><label>Taller o proveedor</label><select class="inp" id="mcP"><option value="">Sin taller registrado</option>' + ProvFact.opciones('') + '</select></div>' +
@@ -9904,7 +10000,7 @@ Object.assign(Ventanas, {
           '<div class="field"><label>Órdenes de Facturación <span class="txt-3">(si tiene)</span></label><div class="oc-lista" id="mcO"></div>' +
             '<div class="hint">Márquela si el arreglo tiene orden. El valor de arriba cuenta hasta que la orden pase a contabilidad; desde ahí cuenta la orden.</div></div>' +
           '<div class="row"><div class="field" id="mcSal"><label>Salió del taller</label><input class="inp" type="date" id="mcS" value="' + hoyISO + '"></div></div>' +
-          '<div class="field mb0"><label>Fotos del arreglo</label>' +
+          '<div class="field mb0"><label id="mcFotosL">Fotos del arreglo</label>' +
             Dz.camara('mcDz') + Dz.html('mcDz', '<span class="solo-web">Arrastre aquí las fotos que mandan los conductores</span><span class="solo-cel">Escoger de la galería</span>',
               '<span class="solo-web">Puede soltar varias a la vez; a cada una se le escribe qué muestra</span>', 'image/*', true) +
             '<div class="fotos" id="mcFotos"></div></div>' +
@@ -9915,6 +10011,8 @@ Object.assign(Ventanas, {
     });
     m._fotos = [];
     m._estado = 'cerrado';
+    /* Los avances, si sigue en el taller (ver AvancesForm) */
+    AvancesForm.montar(m, $('#mcAv', m), 'mc');
     ProvFact.alAbrir(m, 'mcP');
     /* Desde una novedad: su parte, su pregunta como componente y lo que reportó el conductor */
     const nov = o.nov ? Novedades.de(u0).find(n => n.i === o.nov) : null;
@@ -9938,14 +10036,16 @@ Object.assign(Ventanas, {
     $('#mcLlNueva', m).addEventListener('input', e => LlantaForm.escribir(m, e.target));
     $('#mcLlNueva', m).addEventListener('click', e => { const b = e.target.closest('[data-ll-op]'); if (b) LlantaForm.opcion(m, b); });
     $$('#mcEst button', m).forEach(b => b.addEventListener('click', () => {
-      const taller = b.dataset.v === 'taller', de = $(taller ? '#mcT' : '#mcN', m), a = $(taller ? '#mcN' : '#mcT', m);
+      const taller = b.dataset.v === 'taller';
+      if ((m._estado === 'taller') === taller) return;
       m._estado = b.dataset.v;
       $$('#mcEst button', m).forEach(x => x.classList.toggle('on', x === b));
       $('#mcSal', m).classList.toggle('hidden', taller);
       $('#mcTC', m).classList.toggle('hidden', taller);
       $('#mcNC', m).classList.toggle('hidden', !taller);
-      /* Lo que ya se escribió pasa al otro campo */
-      if (de.value.trim() && !a.value.trim()) { a.value = de.value; de.value = ''; }
+      $('#mcFotosL', m).innerHTML = taller ? 'Fotos de cómo llegó <span class="txt-3">(opcional)</span>' : 'Fotos del arreglo';
+      /* Lo que ya se escribió pasa al otro lado (ver AvancesForm.pasar) */
+      AvancesForm.pasar(m, $('#mcT', m), taller);
     }));
     const pintar = () => {
       $('#mcFotos', m).innerHTML = m._fotos.map((f, i) => '<div class="foto"><img src="' + attr(f.src) + '" alt="">' +
@@ -9954,6 +10054,7 @@ Object.assign(Ventanas, {
       $$('#mcFotos input', m).forEach(inp => inp.addEventListener('input', () => { m._fotos[+inp.dataset.i].txt = inp.value; }));
       $$('#mcFotos button', m).forEach(b => b.addEventListener('click', () => { m._fotos.splice(+b.dataset.i, 1); pintar(); }));
     };
+    m._pintarFotos = pintar;
     /* Las fotos del taller: a 1.600 px, como las del registro fotográfico */
     Dz.bind('mcDz', files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
       .then(lista => { lista.forEach(a => m._fotos.push({ id: a.id, src: Archivos.vistos.get(a.id).url, txt: '' })); pintar(); }));
@@ -9971,30 +10072,12 @@ Object.assign(Ventanas, {
         ((r.partes || []).length ? ' · ' + r.partes.map(x => Plano.nombre(u, x)).join(', ') : '')),
       cuerpo: (r.falla ? '<div class="alert a-info mb12">' + Icon('info') + '<div><b>Qué pasó:</b> ' + esc(r.falla) + '</div></div>' : '') +
         ((r.notas || []).length ? '<div class="field"><label>Lo anotado hasta ahora</label>' + Avances.lista(r) + '</div>' : '') +
-        '<div class="row"><div class="field"><label>Fecha</label><input class="inp" type="date" id="avF" value="' + hoyISO + '"></div>' +
-          '<div class="field"><label>Hora</label><input class="inp" type="time" id="avH" value="' + ahora() + '"></div></div>' +
-        '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" id="avT" rows="3" placeholder="Ej.: se desmontó la llanta y el rin estaba partido"></textarea></div>' +
-        '<div class="field mb0"><label>Fotos de esta anotación <span class="txt-3">(opcional)</span></label>' +
-          Dz.camara('avDz') + Dz.html('avDz', '<span class="solo-web">Arrastre aquí las fotos</span><span class="solo-cel">Escoger de la galería</span>',
-            '<span class="solo-web">Puede soltar varias a la vez; a cada una se le escribe qué muestra</span>', 'image/*', true) +
-          '<div class="fotos" id="avFotos"></div></div>',
+        '<div id="avLista"></div>',
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarAvance" data-m="' + attr(r.id) + '" disabled>' +
-        Icon('save', '', 14) + 'Guardar anotación</button>'
+        Icon('save', '', 14) + 'Guardar</button>'
     });
-    m._fotos = [];
-    const revisar = () => { $('[data-act="guardarAvance"]', m).disabled = !$('#avT', m).value.trim() && !m._fotos.length; };
-    const pintar = () => {
-      $('#avFotos', m).innerHTML = m._fotos.map((f, i) => '<div class="foto"><img src="' + attr(f.src) + '" alt="">' +
-        '<button type="button" data-i="' + i + '" title="Quitar la foto">' + Icon('x', '', 12) + '</button>' +
-        '<input data-i="' + i + '" value="' + attr(f.txt) + '" placeholder="¿Qué muestra? Ej.: el rin partido"></div>').join('');
-      $$('#avFotos input', m).forEach(inp => inp.addEventListener('input', () => { m._fotos[+inp.dataset.i].txt = inp.value; }));
-      $$('#avFotos button', m).forEach(b => b.addEventListener('click', () => { m._fotos.splice(+b.dataset.i, 1); pintar(); }));
-      revisar();
-    };
-    $('#avT', m).addEventListener('input', revisar);
-    /* Las fotos, a 1.600 px, como las del registro del arreglo */
-    Dz.bind('avDz', files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
-      .then(lista => { lista.forEach(a => m._fotos.push({ id: a.id, src: Archivos.vistos.get(a.id).url, txt: '' })); pintar(); }));
+    /* Uno o varios avances (ver AvancesForm); Guardar se prende cuando alguno tiene algo */
+    AvancesForm.montar(m, $('#avLista', m), 'av', () => { $('[data-act="guardarAvance"]', m).disabled = !AvancesForm.hay(m); });
   },
 
   inspeccion(o) {
@@ -10538,12 +10621,13 @@ Object.assign(Ventanas, {
 const Leer = {
   correctivo(m) {
     const u = PlanoForm.u(m), taller = m._estado === 'taller', entrada = $('#mcE', m).value || hoyISO;
-    /* Si sigue en el taller, lo que se escriba es la primera anotación del historial, con las fotos (ver Avances) */
-    const nota = taller && $('#mcN', m) ? $('#mcN', m).value.trim() : '', notas = nota ? [Avances.nueva(entrada, entrada === hoyISO ? ahora() : '', nota)] : [];
+    /* Si sigue en el taller, los avances que ya tenga, cada uno con sus fotos (ver AvancesForm); las fotos de abajo son las de cómo llegó */
+    const av = taller ? AvancesForm.leer(m) : [], notas = av.map(a => a.n);
     return {
       numero: Num.mc(), unidad: u, prov: ProvFact.leer($('#mcP', m).value), taller, notas,
       entrada, salida: taller ? '' : $('#mcS', m).value || entrada,
-      trabajo: taller ? '' : $('#mcT', m).value.trim(), fotos: m._fotos.map(f => (notas.length ? Object.assign({}, f, { nota: notas[0].id }) : f)),
+      trabajo: taller ? '' : $('#mcT', m).value.trim(),
+      fotos: m._fotos.concat(...av.map(a => a.fotos.map(f => Object.assign({}, f, { nota: a.n.id })))),
       valor: Leer.pesos($('#mcV', m).value), ordenes: Compras.leer($('#mcO', m)),
       componente: $('#mcC', m).value.trim(), falla: $('#mcF', m).value.trim(), lectura: Aceite.aplica(u) ? $('#mcL', m).value.trim() : '',
       partes: PlanoForm.escogidas(m), llantas: m._partes.includes('llantas') ? m._llantas.slice() : [], llanta: LlantaForm.leer(m),
@@ -10647,11 +10731,12 @@ Object.assign(Acciones, {
   guardarAvance(el) {
     const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
     if (!m || !u || el.disabled) return;
-    const t = $('#avT', m).value.trim(), f = $('#avF', m).value || hoyISO, h = $('#avH', m).value || '';
-    Avances.agregar(r, Avances.nueva(f, h, t), m._fotos);
+    const av = AvancesForm.leer(m), nf = av.reduce((t, a) => t + a.fotos.length, 0);
+    if (!av.length) return;
+    av.forEach(a => Avances.agregar(r, a.n, a.fotos));
     Modal.cerrar(m);
-    Toast.show('Anotación guardada en el arreglo de <b>' + esc(UI.placaTxt(u)) + '</b>' +
-      (m._fotos.length ? ', con ' + m._fotos.length + (m._fotos.length === 1 ? ' foto' : ' fotos') : '') + '.');
+    Toast.show((av.length === 1 ? 'Avance guardado' : av.length + ' avances guardados') + ' en el arreglo de <b>' + esc(UI.placaTxt(u)) + '</b>' +
+      (nf ? ', con ' + nf + (nf === 1 ? ' foto' : ' fotos') : '') + '.');
     Router.pintar(true);
   },
   terminarArreglo(el) {
@@ -10979,7 +11064,7 @@ Object.assign(Acciones, {
       llantas: d.llantas.length ? d.llantas : undefined, novedades: d.novedades.length ? d.novedades : undefined,
       /* La llanta que se puso, si se cambió (ver LlantaForm) */
       llanta: d.llanta || undefined,
-      /* La primera anotación del historial, si sigue en el taller (ver Avances) */
+      /* Los avances que ya tenía al registrarlo, si sigue en el taller (ver AvancesForm) */
       notas: d.notas.length ? d.notas : undefined
     };
     ProvFact.poner(r, d.prov);
