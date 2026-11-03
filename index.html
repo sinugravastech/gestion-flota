@@ -3591,7 +3591,8 @@ const UI = {
         (m.oc ? '<span class="chip">' + Icon('cart', '', 12) + esc(m.oc) + '</span>' : '') + this.chipsOrdenes(m, 12) +
         (!prev && !m.adjunto ? '<button class="btn btn-sm" data-act="pdfCorrectivo" data-m="' + m.id + '">' + Icon('pdf', '', 12) + 'Generar PDF</button>' : '') +
         (m.estado === 'taller' ? '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + m.id + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
-          '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + m.id + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>' : '') +
+          '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + m.id + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>'
+          : '<button class="btn btn-sm" data-act="editarMant" data-m="' + attr(m.id) + '" title="Corregir lo guardado">' + Icon('edit', '', 12) + 'Editar</button>') +
       '</div></div>';
   },
   /* Las órdenes de Facturación de un arreglo (ver Compras), como chips que se
@@ -5066,6 +5067,7 @@ const ProvFact = {
           });
           s.value = 'f:' + x.id;
           s.dataset.antes = s.value;
+          if (m._alCambiar) m._alCambiar();
         } });
       });
     });
@@ -6744,7 +6746,8 @@ const Plano = {
         (otras.length ? (k === null ? '<span class="chip">' + Icon('tool', '', 11) + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>'
           : '<span class="chip" title="Este arreglo también tocó otras partes">También: ' + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>') : '') +
         (m.estado === 'taller' ? '<button type="button" class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
-          '<button type="button" class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>' : '') +
+          '<button type="button" class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>'
+          : '<button type="button" class="btn btn-sm" data-act="editarMant" data-m="' + attr(m.id) + '" title="Corregir lo guardado">' + Icon('edit', '', 12) + 'Editar</button>') +
         (marcar ? '<button type="button" class="btn btn-sm" data-act="asignarPartes" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Marcar la parte</button>' : '') +
       '</div></div>';
   },
@@ -7211,7 +7214,7 @@ const AvancesForm = {
   pintar(m) {
     const cont = m._avCont, pre = m._avPre, varios = m._av.length > 1;
     cont.innerHTML = m._av.map((a, i) => '<div class="av-b" data-av="' + a.k + '">' +
-        (varios ? '<div class="av-b-h"><b>Avance ' + (i + 1) + '</b><button type="button" class="btn btn-sm btn-ghost btn-icon" data-av-quitar="' + a.k +
+        (varios ? '<div class="av-b-h"><b>Avance ' + (i + 1) + (a.cierre ? ' · salió del taller' : '') + '</b><button type="button" class="btn btn-sm btn-ghost btn-icon" data-av-quitar="' + a.k +
           '" title="Quitar este avance" aria-label="Quitar este avance">' + Icon('x', '', 12) + '</button></div>' : '') +
         '<div class="row"><div class="field"><label>Fecha</label><input class="inp" type="date" data-c="f" value="' + attr(a.f) + '"></div>' +
           '<div class="field"><label>Hora</label><input class="inp" type="time" data-c="h" value="' + attr(a.h) + '"></div></div>' +
@@ -7245,7 +7248,8 @@ const AvancesForm = {
   /* Los bloques con algo escrito o con fotos, listos para guardar (ver Avances) */
   leer(m) {
     return (m._av || []).filter(a => a.t.trim() || a.fotos.length)
-      .map(a => ({ n: a.id ? { id: a.id, f: a.f || hoyISO, h: a.h || '', t: a.t.trim(), ts: a.ts || marca() } : Avances.nueva(a.f || hoyISO, a.h || '', a.t.trim()),
+      .map(a => ({ n: a.id ? Object.assign({ id: a.id, f: a.f || hoyISO, h: a.h || '', t: a.t.trim(), ts: a.ts || marca() }, a.cierre ? { cierre: true } : {})
+        : Avances.nueva(a.f || hoyISO, a.h || '', a.t.trim()),
         fotos: a.fotos.map(f => ({ id: f.id, src: f.src, txt: f.txt })) }));
   },
   /* Al cambiar el estado del registro, lo escrito pasa al otro lado: «¿Qué se
@@ -7265,15 +7269,20 @@ const AvancesForm = {
   }
 };
 
-/* «Anotar avance» (Juan, 03/11/2026: «que muestre literalmente todo lo que sale
-   cuando uno va a registrar… para que uno pueda editar kilometraje y todo
-   eso»): el mismo formulario del registro, con todo lo del arreglo para
-   corregirlo, sus avances (también se corrigen) y uno nuevo para escribir. El
-   arreglo sigue en el taller: para terminarlo, «Terminar arreglo». Las
-   novedades del preoperacional que atendía no se tocan */
+/* Corregir un arreglo ya guardado (Juan, 03/11/2026: «que muestre literalmente
+   todo lo que sale cuando uno va a registrar… para que uno pueda editar
+   kilometraje y todo eso»; y el mismo día, de los terminados: «No hay botón
+   para editar lo que ya yo he guardado como terminado»). Es el mismo formulario
+   del registro, con todo lo del arreglo:
+   - si sigue en el taller, «Anotar avance»: sus avances (también se corrigen)
+     y uno nuevo para escribir; para terminarlo, «Terminar arreglo»;
+   - si ya terminó, «Editar»: qué se hizo (o sus avances, si los tuvo) y la
+     fecha en que salió.
+   El estado no se cambia aquí, y las novedades del preoperacional que atendía
+   no se tocan. Guardar se prende solo si algo cambió */
 const EditarArreglo = {
   poner(m, r) {
-    const u = Q.unidad(r.unidad);
+    const u = Q.unidad(r.unidad), taller = r.estado === 'taller', notas = (r.notas || []).length > 0;
     m._editar = r.id;
     /* El plano: sus partes, sus llantas y el cambio de llanta, si lo hubo */
     PlanoForm.poner(m, u, { partes: (r.partes || []).map(x => x.k), llantas: r.llantas || [] });
@@ -7284,14 +7293,21 @@ const EditarArreglo = {
     $('#mcE', m).value = r.fecha || hoyISO;
     if ($('#mcL', m)) $('#mcL', m).value = r.lectura || '';
     $('#mcV', m).value = r.valor ? r.valor.toLocaleString('es-CO') : '';
-    /* Sigue en el taller: el estado no se cambia aquí */
-    m._estado = 'taller';
-    $('#mcEstC', m).innerHTML = '<label>Estado</label><div class="hint mt0">Sigue en el taller desde el ' + esc(Fecha.larga(r.fecha)) + '. Cuando salga, use «Terminar arreglo».</div>';
-    $('#mcTC', m).classList.add('hidden');
-    $('#mcNC', m).classList.remove('hidden');
-    $('#mcSal', m).classList.add('hidden');
-    $('#mcNC .hint', m).textContent = 'Corrija lo que haga falta y escriba lo nuevo en el último avance. Si llegaron varios, «Agregar otro avance».';
-    $('#mcFotosL', m).innerHTML = 'Fotos de cómo llegó <span class="txt-3">(opcional)</span>';
+    /* El estado, como texto: no se cambia aquí */
+    m._estado = taller ? 'taller' : 'cerrado';
+    m._conAvances = taller || notas;
+    $('#mcEstC', m).innerHTML = '<label>Estado</label><div class="hint mt0">' + esc(taller
+      ? 'Sigue en el taller desde el ' + Fecha.larga(r.fecha) + '. Cuando salga, use «Terminar arreglo».'
+      : 'Terminado: salió del taller el ' + Fecha.larga(r.salida || r.fecha) + '. La fecha se corrige abajo.') + '</div>';
+    /* «¿Qué se hizo?» si terminó sin avances (o si ya lo tenía escrito); los avances, si los tuvo */
+    $('#mcT', m).value = r.trabajo || '';
+    $('#mcTC', m).classList.toggle('hidden', taller || (notas && !r.trabajo));
+    $('#mcNC', m).classList.toggle('hidden', !m._conAvances);
+    $('#mcNC .hint', m).textContent = taller ? 'Corrija lo que haga falta y escriba lo nuevo en el último avance. Si llegaron varios, «Agregar otro avance».'
+      : 'Los avances que tuvo el arreglo: también se pueden corregir.';
+    $('#mcSal', m).classList.toggle('hidden', taller);
+    if (!taller) $('#mcS', m).value = r.salida || r.fecha || hoyISO;
+    $('#mcFotosL', m).innerHTML = m._conAvances ? 'Fotos de cómo llegó <span class="txt-3">(opcional)</span>' : 'Fotos del arreglo';
     /* El taller y quien puso los repuestos */
     [['mcP', false], ['mcR', true]].forEach(([id, rep]) => {
       const s = $('#' + id, m), vacio = s.querySelector('option[value=""]');
@@ -7303,12 +7319,13 @@ const EditarArreglo = {
     if (m._ponerMismo) m._ponerMismo(Boolean(r.repMismo));
     /* Sus órdenes de Facturación */
     Compras.escoger($('#mcO', m), u, r.fecha, r);
-    /* Las fotos de cómo llegó y los avances, cada uno con las suyas, y uno nuevo al final */
+    /* Las fotos sin avance (las de cómo llegó, o todas si no tuvo avances) y los
+       avances, cada uno con las suyas; si sigue en el taller, uno nuevo al final */
     const src = f => (f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || '');
     const fotos = id => Avances.fotos(r, id).map(f => ({ id: f.id, txt: f.txt || '', src: src(f) }));
     m._fotos = fotos('');
-    m._av = Avances.de(r).map(n => Object.assign(AvancesForm.bloque(n.f), { id: n.id, ts: n.ts, h: n.h || '', t: n.t || '', fotos: fotos(n.id) }))
-      .concat([AvancesForm.bloque(hoyISO)]);
+    m._av = Avances.de(r).map(n => Object.assign(AvancesForm.bloque(n.f), { id: n.id, ts: n.ts, h: n.h || '', t: n.t || '', fotos: fotos(n.id) }, n.cierre ? { cierre: true } : {}))
+      .concat(taller || !notas ? [AvancesForm.bloque(hoyISO)] : []);
     AvancesForm.pintar(m);
     m._pintarFotos();
     /* Las fotos que ya tenía se bajan al abrirlo */
@@ -7320,17 +7337,44 @@ const EditarArreglo = {
       m._pintarFotos();
       m._av.forEach(a => AvancesForm.fotos(m, a));
     });
-    /* El cursor, en el avance nuevo */
-    const nuevo = $('#mcAv [data-av="' + m._av[m._av.length - 1].k + '"] textarea', m);
-    if (nuevo) setTimeout(() => nuevo.focus(), 60);
+    /* Si sigue en el taller, el cursor en el avance nuevo */
+    if (taller) {
+      const nuevo = $('#mcAv [data-av="' + m._av[m._av.length - 1].k + '"] textarea', m);
+      if (nuevo) setTimeout(() => nuevo.focus(), 60);
+    }
+    this.vigilar(m, r);
+  },
+  /* Lo que se guardaría, para compararlo con lo de al abrir. El taller y los
+     repuestos van aparte: su lista puede llegar después (ver ProvFact.alAbrir) */
+  firma(m) {
+    const d = Leer.correctivo(m);
+    return JSON.stringify([d.entrada, d.salida, d.trabajo, d.componente, d.falla, d.lectura, d.valor, d.partes.map(p => p.k), d.llantas, d.llanta, d.repMismo,
+      d.notas.map(n => [n.id, n.f, n.h, n.t]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort()]);
+  },
+  /* Guardar, apagado hasta que algo cambie */
+  vigilar(m, r) {
+    const g = $('[data-act="guardarCorrectivo"]', m), antes = this.firma(m);
+    /* Otro taller o proveedor: no cuenta el mismo del arreglo, cuando llega con la lista */
+    const prov = (id, rep) => ProvFact.cambio(m, id) && $('#' + id, m).value !== ProvFact.valor(r, rep);
+    const revisar = () => { if (document.body.contains(m)) g.disabled = !prov('mcP') && !prov('mcR', true) && this.firma(m) === antes; };
+    /* Después de lo que haga cada parte del formulario (el plano, las fotos, los avances) */
+    m._alCambiar = m._avCambio = revisar;
+    ['input', 'change', 'click'].forEach(t => m.addEventListener(t, () => setTimeout(revisar)));
+    g.disabled = true;
   },
   /* Lo corregido queda en el mismo arreglo */
   guardar(m, d) {
     const r = Datos.mantenimientos.find(x => x.id === m._editar), u = r && Q.unidad(r.unidad);
     if (!u) { Modal.cerrar(m); return; }
+    /* Terminado: lo que se hizo sigue siendo obligatorio, como al registrarlo */
+    const conTrabajo = !$('#mcTC', m).classList.contains('hidden');
+    if (conTrabajo && !d.trabajo) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#mcT', m).focus(); return; }
+    if (r.estado !== 'taller' && !conTrabajo && !d.notas.length) { Toast.show('Deje al menos un avance con lo que se hizo.', 'err'); return; }
     const antes = new Set((r.notas || []).map(n => n.id)), nuevos = d.notas.filter(n => !antes.has(n.id)).length;
     const poner = (k, v) => { if (v === undefined || v === '' || (Array.isArray(v) && !v.length)) delete r[k]; else r[k] = v; };
     r.fecha = d.entrada;
+    if (r.estado !== 'taller') r.salida = d.salida || r.salida;
+    if (conTrabajo) r.trabajo = d.trabajo;
     poner('componente', d.componente);
     poner('falla', d.falla);
     poner('lectura', d.lectura);
@@ -7338,7 +7382,7 @@ const EditarArreglo = {
     poner('partes', d.partes);
     poner('llantas', d.llantas);
     poner('llanta', d.llanta || undefined);
-    poner('notas', d.notas);
+    if (m._conAvances) poner('notas', d.notas);
     r.fotosData = d.fotos.map(f => Object.assign({ id: f.id, txt: f.txt }, f.nota ? { nota: f.nota } : {}));
     r.fotos = r.fotosData.length;
     /* El taller y los repuestos solo se tocan si se cambiaron: así un arreglo
@@ -7347,8 +7391,85 @@ const EditarArreglo = {
     if (ProvFact.cambio(m, 'mcR') || Boolean(d.repMismo) !== Boolean(r.repMismo)) ProvFact.ponerRep(r, d.rep, d.repMismo);
     Compras.ponerOrdenes(r, d.ordenes);
     Modal.cerrar(m);
-    Toast.show('Arreglo de <b>' + esc(UI.placaTxt(u)) + '</b> guardado' + (nuevos ? ', con ' + nuevos + (nuevos === 1 ? ' avance nuevo' : ' avances nuevos') : '') + '.');
+    Toast.show(r.estado === 'taller'
+      ? 'Arreglo de <b>' + esc(UI.placaTxt(u)) + '</b> guardado' + (nuevos ? ', con ' + nuevos + (nuevos === 1 ? ' avance nuevo' : ' avances nuevos') : '') + '.'
+      : 'Listo: el arreglo de <b>' + esc(UI.placaTxt(u)) + '</b> quedó corregido.');
     Router.pintar(true);
+  }
+};
+
+/* Corregir un preventivo ya guardado (Juan, 03/11/2026: «También agrégale a
+   los preventivos»): el mismo formulario, con todo lo del preventivo (ver
+   Ventanas.preventivo). La unidad no se cambia. Si es un cambio de aceite, lo
+   corregido llega a su lectura y al último cambio de la unidad, de donde se
+   cuenta el próximo. Guardar se prende solo si algo cambió */
+const EditarPreventivo = {
+  /* Lo que se guardaría, para compararlo con lo de al abrir. El proveedor va
+     aparte: su lista puede llegar después (ver ProvFact.alAbrir) */
+  firma(m, r) {
+    const f = m._archivo;
+    return JSON.stringify([$('#mpF', m).value, $('#mpL', m).value.trim(), $('#mpT', m).value.trim(), Leer.pesos($('#mpV', m).value),
+      PlanoForm.escogidas(m).map(p => p.k), Compras.leer($('#mpO', m), r).slice().sort(), f ? [f.name, f.size, f.lastModified] : null]);
+  },
+  vigilar(m, r) {
+    m._editar = r.id;
+    const g = $('[data-act="guardarPreventivo"]', m), antes = this.firma(m, r);
+    const revisar = () => {
+      if (!document.body.contains(m)) return;
+      const prov = ProvFact.cambio(m, 'mpP') && $('#mpP', m).value !== ProvFact.valor(r);
+      g.disabled = !prov && this.firma(m, r) === antes;
+    };
+    m._alCambiar = revisar;
+    ['input', 'change', 'click', 'drop'].forEach(t => m.addEventListener(t, () => setTimeout(revisar)));
+    g.disabled = true;
+  },
+  /* Lo corregido queda en el mismo preventivo */
+  async guardar(m, el) {
+    const r = Datos.mantenimientos.find(x => x.id === m._editar), u = r && Q.unidad(r.unidad);
+    if (!u) { Modal.cerrar(m); return; }
+    /* El PDF nuevo, si lo cambió: se comprime poco, según la política */
+    const a = m._archivo ? await Archivos.conBoton(el, () => Archivos.preparar(m._archivo)) : null;
+    const antes = this.cambio(u, r), partes = PlanoForm.escogidas(m), valor = Leer.pesos($('#mpV', m).value);
+    r.fecha = $('#mpF', m).value || r.fecha;
+    r.trabajo = $('#mpT', m).value.trim() || 'Cambio de aceite';
+    r.lectura = $('#mpL', m).value.trim();
+    if (valor) r.valor = valor; else delete r.valor;
+    if (partes.length) r.partes = partes; else delete r.partes;
+    if (a) { r.adjunto = a.nombre; r.adjuntoId = a.id; }
+    /* Solo si se cambió: así un preventivo con un proveedor de antes de Flota no lo pierde */
+    if (ProvFact.cambio(m, 'mpP')) ProvFact.poner(r, ProvFact.leer($('#mpP', m).value));
+    Compras.ponerOrdenes(r, Compras.leer($('#mpO', m), r));
+    const despues = this.cambio(u, r);
+    this.aceite(u, r, antes, despues);
+    Modal.cerrar(m);
+    const e = antes || despues ? Aceite.estado(u) : null;
+    Toast.show('Listo: el preventivo de <b>' + esc(UI.placaTxt(u)) + '</b> quedó corregido.' + (a ? '<br>' + esc(Archivos.resumen(a)) : '') +
+      (e && e.proximo ? '<br>Próximo cambio de aceite: ' + esc(Aceite.fmt(u, e.proximo)) + '.' : ''));
+    Router.pintar(true);
+  },
+  /* Si es un cambio de aceite, como al registrarlo (ver guardarPreventivo): su fecha y su lectura */
+  cambio(u, r) {
+    const n = Leer.pesos(r.lectura);
+    return Aceite.aplica(u) && n && /aceite/i.test(r.trabajo || '') ? { fecha: r.fecha, n } : null;
+  },
+  /* La lectura que dejó el cambio de aceite sigue lo corregido, y también el
+     último cambio de la unidad si era este. Si deja de ser cambio de aceite, su
+     lectura se quita y el último pasa a ser el más reciente que quede */
+  aceite(u, r, antes, despues) {
+    if (!antes && !despues) return;
+    if (antes && despues && antes.fecha === despues.fecha && antes.n === despues.n) return;
+    const l = antes && (Datos.lecturas || []).find(x => x.unidad === u.id && x.fuente === 'cambio' && x.fecha === antes.fecha && +x.valor === antes.n);
+    if (l && despues) { l.fecha = despues.fecha; l.valor = despues.n; }
+    else if (l) Datos.lecturas = Datos.lecturas.filter(x => x !== l);
+    else if (despues) Aceite.leer(u, despues.fecha, despues.n, 'cambio');
+    const a = u.aceite || {};
+    if (antes && a.ultimo === antes.n && a.ultimoFecha === antes.fecha) {
+      const x = Datos.mantenimientos.filter(y => y.unidad === u.id && y.tipo === 'preventivo' && this.cambio(u, y))
+        .sort((p, q) => q.fecha.localeCompare(p.fecha))[0];
+      u.aceite = Object.assign({}, a, { ultimo: x ? Leer.pesos(x.lectura) : null, ultimoFecha: x ? x.fecha : null });
+    } else if (despues && (a.ultimo == null || !a.ultimoFecha || despues.fecha >= a.ultimoFecha)) {
+      u.aceite = Object.assign({ frecuencia: null }, a, { ultimo: despues.n, ultimoFecha: despues.fecha });
+    }
   }
 };
 
@@ -7590,8 +7711,8 @@ const PlanoForm = {
       inp.placeholder = u.tipo === 'maquinaria' ? 'Ej.: 4.250 h' : 'Ej.: 183.500 km';
       inp.value = a ? Aceite.fmt(u, a.valor) : '';
     }
-    /* Las órdenes de Facturación de la unidad (ver Compras) */
-    if (oc) Compras.escoger(oc, u, ($('#mcE', m) || {}).value || hoyISO, null);
+    /* Las órdenes de Facturación de la unidad (ver Compras); al corregir un arreglo, marcadas las suyas */
+    if (oc) Compras.escoger(oc, u, ($('#mcE', m) || {}).value || hoyISO, m._editar ? Datos.mantenimientos.find(x => x.id === m._editar) : null);
   }
 };
 
@@ -9397,7 +9518,8 @@ Object.assign(Vistas, {
             '<td>' + (m.estado === 'taller' ? '<div class="flex aic g6" style="flex-wrap:wrap">' + UI.pill('bad', 'En taller') +
               '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '" title="Lo que se va haciendo">' + Icon('edit', '', 12) + 'Anotar</button>' +
               '<button class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '" title="La unidad salió del taller">' + Icon('check', '', 12) + 'Terminar</button></div>'
-              : UI.pill('nr', 'Cerrado')) + '</td></tr>';
+              : '<div class="flex aic g6" style="flex-wrap:wrap">' + UI.pill('nr', 'Cerrado') +
+                '<button class="btn btn-sm" data-act="editarMant" data-m="' + attr(m.id) + '" title="Corregir lo guardado">' + Icon('edit', '', 12) + 'Editar</button></div>') + '</td></tr>';
         }).join('') + '</tbody></table></div>' : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.')) + '</div>';
     return { titulo: 'Mantenimientos', sub: 'Preventivos y correctivos', html };
   },
@@ -10127,17 +10249,23 @@ Object.assign(Ventanas, {
   preventivo(o) {
     o = o || {};
     if (!Datos.unidades.length) { Toast.show('Primero registre una unidad en Flota.', 'warn'); return; }
+    /* «Editar»: el mismo formulario, con todo lo del preventivo (ver EditarPreventivo) */
+    const r0 = o.editar ? Datos.mantenimientos.find(x => x.id === o.editar) : null, u0 = r0 && Q.unidad(r0.unidad);
+    if (o.editar && !u0) return;
     const m = Modal.abrir({
-      titulo: 'Mantenimiento preventivo', sub: 'Cambio de aceite y el PDF de inspección rápida de Navitrans', ancho: 'm-hoja',
+      titulo: r0 ? 'Editar preventivo · ' + UI.placaTxt(u0) : 'Mantenimiento preventivo',
+      sub: r0 ? esc([u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : 'Cambio de aceite y el PDF de inspección rápida de Navitrans', ancho: 'm-hoja',
       cuerpo:
-        '<div class="row"><div class="field"><label>Unidad</label><select class="inp" id="mpU">' + Opc.unidades(o.u) + '</select></div>' +
-        '<div class="field"><label>Fecha</label><input class="inp" type="date" id="mpF" value="' + hoyISO + '"></div></div>' +
+        /* Al corregirlo, la unidad no se cambia: va en el título */
+        '<div class="row"><div class="field' + (r0 ? ' hidden' : '') + '"><label>Unidad</label><select class="inp" id="mpU">' + Opc.unidades(r0 ? u0.id : o.u) + '</select></div>' +
+        '<div class="field"><label>Fecha</label><input class="inp" type="date" id="mpF" value="' + attr(r0 ? r0.fecha : hoyISO) + '"></div></div>' +
         '<div class="row"><div class="field"><label>Proveedor</label><select class="inp" id="mpP"><option value="">Sin proveedor</option>' +
-          ProvFact.opciones(ProvFact.ultimoPreventivo()) + ProvFact.opcionNuevo() + '</select></div>' +
-        '<div class="field"><label>Kilometraje u horómetro</label><input class="inp" id="mpL" placeholder="Ej.: 183.500 km">' +
+          ProvFact.opciones(r0 ? ProvFact.valor(r0) : ProvFact.ultimoPreventivo()) + ProvFact.opcionNuevo() + '</select></div>' +
+        '<div class="field"><label>Kilometraje u horómetro</label><input class="inp" id="mpL" placeholder="Ej.: 183.500 km"' + (r0 ? ' value="' + attr(r0.lectura || '') + '"' : '') + '>' +
           '<div class="hint">En un cambio de aceite, desde aquí se cuenta el próximo.</div></div></div>' +
-        '<div class="row"><div class="field" style="flex:2 1 220px"><label>Trabajo</label><input class="inp" id="mpT" value="Cambio de aceite y filtros"></div>' +
-        '<div class="field" style="flex:1 1 140px"><label>Valor</label><input class="inp" id="mpV" inputmode="numeric" placeholder="Ej.: 850.000"></div></div>' +
+        '<div class="row"><div class="field" style="flex:2 1 220px"><label>Trabajo</label><input class="inp" id="mpT" value="' + attr(r0 ? r0.trabajo || '' : 'Cambio de aceite y filtros') + '"></div>' +
+        '<div class="field" style="flex:1 1 140px"><label>Valor</label><input class="inp" id="mpV" inputmode="numeric" placeholder="Ej.: 850.000"' +
+          (r0 && r0.valor ? ' value="' + attr(r0.valor.toLocaleString('es-CO')) + '"' : '') + '></div></div>' +
         '<div class="field"><label>Órdenes de Facturación <span class="txt-3">(si tiene)</span></label><div class="oc-lista" id="mpO"></div>' +
           '<div class="hint">Márquela si el preventivo tiene orden. El valor de arriba cuenta hasta que la orden pase a contabilidad; desde ahí cuenta la orden.</div></div>' +
         '<div class="field"><label>¿Qué partes tocó? <span class="txt-3">(opcional)</span></label><div class="reg-sel" id="mcSel"></div>' +
@@ -10146,7 +10274,10 @@ Object.assign(Ventanas, {
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarPreventivo">' + Icon('save', '', 14) + 'Guardar</button>'
     });
     Dz.bind('mpDz', files => { m._archivo = files[0]; Dz.lista('mpDz', [files[0]], 'documento'); });
-    ProvFact.alAbrir(m, 'mpP', () => ProvFact.ultimoPreventivo());
+    /* El PDF que ya tiene: si se sube otro, lo reemplaza */
+    if (r0 && r0.adjuntoId) $('#mpDzF', m).innerHTML = '<div class="dz-file">' + UI.file(r0.adjunto, r0.adjuntoId) +
+      '<span class="txt-3 fs11">El que tiene ahora. Para cambiarlo, suba el nuevo arriba.</span></div>';
+    ProvFact.alAbrir(m, 'mpP', () => (r0 ? ProvFact.valor(r0) : ProvFact.ultimoPreventivo()));
     ProvFact.listas(m, ['mpP']);
     /* Se propone la última lectura de la unidad, mientras no se escriba otra */
     let propuesta = '';
@@ -10156,15 +10287,17 @@ Object.assign(Ventanas, {
       inp.value = propuesta = a ? Aceite.fmt(u, a.valor) : '';
     };
     $('#mpU', m).addEventListener('change', proponer);
-    proponer();
+    /* Al corregirlo, queda la suya */
+    if (!r0) proponer();
     /* Las partes, de la unidad escogida */
-    const partes = () => { PlanoForm.poner(m, Q.unidad($('#mpU', m).value)); PlanoForm.pintar(m); };
+    const partes = () => { PlanoForm.poner(m, Q.unidad($('#mpU', m).value), r0 ? { partes: (r0.partes || []).map(x => x.k) } : null); PlanoForm.pintar(m); };
     $('#mpU', m).addEventListener('change', partes);
     partes();
-    /* Las órdenes de Facturación de la unidad escogida (ver Compras) */
-    const ordenes = () => Compras.escoger($('#mpO', m), Q.unidad($('#mpU', m).value), $('#mpF', m).value || hoyISO, null);
+    /* Las órdenes de Facturación de la unidad escogida (ver Compras); al corregirlo, marcadas las suyas */
+    const ordenes = () => Compras.escoger($('#mpO', m), Q.unidad($('#mpU', m).value), $('#mpF', m).value || hoyISO, r0);
     $('#mpU', m).addEventListener('change', ordenes);
     ordenes();
+    if (r0) EditarPreventivo.vigilar(m, r0);
   },
 
   /* Una lectura del kilometraje o del horómetro escrita a mano (la de cada
@@ -10222,13 +10355,13 @@ Object.assign(Ventanas, {
      preoperacional que atiende). */
   correctivo(o) {
     o = o || {};
-    /* «Anotar avance»: el mismo formulario, con todo lo del arreglo (ver EditarArreglo) */
+    /* «Anotar avance» o «Editar»: el mismo formulario, con todo lo del arreglo (ver EditarArreglo) */
     const r0 = o.editar ? Datos.mantenimientos.find(x => x.id === o.editar) : null;
     const u0 = (r0 && Q.unidad(r0.unidad)) || (o.u && Q.unidad(o.u)) || Datos.unidades[0];
     if (!u0) { Toast.show('Primero registre una unidad en Flota.', 'warn'); return; }
     const fijo = Boolean(o.fijo || r0);
     const m = Modal.abrir({
-      titulo: r0 ? 'Anotar avance · ' + UI.placaTxt(u0) : o.cambio ? 'Cambio de llanta · ' + UI.placaTxt(u0) : fijo ? 'Registrar arreglo · ' + UI.placaTxt(u0) : 'Mantenimiento correctivo',
+      titulo: r0 ? (r0.estado === 'taller' ? 'Anotar avance · ' : 'Editar arreglo · ') + UI.placaTxt(u0) : o.cambio ? 'Cambio de llanta · ' + UI.placaTxt(u0) : fijo ? 'Registrar arreglo · ' + UI.placaTxt(u0) : 'Mantenimiento correctivo',
       sub: r0 ? esc([r0.numero, u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : fijo ? esc([u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : 'Visita al taller con la parte que se arregló y las fotos de cada cambio', ancho: 'xwide m-hoja',
       cuerpo: '<div class="reg"><div>' +
           (fijo ? '' : '<div class="field"><label>Unidad</label><select class="inp" id="mcU">' + Opc.unidades(u0.id) + '</select></div>') +
@@ -10267,6 +10400,8 @@ Object.assign(Ventanas, {
     });
     m._fotos = [];
     m._estado = 'cerrado';
+    /* Al corregir uno, desde ya: así sus órdenes salen marcadas (ver PlanoForm.unidad) */
+    if (r0) m._editar = r0.id;
     /* Los avances, si sigue en el taller (ver AvancesForm) */
     AvancesForm.montar(m, $('#mcAv', m), 'mc');
     ProvFact.alAbrir(m, 'mcP');
@@ -10313,6 +10448,8 @@ Object.assign(Ventanas, {
         '<input data-i="' + i + '" value="' + attr(f.txt) + '" placeholder="¿Qué muestra? Ej.: bomba nueva"></div>').join('');
       $$('#mcFotos input', m).forEach(inp => inp.addEventListener('input', () => { m._fotos[+inp.dataset.i].txt = inp.value; }));
       $$('#mcFotos button', m).forEach(b => b.addEventListener('click', () => { m._fotos.splice(+b.dataset.i, 1); pintar(); }));
+      /* Al corregir un arreglo, para prender Guardar (ver EditarArreglo.vigilar) */
+      if (m._alCambiar) m._alCambiar();
     };
     m._pintarFotos = pintar;
     /* Las fotos del taller: a 1.600 px, como las del registro fotográfico */
@@ -10900,15 +11037,16 @@ Object.assign(Ventanas, {
 const Leer = {
   correctivo(m) {
     const u = PlanoForm.u(m), taller = m._estado === 'taller', entrada = $('#mcE', m).value || hoyISO;
-    /* Si sigue en el taller, los avances que ya tenga, cada uno con sus fotos (ver AvancesForm); las fotos de abajo son las de cómo llegó */
-    const av = taller ? AvancesForm.leer(m) : [], notas = av.map(a => a.n);
+    /* Si sigue en el taller (o al corregir uno que los tuvo), los avances, cada uno con sus fotos (ver AvancesForm); las fotos de abajo son las de cómo llegó */
+    const av = taller || m._conAvances ? AvancesForm.leer(m) : [], notas = av.map(a => a.n);
+    const r0 = m._editar ? Datos.mantenimientos.find(x => x.id === m._editar) : null;
     return {
-      numero: m._editar ? ((Datos.mantenimientos.find(x => x.id === m._editar) || {}).numero || Num.mc()) : Num.mc(), unidad: u, prov: ProvFact.leer($('#mcP', m).value),
+      numero: (r0 && r0.numero) || Num.mc(), unidad: u, prov: ProvFact.leer($('#mcP', m).value),
       rep: m._mismo ? null : ProvFact.leer(($('#mcR', m) || {}).value), repMismo: Boolean(m._mismo), taller, notas,
       entrada, salida: taller ? '' : $('#mcS', m).value || entrada,
       trabajo: taller ? '' : $('#mcT', m).value.trim(),
       fotos: m._fotos.concat(...av.map(a => a.fotos.map(f => Object.assign({}, f, { nota: a.n.id })))),
-      valor: Leer.pesos($('#mcV', m).value), ordenes: Compras.leer($('#mcO', m)),
+      valor: Leer.pesos($('#mcV', m).value), ordenes: Compras.leer($('#mcO', m), r0),
       componente: $('#mcC', m).value.trim(), falla: $('#mcF', m).value.trim(), lectura: Aceite.aplica(u) ? $('#mcL', m).value.trim() : '',
       partes: PlanoForm.escogidas(m), llantas: m._partes.includes('llantas') ? m._llantas.slice() : [], llanta: LlantaForm.leer(m),
       novedades: m._novs.map(n => ({ i: n.i, f: n.fecha, p: n.preop, t: n.texto }))
@@ -11007,6 +11145,12 @@ Object.assign(Acciones, {
   anotarAvance(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     if (r) Ventanas.correctivo({ editar: r.id });
+  },
+  /* Corregir un mantenimiento ya guardado: el mismo formulario de su tipo (ver EditarArreglo y EditarPreventivo) */
+  editarMant(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
+    if (!r) return;
+    if (r.tipo === 'preventivo') Ventanas.preventivo({ editar: r.id }); else Ventanas.correctivo({ editar: r.id });
   },
   /* Los proveedores, en la lista de Facturación (ver ProvFact y Vistas.proveedores) */
   provNuevo() { Ventanas.provNuevo({}); },
@@ -11253,6 +11397,8 @@ Object.assign(Acciones, {
   async guardarPreventivo(el) {
     if (el.disabled) return;
     const m = el.closest('.modal-bd'), u = Q.unidad($('#mpU', m).value);
+    /* «Editar»: lo corregido queda en el mismo preventivo (ver EditarPreventivo) */
+    if (m._editar) { await EditarPreventivo.guardar(m, el); return; }
     /* El PDF de Navitrans se comprime poco, según la política */
     const a = m._archivo ? await Archivos.conBoton(el, () => Archivos.preparar(m._archivo)) : null;
     const fecha = $('#mpF', m).value || hoyISO, trabajo = $('#mpT', m).value.trim() || 'Cambio de aceite', lectura = $('#mpL', m).value.trim();
@@ -11364,7 +11510,7 @@ Object.assign(Acciones, {
   },
   guardarCorrectivo(el) {
     const m = el.closest('.modal-bd'), d = Leer.correctivo(m);
-    /* «Anotar avance»: lo corregido queda en el mismo arreglo (ver EditarArreglo) */
+    /* «Anotar avance» o «Editar»: lo corregido queda en el mismo arreglo (ver EditarArreglo) */
     if (m._editar) { EditarArreglo.guardar(m, d); return; }
     /* Si sigue en el taller, se guarda sin «¿Qué se hizo?»: va en el historial (ver Avances) */
     if (!d.taller && !d.trabajo) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#mcT', m).focus(); return; }
