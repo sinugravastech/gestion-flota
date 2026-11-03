@@ -1535,6 +1535,24 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 /* El clip de los adjuntos (ver UI.clip): sin adjuntos, apagado */
 .chip-btn.chip-adj svg{color:var(--text-2)}
 span.chip-adj{color:var(--text-3)}
+/* Las listas que se buscan escribiendo (ver Buscador): el campo, con su flecha,
+   y la lista encima de la ventana */
+.bus-inp{padding-right:28px;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7c8c' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center}
+.bus-lista{position:fixed;z-index:250;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius);box-shadow:var(--sh-pop);
+  overflow-y:auto;padding:4px 0}
+.bus-op{padding:7px 12px;font-size:13px;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bus-op.on{background:var(--accent-soft)}
+.bus-op.sel{font-weight:600;color:var(--accent)}
+.bus-op.vacio{color:var(--text-3)}
+.bus-op.nuevo{color:var(--accent);font-weight:600;border-top:1px solid var(--border);margin-top:4px;padding-top:9px}
+.bus-op mark{background:none;color:var(--accent);font-weight:700;padding:0}
+.bus-nada,.bus-mas{padding:8px 12px;font-size:12px;color:var(--text-3)}
+.bus-mas{font-size:11px;border-top:1px solid var(--border)}
+@media (max-width:860px){.bus-op{padding:10px 12px;font-size:15px}}
+/* Lo que le falta a un arreglo (ver Pendiente) */
+.chip-falta{background:var(--warn-50);border-color:transparent;color:var(--warn-700)}
+.chip-falta svg{color:var(--warn-500)}
 .pl-vacio{padding:22px 10px;text-align:center;color:var(--text-3);font-size:12.5px}
 /* Arriba del plano: lo que sigue en el taller, para terminarlo cuando la unidad sale */
 .pl-taller{display:flex;align-items:center;gap:12px;padding:10px 14px;margin-bottom:14px;border:1px solid rgba(200,55,45,.3);background:var(--dang-50);border-radius:var(--radius);font-size:12.5px;color:var(--dang-700)}
@@ -3624,7 +3642,7 @@ const UI = {
       '<div class="tl-x">' + (m.partes || []).map(x => '<span class="chip">' + Icon('tool', '', 12) + esc(Plano.nombre(u, x)) + '</span>').join('') +
         this.clip(m, 12) +
         (m.fotos ? '<span class="chip">' + Icon('image', '', 12) + m.fotos + (m.fotos === 1 ? ' foto' : ' fotos') + '</span>' : '') +
-        (m.oc ? '<span class="chip">' + Icon('cart', '', 12) + esc(m.oc) + '</span>' : '') + this.chipsOrdenes(m, 12) +
+        (m.oc ? '<span class="chip">' + Icon('cart', '', 12) + esc(m.oc) + '</span>' : '') + this.chipsOrdenes(m, 12) + Pendiente.chips(m, 12) +
         (prev ? '' : '<button class="btn btn-sm" data-act="pdfCorrectivo" data-m="' + attr(m.id) + '" title="El PDF del arreglo, con sus fotos">' + Icon('pdf', '', 12) + 'Ver PDF</button>') +
         (m.estado === 'taller' ? '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + m.id + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
           '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + m.id + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>'
@@ -5105,10 +5123,15 @@ const ProvFact = {
       const s = $('#' + id, m);
       if (!s) return;
       s.dataset.antes = s.dataset.inicial = s.value;
+      /* Se busca escribiendo (ver Buscador) */
+      Buscador.poner(s);
       s.addEventListener('change', () => {
         if (s.value !== 'nuevo:') { s.dataset.antes = s.value; return; }
         s.value = s.dataset.antes || '';
-        Ventanas.provNuevo({ alCrear: x => {
+        /* Con lo que se escribió en el buscador, si no lo encontró */
+        const nombre = s.dataset.buscado || '';
+        delete s.dataset.buscado;
+        Ventanas.provNuevo({ nombre, alCrear: x => {
           ids.forEach(otro => {
             const o = $('#' + otro, m);
             if (!o) return;
@@ -5159,6 +5182,157 @@ const ProvFact = {
       const antes = s.value || (propuesta ? propuesta() : ''), vacio = s.querySelector('option[value=""]');
       s.innerHTML = (vacio ? vacio.outerHTML : '') + this.opciones(antes) + this.opcionNuevo();
     });
+  }
+};
+
+/* Las listas largas que se buscan escribiendo (Juan, 03/11/2026: «que tenga
+   la forma de uno ir escribiendo y que le vayan saliendo las palabras que
+   coinciden», como el centro de trabajo en RH). Por ahora, el taller y los
+   proveedores (ver ProvFact.listas). La lista de verdad sigue siendo el
+   <select>, escondido: lo que se escoge aquí se le pone, con su «change», y lo
+   que el programa le ponga (otro valor u otras opciones) se ve aquí. Busca sin
+   tildes ni mayúsculas, resalta lo que coincide y se maneja con las flechas,
+   Enter y Escape. Si no está, «+ Agregar» lo crea con lo escrito */
+const Buscador = {
+  MAX: 60,
+  _b: null,
+  _l: null,
+  _mover: () => Buscador.colocar(),
+  poner(sel) {
+    if (!sel || sel._bus) return;
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'inp bus-inp';
+    inp.autocomplete = 'off';
+    inp.spellcheck = false;
+    inp.setAttribute('role', 'combobox');
+    inp.setAttribute('aria-autocomplete', 'list');
+    inp.setAttribute('aria-expanded', 'false');
+    sel.insertAdjacentElement('beforebegin', inp);
+    sel.hidden = true;
+    const b = sel._bus = { sel, inp, ops: [], hl: -1, q: '' };
+    /* El texto: lo escogido; sin nada, la opción vacía de guía («Sin taller registrado») */
+    b.pintar = () => {
+      const o = sel.selectedOptions[0];
+      inp.value = sel.value && o ? o.textContent : '';
+      inp.placeholder = (sel.querySelector('option[value=""]') || {}).textContent || 'Escriba para buscar';
+    };
+    /* Lo que el programa le ponga al select también se ve aquí: el valor y las opciones */
+    const d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+    Object.defineProperty(sel, 'value', { configurable: true, get() { return d.get.call(this); }, set(v) { d.set.call(this, v); b.pintar(); } });
+    new MutationObserver(() => b.pintar()).observe(sel, { childList: true });
+    inp.addEventListener('focus', () => { inp.select(); this.abrir(b, ''); });
+    inp.addEventListener('click', () => { if (this._b !== b) this.abrir(b, ''); });
+    inp.addEventListener('input', () => this.abrir(b, inp.value));
+    inp.addEventListener('keydown', e => this.tecla(e, b));
+    inp.addEventListener('blur', () => setTimeout(() => {
+      if (document.activeElement === inp) return;
+      if (this._b === b) this.cerrar();
+      b.pintar();
+    }, 150));
+    b.pintar();
+  },
+  abrir(b, q) {
+    let l = this._l;
+    if (!l) {
+      l = this._l = document.createElement('div');
+      l.className = 'bus-lista';
+      l.setAttribute('role', 'listbox');
+      /* mousedown y no click: así el campo no pierde el foco antes de escoger */
+      l.addEventListener('mousedown', e => {
+        e.preventDefault();
+        const x = e.target.closest('.bus-op');
+        if (x && this._b) this.elegir(this._b, this._b.ops[+x.dataset.i]);
+      });
+    }
+    if (this._b !== b) {
+      this.cerrar();
+      this._b = b;
+      window.addEventListener('scroll', this._mover, true);
+      window.addEventListener('resize', this._mover);
+    }
+    if (!l.isConnected) document.body.appendChild(l);
+    b.inp.setAttribute('aria-expanded', 'true');
+    b.q = q;
+    const n = sinTildes(q).trim(), todas = [...b.sel.options].map(o => ({ v: o.value, t: o.textContent }));
+    const vacio = todas.find(o => o.v === ''), nuevo = todas.find(o => o.v === 'nuevo:');
+    const hay = todas.filter(o => o.v && o.v !== 'nuevo:' && (!n || sinTildes(o.t).includes(n)));
+    const lista = (n || !vacio ? [] : [Object.assign({ cls: 'vacio' }, vacio)]).concat(hay.slice(0, this.MAX));
+    b.ops = lista.concat(nuevo ? [{ v: 'nuevo:', t: q.trim() ? '+ Agregar «' + q.trim() + '»' : nuevo.t, cls: 'nuevo' }] : []);
+    /* La parte que coincide, resaltada (sinTildes no cambia el largo del texto) */
+    const marcar = t => {
+      const i = n ? sinTildes(t).indexOf(n) : -1;
+      return i < 0 ? esc(t) : esc(t.slice(0, i)) + '<mark>' + esc(t.slice(i, i + n.length)) + '</mark>' + esc(t.slice(i + n.length));
+    };
+    const fila = (o, i) => '<div class="bus-op' + (o.cls ? ' ' + o.cls : '') + (o.v && o.v === b.sel.value ? ' sel' : '') + '" role="option" data-i="' + i + '">' +
+      (o.cls === 'nuevo' ? esc(o.t) : marcar(o.t)) + '</div>';
+    l.innerHTML = lista.map(fila).join('') +
+      (n && !hay.length ? '<div class="bus-nada">Ninguno coincide con «' + esc(q.trim()) + '».</div>' : '') +
+      (hay.length > this.MAX ? '<div class="bus-mas">Se ven ' + this.MAX + ' de ' + hay.length + ': siga escribiendo para encontrarlo.</div>' : '') +
+      (nuevo ? fila(b.ops[b.ops.length - 1], b.ops.length - 1) : '');
+    /* Resaltado: buscando, el primero que coincide (o «+ Agregar»); si no, el escogido */
+    b.hl = n ? (hay.length ? b.ops.indexOf(lista.find(o => !o.cls)) : b.ops.length - 1) : b.ops.findIndex(o => o.v && o.v === b.sel.value);
+    this.colocar();
+    this.resaltar(b);
+  },
+  resaltar(b) {
+    if (!this._l) return;
+    $$('.bus-op', this._l).forEach(x => x.classList.toggle('on', +x.dataset.i === b.hl));
+    const x = this._l.querySelector('.bus-op.on');
+    if (x) x.scrollIntoView({ block: 'nearest' });
+  },
+  tecla(e, b) {
+    const abierta = this._b === b;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!abierta) { this.abrir(b, ''); return; }
+      const k = b.ops.length;
+      if (!k) return;
+      b.hl = e.key === 'ArrowDown' ? (b.hl + 1) % k : b.hl <= 0 ? k - 1 : b.hl - 1;
+      this.resaltar(b);
+    } else if (e.key === 'Enter' && abierta) {
+      e.preventDefault();
+      const o = b.ops[b.hl >= 0 ? b.hl : 0];
+      if (o) this.elegir(b, o);
+    } else if (e.key === 'Escape' && abierta) {
+      /* Cierra la lista, no la ventana */
+      e.preventDefault();
+      e.stopPropagation();
+      this.cerrar();
+      b.pintar();
+    }
+  },
+  elegir(b, o) {
+    this.cerrar();
+    /* «+ Agregar» abre la ventana con lo que se escribió (ver ProvFact.listas) */
+    if (o.v === 'nuevo:') b.sel.dataset.buscado = (b.q || '').trim();
+    if (o.v !== b.sel.value || o.v === 'nuevo:') {
+      b.sel.value = o.v;
+      b.sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    b.pintar();
+    b.inp.blur();
+  },
+  cerrar() {
+    if (this._l) this._l.remove();
+    if (this._b) this._b.inp.setAttribute('aria-expanded', 'false');
+    this._b = null;
+    window.removeEventListener('scroll', this._mover, true);
+    window.removeEventListener('resize', this._mover);
+  },
+  /* La lista, pegada al campo: abajo si cabe; si no, arriba. Va en el body,
+     encima de la ventana, para que la ventana no la corte */
+  colocar() {
+    const b = this._b, l = this._l;
+    if (!b || !l) return;
+    if (!b.inp.isConnected) { this.cerrar(); return; }
+    const r = b.inp.getBoundingClientRect(), abajo = innerHeight - r.bottom - 8, arriba = r.top - 8;
+    l.style.maxHeight = '';
+    const alto = Math.min(l.scrollHeight, 300), bajo = abajo >= alto || abajo >= arriba, ancho = Math.max(r.width, 240);
+    l.style.width = ancho + 'px';
+    l.style.left = Math.max(8, Math.min(r.left, innerWidth - ancho - 8)) + 'px';
+    l.style.maxHeight = Math.max(120, Math.min(300, bajo ? abajo : arriba)) + 'px';
+    l.style.top = (bajo ? r.bottom + 4 : r.top - 4 - Math.min(alto, arriba)) + 'px';
   }
 };
 
@@ -6790,7 +6964,7 @@ const Plano = {
         ((m.llantas || []).length ? '<span class="chip">' + Icon('disc', '', 11) + esc(m.llantas.map(p => Llantas.nombre(p, true)).join(', ')) + '</span>' : '') +
         (m.llanta ? '<span class="chip" title="La llanta que se puso">' + Icon('refresh', '', 11) + 'Se puso: ' + esc(Llantas.txt(m.llanta) || 'otra llanta') + '</span>' : '') +
         (m.fotos ? '<span class="chip">' + Icon('image', '', 11) + m.fotos + (m.fotos === 1 ? ' foto' : ' fotos') + '</span>' : '') +
-        (m.oc ? '<span class="chip">' + Icon('cart', '', 11) + esc(m.oc) + '</span>' : '') + UI.chipsOrdenes(m, 11) +
+        (m.oc ? '<span class="chip">' + Icon('cart', '', 11) + esc(m.oc) + '</span>' : '') + UI.chipsOrdenes(m, 11) + Pendiente.chips(m, 11) +
         UI.clip(m, 11) +
         (prev ? '' : '<button type="button" class="chip chip-btn" data-act="pdfCorrectivo" data-m="' + attr(m.id) + '" title="El PDF del arreglo, con sus fotos">' + Icon('pdf', '', 11) +
           'Ver PDF</button>') +
@@ -7241,6 +7415,22 @@ const Adjuntos = {
   de: m => (m.adjuntoId ? [{ id: m.adjuntoId, nombre: m.adjunto || 'Adjunto' }] : []).concat(m.adjuntos || []),
   /* Lo que se guarda de cada uno: su archivo, su nombre y lo que pesaba y pesa (ver Peso.foto) */
   dato: a => Object.assign({ id: a.id, nombre: a.nombre }, a.tam ? { tam: a.tam } : {}, a.antes > a.tam ? { antes: a.antes } : {})
+};
+
+/* Lo que le falta a un arreglo (Juan, 03/11/2026: «debe quedar como un aviso
+   de que ese arreglo le falta valor y le falta la orden de facturación…
+   Siempre debe tener su orden»). La cotización y la orden llegan días después:
+   mientras no estén, el arreglo queda pendiente a la vista (en la línea de
+   tiempo de la ficha, en la historia de cada parte y en el historial, con su
+   aviso y su filtro). Se ponen con «Editar», «Anotar avance» o «Terminar
+   arreglo». Solo los correctivos */
+const Pendiente = {
+  NOMBRE: { valor: 'Falta el valor', orden: 'Falta la orden' },
+  de: m => (m.tipo !== 'correctivo' ? [] : [m.valor > 0 ? '' : 'valor', (m.ordenes || []).length ? '' : 'orden'].filter(Boolean)),
+  chips(m, tam) {
+    return this.de(m).map(k => '<span class="chip chip-falta" title="' + (k === 'valor' ? 'Todavía no tiene el valor de lo que costó' : 'Todavía no tiene su orden de Facturación') +
+      '">' + Icon('warn', '', tam) + this.NOMBRE[k] + '</span>').join('');
+  }
 };
 
 /* Varios avances de una vez (Juan, 03/11/2026: «si ya yo tengo los avances, yo
@@ -9565,11 +9755,11 @@ Object.assign(Vistas, {
     const todos = Datos.mantenimientos.slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
     const delMes = m => { const d = Fecha.parse(m.fecha); return d.getMonth() === HOY.getMonth() && d.getFullYear() === HOY.getFullYear(); };
     const taller = todos.filter(m => m.estado === 'taller');
-    const sinOrden = todos.filter(m => Compras.malas(m));
+    const sinOrden = todos.filter(m => Compras.malas(m)), pend = todos.filter(m => Pendiente.de(m).length);
     const ultPrev = todos.find(m => m.tipo === 'preventivo');
-    const lista = todos.filter(m => f === 'todos' || (f === 'taller' ? m.estado === 'taller' : m.tipo === f));
+    const lista = todos.filter(m => f === 'todos' || (f === 'taller' ? m.estado === 'taller' : f === 'pendientes' ? Pendiente.de(m).length : m.tipo === f));
     const segs = [['todos', 'Todos', todos.length], ['preventivo', 'Preventivos', todos.filter(m => m.tipo === 'preventivo').length],
-      ['correctivo', 'Correctivos', todos.filter(m => m.tipo === 'correctivo').length], ['taller', 'En taller', taller.length]];
+      ['correctivo', 'Correctivos', todos.filter(m => m.tipo === 'correctivo').length], ['taller', 'En taller', taller.length], ['pendientes', 'Sin valor u orden', pend.length]];
     const html = head + tabs +
       '<div class="grid g4 mb16 mant-kpis mant-kpis-h">' +
         UI.kpi({ label: 'Preventivos del mes', valor: todos.filter(m => m.tipo === 'preventivo' && delMes(m)).length, icono: 'tool', color: 'var(--info-500)', meta: 'Cambios de aceite registrados', act: 'filtroMant', v: 'preventivo' }) +
@@ -9584,6 +9774,9 @@ Object.assign(Vistas, {
       (sinOrden.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (sinOrden.length === 1 ? 'Un arreglo tiene una orden' : sinOrden.length + ' arreglos tienen una orden') +
         ' que ya no está en Facturación o que ahora es de otro vehículo.</b> Mientras tanto ' + (sinOrden.length === 1 ? 'cuenta' : 'cuentan') +
         ' su propio valor. En la lista se ve cuál es; en la ficha del vehículo se puede quitar.</div></div>' : '') +
+      (pend.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (pend.length === 1 ? 'A un arreglo le falta' : 'A ' + pend.length + ' arreglos les falta') +
+        ' el valor o la orden de Facturación.</b> Quedan pendientes hasta que se pongan, con «Editar» o «Anotar avance». ' +
+        (f === 'pendientes' ? '' : '<span class="link" data-act="filtroMant" data-v="pendientes">Ver cuáles</span>') + '</div></div>' : '') +
       '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroMant" data-v="' + s[0] + '">' + s[1] +
         '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div></div>' +
       '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Trabajo</th><th>Taller y repuestos</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
@@ -9604,7 +9797,8 @@ Object.assign(Vistas, {
               (c.ajenas.length ? '<div class="dias d-warn" title="Mientras tanto cuenta el valor del arreglo">' + esc(c.ajenas.map(o => o.codigo).join(', ')) +
                 ' ahora es de otro vehículo</div>' : '') +
               (c.faltan ? '<div class="dias d-warn" title="Mientras tanto cuenta el valor del arreglo">La orden ya no está</div>' : '') +
-              (c.ids.length && !c.fiable ? '<div class="dias">Con orden de Facturación</div>' : '') + '</td>' +
+              (c.ids.length && !c.fiable ? '<div class="dias">Con orden de Facturación</div>' : '') +
+              Pendiente.de(m).map(k => '<div class="dias d-warn">' + Pendiente.NOMBRE[k] + '</div>').join('') + '</td>' +
             '<td><div class="flex aic g6" style="flex-wrap:wrap">' + UI.clip(m, 12) +
               (m.fotos ? '<span class="chip" title="Fotos del taller">' + Icon('image', '', 12) + m.fotos + '</span>' : '') +
               (prev ? '' : '<button class="btn btn-sm" data-act="pdfCorrectivo" data-m="' + attr(m.id) + '" title="El PDF del arreglo, con sus fotos">' + Icon('pdf', '', 12) +
@@ -10604,6 +10798,8 @@ Object.assign(Ventanas, {
           'Para usarlo, actívelo allá.</div></div>';
     };
     ['#pnN', '#pnD'].forEach(s => $(s, m).addEventListener('input', revisar));
+    /* Lo que se escribió en el buscador y no se encontró */
+    if (o.nombre) { $('#pnN', m).value = o.nombre; revisar(); }
   },
 
   inspeccion(o) {
