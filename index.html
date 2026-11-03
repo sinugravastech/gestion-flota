@@ -869,6 +869,61 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
   .vel-esc{left:100px;right:76px}
   .sem-d{grid-template-columns:1fr;gap:6px}
 }
+/* El mapa de rutas del GPS (ver MapaGPS): los vehículos y las capas a la
+   izquierda, el mapa con su resumen y la tabla de rutas. Lo que va encima del
+   mapa lleva colores fijos: los mosaicos son claros también en el modo oscuro.
+   Los estilos de Leaflet llegan después de estos, por eso aquí van con dos
+   clases */
+.mp{display:grid;grid-template-columns:250px minmax(0,1fr);gap:14px;align-items:start}
+.mp-f{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--sh-1)}
+.mp-f h4{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin:0 0 8px}
+.mp-sec{padding:13px 14px;border-bottom:1px solid var(--border)}
+.mp-sec:last-child{border-bottom:0}
+.mp-v{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0;cursor:pointer}
+.mp-v input{margin:0}
+.mp-v b{font-family:var(--mono);font-size:12px;letter-spacing:.03em;font-weight:650}
+.mp-v .k{margin-left:auto;color:var(--text-3);font-size:11.5px;font-variant-numeric:tabular-nums}
+.mp-v.apagado{opacity:.45}
+.mp-bt{display:flex;gap:6px;margin-top:6px}
+.mp-ley{display:grid;gap:6px;font-size:11.5px;color:var(--text-2)}
+.mp-ley svg{vertical-align:middle;margin-right:7px}
+.mp-mapa{position:relative;isolation:isolate;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--sh-1);overflow:hidden}
+.mp-mapa.mp-plano{border:0;border-radius:0;box-shadow:none;background:none}
+.mp-lf{position:relative;z-index:0;height:620px;background:#e8edf1}
+.mp-lf.chico{height:500px}
+.mp-l{position:absolute;inset:0}
+.mp-aviso{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:20px;text-align:center;font-size:12.5px;color:var(--ink-500)}
+.mp-res{display:flex;flex-wrap:wrap;gap:6px 16px;padding:9px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--text-2)}
+.mp-res b{color:var(--text);font-variant-numeric:tabular-nums}
+.mp-lf .leaflet-container{font:inherit;background:#e8edf1}
+.mp-lf .leaflet-popup-content{font-size:12.5px;line-height:1.45;margin:10px 12px;color:var(--ink-800)}
+.mp-lf .leaflet-popup-content .m{color:var(--ink-500);font-size:11.5px}
+.mp-lf .mp-etq{background:#fff;border:1px solid var(--brand-500);border-radius:6px;padding:1px 6px;font-size:11px;font-weight:650;color:var(--brand-700);
+  box-shadow:0 1px 3px rgba(0,0,0,.15);white-space:nowrap}
+.mp-lf .mp-etq::before{display:none}
+.mp-lf .mp-arco{cursor:pointer}
+.mp-arco-n span{display:inline-block;transform:translate(-50%,-50%);background:#fff;border:1px solid var(--ink-300);border-radius:10px;padding:1px 8px;
+  font-size:11.5px;font-weight:600;line-height:16px;color:var(--ink-600);box-shadow:0 1px 3px rgba(0,0,0,.18);white-space:nowrap;cursor:pointer}
+.mp-arco-n span b{font-weight:800}
+.mp-arco-n.chico span{padding:0 5px;font-size:10.5px;cursor:default}
+/* El aviso cuando no hay vehículos escogidos */
+.mp-vacio{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:1;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);box-shadow:var(--sh-2);padding:14px 18px;text-align:center;font-size:12.5px;color:var(--text-2);width:290px;
+  max-width:calc(100% - 32px);line-height:1.5}
+.mp-vacio b{display:block;color:var(--text);font-size:14px;margin-bottom:3px}
+.mp-vacio .btn{margin-top:10px}
+.mp-vacio[hidden]{display:none}
+.mp-arriba{display:none}
+@media (max-width:900px){
+  .mp{grid-template-columns:minmax(0,1fr)}
+  .mp-vs{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));column-gap:18px}
+  .mp-lf{height:460px}
+  .mp-izq{display:none}
+  .mp-arriba{display:inline}
+}
+@media (max-width:600px){
+  .mp-lf,.mp-lf.chico{height:380px}
+}
 .cols{display:flex;align-items:flex-end;gap:10px;height:168px;border-bottom:1px solid var(--border-strong);padding:20px 0 0}
 .col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
 /* La barra no se achica por el número de arriba, que cabe en el relleno de
@@ -4797,8 +4852,10 @@ const UIState = {
   unidadId: null, tab: 'info', act: 'todos',
   /* El área Catálogo: la lista escogida, lo que se busca y si se está agregando */
   catalogo: { lista: 'clases.carga', q: '', agregando: false },
-  /* El área GPS y su pestaña en la ficha: semana o mes, y desde cuándo */
-  gps: { modo: 'semana', desde: null }
+  /* El área GPS y su pestaña en la ficha: semana o mes, y desde cuándo. El
+     mapa (ver MapaGPS): la pestaña, los vehículos marcados (abre sin ninguno:
+     Juan los va marcando uno por uno, 02/11/2026) y lo que se ve */
+  gps: { modo: 'semana', desde: null, tab: 'resumen', mapa: { ids: [], capas: { viajes: true, paradas: false, excesos: false } } }
 };
 
 /* Los proveedores son de Facturación (Juan, 02/11/2026; su SQL 211): Flota
@@ -5626,7 +5683,12 @@ const GPS = {
           desde: a >= 0 ? this.nombreDe(ps[a]) : null, salio: a >= 0 ? ps[a].b : null, kmIda: a >= 0 ? llega.kmAntes - ps[a].kmAntes : null,
           llego: llega.a, seFue: sale.b, espera: sale.b - llega.a, sigueA: sigue ? this.nombreDe(ps[b]) : null,
           volvioA: b < ps.length && !sigue ? this.nombreDe(ps[b]) : null, llegoBase: b < ps.length && !sigue ? ps[b].a : null,
-          kmReg: b < ps.length && !sigue ? ps[b].kmAntes - sale.kmAntes : null });
+          kmReg: b < ps.length && !sigue ? ps[b].kmAntes - sale.kmAntes : null,
+          /* Para el mapa (ver MapaGPS): el lugar de donde salió y al que volvió;
+             si volvió a una parada larga cerca de la base, la base */
+          deL: a >= 0 ? ps[a].l : null,
+          finL: b < ps.length && !sigue ? (['Planta', 'Base'].includes(tipo(ps[b])) ? ps[b].l
+            : bases.find(x => this.dist(ps[b].la, ps[b].lo, x.la, x.lo) <= 10) || ps[b].l) : null });
         i = j;
       }
     });
@@ -5663,6 +5725,397 @@ const GPS = {
 document.addEventListener('change', e => {
   if (e.target && e.target.id === 'gpsPer') { UIState.gps.desde = e.target.value; Router.pintar(true); }
 });
+
+/* ==========================================================================
+   El mapa de rutas del GPS (Juan, 02/11/2026), como la maqueta que aprobó:
+   la pestaña «Mapa» del área GPS y «Sus rutas» en la ficha de cada camión.
+   De lejos, Montería – Lorica (la base, la planta y las fincas: lo que está a
+   menos de 80 km de la base) es un solo punto, y de ahí sale una ruta por
+   destino con dos carriles: la ida en verde y el regreso en naranja. Al
+   acercar, se abre en sus sitios, con los viajes cortos (la fruta en morado).
+   Las idas y los regresos son los de «Viajes de entrega» (GPS.resumen), para
+   que los números casen. Abre sin vehículos: Juan los va marcando uno por uno.
+   Leaflet 1.9.4 se baja de cdnjs con su huella (integrity) la primera vez que
+   se abre un mapa; los mosaicos son de OpenStreetMap. El mapa no se vuelve a
+   crear cada vez que se pinta la vista: su caja pasa a la nueva y conserva
+   el zoom.
+   ========================================================================== */
+const MapaGPS = {
+  JS: ['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js', 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='],
+  CSS: ['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css', 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='],
+  /* Montería – Lorica llega hasta 80 km de la base; desde el zoom 10 se abre en sus sitios */
+  RADIO: 80, ZOOM_CERCA: 10,
+  COLOR: { carga: '#12915a', regreso: '#e8590c', fruta: '#6d4aca', otro: '#5a7fd0' },
+  _listo: false,
+  _carga: null,
+  /* Los mapas montados (el del área y el de la ficha) y lo que muestra cada uno */
+  _m: {},
+  _datos: {},
+
+  /* ---------------- Leaflet, la primera vez ---------------- */
+  cargar() {
+    if (this._listo) return Promise.resolve();
+    if (this._carga) return this._carga;
+    const els = [];
+    const poner = (tag, [url, huella]) => new Promise((ok, mal) => {
+      const el = document.createElement(tag);
+      if (tag === 'link') { el.rel = 'stylesheet'; el.href = url; } else el.src = url;
+      el.integrity = huella;
+      el.crossOrigin = 'anonymous';
+      el.onload = ok;
+      el.onerror = () => mal(new Error('No se pudo bajar el mapa'));
+      els.push(el);
+      document.head.appendChild(el);
+    });
+    this._carga = Promise.all([poner('link', this.CSS), poner('script', this.JS)])
+      .then(() => { this._listo = true; })
+      .catch(e => { els.forEach(el => el.remove()); throw e; })
+      .finally(() => { this._carga = null; });
+    return this._carga;
+  },
+  /* Después de pintar (Router.pintar y las pestañas de la ficha): cada hueco recibe su mapa */
+  poner() {
+    if (!$('.mp-lf[data-mapa]')) return;
+    if (!this._listo) {
+      this.cargar().then(() => this.poner(), () => $$('.mp-lf[data-mapa]').forEach(h => { h.innerHTML = this.sinMapa(); }));
+      return;
+    }
+    $$('.mp-lf[data-mapa]').forEach(h => {
+      try { this.montar(h); } catch (e) { console.error(e); h.innerHTML = this.sinMapa(); }
+    });
+  },
+  sinMapa() {
+    return '<div class="mp-aviso">' + Icon('warn', '', 16) + '<span>No se pudo cargar el mapa. Revise el internet. ' +
+      '<span class="link" data-act="gpsMapaReintentar">Intentar otra vez</span></span></div>';
+  },
+  hueco(clave) {
+    return '<div class="mp-lf' + (clave === 'ficha' ? ' chico' : '') + '" data-mapa="' + clave + '"><div class="mp-aviso">' + Icon('pin', '', 16) +
+      '<span>Cargando el mapa…</span></div></div>';
+  },
+  montar(h) {
+    const clave = h.dataset.mapa;
+    if (!this._datos[clave]) return;
+    let m = this._m[clave];
+    if (!m) {
+      const el = document.createElement('div');
+      el.className = 'mp-l';
+      h.textContent = '';
+      h.appendChild(el);
+      /* Zoom de medio en medio: así el encuadre queda más justo */
+      const mapa = L.map(el, { zoomControl: true, attributionControl: true, zoomSnap: 0.5 });
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(mapa);
+      m = this._m[clave] = { clave, el, mapa, capas: {} };
+      ['paradas', 'excesos', 'viajes', 'nodos'].forEach(k => { m.capas[k] = L.layerGroup().addTo(mapa); });
+      mapa.on('zoomend', () => this.trazar(m));
+      if (window.ResizeObserver) new ResizeObserver(() => { if (el.isConnected && el.offsetWidth) mapa.invalidateSize(); }).observe(el);
+    } else if (m.el.parentNode !== h) {
+      h.textContent = '';
+      h.appendChild(m.el);
+    }
+    m.mapa.invalidateSize();
+    this.dibujar(m);
+  },
+
+  /* ---------------- Lo que se calcula ---------------- */
+  k: x => x.id || x.n,
+  pos: x => [x.la, x.lo],
+  /* Montería – Lorica: la base y lo que está a menos de 80 km de ella (menos
+     las entregas). Su punto queda entre la base y la planta, y su nombre sale
+     de los pueblos de las dos */
+  zona(lugares) {
+    const base = lugares.find(x => x.tipo === 'Base');
+    if (!base) return null;
+    const dentro = lugares.filter(x => x.tipo !== 'Entrega' && GPS.dist(x.la, x.lo, base.la, base.lo) <= this.RADIO);
+    const centro = dentro.filter(x => x.tipo === 'Base' || x.tipo === 'Planta'), nombres = [];
+    centro.forEach(x => { const p = GPS.pueblo(x.la, x.lo).replace(/^Cerca de /, ''); if (!nombres.includes(p)) nombres.push(p); });
+    return { id: ' zona', n: nombres.join(' – '), tipo: 'Zona', ids: new Set(dentro.map(this.k)),
+      la: centro.reduce((s, x) => s + x.la, 0) / centro.length, lo: centro.reduce((s, x) => s + x.lo, 0) / centro.length };
+  },
+  /* Las rutas de los vehículos marcados. «lejos»: Montería – Lorica es un
+     solo punto; «cerca»: cada sitio. Las idas y los regresos son los de
+     «Viajes de entrega»; los demás viajes van de un lugar con nombre a otro
+     (la base, la planta, una finca), como en la maqueta */
+  calcular(d, ids) {
+    const R = d.R, Z = d.Z, lugares = d.lugares, per = d.per, k = this.k;
+    const enZona = x => Boolean(Z) && x !== Z && Z.ids.has(k(x)), local = x => x === Z || enZona(x);
+    const visitas = R.visitas.filter(v => ids.has(v.u)), paradas = R.paradas.filter(p => ids.has(p.u)), excesos = R.excesos.filter(x => ids.has(x.u));
+    const precio = GPS.precio(), rinde = {}, rindeDe = id => (id in rinde ? rinde[id] : (rinde[id] = GPS.rinde(Q.unidad(id))));
+    /* De parada en parada: una parada larga a menos de 10 km de la base cuenta
+       como la base; las de descanso, de tanqueo y sin nombre quedan en el camino */
+    const larga = (+Config.gps.paradaMin || 45) * 60, bases = lugares.filter(x => x.tipo === 'Base'), NODO = ['Base', 'Planta', 'Entrega', 'Finca'];
+    const nodoDe = p => (p.l && NODO.includes(p.l.tipo) ? p.l
+      : p.dur >= larga && p.la != null ? bases.find(x => GPS.dist(p.la, p.lo, x.la, x.lo) <= 10) || null : null);
+    const otros = [];
+    let ant = null;
+    paradas.forEach(p => {
+      if (ant && ant.p.u !== p.u) ant = null;
+      const n = nodoDe(p);
+      if (!n) return;
+      if (ant && k(ant.n) === k(n)) { ant.p = p; return; }
+      if (ant && n.tipo !== 'Entrega' && ant.n.tipo !== 'Entrega' && p.a >= per.desde && p.a < per.hasta)
+        otros.push({ u: p.u, A: ant.n, B: n, km: Math.max(0, p.kmAntes - ant.p.kmAntes), tipo: ant.n.tipo === 'Finca' && n.tipo === 'Planta' ? 'fruta' : 'otro' });
+      ant = { n, p };
+    });
+    const armar = unir => {
+      const rs = new Map(), de = x => (unir && enZona(x) ? Z : x);
+      const sumar = (A0, B0, u, km, gal, tipo) => {
+        const A = de(A0), B = de(B0);
+        if (k(A) === k(B)) return;
+        const [X, Y] = local(A) ? [A, B] : local(B) ? [B, A] : [A, B].sort((a, b) => String(a.n).localeCompare(String(b.n)));
+        const clave = k(X) + '|' + k(Y);
+        let r = rs.get(clave);
+        if (!r) rs.set(clave, r = { X, Y, tipo: local(X) && Y.tipo === 'Entrega' ? 'entrega' : tipo,
+          ida: { n: 0, km: 0, gal: 0, us: new Set() }, vuelta: { n: 0, km: 0, gal: 0, us: new Set() } });
+        const l = k(A) === k(X) ? r.ida : r.vuelta;
+        l.n++; l.km += km || 0; l.gal += gal || 0; l.us.add(u);
+      };
+      visitas.forEach(v => {
+        if (v.deL) sumar(v.deL, v.lugar, v.u, v.kmIda, 0, 'otro');
+        if (v.kmReg && v.finL) { const r = rindeDe(v.u); sumar(v.lugar, v.finL, v.u, v.kmReg, r ? v.kmReg / r : 0, 'otro'); }
+      });
+      otros.forEach(t => { if (!(local(t.A) && local(t.B))) sumar(t.A, t.B, t.u, t.km, 0, t.tipo); });
+      return Array.from(rs.values()).sort((a, b) => b.ida.n + b.vuelta.n - (a.ida.n + a.vuelta.n));
+    };
+    const dentro = new Map();
+    otros.forEach(t => {
+      if (!(local(t.A) && local(t.B))) return;
+      const clave = k(t.A) + '>' + k(t.B), x = dentro.get(clave) || { A: t.A, B: t.B, tipo: t.tipo, n: 0, km: 0, us: new Set() };
+      x.n++; x.km += t.km; x.us.add(t.u);
+      dentro.set(clave, x);
+    });
+    const completos = visitas.filter(v => v.kmReg), ds = Array.from(dentro.values()).sort((a, b) => b.n - a.n);
+    const galReg = completos.reduce((s, v) => { const r = rindeDe(v.u); return s + (r ? v.kmReg / r : 0); }, 0);
+    return { Z, lugares, enZona, n: ids.size, precio, paradas, excesos, lejos: armar(true), cerca: armar(false), dentro: ds,
+      entregas: visitas.length, regresos: completos.length, kmReg: completos.reduce((s, v) => s + v.kmReg, 0), galReg, plata: galReg * precio,
+      nDentro: ds.reduce((s, x) => s + x.n, 0) };
+  },
+  /* Los vehículos marcados que tienen recorridos en estas fechas */
+  marcados() {
+    const d = this._datos.area, ids = new Set(UIState.gps.mapa.ids);
+    return new Set(d ? d.us.filter(u => ids.has(u.id)).map(u => u.id) : []);
+  },
+
+  /* ---------------- Lo que se pinta ---------------- */
+  /* La pestaña «Mapa» del área GPS: los vehículos y las capas a la izquierda,
+     el mapa con su resumen y, debajo, la tabla de rutas */
+  area(tr, per, R) {
+    const st = UIState.gps.mapa, lugares = GPS.lugares(), lim = +Config.gps.limite || 80, km = {};
+    R.unidades.forEach(s => { km[s.u.id] = s.km; });
+    const us = Array.from(new Set(tr.map(t => t.u))).map(id => Q.unidad(id)).filter(Boolean)
+      .sort((a, b) => (a.tipo === 'maquinaria') - (b.tipo === 'maquinaria') || UI.placaTxt(a).localeCompare(UI.placaTxt(b)));
+    this._datos.area = { R, per, us, lugares, Z: this.zona(lugares) };
+    const sel = this.marcados(), C = this.calcular(this._datos.area, sel), n = v => esc(Math.round(v).toLocaleString('es-CO'));
+    const capa = (k, t) => '<label class="mp-v"><input type="checkbox" data-act="gpsMapaCapa" data-capa="' + k + '"' + (st.capas[k] ? ' checked' : '') + '><span>' + t + '</span></label>';
+    const ley = (c1, c2) => '<svg width="30" height="14" viewBox="0 0 30 14" aria-hidden="true"><path d="M2 4 L22 4" stroke="' + c1 + '" stroke-width="3.5"/>' +
+      '<path d="M21 0.5 L28 4 L21 7.5 Z" fill="' + c1 + '"/>' + (c2 ? '<path d="M8 10.5 L28 10.5" stroke="' + c2 + '" stroke-width="3.5"/><path d="M9 7 L2 10.5 L9 14 Z" fill="' + c2 + '"/>' : '') + '</svg>';
+    /* Lo que llevan las entregas (aceite, almendra…), de los lugares */
+    const cargas = Array.from(new Set(lugares.filter(x => x.tipo === 'Entrega' && x.carga).map(x => String(x.carga).toLowerCase())));
+    const filtros = '<div class="mp-f">' +
+      '<div class="mp-sec"><h4>Vehículos</h4><div class="mp-vs">' + us.map(u => '<label class="mp-v' + (sel.has(u.id) ? '' : ' apagado') + '">' +
+          '<input type="checkbox" data-act="gpsMapaVeh" data-u="' + attr(u.id) + '"' + (sel.has(u.id) ? ' checked' : '') + '><b>' + esc(UI.placaTxt(u)) + '</b>' +
+          '<span class="k">' + (km[u.id] >= 1 ? n(km[u.id]) + ' km' : 'Quieto') + '</span></label>').join('') + '</div>' +
+        '<div class="mp-bt"><button class="btn btn-sm" data-act="gpsMapaTodos" data-v="1">Todos</button><button class="btn btn-sm" data-act="gpsMapaTodos" data-v="0">Ninguno</button></div></div>' +
+      '<div class="mp-sec"><h4>Qué se ve</h4>' + capa('viajes', 'Rutas') + capa('paradas', 'Dónde paran') + capa('excesos', 'Más de ' + lim + ' km/h') + '</div>' +
+      '<div class="mp-sec"><h4>Cómo se lee</h4><div class="mp-ley">' +
+        '<div>' + ley(this.COLOR.carga, this.COLOR.regreso) + 'Ida con carga y regreso</div>' +
+        '<div class="txt-3">Verde: va con ' + esc(cargas.length ? cargas.join(' o ') : 'carga') + '. Naranja: vuelve, puede ir vacío. Más grueso, más viajes.</div>' +
+        '<div>' + ley(this.COLOR.fruta) + 'Fruta (se ve al acercar)</div>' +
+        '<div>' + ley(this.COLOR.otro) + 'Otros movimientos</div></div></div></div>';
+    return '<div class="mp" id="gpsMapa">' + filtros + '<div class="mp-der"><div class="mp-mapa">' + this.hueco('area') +
+        '<div class="mp-vacio"' + (C.n ? ' hidden' : '') + '><b>Escoja los vehículos</b>Márquelos <span class="mp-izq">a la izquierda</span><span class="mp-arriba">arriba</span>, ' +
+          'uno por uno, para ver sus rutas.<br><button class="btn btn-sm" data-act="gpsMapaTodos" data-v="1">Ver todos</button></div>' +
+        '<div class="mp-res">' + this.res(C) + '</div></div>' +
+      UI.card('Rutas', '<div class="mp-tabla">' + this.tabla(C) + '</div>', { flush: true, cls: 'mt12', sub: 'Lo mismo del mapa, en números' }) + '</div></div>';
+  },
+  /* «Sus rutas», en la ficha de un camión */
+  ficha(u, R, per) {
+    const lugares = GPS.lugares();
+    this._datos.ficha = { R, per, u, lugares, Z: this.zona(lugares) };
+    const C = this.calcular(this._datos.ficha, new Set([u.id]));
+    return UI.card('Sus rutas', '<div class="mp-mapa mp-plano">' + this.hueco('ficha') + '<div class="mp-res">' + this.res(C) + '</div></div>',
+      { flush: true, cls: 'mb16', sub: 'Clic en una ruta para ver sus viajes' });
+  },
+  /* El resumen de abajo del mapa: los mismos números de «Viajes de entrega» */
+  res(C) {
+    if (!C.n) return '<span>Ningún vehículo escogido</span>';
+    const n = v => esc(Math.round(v).toLocaleString('es-CO'));
+    return (C.entregas ? '<span><b>' + C.entregas + '</b> ' + (C.entregas === 1 ? 'entrega' : 'entregas') + '</span>' +
+        '<span><b>' + C.regresos + '</b> ' + (C.regresos === 1 ? 'regreso' : 'regresos') + (C.regresos ? ' · ' + n(C.kmReg) + ' km' +
+          (C.plata ? ' · ≈ <b>' + esc(Money.format(C.plata)) + '</b> si ' + (C.regresos === 1 ? 'fue vacío' : 'fueron vacíos') : '') : '') + '</span>'
+      : '<span>Sin entregas en estas fechas</span>') +
+      (C.nDentro ? '<span><b>' + C.nDentro + '</b> ' + (C.nDentro === 1 ? 'viaje corto' : 'viajes cortos') + ' dentro de ' + esc(C.Z.n) + '</span>' : '');
+  },
+  /* La tabla «Rutas»: una fila por ruta, con el diésel del regreso y el total */
+  tabla(C) {
+    if (!C.n) return UI.empty('truck', 'Escoja los vehículos', 'Sus rutas salen aquí, en números.');
+    if (!C.lejos.length && !C.nDentro) return UI.empty('truck', 'Sin viajes en estas fechas', 'Salen cuando un vehículo va de un lugar con nombre a otro (ver Lugares).');
+    const n = v => esc(Math.round(v).toLocaleString('es-CO')), plata = gal => (C.precio ? esc(Money.format(gal * C.precio)) : '') + '<div class="dias">' + n(gal) + ' gal</div>';
+    const ent = C.lejos.filter(r => r.tipo === 'entrega');
+    const tot = { viajes: C.nDentro, reg: 0, km: 0, gal: 0 };
+    const filas = C.lejos.map(r => {
+      const e = r.tipo === 'entrega';
+      tot.viajes += e ? r.ida.n : r.ida.n + r.vuelta.n;
+      return '<tr><td class="nowrap">' + esc(r.X.n) + ' ⇄ ' + esc(r.Y.n) + (e && r.Y.carga ? ' <span class="txt-3 fs12">· ' + esc(String(r.Y.carga).toLowerCase()) + '</span>' : '') + '</td>' +
+        '<td class="num">' + (e ? r.ida.n || '—' : r.ida.n + r.vuelta.n) + '</td><td class="num">' + (e ? r.vuelta.n || '—' : '—') + '</td>' +
+        '<td class="num nowrap">' + (e && r.vuelta.n ? n(r.vuelta.km) + ' km' : '—') + '</td><td class="num nowrap">' + (e && r.vuelta.gal ? plata(r.vuelta.gal) : '—') + '</td></tr>';
+    }).join('');
+    ent.forEach(r => { tot.reg += r.vuelta.n; tot.km += r.vuelta.km; tot.gal += r.vuelta.gal; });
+    /* Los viajes cortos, por el tipo de lugar: «12 base → planta» */
+    const tipo = x => (x.tipo ? String(x.tipo).toLowerCase() : x.n);
+    const dentro = C.nDentro ? '<tr><td>Dentro de ' + esc(C.Z.n) + ' <span class="txt-3 fs12">· ' + esc(C.dentro.slice(0, 3).map(x => x.n + ' ' + tipo(x.A) + ' → ' + tipo(x.B)).join(', ')) +
+      (C.dentro.length > 3 ? '…' : '') + '</span></td><td class="num">' + C.nDentro + '</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>' : '';
+    return '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Ruta</th><th class="num">Idas</th><th class="num">Regresos</th><th class="num">Km de regreso</th>' +
+        '<th class="num">Diésel del regreso</th></tr></thead><tbody>' + filas + dentro + '</tbody>' +
+      '<tfoot><tr><td>Total</td><td class="num">' + tot.viajes + '</td><td class="num">' + tot.reg + '</td><td class="num nowrap">' + (tot.km ? n(tot.km) + ' km' : '—') + '</td>' +
+        '<td class="num nowrap">' + (tot.gal ? plata(tot.gal) : '—') + '</td></tr></tfoot></table></div>';
+  },
+  /* Al marcar un vehículo o una capa, sin pintar otra vez la vista */
+  refrescar() {
+    const d = this._datos.area, caja = $('#gpsMapa');
+    if (!d || !caja) return;
+    const sel = this.marcados(), C = this.calcular(d, sel);
+    $$('input[data-act="gpsMapaVeh"]', caja).forEach(c => { c.checked = sel.has(c.dataset.u); c.closest('.mp-v').classList.toggle('apagado', !c.checked); });
+    $('.mp-vacio', caja).hidden = C.n > 0;
+    $('.mp-res', caja).innerHTML = this.res(C);
+    $('.mp-tabla', caja).innerHTML = this.tabla(C);
+    const m = this._m.area;
+    if (m && m.el.isConnected) this.dibujar(m, C);
+  },
+
+  /* ---------------- El dibujo (Leaflet) ---------------- */
+  dibujar(m, C) {
+    const d = this._datos[m.clave];
+    C = m.C = C || this.calcular(d, m.clave === 'area' ? this.marcados() : new Set([d.u.id]));
+    const capas = m.clave === 'area' ? UIState.gps.mapa.capas : { viajes: true };
+    m.capas.paradas.clearLayers();
+    m.capas.excesos.clearLayers();
+    if (capas.paradas) GPS.donde({ paradas: C.paradas }).forEach(g => L.circleMarker([g.la, g.lo], { radius: Math.min(24, 4 + 3 * Math.sqrt(g.h / 3600)),
+        color: '#fff', weight: 1.5, fillColor: g.l ? '#193680' : '#4e5d6b', fillOpacity: 0.45 })
+      .bindPopup('<b>' + esc(g.l ? g.l.n : GPS.pueblo(g.la, g.lo)) + '</b><br>' + esc(GPS.horas(g.h)) + ' en ' + g.n + (g.n === 1 ? ' parada' : ' paradas') + ' · ' +
+        g.us.size + (g.us.size === 1 ? ' vehículo' : ' vehículos')).addTo(m.capas.paradas));
+    if (capas.excesos) C.excesos.forEach(x => {
+      if (x.la == null) return;
+      const p = GPS.pueblo(x.la, x.lo);
+      L.circleMarker([x.la, x.lo], { radius: 4, color: '#93261e', weight: 1, fillColor: '#c8372d', fillOpacity: 0.9 })
+        .bindPopup('<b>' + esc(this.placa(x.u)) + '</b> · <b style="color:#93261e">' + x.vmax + ' km/h</b><br>' + esc(GPS.cuando(x.a)) +
+          '<br><span class="m">' + esc(/^Cerca de /.test(p) ? p : 'Cerca de ' + p) + '</span>').addTo(m.capas.excesos);
+    });
+    m.verViajes = capas.viajes !== false;
+    /* Se encuadra al abrir y al cambiar las fechas (o el camión de la ficha); si no, queda donde estaba */
+    const encuadre = m.clave + '|' + d.per.modo + '|' + d.per.desdeIso + (d.u ? '|' + d.u.id : '');
+    if (m.encuadre !== encuadre) { m.encuadre = encuadre; this.encuadrar(m); }
+    this.trazar(m);
+  },
+  encuadrar(m) {
+    const C = m.C, pts = [];
+    if (C.lejos.length) {
+      if (C.Z) pts.push(this.pos(C.Z));
+      C.lejos.forEach(r => { pts.push(this.pos(r.X)); pts.push(this.pos(r.Y)); });
+    } else if (C.dentro.length) C.dentro.forEach(x => { pts.push(this.pos(x.A)); pts.push(this.pos(x.B)); });
+    else {
+      if (C.Z) pts.push(this.pos(C.Z));
+      C.lugares.filter(x => x.tipo === 'Entrega').forEach(x => pts.push(this.pos(x)));
+    }
+    if (!pts.length) C.lugares.forEach(x => pts.push(this.pos(x)));
+    if (pts.length) m.mapa.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: C.lejos.length || !C.dentro.length ? 9 : 11, animate: false });
+    else m.mapa.setView([4.6, -74.1], 6, { animate: false });
+  },
+  /* Las rutas y los sitios, según el zoom: de lejos Montería – Lorica es un
+     punto; de cerca, sus sitios con sus viajes cortos. Si solo hay viajes
+     cortos (una volqueta), se ven sin acercar */
+  trazar(m) {
+    const C = m.C, mapa = m.mapa;
+    m.capas.viajes.clearLayers();
+    m.capas.nodos.clearLayers();
+    if (!C) return;
+    const cerca = !C.Z || mapa.getZoom() >= this.ZOOM_CERCA || (!C.lejos.length && C.dentro.length > 0), nodos = new Map(), nodo = x => nodos.set(this.k(x), x);
+    if (m.verViajes) {
+      (cerca ? C.cerca : C.lejos).forEach(r => { this.ruta(m, r); nodo(r.X); nodo(r.Y); });
+      if (cerca) C.dentro.forEach(v => { this.corta(m, v); nodo(v.A); nodo(v.B); });
+    }
+    /* Sin nada que dibujar, los sitios principales, para ubicarse */
+    if (!nodos.size) (cerca ? C.lugares.filter(x => C.enZona(x) && ['Base', 'Planta', 'Finca'].includes(x.tipo)) : C.Z ? [C.Z] : [])
+      .concat(C.lugares.filter(x => x.tipo === 'Entrega')).forEach(nodo);
+    nodos.forEach(x => {
+      if (x === C.Z && cerca) return;
+      const grande = x === C.Z;
+      L.circleMarker(this.pos(x), { radius: grande ? 9 : 6, color: '#193680', weight: 2.5, fillColor: grande ? '#193680' : '#fff', fillOpacity: 1 })
+        .bindTooltip(esc(x.n), { permanent: true, direction: grande ? 'left' : 'top', offset: grande ? [-10, 0] : [0, -8], className: 'mp-etq' }).addTo(m.capas.nodos);
+    });
+  },
+  /* Una ruta: una curva suave de X a Y y dos carriles a cada lado (la ida a un
+     lado y el regreso al otro), cada uno con su punta, y un solo rótulo en la
+     mitad. Se dibuja en píxeles y otra vez con cada zoom */
+  ruta(m, r) {
+    const mapa = m.mapa, capa = m.capas.viajes, COLOR = this.COLOR;
+    const p0 = mapa.latLngToLayerPoint(this.pos(r.X)), p2 = mapa.latLngToLayerPoint(this.pos(r.Y));
+    const dx = p2.x - p0.x, dy = p2.y - p0.y, largo = Math.hypot(dx, dy);
+    if (largo < 40) return;
+    const p1 = L.point((p0.x + p2.x) / 2 - dy * 0.1, (p0.y + p2.y) / 2 + dx * 0.1);
+    const en = t => L.point((1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x, (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y);
+    const tan = t => { const x = 2 * (1 - t) * (p1.x - p0.x) + 2 * t * (p2.x - p1.x), y = 2 * (1 - t) * (p1.y - p0.y) + 2 * t * (p2.y - p1.y), h = Math.hypot(x, y) || 1; return [x / h, y / h]; };
+    const corrido = (t, dd) => { const p = en(t), [tx, ty] = tan(t); return L.point(p.x - ty * dd, p.y + tx * dd); };
+    const ent = r.tipo === 'entrega', otro = r.tipo === 'fruta' ? COLOR.fruta : COLOR.otro, borde = Math.min(0.2, 16 / largo), clic = e => this.abrirRuta(m, r, e.latlng);
+    const carril = (lado, signo, color, haciaY) => {
+      if (!lado.n) return;
+      const w = Math.min(12, 3.5 + 1.4 * Math.sqrt(lado.n)), dd = signo * (w / 2 + 2), punta = 7 + w * 1.4, ala = 3.5 + w * 0.95;
+      const tPunta = haciaY ? 1 - borde : borde, tBase = haciaY ? tPunta - Math.min(0.3, punta / largo) : tPunta + Math.min(0.3, punta / largo);
+      const ini = haciaY ? borde : tBase, fin = haciaY ? tBase : 1 - borde, pts = [];
+      for (let i = 0; i <= 40; i++) pts.push(mapa.layerPointToLatLng(corrido(ini + (fin - ini) * i / 40, dd)));
+      L.polyline(pts, { color, weight: w, opacity: 0.92, lineCap: 'butt', className: 'mp-arco' }).on('click', clic).addTo(capa);
+      const tip = corrido(tPunta, dd), b = corrido(tBase, dd), h = Math.hypot(tip.x - b.x, tip.y - b.y) || 1, ux = (tip.x - b.x) / h, uy = (tip.y - b.y) / h;
+      L.polygon([tip, L.point(b.x - uy * ala, b.y + ux * ala), L.point(b.x + uy * ala, b.y - ux * ala)].map(p => mapa.layerPointToLatLng(p)),
+        { color, weight: 1, opacity: 1, fillColor: color, fillOpacity: 1, className: 'mp-arco' }).on('click', clic).addTo(capa);
+    };
+    carril(r.ida, 1, ent ? COLOR.carga : otro, true);
+    carril(r.vuelta, -1, ent ? COLOR.regreso : otro, false);
+    const n = r.ida.n + r.vuelta.n;
+    const html = ent
+      ? (r.ida.n ? '<b style="color:' + COLOR.carga + '">' + r.ida.n + '</b> ' + (r.ida.n === 1 ? 'ida' : 'idas') : '') + (r.ida.n && r.vuelta.n ? ' · ' : '') +
+        (r.vuelta.n ? '<b style="color:' + COLOR.regreso + '">' + r.vuelta.n + '</b> ' + (r.vuelta.n === 1 ? 'regreso' : 'regresos') : '')
+      : '<b style="color:' + otro + '">' + n + '</b> ' + (n === 1 ? 'viaje' : 'viajes');
+    L.marker(mapa.layerPointToLatLng(en(0.5)), { keyboard: false, icon: L.divIcon({ className: 'mp-arco-n', iconSize: null, html: '<span>' + html + '</span>' }) })
+      .on('click', clic).addTo(capa);
+  },
+  /* Un viaje corto dentro de Montería – Lorica, al acercar: una flecha fina */
+  corta(m, v) {
+    const mapa = m.mapa, capa = m.capas.viajes;
+    const p0 = mapa.latLngToLayerPoint(this.pos(v.A)), p2 = mapa.latLngToLayerPoint(this.pos(v.B));
+    const dx = p2.x - p0.x, dy = p2.y - p0.y, largo = Math.hypot(dx, dy);
+    if (largo < 40) return;
+    const p1 = L.point((p0.x + p2.x) / 2 - dy * 0.18, (p0.y + p2.y) / 2 + dx * 0.18);
+    const en = t => L.point((1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x, (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y);
+    const color = v.tipo === 'fruta' ? this.COLOR.fruta : this.COLOR.otro, w = Math.min(7, 2 + 0.8 * Math.sqrt(v.n)), borde = Math.min(0.2, 14 / largo), punta = 6 + w * 1.4;
+    const tFin = 1 - borde, tBase = tFin - Math.min(0.3, punta / largo), pts = [], clic = e => this.abrirCorta(m, v, e.latlng);
+    for (let i = 0; i <= 24; i++) pts.push(mapa.layerPointToLatLng(en(borde + (tBase - borde) * i / 24)));
+    L.polyline(pts, { color, weight: w, opacity: 0.85, lineCap: 'butt', className: 'mp-arco' }).on('click', clic).addTo(capa);
+    const tip = en(tFin), b = en(tBase), h = Math.hypot(tip.x - b.x, tip.y - b.y) || 1, ux = (tip.x - b.x) / h, uy = (tip.y - b.y) / h, ala = 3 + w;
+    L.polygon([tip, L.point(b.x - uy * ala, b.y + ux * ala), L.point(b.x + uy * ala, b.y - ux * ala)].map(p => mapa.layerPointToLatLng(p)),
+      { color, weight: 1, fillColor: color, fillOpacity: 1, className: 'mp-arco' }).on('click', clic).addTo(capa);
+    L.marker(mapa.layerPointToLatLng(en(0.5)), { keyboard: false, interactive: false,
+      icon: L.divIcon({ className: 'mp-arco-n chico', iconSize: null, html: '<span><b style="color:' + color + '">' + v.n + '</b></span>' }) }).addTo(capa);
+  },
+  placa(id) { const u = Q.unidad(id); return u ? UI.placaTxt(u) : id; },
+  placas(s) { return Array.from(s).map(id => this.placa(id)).sort().join(', '); },
+  /* Clic en una ruta: idas, regresos, km, el diésel del regreso y qué vehículos */
+  abrirRuta(m, r, donde) {
+    const C = m.C, n = v => Math.round(v).toLocaleString('es-CO'), us = new Set([...r.ida.us, ...r.vuelta.us]);
+    const html = '<b>' + esc(r.X.n) + ' ⇄ ' + esc(r.Y.n) + '</b><br>' + (r.tipo === 'entrega'
+      ? (r.ida.n ? '<span style="color:' + this.COLOR.carga + '">●</span> ' + r.ida.n + (r.ida.n === 1 ? ' ida' : ' idas') +
+          (r.Y.carga ? ' con ' + esc(String(r.Y.carga).toLowerCase()) : '') + (r.ida.km ? ' · ' + n(r.ida.km) + ' km' : '') + '<br>' : '') +
+        (r.vuelta.n ? '<span style="color:' + this.COLOR.regreso + '">●</span> ' + r.vuelta.n + (r.vuelta.n === 1 ? ' regreso' : ' regresos') + ' · ' + n(r.vuelta.km) + ' km' +
+          (r.vuelta.gal && C.precio ? ' · ≈ ' + esc(Money.format(r.vuelta.gal * C.precio)) + ' de diésel <span class="m">(si ' + (r.vuelta.n === 1 ? 'fue vacío' : 'fueron vacíos') + ')</span>' : '') +
+          '<br>' : '')
+      : (r.ida.n ? r.ida.n + ' de ' + esc(r.X.n) + ' a ' + esc(r.Y.n) + '<br>' : '') + (r.vuelta.n ? r.vuelta.n + ' de ' + esc(r.Y.n) + ' a ' + esc(r.X.n) + '<br>' : '')) +
+      '<span class="m">' + esc(this.placas(us)) + '</span>';
+    L.popup().setLatLng(donde).setContent(html).openOn(m.mapa);
+  },
+  abrirCorta(m, v, donde) {
+    L.popup().setLatLng(donde).setContent('<b>' + esc(v.A.n) + ' → ' + esc(v.B.n) + '</b><br>' + v.n + (v.n === 1 ? ' viaje' : ' viajes') + (v.tipo === 'fruta' ? ' con fruta' : '') +
+      ' · ' + Math.round(v.km).toLocaleString('es-CO') + ' km<br><span class="m">' + esc(this.placas(v.us)) + '</span>').openOn(m.mapa);
+  }
+};
 
 /* Cambios de aceite, con la regla del ingeniero: el próximo cambio es el
    último más la frecuencia; vencido cuando ya no falta nada y próximo cuando
@@ -7604,6 +8057,7 @@ const Acciones = {
     UIState.tab = el.dataset.tab;
     $$('.tabs .tab').forEach(t => t.classList.toggle('active', t === el));
     $('#tabBody').innerHTML = Vistas['tab_' + UIState.tab](Q.unidad(UIState.unidadId));
+    MapaGPS.poner();
   },
   modoFlota(el) {
     UIState.flota.modo = el.dataset.v;
@@ -8527,13 +8981,15 @@ Object.assign(Vistas, {
       'En el GPS, en Reportes, baje «Recorridos y paradas» en JSON, con todos los equipos, y cárguelo aquí tal como sale. ' +
       'Se pueden cargar varios archivos a la vez (por ejemplo, las quincenas de un mes): lo que ya estaba no se repite.') };
     const per = GPS.actual(), tr = GPS.tramos(per.desde, per.hasta);
-    const barra = this.gpsBarra(per);
+    const barra = this.gpsTabs() + this.gpsBarra(per);
     if (!tr) return { titulo, sub, html: head + barra + '<div class="card">' + UI.empty('pin', 'Trayendo los recorridos de ' + per.nombre.toLowerCase() + '…', '') + '</div>' };
     if (tr.error) return { titulo, sub, html: head + barra + '<div class="alert a-warn">' + Icon('warn') + '<div><b>No llegaron los recorridos.</b> ' + esc(tr.error) +
       ' <span class="link" data-act="gpsReintentar">Intentar otra vez</span></div></div>' };
     const R = GPS.resumen(tr, per), cfg = Config.gps, lim = +cfg.limite || 80, precio = GPS.precio();
     if (!R.unidades.length) return { titulo, sub, html: head + barra + '<div class="card">' + UI.empty('pin', 'Sin recorridos en ' + per.nombre.toLowerCase(),
       'Escoja otra semana o mes, o cargue los archivos del GPS de esas fechas.') + '</div>' + this.gpsArchivos() };
+    /* La pestaña «Mapa» (ver MapaGPS) */
+    if (UIState.gps.tab === 'mapa') return { titulo, sub, html: head + barra + MapaGPS.area(tr, per, R) };
     /* En las máquinas (cargador, retro) el motor encendido sin moverse es
        trabajo, no ralentí: los KPI de horas y de ralentí son de los camiones */
     const maq = s => s.u.tipo === 'maquinaria', cam = R.unidades.filter(s => !maq(s)), nMaq = R.unidades.length - cam.length;
@@ -8612,6 +9068,11 @@ Object.assign(Vistas, {
       '</div>';
     return { titulo, sub, html };
   },
+  /* El resumen o el mapa (Juan, 02/11/2026) */
+  gpsTabs() {
+    return '<div class="tabs">' + [['resumen', 'Resumen'], ['mapa', 'Mapa']].map(([k, t]) => '<div class="tab' + (UIState.gps.tab === k ? ' active' : '') +
+      '" data-act="gpsTab" data-v="' + k + '">' + t + '</div>').join('') + '</div>';
+  },
   /* La semana o el mes, y hasta cuándo hay datos */
   gpsBarra(per) {
     const st = UIState.gps, ps = GPS.periodos(st.modo), ult = GPS.archivos.length ? Math.max.apply(null, GPS.archivos.map(x => x.hasta)) : 0;
@@ -8641,10 +9102,17 @@ Object.assign(Vistas, {
         '<td class="num nowrap">' + (gal ? (precio ? esc(Money.format(gal * precio)) : '') + '<div class="dias">' + n(gal) + ' gal</div>' : '—') + '</td></tr>';
     }).join('');
     const completos = R.visitas.filter(v => v.kmReg), kmReg = completos.reduce((s, v) => s + v.kmReg, 0);
-    const plata = completos.reduce((s, v) => { const r = GPS.rinde(Q.unidad(v.u)); return s + (r ? v.kmReg / r * precio : 0); }, 0);
+    const galReg = completos.reduce((s, v) => { const r = GPS.rinde(Q.unidad(v.u)); return s + (r ? v.kmReg / r : 0); }, 0), plata = galReg * precio;
+    /* La suma de abajo (Juan, 02/11/2026): los km de ida, los de regreso y el diésel del regreso */
+    const kmIda = R.visitas.reduce((s, v) => s + (v.kmIda || 0), 0);
+    const total = '<tfoot><tr><td colspan="3">Total<div class="dias">' + R.visitas.length + (R.visitas.length === 1 ? ' entrega' : ' entregas') +
+        (completos.length < R.visitas.length ? ' · ' + completos.length + (completos.length === 1 ? ' regreso completo' : ' regresos completos') : '') + '</div></td>' +
+      '<td class="num nowrap">' + (kmIda ? n(kmIda) + ' km' : '—') + '</td><td colspan="3"></td>' +
+      '<td class="num nowrap">' + (kmReg ? n(kmReg) + ' km' : '—') + '</td>' +
+      '<td class="num nowrap">' + (galReg ? (precio ? esc(Money.format(plata)) : '') + '<div class="dias">' + n(galReg) + ' gal</div>' : '—') + '</td></tr></tfoot>';
     return UI.card('Viajes de entrega', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th><th>Lleva</th><th>Salió de</th><th class="num">Ida</th>' +
         '<th>Llegó a</th><th class="num">Tiempo allá</th><th>Regresó a</th><th class="num">Regreso</th><th class="num">Diésel del regreso</th></tr></thead><tbody>' + filas +
-        '</tbody></table></div>', { flush: true, cls: 'mb16',
+        '</tbody>' + total + '</table></div>', { flush: true, cls: 'mb16',
       sub: R.visitas.length + (R.visitas.length === 1 ? ' entrega' : ' entregas') + (completos.length ? ' · ' + completos.length + (completos.length === 1 ? ' regreso completo, ' : ' regresos completos, ') +
         n(kmReg) + ' km' + (plata ? ' · ' + esc(Money.format(plata)) + ' de diésel si regresaron vacíos' : '') : '') });
   },
@@ -8705,6 +9173,7 @@ Object.assign(Vistas, {
       '</div>' +
       '<div class="grid g2 mb16">' + UI.card('Km por día', cols, { sub: per.nombre }) +
         UI.card('Por encima de ' + lim + ' km/h', tablaEx, { flush: true, sub: exs.length > 8 ? 'Los 8 más rápidos de ' + exs.length : '' }) + '</div>' +
+      (u.tipo === 'carga' ? MapaGPS.ficha(u, R, per) : '') +
       this.gpsViajes(R, precio, true) +
       UI.card(per.modo === 'mes' ? 'Su mes, día por día' : 'Su semana, día por día', semana,
         { sub: 'Paradas de ' + (+Config.gps.paradaMin || 45) + ' min o más, y desde 10 min en los lugares con nombre · verde: entrega · morado: planta · azul: base' });
@@ -10256,6 +10725,24 @@ Object.assign(Acciones, {
     Router.pintar(true);
   },
   gpsReintentar() { GPS.olvidar(); Router.pintar(true); },
+  /* El mapa (ver MapaGPS) */
+  gpsTab(el) { UIState.gps.tab = el.dataset.v; Router.pintar(true); },
+  gpsMapaVeh(el) {
+    const ids = UIState.gps.mapa.ids.filter(id => id !== el.dataset.u);
+    if (el.checked) ids.push(el.dataset.u);
+    UIState.gps.mapa.ids = ids;
+    MapaGPS.refrescar();
+  },
+  gpsMapaTodos(el) {
+    const d = MapaGPS._datos.area;
+    UIState.gps.mapa.ids = el.dataset.v === '1' && d ? d.us.map(u => u.id) : [];
+    MapaGPS.refrescar();
+  },
+  gpsMapaCapa(el) {
+    UIState.gps.mapa.capas = Object.assign({}, UIState.gps.mapa.capas, { [el.dataset.capa]: el.checked });
+    MapaGPS.refrescar();
+  },
+  gpsMapaReintentar() { Router.pintar(true); },
   lugaresGps() { Ventanas.lugaresGps(); },
   quitarLugarFila(el) {
     const tr = el.closest('tr'), m = el.closest('.modal-bd');
@@ -14516,6 +15003,8 @@ const Router = {
       Shell.titulo(r.titulo, r.sub);
       cont.innerHTML = r.html;
       if (r.despues) r.despues();
+      /* Los mapas del GPS: cada uno a su hueco (ver MapaGPS) */
+      MapaGPS.poner();
     } catch (e) {
       console.error(e);
       cont.innerHTML = '<div class="alert a-err">' + Icon('warn') + '<div><b>Esta vista falló al dibujarse.</b> ' + esc(e.message) + '</div></div>';
