@@ -924,6 +924,46 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 @media (max-width:600px){
   .mp-lf,.mp-lf.chico{height:380px}
 }
+/* La foto del vehículo en chiquito, al lado de la placa (ver Plano.fotito):
+   en Mantenimientos y en Llantas, para comparar con el dibujo */
+.pl-foto{position:relative;flex:0 0 auto;display:block;width:84px;height:56px;padding:0;border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--border);background:var(--surface-3);cursor:zoom-in}
+.pl-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.pl-foto .ph svg{width:84%}
+.pl-foto:hover{border-color:var(--brand-400)}
+.pl-foto.vacia{cursor:default}
+.pl-foto-z{position:absolute;right:4px;bottom:4px;width:20px;height:20px;border-radius:50%;background:rgba(13,19,25,.62);color:#fff;display:grid;place-items:center}
+/* El área Llantas (ver LlantasArea) */
+.ll-uc .uc-ph{aspect-ratio:4/3}
+.ll-uc .uc-ph .plano-caja.ll-caja{padding:34px 14px 10px;grid-template:minmax(0,1fr) / minmax(0,1fr)}
+.ll-caja .llantas-v{width:100%;height:100%}
+.ll-uc .llantas-v .llanta{cursor:inherit}
+.ll-grid{grid-template-columns:minmax(260px,340px) minmax(0,1fr);align-items:start}
+.ll-dib{padding:14px 10px}
+.ll-dib .llantas-v{max-width:240px;margin:0 auto}
+.ll-conf{font-size:12px;color:var(--text-3);margin-top:10px;line-height:1.5}
+.ll-puesta{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);padding:12px 14px;margin-bottom:12px}
+.ll-puesta.vacia{font-size:12.5px;color:var(--text-3);text-align:center;line-height:1.5}
+.ll-p-h{display:flex;align-items:center;gap:8px;font-size:14px}
+.ll-p-h svg{color:var(--text-3);flex:0 0 auto}
+.ll-p-d{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 16px;margin-top:10px}
+.ll-p-d small{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700}
+.ll-p-d span{font-size:12.5px}
+.ll-acc{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.ll-hist{padding:14px 16px;border-top:1px solid var(--border)}
+.ll-hist h4{font-size:12.5px;margin:0 0 12px}
+/* El cambio de llanta en el registro de un arreglo (ver LlantaForm) */
+.ll-form{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;background:var(--surface-2);margin-bottom:14px}
+.ll-tabla{width:100%;border-collapse:collapse;font-size:12.5px}
+.ll-tabla th{text-align:left;font-size:11px;color:var(--text-3);font-weight:600;padding:0 8px 4px 0}
+.ll-tabla td{padding:3px 8px 3px 0}
+.ll-tabla td:last-child,.ll-tabla th:last-child{padding-right:0}
+@media(max-width:900px){
+  .ll-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:600px){
+  .pl-foto{width:62px;height:44px}
+}
 .cols{display:flex;align-items:flex-end;gap:10px;height:168px;border-bottom:1px solid var(--border-strong);padding:20px 0 0}
 .col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
 /* La barra no se achica por el número de arriba, que cabe en el relleno de
@@ -1182,6 +1222,11 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .dp-foto img{width:100%;height:58mm;object-fit:cover;display:block}
 .dp-foto figcaption{font-size:8pt;padding:1.2mm 2mm;border-top:.6px solid #c3cfe9;background:#edf1fb;color:#193680}
 .dp-vacio{border:1.2px solid #193680;border-top:0;padding:3mm;font-size:8.5pt;color:#4e5d6b}
+/* El historial de la reparación en el PDF: cada anotación con sus fotos debajo (ver Formatos.trabajoCorrectivo) */
+.dp-av{border:1.2px solid #193680;border-top:0;padding:2mm 3mm 3mm}
+.dp-av-h{font-size:7.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:#193680}
+.dp-av-t{font-size:8.5pt;margin-top:1mm;white-space:pre-line}
+.dp-av .dp-fotos{padding-top:2mm}
 .dp-sign{margin-top:4mm;display:flex;gap:14mm;justify-content:space-between}
 .dp-sign div{flex:1;text-align:center;font-size:8pt;color:#4e5d6b}
 /* El espacio para firmar, sobre la línea: ahí va la firma del responsable de
@@ -1469,6 +1514,12 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .pl-taller b{display:block;font-size:13px}
 .pl-taller span{display:block;color:var(--text-2);margin-top:1px}
 .pl-taller .btn{flex:0 0 auto}
+/* El historial de un arreglo que sigue en el taller (ver Avances) */
+.av-l{display:grid;gap:6px;margin-top:7px;padding-left:10px;border-left:2px solid var(--border)}
+.av-i{font-size:12px;line-height:1.45;color:var(--text-2);white-space:pre-line}
+.av-c{display:block;font-size:11px;font-weight:650;color:var(--text-3);white-space:normal}
+.av-i.cierre .av-c{color:var(--ok-700)}
+.av-f{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--text-3);margin-left:6px;white-space:nowrap}
 html[data-theme="dark"] .pl-taller{color:var(--dang-500)}
 .pl-btn{width:100%;justify-content:center;margin-top:10px}
 /* Las llantas vistas desde arriba */
@@ -3503,17 +3554,18 @@ const UI = {
   itemMant(m, conUnidad) {
     const p = Q.provDe(m), u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', valor = Compras.deArreglo(m).valor;
     return '<div class="tl-i" style="--c:' + (prev ? 'var(--info-500)' : 'var(--warn-500)') + '"><span class="tl-dot">' + Icon(prev ? 'tool' : 'camera', '', 10) + '</span>' +
-      '<div class="tl-h">' + this.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + '<b>' + esc(m.trabajo) + '</b>' +
+      '<div class="tl-h">' + this.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + '<b>' + esc(Avances.titulo(m)) + '</b>' +
         (m.estado === 'taller' ? this.pill('bad', 'En taller') : '') + '</div>' +
       '<div class="tl-m">' + esc(Fecha.larga(m.fecha)) + (m.salida ? ' a ' + esc(Fecha.larga(m.salida)) : '') + ' · ' + esc(p ? p.nombre : '—') +
         (m.lectura ? ' · ' + esc(m.lectura) : '') + (valor ? ' · ' + Money.format(valor) : '') + (conUnidad && u ? ' · ' + esc(this.placaTxt(u)) : '') + '</div>' +
-      (m.falla ? '<div class="tl-m">Qué pasó: ' + esc(m.falla) + '</div>' : '') +
+      (m.falla ? '<div class="tl-m">Qué pasó: ' + esc(m.falla) + '</div>' : '') + Avances.lista(m) +
       '<div class="tl-x">' + (m.partes || []).map(x => '<span class="chip">' + Icon('tool', '', 12) + esc(Plano.nombre(u, x)) + '</span>').join('') +
         (m.adjunto ? this.file(m.adjunto, m.adjuntoId) : '') +
         (m.fotos ? '<span class="chip">' + Icon('image', '', 12) + m.fotos + ' fotos</span>' : '') +
         (m.oc ? '<span class="chip">' + Icon('cart', '', 12) + esc(m.oc) + '</span>' : '') + this.chipsOrdenes(m, 12) +
         (!prev && !m.adjunto ? '<button class="btn btn-sm" data-act="pdfCorrectivo" data-m="' + m.id + '">' + Icon('pdf', '', 12) + 'Generar PDF</button>' : '') +
-        (m.estado === 'taller' ? '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + m.id + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>' : '') +
+        (m.estado === 'taller' ? '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + m.id + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
+          '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + m.id + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>' : '') +
       '</div></div>';
   },
   /* Las órdenes de Facturación de un arreglo (ver Compras), como chips que se
@@ -4775,6 +4827,7 @@ const NAV = [
   { id: 'flota', icono: 'truck', txt: 'Flota', badge: 'unidades' },
   { id: 'documentos', icono: 'shield', txt: 'Documentos', badge: 'docs', alerta: true },
   { id: 'mantenimientos', icono: 'tool', txt: 'Mantenimientos', badge: 'taller', alerta: true },
+  { id: 'llantas', icono: 'disc', txt: 'Llantas' },
   { id: 'aceite', icono: 'gota', txt: 'Cambios de aceite', badge: 'aceite', alerta: true },
   { id: 'combustible', icono: 'fuel', txt: 'Combustible' },
   { id: 'gps', icono: 'pin', txt: 'GPS' },
@@ -4784,8 +4837,6 @@ const NAV = [
   { id: 'compras', icono: 'cart', txt: 'Órdenes de compra' },
   { sec: 'Registros' },
   { id: 'conductores', icono: 'personas', txt: 'Conductores', badge: 'conductores' },
-  { sec: 'Próximamente' },
-  { id: 'pronto/llantas', icono: 'disc', txt: 'Llantas', soon: true },
   { sec: 'Sistema' },
   { id: 'catalogo', icono: 'list', txt: 'Catálogo' },
   { id: 'configuracion', icono: 'cog', txt: 'Configuración' }
@@ -4855,7 +4906,9 @@ const UIState = {
   /* El área GPS y su pestaña en la ficha: semana o mes, y desde cuándo. El
      mapa (ver MapaGPS): la pestaña, los vehículos marcados (abre sin ninguno:
      Juan los va marcando uno por uno, 02/11/2026) y lo que se ve */
-  gps: { modo: 'semana', desde: null, tab: 'resumen', mapa: { ids: [], capas: { viajes: true, paradas: false, excesos: false } } }
+  gps: { modo: 'semana', desde: null, tab: 'resumen', mapa: { ids: [], capas: { viajes: true, paradas: false, excesos: false } } },
+  /* El área Llantas: el tipo de vehículo, la llanta escogida y el período */
+  llantas: { tipo: 'todos', u: null, pos: null, periodo: '12' }
 };
 
 /* Los proveedores son de Facturación (Juan, 02/11/2026; su SQL 211): Flota
@@ -4974,7 +5027,7 @@ const Compras = {
   /* En Facturación cambian sin que Flota se entere: si pasó más de un minuto,
      se vuelven a pedir */
   FRESCO: 60000,
-  VISTAS: ['inicio', 'compras', 'unidad', 'mantenimientos'],
+  VISTAS: ['inicio', 'compras', 'unidad', 'mantenimientos', 'llantas'],
   /* Con los nombres de Facturación */
   ESTADOS: { ESPERANDO: ['warn', 'Esperando cotización'], CONTABILIDAD: ['info', 'En contabilidad'], PAGADA: ['ok', 'Pagada'] },
   TIPOS: { COMPRA: 'Orden de compra', SERVICIO: 'Orden de servicio', PEDIDO: 'Orden de pedido' },
@@ -6472,13 +6525,15 @@ const Plano = {
         ' la parte marcada. Salen abajo, en «Sin parte marcada».</span></div>' : ''),
       { sub: sel ? 'Toque la misma parte para ver todo el vehículo' : 'Toque una parte para ver sus arreglos' });
     return '<div class="pl-pagina"><div class="crumbs"><a data-ir="mantenimientos">Mantenimientos</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
-      '<div class="page-head"><div class="pl-tit">' + UI.placa(u, 'xl') + '<div><h1>' + esc([u.clase || TIPOS[u.tipo].nombre, UI.nombre(u), u.modelo].filter(Boolean).join(' · ')) + '</h1>' +
+      '<div class="page-head"><div class="pl-tit">' + this.fotito(u) + UI.placa(u, 'xl') + '<div><h1>' + esc([u.clase || TIPOS[u.tipo].nombre, UI.nombre(u), u.modelo].filter(Boolean).join(' · ')) + '</h1>' +
           '<div class="ph-sub">' + esc([lect ? Aceite.fmt(u, lect.valor) : '', ult ? 'último arreglo ' + Fecha.hace(ult.fecha) : 'sin arreglos registrados'].filter(Boolean).join(' · ')) + '</div></div></div>' +
         '<div class="ph-actions"><button class="btn" data-act="irUnidad" data-u="' + attr(u.id) + '" data-tab="mant">' + Icon('truck', '', 14) + 'Ver la ficha</button>' +
           '<button class="btn btn-primary" data-act="registrarArreglo" data-u="' + attr(u.id) + '"' + (sel ? ' data-p="' + attr(sel.k) + '"' : '') + '>' + Icon('plus', '', 14) + 'Registrar arreglo</button></div></div>' +
       /* Lo que está en el taller, arriba: se termina cuando la unidad sale */
       this.arreglos(u, '').filter(m => m.estado === 'taller').map(m => '<div class="pl-taller">' + Icon('tool', '', 16) +
-        '<div class="f1"><b>En el taller desde el ' + esc(Fecha.larga(m.fecha)) + '</b><span>' + esc([m.trabajo, (m.partes || []).map(x => this.nombre(u, x)).join(', ')].filter(Boolean).join(' · ')) + '</span></div>' +
+        '<div class="f1"><b>En el taller desde el ' + esc(Fecha.larga(m.fecha)) + '</b><span>' + esc([m.trabajo, (m.partes || []).map(x => this.nombre(u, x)).join(', '),
+          Avances.ultima(m) ? 'última anotación: ' + Avances.cuando(Avances.ultima(m)) + (Avances.ultima(m).t ? ', ' + Avances.ultima(m).t : '') : ''].filter(Boolean).join(' · ')) + '</span></div>' +
+        '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
         '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button></div>').join('') +
       '<div class="kpis4 mant-kpis">' +
         UI.kpi({ label: 'Arreglos ' + enPer, valor: lista.length, icono: 'tool', meta: (lista.length - prev) + (lista.length - prev === 1 ? ' correctivo · ' : ' correctivos · ') + prev + (prev === 1 ? ' preventivo' : ' preventivos') }) +
@@ -6497,6 +6552,15 @@ const Plano = {
       '<div class="pl-barra-cel"><button class="btn btn-primary" data-act="registrarArreglo" data-u="' + attr(u.id) + '"' + (sel ? ' data-p="' + attr(sel.k) + '"' : '') +
         (sel && sel.k === 'llantas' && st.llanta ? ' data-pos="' + attr(st.llanta) + '"' : '') + '>' + Icon('plus', '', 16) +
         (sel ? 'Registrar arreglo en ' + esc(sel.n) : 'Registrar arreglo') + '</button></div></div>';
+  },
+  /* La foto del vehículo en chiquito, al lado de la placa, para comparar con
+     el dibujo (Juan, 03/11/2026). Al hacerle clic se abre en grande, con la
+     lupa (ver Ventanas.foto). Sin foto sale su dibujo, que no se abre */
+  fotito(u) {
+    return u.mini || u.foto || u.fotoInfo
+      ? '<button type="button" class="pl-foto" data-act="verFoto" data-u="' + attr(u.id) + '" title="Ver la foto en grande" aria-label="Ver la foto en grande">' +
+        UI.foto(u, true) + '<span class="pl-foto-z">' + Icon('search', '', 12) + '</span></button>'
+      : '<span class="pl-foto vacia" title="Sin foto: se sube en la ficha">' + UI.foto(u, true) + '</span>';
   },
   /* A la derecha: la historia de la parte escogida */
   panel(u, k, p, lista, pp, novs) {
@@ -6535,13 +6599,15 @@ const Plano = {
     const st = UIState.plano, cuenta = {}, nivel = {};
     lista.forEach(m => (m.llantas || []).forEach(p => { cuenta[p] = (cuenta[p] || 0) + 1; }));
     Object.keys(cuenta).forEach(p => { nivel[p] = this.NIVEL(cuenta[p]); });
-    const ejes = Llantas.ejes(u);
+    const puesta = st.llanta ? Llantas.puesta(u, st.llanta) : null;
     return '<div class="pl-llantas"><div class="pl-ll-d">' + Llantas.svg(u, { nivel, sel: st.llanta ? [st.llanta] : [], act: 'planoLlanta' }) + '</div>' +
       '<div class="pl-ll-t"><b>Llantas por posición</b><p>' + (st.llanta ? esc(Llantas.nombre(st.llanta)) + ': ' + (cuenta[st.llanta] || 0) +
         ((cuenta[st.llanta] || 0) === 1 ? ' arreglo.' : ' arreglos.') + ' <span class="link" data-act="planoLlanta" data-pos="">Ver todas</span>'
         : 'Toque una llanta para ver solo sus arreglos.') + '</p>' +
-        '<p class="txt-3">' + ejes.length + (ejes.length === 1 ? ' eje: ' : ' ejes: ') + esc(ejes.map(t => (t === 'd' ? 'doble' : 'sencilla')).join(', ')) +
-          '. <span class="link" data-act="cambiarEjes" data-u="' + attr(u.id) + '">Cambiar</span></p></div></div>';
+        (st.llanta ? '<p>' + (puesta ? 'Tiene puesta: <strong>' + esc(Llantas.txt(puesta) || 'la del cambio') + '</strong>, desde el ' + esc(Fecha.corta(puesta.fecha)) + '.'
+          : 'Sin cambio de llanta registrado.') + '</p>' : '') +
+        '<p class="txt-3">' + esc(Llantas.ejesTxt(u) + (Llantas.repuesto(u) ? ', con repuesto' : ', sin repuesto')) +
+          '. <span class="link" data-act="cambiarEjes" data-u="' + attr(u.id) + '">Cambiar</span> · <span class="link" data-ir="llantas/' + attr(u.id) + '">Ver en Llantas</span></p></div></div>';
   },
   cajaNovedad(u, n) {
     return '<div class="nov-ab' + (n.grave ? ' grave' : '') + '"><b>' + Icon('warn', '', 12) + (n.grave ? 'Novedad grave sin arreglar' : 'Novedad sin arreglar') + '</b>' +
@@ -6558,11 +6624,12 @@ const Plano = {
     const prev = m.tipo === 'preventivo', prov = Q.provDe(m), c = this.costo(m), otras = (m.partes || []).filter(r => r.k !== k);
     return '<div class="pm-tl-i"><div class="pm-tl-f"><span>' + esc(Fecha.corta(m.fecha)) + '</span>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') +
         (m.estado === 'taller' ? UI.pill('bad', 'En taller') : '') + '<span class="v">' + (c ? esc(Money.format(c)) : '—') + '</span></div>' +
-      '<div class="pm-tl-t">' + esc(m.trabajo || 'Sin descripción') + (m.componente ? '<span> · ' + esc(m.componente) + '</span>' : '') + '</div>' +
-      (m.falla ? '<div class="pm-tl-q"><span>Qué pasó:</span> ' + esc(m.falla) + '</div>' : '') +
+      '<div class="pm-tl-t">' + esc(Avances.titulo(m)) + (m.componente ? '<span> · ' + esc(m.componente) + '</span>' : '') + '</div>' +
+      (m.falla ? '<div class="pm-tl-q"><span>Qué pasó:</span> ' + esc(m.falla) + '</div>' : '') + Avances.lista(m) +
       '<div class="pm-tl-m">' + (prov ? '<span class="chip">' + Icon('briefcase', '', 11) + esc(prov.nombre) + '</span>' : '') +
         (m.lectura ? '<span class="chip">' + Icon('medidor', '', 11) + esc(m.lectura) + '</span>' : '') +
         ((m.llantas || []).length ? '<span class="chip">' + Icon('disc', '', 11) + esc(m.llantas.map(p => Llantas.nombre(p, true)).join(', ')) + '</span>' : '') +
+        (m.llanta ? '<span class="chip" title="La llanta que se puso">' + Icon('refresh', '', 11) + 'Se puso: ' + esc(Llantas.txt(m.llanta) || 'otra llanta') + '</span>' : '') +
         (m.fotos ? '<span class="chip">' + Icon('image', '', 11) + m.fotos + (m.fotos === 1 ? ' foto' : ' fotos') + '</span>' : '') +
         (m.oc ? '<span class="chip">' + Icon('cart', '', 11) + esc(m.oc) + '</span>' : '') + UI.chipsOrdenes(m, 11) +
         (prev ? (m.adjunto ? UI.file(m.adjunto, m.adjuntoId) : '')
@@ -6570,7 +6637,8 @@ const Plano = {
         ((m.novedades || []).length ? '<span class="chip">' + Icon('checkSquare', '', 11) + 'Vino del preoperacional</span>' : '') +
         (otras.length ? (k === null ? '<span class="chip">' + Icon('tool', '', 11) + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>'
           : '<span class="chip" title="Este arreglo también tocó otras partes">También: ' + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>') : '') +
-        (m.estado === 'taller' ? '<button type="button" class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>' : '') +
+        (m.estado === 'taller' ? '<button type="button" class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
+          '<button type="button" class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>' : '') +
         (marcar ? '<button type="button" class="btn btn-sm" data-act="asignarPartes" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Marcar la parte</button>' : '') +
       '</div></div>';
   },
@@ -6701,7 +6769,21 @@ const Novedades = {
    cambian en su plano. */
 const Llantas = {
   ejes(u) { return Array.isArray(u.ejes) && u.ejes.length ? u.ejes : PLANOS[Plano.clave(u)].ejes || []; },
+  nLlantas: ejes => ejes.reduce((s, t) => s + (t === 'd' ? 4 : 2), 0),
+  /* ¿Trae repuesto? Lo que se escogió en el vehículo (en la ventana de los
+     ejes, Juan 03/11/2026) o, si no, lo de su dibujo */
+  repuesto(u) { return typeof u.repuesto === 'boolean' ? u.repuesto : Boolean(PLANOS[Plano.clave(u)].repuesto); },
   aplica(u) { return this.ejes(u).length > 0; },
+  /* «10 llantas y repuesto» */
+  cuantas(u) {
+    const n = this.nLlantas(this.ejes(u));
+    return n + (n === 1 ? ' llanta' : ' llantas') + (this.repuesto(u) ? ' y repuesto' : '');
+  },
+  /* «3 ejes: sencilla, doble, doble» */
+  ejesTxt(u) {
+    const e = this.ejes(u);
+    return e.length + (e.length === 1 ? ' eje: ' : ' ejes: ') + e.map(t => (t === 'd' ? 'doble' : 'sencilla')).join(', ');
+  },
   LADO: { I: 'izquierda', D: 'derecha', IE: 'izquierda, por fuera', II: 'izquierda, por dentro', DI: 'derecha, por dentro', DE: 'derecha, por fuera' },
   CORTO: { I: 'izq.', D: 'der.', IE: 'izq. fuera', II: 'izq. dentro', DI: 'der. dentro', DE: 'der. fuera' },
   nombre(pos, corto) {
@@ -6718,7 +6800,7 @@ const Llantas = {
       const n = 'E' + (i + 1) + '-';
       (t === 'd' ? [['IE', 22], ['II', 48], ['DI', 150], ['DE', 176]] : [['I', 35], ['D', 163]]).forEach(([l, x]) => out.push({ k: n + l, x, y }));
     });
-    if (PLANOS[k].repuesto && ejes.length) out.push({ k: 'R', x: 86, y: y + 66, rep: true });
+    if (this.repuesto(u) && ejes.length) out.push({ k: 'R', x: 86, y: y + 66, rep: true });
     return out;
   },
   /* o: nivel y sel por posición, act y u (lo que hace el clic) */
@@ -6737,6 +6819,250 @@ const Llantas = {
       ys.map((y, i) => '<path class="ll-eje" d="M34 ' + y + 'H186"/><circle class="ll-num" cx="110" cy="' + y + '" r="9"/>' +
         '<text class="ll-n" x="110" y="' + (y + 3.5) + '" text-anchor="middle">' + (i + 1) + '</text>').join('') +
       pos.map(llanta).join('') + (rep ? '<text class="ll-txt" x="110" y="' + (rep.y + 26) + '" text-anchor="middle">REPUESTO</text>' : '') + '</svg>';
+  },
+
+  /* ---------------- Lo que se les ha hecho ----------------
+     Son arreglos de Mantenimientos: los de la parte «llantas», los que tienen
+     posiciones o los que pusieron otra llanta (m.llanta, ver LlantaForm). Así
+     el área Llantas y Mantenimientos → «Llantas y rines» son lo mismo. */
+  esDe: m => (m.partes || []).some(p => p.k === 'llantas') || (m.llantas || []).length > 0 || Boolean(m.llanta),
+  arreglos(u, desde) { return Plano.arreglos(u, desde).filter(m => this.esDe(m)); },
+  /* Lo que le tocó a las llantas: si el arreglo tocó varias partes, se reparte, como en el plano */
+  costo(m) { return Plano.costo(m) / ((m.partes || []).length || 1); },
+  /* Cuántos registros tiene cada posición */
+  porPosicion(lista) {
+    const out = {};
+    lista.forEach(m => (m.llantas || []).forEach(p => { out[p] = (out[p] || 0) + 1; }));
+    return out;
+  },
+  /* La llanta puesta en una posición: la del último cambio registrado */
+  puesta(u, pos) {
+    const m = Plano.arreglos(u, '').find(x => x.llanta && x.llanta.pos && x.llanta.pos[pos]);
+    if (!m) return null;
+    const l = m.llanta, p = l.pos[pos] || {};
+    return { m, fecha: m.fecha, marca: l.marca || '', medida: l.medida || '', tipo: l.tipo || '', serial: p.serial || '', sello: p.sello || '' };
+  },
+  /* «Michelin · 295/80R22.5 · nueva» */
+  txt(x) { return [x.marca, x.medida, x.tipo === 'reencauche' ? 'reencauchada' : x.tipo === 'nueva' ? 'nueva' : ''].filter(Boolean).join(' · '); },
+  /* La medida de la hoja de vida, para no escribirla cada vez */
+  medida(u) { return String((u.ficha || {})['Dimensión de llantas'] || '').trim(); }
+};
+
+/* ==========================================================================
+   El área Llantas (Juan, 03/11/2026): las llantas de cada vehículo por
+   posición, con el mismo dibujo de Mantenimientos → «Llantas y rines». No
+   guarda nada aparte: un cambio o un arreglo de llanta es un arreglo de
+   Mantenimientos en la parte «llantas», con sus posiciones, y si se puso otra
+   llanta, su marca, medida, serial y sello (ver LlantaForm). Lo que se
+   registra en un lado sale en el otro.
+   ========================================================================== */
+const LlantasArea = {
+  /* ---------------- Por vehículo ---------------- */
+  flota() {
+    const f = UIState.llantas.tipo, desde = Plano.desde('12');
+    const us = ORDEN.flatMap(t => Datos.unidades.filter(u => u.tipo === t)).filter(u => Llantas.aplica(u));
+    const lista = us.filter(u => f === 'todos' || u.tipo === f);
+    const del12 = Datos.mantenimientos.filter(m => m.fecha >= desde && Llantas.esDe(m));
+    const camb = del12.filter(m => m.llanta), puestas = camb.reduce((s, m) => s + Object.keys(m.llanta.pos || {}).length, 0);
+    const gasto = del12.reduce((s, m) => s + Llantas.costo(m), 0), total = us.reduce((s, u) => s + Llantas.posiciones(u).length, 0);
+    const kpis = '<div class="kpis4 mant-kpis">' +
+      UI.kpi({ label: 'Llantas de la flota', valor: total, icono: 'disc', meta: us.length + ' vehículos · con los repuestos' }) +
+      UI.kpi({ label: 'Cambiadas en 12 meses', valor: puestas, icono: 'refresh', color: 'var(--info-500)',
+        meta: camb.length ? camb.length + (camb.length === 1 ? ' cambio registrado' : ' cambios registrados') : 'Ningún cambio registrado' }) +
+      UI.kpi({ label: 'Arreglos en 12 meses', valor: del12.length - camb.length, icono: 'tool', color: 'var(--warn-500)', meta: 'Despinches, reparaciones y otros' }) +
+      UI.kpi({ label: 'Gasto en llantas', valor: esc(Money.format(gasto)), icono: 'pesos', meta: 'Últimos 12 meses' }) +
+      '</div>';
+    const filtros = [['todos', 'Todos', us.length]].concat(ORDEN.map(t => [t, TIPOS[t].plural, us.filter(u => u.tipo === t).length]).filter(x => x[2]));
+    const chips = '<label class="mant-buscar">' + Icon('search', '', 16) + '<input class="inp" id="mantBuscar" type="search" placeholder="Buscar placa…" ' +
+      'autocomplete="off" enterkeyhint="search" aria-label="Buscar placa"></label><div class="fchips mant-tipos">' + filtros.map(s => '<button class="fchip' +
+      (f === s[0] ? ' on' : '') + '" data-act="llantasTipo" data-v="' + s[0] + '">' + esc(s[1]) + '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div>';
+    const tarjeta = u => {
+      const ar = Llantas.arreglos(u, desde), cuenta = Llantas.porPosicion(ar), nivel = {}, cu = ar.filter(m => m.llanta).length;
+      Object.keys(cuenta).forEach(p => { nivel[p] = Plano.NIVEL(cuenta[p]); });
+      return '<article class="uc uc-plano ll-uc" data-ir="llantas/' + attr(u.id) + '" tabindex="0" data-buscar="' +
+          attr(sinTildes([u.placa, UI.placaTxt(u), u.clase, UI.nombre(u), u.alias].join(' '))) + '">' +
+        '<div class="uc-ph"><div class="plano-caja ll-caja">' + Llantas.svg(u, { nivel }) + '</div>' +
+          '<span class="uc-tag">' + Icon(TIPOS[u.tipo].icono, '', 12) + esc(u.clase || TIPOS[u.tipo].nombre) + '</span></div>' +
+        '<div class="uc-b"><div class="uc-l1">' + UI.placa(u) + '<span class="uc-anio">' + esc(u.modelo || '') + '</span></div>' +
+          '<div class="uc-mm">' + esc(UI.nombre(u) || TIPOS[u.tipo].nombre) + '</div>' +
+          '<div class="uc-zs"><span class="chip">' + esc(Llantas.cuantas(u)) + '</span>' +
+            (cu ? '<span class="chip">' + cu + (cu === 1 ? ' cambio' : ' cambios') + '</span>' : '') + '</div></div>' +
+        '<div class="uc-f"><span>' + Icon('tool', '', 12) + (ar.length ? ar.length + (ar.length === 1 ? ' registro' : ' registros') + ' en 12 meses' : 'Nada en 12 meses') +
+          '</span><b>' + esc(Money.format(ar.reduce((s, m) => s + Llantas.costo(m), 0))) + '</b></div></article>';
+    };
+    return UI.head('Llantas', 'Cambios y arreglos de cada llanta, por posición · son los mismos de Mantenimientos') + kpis + chips +
+      (lista.length ? '<div class="ugrid mant-grid" id="mantGrid">' + lista.map(tarjeta).join('') + '</div>' +
+        '<div class="card hidden" id="mantNada">' + UI.empty('search', 'Ninguna placa coincide', 'Pruebe con otra o borre la búsqueda.') + '</div>'
+      : '<div class="card">' + UI.empty('disc', 'No hay vehículos con llantas', 'Se registran en Flota.') + '</div>');
+  },
+
+  /* ---------------- Las llantas de un vehículo ---------------- */
+  vista(u) {
+    const st = UIState.llantas;
+    if (st.u !== u.id) Object.assign(st, { u: u.id, pos: null });
+    const sel = Llantas.posiciones(u).some(p => p.k === st.pos) ? st.pos : null;
+    const lista = Llantas.arreglos(u, Plano.desde(st.periodo)), cuenta = Llantas.porPosicion(lista), nivel = {};
+    Object.keys(cuenta).forEach(p => { nivel[p] = Plano.NIVEL(cuenta[p]); });
+    const camb = lista.filter(m => m.llanta), gasto = lista.reduce((s, m) => s + Llantas.costo(m), 0), ult = Llantas.arreglos(u, '').find(m => m.llanta);
+    const puestas = camb.reduce((s, m) => s + Object.keys(m.llanta.pos || {}).length, 0);
+    const mas = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a])[0];
+    const enPer = { anio: 'este año', '12': 'en 12 meses', todo: 'en total' }[st.periodo];
+    const seg = '<div class="seg">' + Plano.PERIODOS.map(o => '<button type="button" class="' + (o[0] === st.periodo ? 'on' : '') + '" data-act="llantaPeriodo" data-v="' + o[0] + '">' +
+      esc(o[1]) + '</button>').join('') + '</div>';
+    const ley = '<div class="pl-ley"><span class="pl-ley-t">Registros</span>' + [['', '0'], ['h1', '1'], ['h2', '2'], ['h3', '3 a 4'], ['h4', '5 o más']]
+      .map(([c, t]) => '<span><i' + (c ? ' class="' + c + '"' : '') + '></i>' + t + '</span>').join('') + '</div>';
+    const dibujo = UI.card('Llantas por posición',
+      '<div class="pl-bar"><span class="lbl">Período</span>' + seg + '</div>' +
+      '<div class="plano-caja claro ll-dib">' + Llantas.svg(u, { nivel, sel: sel ? [sel] : [], act: 'llantaPos' }) + '</div>' + ley +
+      '<div class="ll-conf">' + esc(Llantas.cuantas(u) + ' · ' + Llantas.ejesTxt(u)) + '. <span class="link" data-act="cambiarEjes" data-u="' + attr(u.id) + '">Cambiar</span></div>',
+      { sub: sel ? 'Toque la misma llanta para ver todas' : 'Toque una llanta para ver la suya' });
+    return '<div class="pl-pagina"><div class="crumbs"><a data-ir="llantas">Llantas</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
+      '<div class="page-head"><div class="pl-tit">' + Plano.fotito(u) + UI.placa(u, 'xl') + '<div><h1>' +
+          esc([u.clase || TIPOS[u.tipo].nombre, UI.nombre(u), u.modelo].filter(Boolean).join(' · ')) + '</h1>' +
+          '<div class="ph-sub">' + esc(Llantas.cuantas(u) + ' · ' + (ult ? 'último cambio ' + Fecha.hace(ult.fecha) : 'sin cambios registrados')) + '</div></div></div>' +
+        '<div class="ph-actions"><button class="btn" data-ir="mantenimientos/' + attr(u.id) + '">' + Icon('tool', '', 14) + 'Plano de mantenimiento</button>' +
+          '<button class="btn" data-act="cambiarEjes" data-u="' + attr(u.id) + '">' + Icon('cog', '', 14) + 'Ejes y repuesto</button>' +
+          '<button class="btn btn-primary" data-act="cambiarLlanta" data-u="' + attr(u.id) + '"' + (sel ? ' data-pos="' + attr(sel) + '"' : '') + '>' + Icon('refresh', '', 14) +
+            'Cambiar llanta</button></div></div>' +
+      '<div class="kpis4 mant-kpis">' +
+        UI.kpi({ label: 'Cambios ' + enPer, valor: camb.length, icono: 'refresh', color: 'var(--info-500)',
+          meta: puestas ? puestas + (puestas === 1 ? ' llanta puesta' : ' llantas puestas') : 'Ninguna llanta puesta' }) +
+        UI.kpi({ label: 'Arreglos ' + enPer, valor: lista.length - camb.length, icono: 'tool', color: 'var(--warn-500)', meta: 'Despinches, reparaciones y otros' }) +
+        UI.kpi({ label: 'Gasto ' + enPer, valor: esc(Money.format(gasto)), icono: 'pesos', meta: 'Cambios y arreglos de llantas' }) +
+        UI.kpi({ label: 'La que más registros tiene', valor: mas ? esc(Llantas.nombre(mas, true)) : '—', icono: 'disc', color: 'var(--warn-500)',
+          meta: mas ? cuenta[mas] + (cuenta[mas] === 1 ? ' registro' : ' registros') : 'Ninguna', act: mas ? 'llantaPos' : '', v: mas || '' }) +
+      '</div>' +
+      '<div class="grid ll-grid">' + dibujo + '<div>' + (sel ? this.panel(u, sel, lista) : this.todas(u, lista, cuenta)) + '</div></div>' +
+      /* En el celular, el botón queda abajo, siempre a la mano */
+      '<div class="pl-barra-cel"><button class="btn btn-primary" data-act="cambiarLlanta" data-u="' + attr(u.id) + '"' + (sel ? ' data-pos="' + attr(sel) + '"' : '') + '>' +
+        Icon('refresh', '', 16) + (sel ? 'Cambiar ' + esc(Llantas.nombre(sel, true)) : 'Cambiar llanta') + '</button></div></div>';
+  },
+  /* Sin llanta escogida: todas, con lo que tiene puesto cada una, y su historia */
+  todas(u, lista, cuenta) {
+    const filas = Llantas.posiciones(u).map(x => {
+      const p = Llantas.puesta(u, x.k);
+      return '<tr class="row-click" data-act="llantaPos" data-pos="' + x.k + '"><td class="nowrap"><b>' + esc(Llantas.nombre(x.k, true)) + '</b></td>' +
+        '<td>' + (p ? esc(Llantas.txt(p) || 'Cambio registrado') + (p.serial || p.sello ? '<div class="dias">' + esc([p.serial ? 'Serial ' + p.serial : '', p.sello ? 'sello ' + p.sello : '']
+          .filter(Boolean).join(' · ')) + '</div>' : '') : '<span class="txt-3">Sin cambio registrado</span>') + '</td>' +
+        '<td class="nowrap">' + (p ? esc(Fecha.corta(p.fecha)) : '—') + '</td><td class="num">' + (cuenta[x.k] || '—') + '</td></tr>';
+    }).join('');
+    return UI.card('Todas las llantas', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Posición</th><th>Tiene puesta</th><th>Desde</th>' +
+        '<th class="num">Registros</th></tr></thead><tbody>' + filas + '</tbody></table></div>' +
+      '<div class="ll-hist"><h4>Cambios y arreglos del período</h4>' + (lista.length ? '<div class="pm-tl">' + lista.map(m => Plano.itemTl(u, m, 'llantas')).join('') + '</div>'
+        : '<div class="pl-vacio">No hay cambios ni arreglos de llantas en el período.</div>') + '</div>',
+      { flush: true, sub: 'Toque una para ver la suya' });
+  },
+  /* Una llanta: lo que tiene puesto y lo que se le ha hecho */
+  panel(u, sel, lista) {
+    const p = Llantas.puesta(u, sel), mios = lista.filter(m => (m.llantas || []).includes(sel));
+    const despues = p ? Plano.arreglos(u, '').filter(m => m !== p.m && m.fecha >= p.fecha && (m.llantas || []).includes(sel)).length : 0;
+    const dato = (t, v) => '<div><small>' + t + '</small><span>' + (v ? esc(v) : '—') + '</span></div>';
+    const caja = p ? '<div class="ll-puesta"><div class="ll-p-h">' + Icon('disc', '', 16) + '<b>' + esc(Llantas.txt(p) || 'Cambio registrado') + '</b></div>' +
+        '<div class="ll-p-d">' + dato('Serial', p.serial) + dato('Sello', p.sello) + dato('Puesta el', Fecha.corta(p.fecha) + ' · ' + Fecha.hace(p.fecha)) +
+          dato('Arreglos desde entonces', despues ? String(despues) : 'Ninguno') + '</div></div>'
+      : '<div class="ll-puesta vacia">Todavía no hay un cambio registrado en esta posición. Cuando se registre, aquí sale la llanta que tiene puesta.</div>';
+    return UI.card(esc(Llantas.nombre(sel)), caja +
+      '<div class="ll-acc"><button class="btn btn-sm btn-primary" data-act="cambiarLlanta" data-u="' + attr(u.id) + '" data-pos="' + attr(sel) + '">' + Icon('refresh', '', 12) +
+          'Cambiar esta llanta</button>' +
+        '<button class="btn btn-sm" data-act="registrarArreglo" data-u="' + attr(u.id) + '" data-p="llantas" data-pos="' + attr(sel) + '">' + Icon('tool', '', 12) + 'Registrar arreglo</button></div>' +
+      (mios.length ? '<div class="pm-tl">' + mios.map(m => Plano.itemTl(u, m, 'llantas')).join('') + '</div>'
+        : '<div class="pl-vacio">Esta llanta no tiene cambios ni arreglos en el período.</div>'),
+      { sub: 'Lo que tiene puesto y lo que se le ha hecho',
+        act: '<button class="btn btn-sm btn-ghost" data-act="llantaPos" data-pos="" title="Soltar la llanta">' + Icon('x', '', 12) + 'Ver todas</button>' });
+  }
+};
+
+/* El cambio de llanta en el registro de un arreglo (Juan, 03/11/2026): si en
+   las llantas marcadas se puso otra, su marca, su medida, si es nueva o
+   reencauchada y, de cada una, el serial que trae y el sello que le marcan en
+   la empresa. Va en el arreglo (m.llanta): de ahí sale, en el área Llantas y
+   en Mantenimientos, lo que tiene puesto cada posición. Nada es obligatorio. */
+const LlantaForm = {
+  poner(m, u, cambio) { m._ll = { cambio: Boolean(cambio), marca: '', medida: Llantas.medida(u), tipo: 'nueva', pos: {} }; },
+  pintar(m) {
+    const caja = $('#mcLlNueva', m), x = m._ll;
+    if (!caja || !x) return;
+    const u = PlanoForm.u(m), ps = m._partes.includes('llantas') && Llantas.aplica(u) ? m._llantas : [];
+    if (!ps.length) { caja.innerHTML = ''; return; }
+    const op = (k, v, t) => '<button type="button" class="' + (String(x[k]) === v ? 'on' : '') + '" data-ll-op="' + k + '" data-v="' + v + '">' + t + '</button>';
+    caja.innerHTML = '<div class="ll-form"><div class="field' + (x.cambio ? '' : ' mb0') + '"><label>¿Se puso otra llanta?</label><div class="seg">' +
+        op('cambio', 'false', 'No, se arregló') + op('cambio', 'true', ps.length === 1 ? 'Sí, se cambió' : 'Sí, se cambiaron') + '</div></div>' +
+      (x.cambio ? '<div class="row"><div class="field"><label>Marca</label><input class="inp" data-ll="marca" value="' + attr(x.marca) + '" placeholder="Ej.: Michelin"></div>' +
+          '<div class="field"><label>Medida</label><input class="inp" data-ll="medida" value="' + attr(x.medida) + '" placeholder="Ej.: 295/80R22.5"></div></div>' +
+        '<div class="field"><label>La que se puso</label><div class="seg">' + op('tipo', 'nueva', 'Nueva') + op('tipo', 'reencauche', 'Reencauchada') + '</div></div>' +
+        '<table class="ll-tabla"><thead><tr><th>Posición</th><th>Serial</th><th>Sello</th></tr></thead><tbody>' + ps.map(p => {
+          const v = x.pos[p] || {};
+          return '<tr><td class="nowrap">' + esc(Llantas.nombre(p, true)) + '</td><td><input class="inp" data-ll-pos="' + p + '" data-ll-c="serial" value="' + attr(v.serial || '') + '"></td>' +
+            '<td><input class="inp" data-ll-pos="' + p + '" data-ll-c="sello" value="' + attr(v.sello || '') + '"></td></tr>';
+        }).join('') + '</tbody></table>' +
+        '<div class="hint">El serial viene en la llanta; el sello es el que le marcan en la empresa. Si no los sabe, déjelos vacíos.</div>' : '') + '</div>';
+  },
+  /* Lo que se escribe queda en m._ll, para no perderlo al tocar otra llanta */
+  escribir(m, t) {
+    const x = m._ll;
+    if (!x) return;
+    if (t.dataset.ll) x[t.dataset.ll] = t.value;
+    else if (t.dataset.llPos) (x.pos[t.dataset.llPos] = x.pos[t.dataset.llPos] || {})[t.dataset.llC] = t.value;
+  },
+  opcion(m, b) {
+    const x = m._ll;
+    if (!x) return;
+    if (b.dataset.llOp === 'cambio') {
+      x.cambio = b.dataset.v === 'true';
+      /* Si no se ha escrito nada, el componente y lo que se hizo */
+      if (x.cambio) {
+        const n = m._llantas.length;
+        if (!$('#mcC', m).value.trim()) $('#mcC', m).value = 'Llantas';
+        if (!$('#mcT', m).value.trim()) $('#mcT', m).value = n > 1 ? 'Cambio de ' + n + ' llantas' : 'Cambio de llanta';
+      }
+    } else x.tipo = b.dataset.v;
+    this.pintar(m);
+  },
+  leer(m) {
+    const x = m._ll;
+    if (!x || !x.cambio || !m._partes.includes('llantas') || !m._llantas.length) return null;
+    const pos = {};
+    m._llantas.forEach(p => { const v = x.pos[p] || {}; pos[p] = { serial: String(v.serial || '').trim(), sello: String(v.sello || '').trim() }; });
+    return { marca: x.marca.trim(), medida: x.medida.trim(), tipo: x.tipo, pos };
+  }
+};
+
+/* El historial de un arreglo que sigue en el taller (Juan, 03/11/2026): lo
+   que se va haciendo, con fecha y hora, cada anotación con sus fotos. Va en el
+   arreglo (m.notas) y cada foto de m.fotosData dice de qué anotación es
+   (nota); las fotos sin anotación son las del registro. Nada se borra: cada
+   anotación se agrega debajo de la anterior. En el PDF, cada foto sale debajo
+   de su anotación, en orden (ver Formatos.trabajoCorrectivo). */
+const Avances = {
+  de(m) {
+    return (m.notas || []).slice().sort((a, b) => (a.f + ' ' + (a.h || '')).localeCompare(b.f + ' ' + (b.h || '')) || (a.ts || 0) - (b.ts || 0));
+  },
+  fotos(m, id) { return (m.fotosData || []).filter(f => (f.nota || '') === (id || '')); },
+  cuando(n) { return Fecha.corta(n.f) + (n.h ? ' · ' + n.h : ''); },
+  ultima(m) { const l = this.de(m); return l[l.length - 1] || null; },
+  /* El título del arreglo en las listas: lo que se hizo o, si va por anotaciones, cuántas lleva */
+  titulo(m) {
+    const n = (m.notas || []).length;
+    return m.trabajo || (n ? (m.estado === 'taller' ? 'En el taller' : 'Reparación') + ' · ' + n + (n === 1 ? ' anotación' : ' anotaciones')
+      : m.estado === 'taller' ? 'En el taller, sin anotaciones todavía' : 'Sin descripción');
+  },
+  /* Las anotaciones, una debajo de otra, con cuántas fotos tiene cada una */
+  lista(m) {
+    const l = this.de(m);
+    if (!l.length) return '';
+    return '<div class="av-l">' + l.map(n => {
+      const f = this.fotos(m, n.id).length;
+      return '<div class="av-i' + (n.cierre ? ' cierre' : '') + '"><span class="av-c">' + esc(this.cuando(n)) + (n.cierre ? ' · salió del taller' : '') + '</span>' +
+        esc(n.t || (f ? 'Fotos' : '—')) + (f ? '<span class="av-f">' + Icon('image', '', 11) + f + (f === 1 ? ' foto' : ' fotos') + '</span>' : '') + '</div>';
+    }).join('') + '</div>';
+  },
+  nueva: (f, h, t, cierre) => Object.assign({ id: 'n' + marca().toString(36), f, h, t, ts: marca() }, cierre ? { cierre: true } : {}),
+  /* Una anotación más, con sus fotos (las de Archivos.preparar, con lo que muestran) */
+  agregar(r, n, fotos) {
+    r.notas = (r.notas || []).concat([n]);
+    if (!fotos.length) return;
+    r.fotosData = (r.fotosData || []).concat(fotos.map(f => ({ id: f.id, txt: f.txt, nota: n.id })));
+    r.fotos = r.fotosData.length;
   }
 };
 
@@ -6966,6 +7292,7 @@ const PlanoForm = {
         otras.map(n => '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>Esta parte tiene una novedad sin arreglar</b><div>' + esc(txt(n)) + '</div>' +
           '<span class="link" data-act="regNov" data-nov="' + attr(n.i) + '">Este arreglo la atiende</span></div></div>').join('');
     }
+    LlantaForm.pintar(m);
   },
   /* Lo que depende de la unidad: la lectura y las órdenes de compra */
   unidad(m) {
@@ -7159,11 +7486,22 @@ const Vistas = {
       { flush: true, sub: 'Km por galón · ' + esc(perTxt), act: '<span class="link fs12" data-ir="combustible">Ver todo</span>',
         pie: prom ? '<span><span class="rk-ley"></span>Promedio de la flota: ' + esc(Tanqueos.rindeTxt(prom)) + ' · en amarillo, los que rinden menos</span>' : '' });
 
-    /* Lo que llega cuando se registren las llantas y el GPS */
-    const pronto = (titulo, sub, nota, ir, anchos) => UI.card(titulo, '<div class="rk-lista">' + anchos.map(w =>
-        '<div class="rk"><span class="rk-l">— — —</span><span class="rk-t"><i style="width:' + w + '%"></i></span><span class="rk-v txt-3">—</span></div>').join('') + '</div>',
-      { flush: true, cls: 'pronto-c', sub, pie: Icon('clock', '', 13) + '<span>' + nota + ' <span class="link" data-ir="' + ir + '">Ver qué viene</span></span>' });
-
+    /* El gasto en llantas de cada vehículo en el período: sus cambios y arreglos (ver Llantas) */
+    const llantasG = (() => {
+      const porU = {};
+      Datos.mantenimientos.forEach(m => {
+        if (m.fecha < per.desde || m.fecha > per.hasta || !Llantas.esDe(m)) return;
+        porU[m.unidad] = (porU[m.unidad] || 0) + Llantas.costo(m);
+      });
+      const top = Object.keys(porU).map(id => ({ u: Q.unidad(id), v: porU[id] })).filter(x => x.u && x.v > 0).sort((a, b) => b.v - a.v);
+      const ver = '<span class="link fs12" data-ir="llantas">Ver llantas</span>';
+      if (!top.length) return UI.card('Mayor gasto en llantas', UI.empty('disc', 'Sin gasto en llantas en ' + per.nombre, 'Sale de los cambios y arreglos de llantas.'),
+        { flush: true, sub: 'Por vehículo', act: ver });
+      return UI.card('Mayor gasto en llantas', '<div class="rk-lista">' + top.slice(0, 5).map(x => '<div class="rk" data-ir="llantas/' + attr(x.u.id) + '">' +
+          '<span class="rk-l">' + esc(UI.placaTxt(x.u)) + '</span><span class="rk-t"><i style="width:' + Math.max(3, Math.round(x.v / top[0].v * 100)) + '%"></i></span>' +
+          '<span class="rk-v">' + esc(Money.compacto(x.v)) + '</span></div>').join('') + '</div>',
+        { flush: true, sub: 'Por vehículo · ' + esc(Tablero.PERIODOS[p].toLowerCase()), act: ver });
+    })();
     /* El ralentí de cada vehículo en el período, del GPS (ver GPS, la vista gps_dias) */
     const ralenti = (() => {
       const l = GPS.estado === 'falta' ? [] : GPS.dias(per.desde, per.hasta);
@@ -7220,7 +7558,7 @@ const Vistas = {
       '<div class="mb16">' + historicoC + '</div>' +
       '<div class="grid g2 mb16">' + consumo + rendimiento + '</div>' +
       '<div class="grid g2">' +
-        pronto('Mayor gasto en llantas', 'Por vehículo', 'Cuando se registren las llantas.', 'pronto/llantas', [80, 57, 41, 26]) +
+        llantasG +
         ralenti +
       '</div>';
     return { titulo: 'Dashboard', sub: 'El balance de la operación', html };
@@ -7674,6 +8012,18 @@ const Vistas = {
         $('#dQuien').addEventListener('change', e => { f.quien = e.target.value; Router.pintar(true); });
       }
     };
+  },
+
+  /* --------------------------------------------------------------- Llantas
+     Por vehículo, y las de cada uno por posición (ver LlantasArea) */
+  llantas(id) {
+    if (id) {
+      const u = Q.unidad(id);
+      if (!u || !Llantas.aplica(u)) return { titulo: 'Llantas', html: '<div class="card">' + UI.empty('disc', 'No se encontró la unidad',
+        '<span class="link" data-ir="llantas">Volver a Llantas</span>') + '</div>' };
+      return { titulo: UI.placaTxt(u), sub: 'Llantas', html: LlantasArea.vista(u) };
+    }
+    return { titulo: 'Llantas', sub: 'Por vehículo y por posición', html: LlantasArea.flota(), despues: () => Plano.buscador() };
   },
 
   /* --------------------------------------------------------- Próximamente */
@@ -8487,7 +8837,11 @@ const Formatos = {
     const k = Plano.clave(u), partes = d.partes || [], zonas = partes.map(x => (Plano.parte(k, x.k) || {}).zona).filter(Boolean);
     const arreglo = [['Parte del vehículo', partes.length ? partes.map(x => Plano.nombre(u, x)).join(', ') : 'Sin marcar'], ['Componente', d.componente || '—']]
       .concat(d.lectura ? [[u.tipo === 'maquinaria' ? 'Horómetro' : 'Kilometraje', d.lectura]] : [])
-      .concat((d.llantas || []).length ? [['Llantas', d.llantas.map(x => Llantas.nombre(x)).join(' · ')]] : []);
+      .concat((d.llantas || []).length ? [['Llantas', d.llantas.map(x => Llantas.nombre(x)).join(' · ')]] : [])
+      /* La llanta que se puso, con el serial y el sello de cada una */
+      .concat(d.llanta ? [['Llanta que se puso', Llantas.txt(d.llanta) || 'Sin datos']].concat(Object.keys(d.llanta.pos || {})
+        .filter(x => d.llanta.pos[x].serial || d.llanta.pos[x].sello).map(x => ['Serial · ' + Llantas.nombre(x, true),
+          [d.llanta.pos[x].serial, d.llanta.pos[x].sello ? 'sello ' + d.llanta.pos[x].sello : ''].filter(Boolean).join(' · ')])) : []);
     return this.cabecera('Historial de mantenimiento correctivo', 'Visita al taller con el registro fotográfico de cada cambio', d.numero, null,
         [[UI.placaTxt(u), u.clase, d.entrada ? 'entró el ' + Fecha.larga(d.entrada) : ''].filter(Boolean).join(' · '), 'Correctivo N.º ' + d.numero]) +
       this.sec('Unidad', this.campos([[conPlaca ? 'Placa' : 'Código', UI.placaTxt(u)], ['Tipo', TIPOS[u.tipo].nombre + ' · ' + u.clase],
@@ -8497,13 +8851,32 @@ const Formatos = {
       this.sec('Arreglo', '<div class="dp-arreglo"><div class="dp-plano">' + Plano.svg(k, { mini: true, sel: zonas }) + '</div>' +
         '<div class="dp-fields">' + arreglo.map(x => '<div class="dp-f"><label>' + esc(x[0]) + '</label><span>' + esc(x[1]) + '</span></div>').join('') + '</div></div>') +
       (d.falla ? '<div class="dp-obs"><b>Qué pasó</b>' + esc(d.falla) + '</div>' : '') +
-      '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo || 'Sin descripción todavía.') + '</div>' +
-      this.sec('Registro fotográfico · ' + d.fotos.length + ' foto(s)', d.fotos.length ? '<div class="dp-fotos">' + d.fotos.map((f, i) => '<figure class="dp-foto" style="margin:0">' +
-          (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<div class="ph" style="height:58mm">' + ILUS[ilusDe(u)] + '</div>') +
-          '<figcaption>' + (i + 1) + '. ' + esc(f.txt || 'Sin descripción') + '</figcaption></figure>').join('') + '</div>'
-        : '<div class="dp-vacio">Todavía no hay fotos.</div>', 'dp-libre') +
+      this.trabajoCorrectivo(d) +
       this.firmas([['Responsable de flota', 'Recibe la unidad'], ['Conductor', 'Entrega y recibe'], ['Taller', 'Hizo el trabajo']]) +
       this.pie('Mantenimiento correctivo ' + d.numero);
+  },
+
+  /* Lo que se hizo. Sin historial, «Trabajo realizado» y sus fotos, como
+     siempre. Con historial (ver Avances), cada anotación con su fecha, su hora
+     y sus fotos debajo, en orden (Juan, 03/11/2026: nada de fotos regadas al
+     final); las del registro, si no van con una anotación, salen antes, como
+     «Al entrar al taller». Las fotos van numeradas en el orden en que salen */
+  trabajoCorrectivo(d) {
+    const u = d.unidad, notas = Avances.de({ notas: d.notas || [] }), fotos = d.fotos || [];
+    let i = 0;
+    const grilla = l => '<div class="dp-fotos">' + l.map(f => '<figure class="dp-foto" style="margin:0">' +
+      (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<div class="ph" style="height:58mm">' + ILUS[ilusDe(u)] + '</div>') +
+      '<figcaption>' + (++i) + '. ' + esc(f.txt || 'Sin descripción') + '</figcaption></figure>').join('') + '</div>';
+    if (!notas.length) return '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo || 'Sin descripción todavía.') + '</div>' +
+      this.sec('Registro fotográfico · ' + fotos.length + ' foto(s)', fotos.length ? grilla(fotos) : '<div class="dp-vacio">Todavía no hay fotos.</div>', 'dp-libre');
+    const sueltas = fotos.filter(f => !f.nota || !notas.some(n => n.id === f.nota));
+    return (d.trabajo ? '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo) + '</div>' : '') +
+      (sueltas.length ? this.sec('Al entrar al taller · ' + sueltas.length + ' foto(s)', grilla(sueltas), 'dp-libre') : '') +
+      this.sec('Historial de la reparación · ' + notas.length + (notas.length === 1 ? ' anotación' : ' anotaciones'), notas.map(n => {
+        const fs = fotos.filter(f => f.nota === n.id);
+        return '<div class="dp-av"><div class="dp-av-h">' + esc(Avances.cuando(n)) + (n.cierre ? ' · Salió del taller' : '') + '</div>' +
+          (n.t ? '<div class="dp-av-t">' + esc(n.t) + '</div>' : '') + (fs.length ? grilla(fs) : '') + '</div>';
+      }).join(''), 'dp-libre');
   },
 
   /* El informe del mes para el área del primer piso */
@@ -8605,7 +8978,7 @@ const Formatos = {
         }).join('') : '<tr><td colspan="4">Este tipo de unidad no tiene documentos obligatorios.</td></tr>') + '</tbody></table>') +
       sec('Últimos mantenimientos', '<table class="dp-tbl"><thead><tr><th style="width:26mm">Fecha</th><th style="width:24mm">Tipo</th><th>Trabajo</th><th>Proveedor</th></tr></thead><tbody>' +
         (ms.length ? ms.map(m => '<tr><td>' + esc(Fecha.corta(m.fecha)) + '</td><td>' + (m.tipo === 'preventivo' ? 'Preventivo' : 'Correctivo') + '</td>' +
-          '<td>' + esc(m.trabajo) + '</td><td>' + esc((Q.provDe(m) || {}).nombre || '—') + '</td></tr>').join('')
+          '<td>' + esc(Avances.titulo(m)) + '</td><td>' + esc((Q.provDe(m) || {}).nombre || '—') + '</td></tr>').join('')
           : '<tr><td colspan="4">Sin mantenimientos registrados.</td></tr>') + '</tbody></table>') +
       this.firmas([['Responsable de flota', 'Elaboró']]) +
       this.pie('Hoja de vida ' + UI.placaTxt(u) + ' · SST-FRT-026') + '</div>';
@@ -8661,7 +9034,7 @@ Object.assign(Vistas, {
             '<td class="nowrap">' + esc(Fecha.corta(m.fecha)) + '<div class="dias">' + esc(Fecha.hace(m.fecha)) + '</div></td>' +
             '<td>' + UI.unidadCelda(u) + '</td>' +
             '<td>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + '</td>' +
-            '<td>' + esc(m.trabajo) + (m.lectura ? '<div class="dias">' + esc(m.lectura) + '</div>' : '') +
+            '<td>' + esc(Avances.titulo(m)) + (m.lectura ? '<div class="dias">' + esc(m.lectura) + '</div>' : '') +
               ((m.partes || []).length ? '<div class="m-partes">' + m.partes.map(x => '<span class="chip">' + esc(Plano.nombre(u, x)) + '</span>').join('') + '</div>' : '') + '</td>' +
             '<td>' + esc(p ? p.nombre : '—') + '</td>' +
             /* Lo que cuenta (ver Compras): sus órdenes de Facturación cuando ya
@@ -8677,6 +9050,7 @@ Object.assign(Vistas, {
               (m.fotos ? '<span class="chip" title="Fotos del taller">' + Icon('image', '', 12) + m.fotos + '</span>' : '') +
               (!prev && !m.adjunto ? '<button class="btn btn-sm" data-act="pdfCorrectivo" data-m="' + m.id + '">' + Icon('pdf', '', 12) + 'Generar PDF</button>' : '') + '</div></td>' +
             '<td>' + (m.estado === 'taller' ? '<div class="flex aic g6" style="flex-wrap:wrap">' + UI.pill('bad', 'En taller') +
+              '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '" title="Lo que se va haciendo">' + Icon('edit', '', 12) + 'Anotar</button>' +
               '<button class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '" title="La unidad salió del taller">' + Icon('check', '', 12) + 'Terminar</button></div>'
               : UI.pill('nr', 'Cerrado')) + '</td></tr>';
         }).join('') + '</tbody></table></div>' : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.')) + '</div>';
@@ -9506,26 +9880,30 @@ Object.assign(Ventanas, {
     if (!u0) { Toast.show('Primero registre una unidad en Flota.', 'warn'); return; }
     const fijo = Boolean(o.fijo);
     const m = Modal.abrir({
-      titulo: fijo ? 'Registrar arreglo · ' + UI.placaTxt(u0) : 'Mantenimiento correctivo',
+      titulo: o.cambio ? 'Cambio de llanta · ' + UI.placaTxt(u0) : fijo ? 'Registrar arreglo · ' + UI.placaTxt(u0) : 'Mantenimiento correctivo',
       sub: fijo ? esc([u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : 'Visita al taller con la parte que se arregló y las fotos de cada cambio', ancho: 'xwide m-hoja',
       cuerpo: '<div class="reg"><div>' +
           (fijo ? '' : '<div class="field"><label>Unidad</label><select class="inp" id="mcU">' + Opc.unidades(u0.id) + '</select></div>') +
           '<div class="field"><label>Parte del vehículo</label><div class="plano-caja claro pl-marcar" id="mcPlano"></div>' +
             '<div class="hint">Toque la parte que se arregló; si fueron varias, tóquelas todas.</div><div class="reg-sel" id="mcSel"></div></div>' +
-          '<div id="mcAviso"></div><div id="mcLlantas"></div><div id="mcNov"></div>' +
+          '<div id="mcAviso"></div><div id="mcLlantas"></div><div id="mcLlNueva"></div><div id="mcNov"></div>' +
         '</div><div>' +
           '<div class="field"><label>Componente</label><input class="inp" id="mcC" placeholder="Ej.: bomba de agua"><div class="sug" id="mcSug"></div></div>' +
           '<div class="field"><label>¿Qué pasó?</label><textarea class="inp" id="mcF" rows="2" placeholder="La falla, o lo que reportó el conductor"></textarea></div>' +
-          '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" id="mcT" rows="2" placeholder="El arreglo: qué se cambió o se reparó"></textarea></div>' +
+          /* El estado decide lo que sigue (Juan, 03/11/2026): terminado, qué se hizo; si sigue en el taller, el historial */
+          '<div class="field"><label>Estado</label><div class="seg" id="mcEst"><button type="button" class="on" data-v="cerrado">' + Icon('check', '', 13) + 'Terminado</button>' +
+            '<button type="button" data-v="taller">' + Icon('tool', '', 13) + 'Sigue en el taller</button></div></div>' +
+          '<div class="field" id="mcTC"><label>¿Qué se hizo?</label><textarea class="inp" id="mcT" rows="2" placeholder="El arreglo: qué se cambió o se reparó"></textarea></div>' +
+          '<div class="field hidden" id="mcNC"><label>Historial de la reparación</label>' +
+            '<textarea class="inp" id="mcN" rows="2" placeholder="La primera anotación, si ya se sabe algo (opcional)"></textarea>' +
+            '<div class="hint">Se puede guardar sin escribir nada. Después, con «Anotar avance», se va agregando lo que se haga, con fecha, hora y fotos.</div></div>' +
           '<div class="row"><div class="field"><label>Entró al taller</label><input class="inp" type="date" id="mcE" value="' + hoyISO + '"></div>' +
             '<div class="field" id="mcLC"><label>Kilometraje</label><input class="inp" id="mcL"></div></div>' +
           '<div class="row"><div class="field"><label>Taller o proveedor</label><select class="inp" id="mcP"><option value="">Sin taller registrado</option>' + ProvFact.opciones('') + '</select></div>' +
             '<div class="field"><label>Valor</label><input class="inp" id="mcV" inputmode="numeric" placeholder="Ej.: 2.160.000"></div></div>' +
           '<div class="field"><label>Órdenes de Facturación <span class="txt-3">(si tiene)</span></label><div class="oc-lista" id="mcO"></div>' +
             '<div class="hint">Márquela si el arreglo tiene orden. El valor de arriba cuenta hasta que la orden pase a contabilidad; desde ahí cuenta la orden.</div></div>' +
-          '<div class="row"><div class="field"><label>Estado</label><div class="seg" id="mcEst"><button type="button" class="on" data-v="cerrado">' + Icon('check', '', 13) + 'Terminado</button>' +
-              '<button type="button" data-v="taller">' + Icon('tool', '', 13) + 'Sigue en el taller</button></div></div>' +
-            '<div class="field" id="mcSal"><label>Salió del taller</label><input class="inp" type="date" id="mcS" value="' + hoyISO + '"></div></div>' +
+          '<div class="row"><div class="field" id="mcSal"><label>Salió del taller</label><input class="inp" type="date" id="mcS" value="' + hoyISO + '"></div></div>' +
           '<div class="field mb0"><label>Fotos del arreglo</label>' +
             Dz.camara('mcDz') + Dz.html('mcDz', '<span class="solo-web">Arrastre aquí las fotos que mandan los conductores</span><span class="solo-cel">Escoger de la galería</span>',
               '<span class="solo-web">Puede soltar varias a la vez; a cada una se le escribe qué muestra</span>', 'image/*', true) +
@@ -9541,6 +9919,9 @@ Object.assign(Ventanas, {
     /* Desde una novedad: su parte, su pregunta como componente y lo que reportó el conductor */
     const nov = o.nov ? Novedades.de(u0).find(n => n.i === o.nov) : null;
     PlanoForm.poner(m, u0, { partes: [o.p || (nov && nov.parte)].filter(Boolean), llantas: o.pos ? [o.pos] : [], novs: nov ? [nov] : [] });
+    /* Desde «Cambiar llanta» (área Llantas): el cambio ya escogido */
+    LlantaForm.poner(m, u0, o.cambio);
+    if (o.cambio) { $('#mcC', m).value = 'Llantas'; $('#mcT', m).value = 'Cambio de llanta'; }
     if (nov) {
       $('#mcC', m).value = nov.texto;
       $('#mcF', m).value = 'Reportado en el preoperacional ' + (nov.fecha === hoyISO ? 'de hoy' : 'del ' + Fecha.corta(nov.fecha)) + (nov.conductor ? ' por ' + nov.conductor : '') +
@@ -9548,11 +9929,23 @@ Object.assign(Ventanas, {
     }
     PlanoForm.unidad(m);
     PlanoForm.pintar(m);
-    if ($('#mcU', m)) $('#mcU', m).addEventListener('change', e => { PlanoForm.poner(m, Q.unidad(e.target.value)); PlanoForm.unidad(m); PlanoForm.pintar(m); });
+    if ($('#mcU', m)) $('#mcU', m).addEventListener('change', e => {
+      PlanoForm.poner(m, Q.unidad(e.target.value));
+      LlantaForm.poner(m, Q.unidad(e.target.value), m._ll && m._ll.cambio);
+      PlanoForm.unidad(m);
+      PlanoForm.pintar(m);
+    });
+    $('#mcLlNueva', m).addEventListener('input', e => LlantaForm.escribir(m, e.target));
+    $('#mcLlNueva', m).addEventListener('click', e => { const b = e.target.closest('[data-ll-op]'); if (b) LlantaForm.opcion(m, b); });
     $$('#mcEst button', m).forEach(b => b.addEventListener('click', () => {
+      const taller = b.dataset.v === 'taller', de = $(taller ? '#mcT' : '#mcN', m), a = $(taller ? '#mcN' : '#mcT', m);
       m._estado = b.dataset.v;
       $$('#mcEst button', m).forEach(x => x.classList.toggle('on', x === b));
-      $('#mcSal', m).classList.toggle('hidden', m._estado === 'taller');
+      $('#mcSal', m).classList.toggle('hidden', taller);
+      $('#mcTC', m).classList.toggle('hidden', taller);
+      $('#mcNC', m).classList.toggle('hidden', !taller);
+      /* Lo que ya se escribió pasa al otro campo */
+      if (de.value.trim() && !a.value.trim()) { a.value = de.value; de.value = ''; }
     }));
     const pintar = () => {
       $('#mcFotos', m).innerHTML = m._fotos.map((f, i) => '<div class="foto"><img src="' + attr(f.src) + '" alt="">' +
@@ -9563,6 +9956,44 @@ Object.assign(Ventanas, {
     };
     /* Las fotos del taller: a 1.600 px, como las del registro fotográfico */
     Dz.bind('mcDz', files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
+      .then(lista => { lista.forEach(a => m._fotos.push({ id: a.id, src: Archivos.vistos.get(a.id).url, txt: '' })); pintar(); }));
+  },
+
+  /* Lo que se va haciendo mientras sigue en el taller (ver Avances): la fecha y
+     la hora (se pueden cambiar, por si se anota después), lo que se hizo y sus
+     fotos. Guardar se prende cuando hay algo escrito o una foto */
+  avance(r) {
+    const u = Q.unidad(r.unidad);
+    if (!u) return;
+    const m = Modal.abrir({
+      titulo: 'Anotar avance · ' + UI.placaTxt(u), ancho: 'wide m-hoja', sinFoco: true,
+      sub: esc('En el taller desde el ' + Fecha.larga(r.fecha) + (r.numero ? ' · ' + r.numero : '') +
+        ((r.partes || []).length ? ' · ' + r.partes.map(x => Plano.nombre(u, x)).join(', ') : '')),
+      cuerpo: (r.falla ? '<div class="alert a-info mb12">' + Icon('info') + '<div><b>Qué pasó:</b> ' + esc(r.falla) + '</div></div>' : '') +
+        ((r.notas || []).length ? '<div class="field"><label>Lo anotado hasta ahora</label>' + Avances.lista(r) + '</div>' : '') +
+        '<div class="row"><div class="field"><label>Fecha</label><input class="inp" type="date" id="avF" value="' + hoyISO + '"></div>' +
+          '<div class="field"><label>Hora</label><input class="inp" type="time" id="avH" value="' + ahora() + '"></div></div>' +
+        '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" id="avT" rows="3" placeholder="Ej.: se desmontó la llanta y el rin estaba partido"></textarea></div>' +
+        '<div class="field mb0"><label>Fotos de esta anotación <span class="txt-3">(opcional)</span></label>' +
+          Dz.camara('avDz') + Dz.html('avDz', '<span class="solo-web">Arrastre aquí las fotos</span><span class="solo-cel">Escoger de la galería</span>',
+            '<span class="solo-web">Puede soltar varias a la vez; a cada una se le escribe qué muestra</span>', 'image/*', true) +
+          '<div class="fotos" id="avFotos"></div></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarAvance" data-m="' + attr(r.id) + '" disabled>' +
+        Icon('save', '', 14) + 'Guardar anotación</button>'
+    });
+    m._fotos = [];
+    const revisar = () => { $('[data-act="guardarAvance"]', m).disabled = !$('#avT', m).value.trim() && !m._fotos.length; };
+    const pintar = () => {
+      $('#avFotos', m).innerHTML = m._fotos.map((f, i) => '<div class="foto"><img src="' + attr(f.src) + '" alt="">' +
+        '<button type="button" data-i="' + i + '" title="Quitar la foto">' + Icon('x', '', 12) + '</button>' +
+        '<input data-i="' + i + '" value="' + attr(f.txt) + '" placeholder="¿Qué muestra? Ej.: el rin partido"></div>').join('');
+      $$('#avFotos input', m).forEach(inp => inp.addEventListener('input', () => { m._fotos[+inp.dataset.i].txt = inp.value; }));
+      $$('#avFotos button', m).forEach(b => b.addEventListener('click', () => { m._fotos.splice(+b.dataset.i, 1); pintar(); }));
+      revisar();
+    };
+    $('#avT', m).addEventListener('input', revisar);
+    /* Las fotos, a 1.600 px, como las del registro del arreglo */
+    Dz.bind('avDz', files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
       .then(lista => { lista.forEach(a => m._fotos.push({ id: a.id, src: Archivos.vistos.get(a.id).url, txt: '' })); pintar(); }));
   },
 
@@ -10106,13 +10537,16 @@ Object.assign(Ventanas, {
 /* Lo que se escribe en los formularios de correctivo y de orden de compra */
 const Leer = {
   correctivo(m) {
-    const u = PlanoForm.u(m), taller = m._estado === 'taller';
+    const u = PlanoForm.u(m), taller = m._estado === 'taller', entrada = $('#mcE', m).value || hoyISO;
+    /* Si sigue en el taller, lo que se escriba es la primera anotación del historial, con las fotos (ver Avances) */
+    const nota = taller && $('#mcN', m) ? $('#mcN', m).value.trim() : '', notas = nota ? [Avances.nueva(entrada, entrada === hoyISO ? ahora() : '', nota)] : [];
     return {
-      numero: Num.mc(), unidad: u, prov: ProvFact.leer($('#mcP', m).value),
-      entrada: $('#mcE', m).value || hoyISO, salida: taller ? '' : $('#mcS', m).value || $('#mcE', m).value || hoyISO,
-      trabajo: $('#mcT', m).value.trim(), fotos: m._fotos.slice(), valor: Leer.pesos($('#mcV', m).value), ordenes: Compras.leer($('#mcO', m)),
+      numero: Num.mc(), unidad: u, prov: ProvFact.leer($('#mcP', m).value), taller, notas,
+      entrada, salida: taller ? '' : $('#mcS', m).value || entrada,
+      trabajo: taller ? '' : $('#mcT', m).value.trim(), fotos: m._fotos.map(f => (notas.length ? Object.assign({}, f, { nota: notas[0].id }) : f)),
+      valor: Leer.pesos($('#mcV', m).value), ordenes: Compras.leer($('#mcO', m)),
       componente: $('#mcC', m).value.trim(), falla: $('#mcF', m).value.trim(), lectura: Aceite.aplica(u) ? $('#mcL', m).value.trim() : '',
-      partes: PlanoForm.escogidas(m), llantas: m._partes.includes('llantas') ? m._llantas.slice() : [],
+      partes: PlanoForm.escogidas(m), llantas: m._partes.includes('llantas') ? m._llantas.slice() : [], llanta: LlantaForm.leer(m),
       novedades: m._novs.map(n => ({ i: n.i, f: n.fecha, p: n.preop, t: n.texto }))
     };
   },
@@ -10205,14 +10639,33 @@ Object.assign(Acciones, {
   /* Un arreglo que quedó «Sigue en el taller»: se termina cuando la unidad
      sale. Mientras sigue allá, se le puede poner lo que se hizo, el valor y
      más fotos. */
+  /* Lo que se va haciendo mientras sigue en el taller (ver Avances) */
+  anotarAvance(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
+    if (r) Ventanas.avance(r);
+  },
+  guardarAvance(el) {
+    const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
+    if (!m || !u || el.disabled) return;
+    const t = $('#avT', m).value.trim(), f = $('#avF', m).value || hoyISO, h = $('#avH', m).value || '';
+    Avances.agregar(r, Avances.nueva(f, h, t), m._fotos);
+    Modal.cerrar(m);
+    Toast.show('Anotación guardada en el arreglo de <b>' + esc(UI.placaTxt(u)) + '</b>' +
+      (m._fotos.length ? ', con ' + m._fotos.length + (m._fotos.length === 1 ? ' foto' : ' fotos') : '') + '.');
+    Router.pintar(true);
+  },
   terminarArreglo(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
     if (!u) return;
+    const hay = (r.notas || []).length > 0;
     const m = Modal.abrir({
       titulo: 'Terminar arreglo · ' + UI.placaTxt(u), ancho: 'wide m-hoja', sinFoco: true,
       sub: esc('Entró al taller el ' + Fecha.larga(r.fecha) + (r.numero ? ' · ' + r.numero : '') + ((r.partes || []).length ? ' · ' + r.partes.map(x => Plano.nombre(u, x)).join(', ') : '')),
       cuerpo: (r.falla ? '<div class="alert a-info mb12">' + Icon('info') + '<div><b>Qué pasó:</b> ' + esc(r.falla) + '</div></div>' : '') +
-        '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" id="taT" rows="3" placeholder="El arreglo: qué se cambió o se reparó">' + esc(r.trabajo || '') + '</textarea></div>' +
+        /* Con historial (ver Avances), lo que se hizo ya está ahí: la nota de cierre es opcional */
+        (hay ? '<div class="field"><label>Historial de la reparación</label>' + Avances.lista(r) + '</div>' +
+            '<div class="field"><label>Nota de cierre <span class="txt-3">(opcional)</span></label><textarea class="inp" id="taT" rows="2" placeholder="Ej.: quedó listo y se probó en la vía"></textarea></div>'
+          : '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" id="taT" rows="3" placeholder="El arreglo: qué se cambió o se reparó">' + esc(r.trabajo || '') + '</textarea></div>') +
         '<div class="field" style="max-width:240px"><label>Valor</label><input class="inp" id="taV" inputmode="numeric" placeholder="Ej.: 2.160.000" value="' +
             (r.valor ? attr(r.valor.toLocaleString('es-CO')) : '') + '"></div>' +
         '<div class="field"><label>Órdenes de Facturación <span class="txt-3">(si tiene)</span></label><div class="oc-lista" id="taO"></div>' +
@@ -10221,7 +10674,7 @@ Object.assign(Acciones, {
             '<button type="button" data-v="taller">' + Icon('tool', '', 13) + 'Sigue en el taller</button></div></div>' +
           '<div class="field" id="taSal"><label>Salió del taller</label><input class="inp" type="date" id="taS" value="' + hoyISO + '"></div></div>' +
         '<div id="taAviso"></div>' +
-        '<div class="field mb0"><label>Fotos del arreglo</label>' +
+        '<div class="field mb0"><label>' + (hay ? 'Fotos de la nota de cierre <span class="txt-3">(opcional)</span>' : 'Fotos del arreglo') + '</label>' +
           Dz.camara('taDz') + Dz.html('taDz', '<span class="solo-web">Agregar fotos</span><span class="solo-cel">Escoger de la galería</span>',
             '<span class="solo-web">Arrastre aquí las fotos o haga clic; a cada una se le escribe qué muestra</span>', 'image/*', true) +
           '<div class="fotos" id="taFotos"></div></div>',
@@ -10231,7 +10684,7 @@ Object.assign(Acciones, {
     m._estado = 'cerrado';
     Compras.escoger($('#taO', m), u, r.fecha, r);
     /* Las fotos que ya tenía y las que se agreguen, cada una con lo que muestra */
-    m._fotos = (r.fotosData || []).map(f => ({ id: f.id, txt: f.txt || '', src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || '' }));
+    m._fotos = hay ? [] : (r.fotosData || []).map(f => ({ id: f.id, txt: f.txt || '', src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || '' }));
     const pintar = () => {
       $('#taFotos', m).innerHTML = m._fotos.map((f, i) => '<div class="foto">' + (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<div class="ph" style="height:104px">' + Icon('image', '', 20) + '</div>') +
         '<button type="button" data-i="' + i + '" title="Quitar la foto">' + Icon('x', '', 12) + '</button>' +
@@ -10260,8 +10713,8 @@ Object.assign(Acciones, {
   guardarTerminar(el) {
     const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
     if (!u) { Modal.cerrar(m); return; }
-    const trabajo = $('#taT', m).value.trim(), terminado = m._estado !== 'taller', salida = $('#taS', m).value || hoyISO;
-    if (!trabajo) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#taT', m).focus(); return; }
+    const trabajo = $('#taT', m).value.trim(), terminado = m._estado !== 'taller', salida = $('#taS', m).value || hoyISO, hay = (r.notas || []).length > 0;
+    if (!trabajo && !hay) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#taT', m).focus(); return; }
     /* Una salida antes de la entrada suele ser un error al escoger la fecha: se avisa, pero se deja guardar */
     if (terminado && salida < r.fecha && !m._aviso) {
       m._aviso = true;
@@ -10270,11 +10723,17 @@ Object.assign(Acciones, {
       return;
     }
     const valor = Leer.pesos($('#taV', m).value);
-    r.trabajo = trabajo;
     if (valor) r.valor = valor; else delete r.valor;
     Compras.ponerOrdenes(r, Compras.leer($('#taO', m), r));
-    r.fotosData = m._fotos.map(f => ({ id: f.id, txt: f.txt }));
-    r.fotos = r.fotosData.length;
+    /* Con historial, la nota de cierre y sus fotos son una anotación más; sin historial, como siempre */
+    if (hay) {
+      const f = terminado ? salida : hoyISO;
+      if (trabajo || m._fotos.length) Avances.agregar(r, Avances.nueva(f, f === hoyISO ? ahora() : '', trabajo, terminado), m._fotos);
+    } else {
+      r.trabajo = trabajo;
+      r.fotosData = m._fotos.map(f => ({ id: f.id, txt: f.txt }));
+      r.fotos = r.fotosData.length;
+    }
     if (terminado) { r.estado = 'cerrado'; r.salida = salida; } else { r.estado = 'taller'; delete r.salida; }
     Modal.cerrar(m);
     Toast.show(terminado ? 'Arreglo terminado: <b>' + esc(UI.placaTxt(u)) + '</b> salió del taller el ' + esc(Fecha.larga(salida)) + '.'
@@ -10309,27 +10768,47 @@ Object.assign(Acciones, {
     const m = Modal.abrir({
       titulo: 'Ejes de ' + UI.placaTxt(u), sub: 'Para el dibujo de las llantas por posición', sinFoco: true, ancho: 'm-hoja',
       cuerpo: '<div id="ejLista"></div><button type="button" class="btn btn-sm mt8" id="ejMas">' + Icon('plus', '', 12) + 'Agregar eje</button>' +
+        /* Si trae repuesto (Juan, 03/11/2026) */
+        '<div class="field mt16 mb0"><label>Repuesto</label><div class="seg" id="ejRep"><button type="button" data-v="1">Trae repuesto</button>' +
+          '<button type="button" data-v="0">Sin repuesto</button></div></div>' +
         '<div class="hint mt12">El eje 1 es el de adelante. «Doble» es con dos llantas a cada lado.</div>',
-      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarEjes" data-u="' + attr(u.id) + '">' + Icon('save', '', 14) + 'Guardar</button>'
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarEjes" data-u="' + attr(u.id) + '" disabled>' +
+        Icon('save', '', 14) + 'Guardar</button>'
     });
     m._ejes = Llantas.ejes(u).slice();
+    m._rep = Llantas.repuesto(u);
+    const antes = JSON.stringify([m._ejes, m._rep]);
     const pintar = () => {
       $('#ejLista', m).innerHTML = m._ejes.map((t, i) => '<div class="ej-fila"><b>Eje ' + (i + 1) + '</b><div class="seg">' +
           [['s', 'Sencilla'], ['d', 'Doble']].map(o => '<button type="button" class="' + (t === o[0] ? 'on' : '') + '" data-i="' + i + '" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div>' +
           (m._ejes.length > 1 ? '<button type="button" class="btn btn-sm btn-ghost btn-icon btn-del" data-quitar="' + i + '" title="Quitar el eje" aria-label="Quitar el eje">' + Icon('trash', '', 13) + '</button>' : '') + '</div>').join('');
       $$('#ejLista [data-v]', m).forEach(b => b.addEventListener('click', () => { m._ejes[+b.dataset.i] = b.dataset.v; pintar(); }));
       $$('#ejLista [data-quitar]', m).forEach(b => b.addEventListener('click', () => { m._ejes.splice(+b.dataset.quitar, 1); pintar(); }));
+      $$('#ejRep button', m).forEach(b => b.classList.toggle('on', (b.dataset.v === '1') === m._rep));
+      $('[data-act="guardarEjes"]', m).disabled = JSON.stringify([m._ejes, m._rep]) === antes;
     };
     $('#ejMas', m).addEventListener('click', () => { if (m._ejes.length < 8) { m._ejes.push('d'); pintar(); } });
+    $$('#ejRep button', m).forEach(b => b.addEventListener('click', () => { m._rep = b.dataset.v === '1'; pintar(); }));
     pintar();
   },
   guardarEjes(el) {
     const m = el.closest('.modal-bd'), u = Q.unidad(el.dataset.u);
+    if (!m || !u || el.disabled) return;
     u.ejes = m._ejes.slice();
+    u.repuesto = m._rep;
     Modal.cerrar(m);
     Toast.show('Ejes de <b>' + esc(UI.placaTxt(u)) + '</b> guardados.');
     Router.pintar(true);
   },
+  /* El área Llantas (ver LlantasArea) */
+  llantasTipo(el) { UIState.llantas.tipo = el.dataset.v; Router.pintar(true); },
+  llantaPos(el) {
+    const p = el.dataset.pos !== undefined ? el.dataset.pos : el.dataset.v || '';
+    UIState.llantas.pos = p && p !== UIState.llantas.pos ? p : null;
+    Router.pintar(true);
+  },
+  llantaPeriodo(el) { UIState.llantas.periodo = el.dataset.v; Router.pintar(true); },
+  cambiarLlanta(el) { Ventanas.correctivo({ u: el.dataset.u, fijo: true, p: 'llantas', pos: el.dataset.pos, cambio: true }); },
   peZona(el) { PlanoCfg.irA(el.dataset.p); },
   periodoDash(el) { UIState.dash = el.dataset.v; Router.pintar(true); },
   filtroInsp(el) { UIState.insp = el.dataset.v; Router.pintar(true); },
@@ -10481,7 +10960,8 @@ Object.assign(Acciones, {
   },
   guardarCorrectivo(el) {
     const m = el.closest('.modal-bd'), d = Leer.correctivo(m);
-    if (!d.trabajo) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#mcT', m).focus(); return; }
+    /* Si sigue en el taller, se guarda sin «¿Qué se hizo?»: va en el historial (ver Avances) */
+    if (!d.taller && !d.trabajo) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#mcT', m).focus(); return; }
     /* Sin la parte, el arreglo no sale en el plano: se avisa, pero se deja guardar */
     if (!d.partes.length && !m._sinParte) {
       m._sinParte = true;
@@ -10492,17 +10972,22 @@ Object.assign(Acciones, {
     const r = {
       id: 'mt' + Date.now(), unidad: d.unidad.id, tipo: 'correctivo', fecha: d.entrada, salida: d.salida || undefined,
       /* De cada foto se guarda su archivo (por su id) y lo que muestra */
-      trabajo: d.trabajo, fotos: d.fotos.length, fotosData: d.fotos.map(f => ({ id: f.id, txt: f.txt })), numero: d.numero, adjunto: 'Correctivo ' + d.numero + '.pdf',
+      trabajo: d.trabajo, fotos: d.fotos.length, fotosData: d.fotos.map(f => Object.assign({ id: f.id, txt: f.txt }, f.nota ? { nota: f.nota } : {})), numero: d.numero, adjunto: 'Correctivo ' + d.numero + '.pdf',
       valor: d.valor || undefined, lectura: d.lectura || undefined, estado: d.salida ? 'cerrado' : 'taller', hora: ahora(), ts: marca(),
       /* Lo del plano: las partes, el componente, qué pasó, las llantas y las novedades del preoperacional que atiende */
       partes: d.partes.length ? d.partes : undefined, componente: d.componente || undefined, falla: d.falla || undefined,
-      llantas: d.llantas.length ? d.llantas : undefined, novedades: d.novedades.length ? d.novedades : undefined
+      llantas: d.llantas.length ? d.llantas : undefined, novedades: d.novedades.length ? d.novedades : undefined,
+      /* La llanta que se puso, si se cambió (ver LlantaForm) */
+      llanta: d.llanta || undefined,
+      /* La primera anotación del historial, si sigue en el taller (ver Avances) */
+      notas: d.notas.length ? d.notas : undefined
     };
     ProvFact.poner(r, d.prov);
     Compras.ponerOrdenes(r, d.ordenes);
     Datos.mantenimientos.push(r);
     Modal.cerrar(m);
     Toast.show('Correctivo <b>' + esc(d.numero) + '</b> guardado en <b>' + esc(UI.placaTxt(d.unidad)) + '</b>, con su PDF.' +
+      (d.taller ? '<br>Sigue en el taller: con «Anotar avance» se va agregando lo que se haga.' : '') +
       (d.novedades.length ? '<br>' + (d.novedades.length === 1 ? 'La novedad del preoperacional quedó como arreglada.' : 'Las novedades del preoperacional quedaron como arregladas.') : ''));
     Router.pintar(true);
   },
@@ -10510,10 +10995,10 @@ Object.assign(Acciones, {
      se ve dónde irían. */
   pdfCorrectivo(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
-    const fotos = () => r.fotosData ? r.fotosData.map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || null, txt: f.txt }))
+    const fotos = () => r.fotosData ? r.fotosData.map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || null, txt: f.txt, nota: f.nota }))
       : Array.from({ length: r.fotos || 0 }, (_, i) => ({ src: null, txt: 'Foto ' + (i + 1) + ' de ' + r.fotos + ' (ejemplo)' }));
     const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.provDe(r), entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos: fotos(),
-      partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [] };
+      partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [], llanta: r.llanta, notas: r.notas || [] };
     const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d),
       '<button class="btn mf-left" data-act="guardarPdfCorrectivo" data-m="' + r.id + '">' + Icon('save', '', 14) + 'Guardar el PDF en la unidad</button>');
     v._numero = d.numero;
