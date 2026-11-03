@@ -3257,6 +3257,15 @@ const Q = {
     const x = ProvFact.porId(m.provFact);
     return x ? { nombre: x.nombre, nit: x.nit, servicio: x.categoria } : { nombre: m.provNombre || '—', nit: m.provNit || '', servicio: '' };
   },
+  /* Quien puso los repuestos (Juan, 03/11/2026): el mismo taller, otro proveedor o nadie registrado */
+  repDe(m) {
+    if (m.repMismo) return Q.provDe(m);
+    if (m.repFact) {
+      const x = ProvFact.porId(m.repFact);
+      return x ? { nombre: x.nombre, nit: x.nit, servicio: x.categoria } : { nombre: m.repNombre || '—', nit: m.repNit || '', servicio: '' };
+    }
+    return m.repProv ? Q.proveedor(m.repProv) : null;
+  },
   conComparendos: () => Datos.unidades.filter(u => Config.comparendos.includes(u.tipo)),
   /* Las unidades que dejan ver los filtros de la flota */
   flota() {
@@ -3554,13 +3563,26 @@ const UI = {
   barra(v, max, color) {
     return '<div class="bar"><i style="width:' + (max ? Math.round(v / max * 100) : 0) + '%' + (color ? ';background:' + color : '') + '"></i></div>';
   },
+  /* El taller y quien puso los repuestos, en una línea */
+  provTxt(m) {
+    const t = Q.provDe(m), r = m.repMismo ? null : Q.repDe(m);
+    if (m.repMismo) return t ? 'Taller y repuestos: ' + t.nombre : '—';
+    if (t && r) return 'Taller: ' + t.nombre + ' · Repuestos: ' + r.nombre;
+    return t ? t.nombre : r ? 'Repuestos: ' + r.nombre : '—';
+  },
+  chipsProv(m, tam) {
+    const t = Q.provDe(m), r = m.repMismo ? null : Q.repDe(m);
+    const chip = (txt, tit) => '<span class="chip" title="' + tit + '">' + Icon('briefcase', '', tam) + esc(txt) + '</span>';
+    if (m.repMismo) return t ? chip(t.nombre + ' · taller y repuestos', 'Hizo el arreglo y puso los repuestos') : '';
+    return (t ? chip(t.nombre, r ? 'El taller' : 'Taller o proveedor') : '') + (r ? chip(r.nombre + ' · repuestos', 'Puso los repuestos') : '');
+  },
   /* Un mantenimiento en la línea de tiempo */
   itemMant(m, conUnidad) {
-    const p = Q.provDe(m), u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', valor = Compras.deArreglo(m).valor;
+    const u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', valor = Compras.deArreglo(m).valor;
     return '<div class="tl-i" style="--c:' + (prev ? 'var(--info-500)' : 'var(--warn-500)') + '"><span class="tl-dot">' + Icon(prev ? 'tool' : 'camera', '', 10) + '</span>' +
       '<div class="tl-h">' + this.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + '<b>' + esc(Avances.titulo(m)) + '</b>' +
         (m.estado === 'taller' ? this.pill('bad', 'En taller') : '') + '</div>' +
-      '<div class="tl-m">' + esc(Fecha.larga(m.fecha)) + (m.salida ? ' a ' + esc(Fecha.larga(m.salida)) : '') + ' · ' + esc(p ? p.nombre : '—') +
+      '<div class="tl-m">' + esc(Fecha.larga(m.fecha)) + (m.salida ? ' a ' + esc(Fecha.larga(m.salida)) : '') + ' · ' + esc(this.provTxt(m)) +
         (m.lectura ? ' · ' + esc(m.lectura) : '') + (valor ? ' · ' + Money.format(valor) : '') + (conUnidad && u ? ' · ' + esc(this.placaTxt(u)) : '') + '</div>' +
       (m.falla ? '<div class="tl-m">Qué pasó: ' + esc(m.falla) + '</div>' : '') + Avances.lista(m) +
       '<div class="tl-x">' + (m.partes || []).map(x => '<span class="chip">' + Icon('tool', '', 12) + esc(Plano.nombre(u, x)) + '</span>').join('') +
@@ -4841,6 +4863,7 @@ const NAV = [
   { id: 'compras', icono: 'cart', txt: 'Órdenes de compra' },
   { sec: 'Registros' },
   { id: 'conductores', icono: 'personas', txt: 'Conductores', badge: 'conductores' },
+  { id: 'proveedores', icono: 'briefcase', txt: 'Proveedores' },
   { sec: 'Sistema' },
   { id: 'catalogo', icono: 'list', txt: 'Catálogo' },
   { id: 'configuracion', icono: 'cog', txt: 'Configuración' }
@@ -4956,7 +4979,7 @@ const ProvFact = {
   limpia(x) {
     if (!x || typeof x !== 'object' || !x.id || !x.nombre) return null;
     const txt = v => (v == null ? '' : String(v));
-    return { id: txt(x.id), nombre: txt(x.nombre), nit: txt(x.nit), categoria: txt(x.categoria), activo: x.activo !== false,
+    return { id: txt(x.id), nombre: txt(x.nombre), nit: txt(x.nit), categoria: txt(x.categoria), ciudad: txt(x.ciudad), activo: x.activo !== false,
       fusionado_con: x.fusionado_con ? txt(x.fusionado_con) : null };
   },
   /* La ficha de un id; si se fusionó, la que quedó */
@@ -4994,6 +5017,85 @@ const ProvFact = {
     const x = m && this.porId(m.provFact);
     return x && x.activo ? 'f:' + x.id : '';
   },
+  /* La última opción de cada lista: agregar uno que no esté (ver Ventanas.provNuevo) */
+  opcionNuevo: () => '<option value="nuevo:">+ Agregar uno nuevo…</option>',
+  /* El valor de la lista para lo guardado en un arreglo: el taller o, con «rep», quien puso los repuestos */
+  valor(r, rep) {
+    if (rep) return r.repFact ? 'f:' + r.repFact : r.repProv ? 'v:' + r.repProv : '';
+    return r.provFact ? 'f:' + r.provFact : r.prov ? 'v:' + r.prov : '';
+  },
+  /* Quien puso los repuestos (Juan, 03/11/2026): el mismo taller, otro de la lista o nadie registrado */
+  ponerRep(r, x, mismo) {
+    ['repFact', 'repNombre', 'repNit', 'repProv', 'repMismo'].forEach(k => { delete r[k]; });
+    if (mismo) r.repMismo = true;
+    else if (x && x.fact) { r.repFact = x.id; r.repNombre = x.nombre; if (x.nit) r.repNit = x.nit; }
+    else if (x) r.repProv = x.id;
+  },
+  /* El botón «El taller también puso los repuestos»: si se oprime, la lista de
+     repuestos se esconde y queda el mismo taller. Devuelve con qué ponerlo */
+  mismo(m, btn, cont, inicial) {
+    const b = $('#' + btn, m), c = $('#' + cont, m);
+    const poner = v => {
+      m._mismo = v;
+      b.classList.toggle('on', v);
+      b.setAttribute('aria-pressed', String(v));
+      b.innerHTML = (v ? Icon('check', '', 11) : '') + 'El taller también puso los repuestos';
+      c.classList.toggle('hidden', v);
+    };
+    b.addEventListener('click', () => poner(!m._mismo));
+    poner(Boolean(inicial));
+    return poner;
+  },
+  /* Las listas de una ventana: «+ Agregar uno nuevo» abre la ventana para
+     crearlo y, al volver, queda escogido (y aparece en las otras listas) */
+  listas(m, ids) {
+    ids.forEach(id => {
+      const s = $('#' + id, m);
+      if (!s) return;
+      s.dataset.antes = s.dataset.inicial = s.value;
+      s.addEventListener('change', () => {
+        if (s.value !== 'nuevo:') { s.dataset.antes = s.value; return; }
+        s.value = s.dataset.antes || '';
+        Ventanas.provNuevo({ alCrear: x => {
+          ids.forEach(otro => {
+            const o = $('#' + otro, m);
+            if (!o) return;
+            const v = o.value, vacio = o.querySelector('option[value=""]');
+            o.innerHTML = (vacio ? vacio.outerHTML : '') + this.opciones(v) + this.opcionNuevo();
+            o.value = v;
+          });
+          s.value = 'f:' + x.id;
+          s.dataset.antes = s.value;
+        } });
+      });
+    });
+  },
+  /* ¿Se cambió lo escogido en una lista desde que se abrió la ventana? */
+  cambio(m, id) { const s = $('#' + id, m); return Boolean(s) && s.value !== (s.dataset.inicial || ''); },
+  /* Crear uno en la lista de Facturación con su función: Flota no escribe en
+     sus tablas, y la función no lo repite si ya está. Queda en la lista de una
+     vez. Devuelve { x, yaEstaba } */
+  async crear(d) {
+    const cuerpo = { p_nombre: d.nombre };
+    [['p_nit', d.nit], ['p_categoria', d.categoria], ['p_ciudad', d.ciudad], ['p_telefono', d.telefono]].forEach(([k, v]) => { if (v) cuerpo[k] = v; });
+    const r = await Nube.pedir('rpc/facturacion_crear_proveedor', { method: 'POST', publico: true, body: JSON.stringify(cuerpo) });
+    const fila = Array.isArray(r) ? r[0] : r, x = this.limpia(fila);
+    if (!x) throw new Error('Facturación no devolvió el proveedor');
+    this.lista = this.lista.filter(y => y.id !== x.id).concat([x]).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    this.estado = 'listo';
+    return { x, yaEstaba: Boolean(fila && fila.ya_estaba) };
+  },
+  /* La clave con que Facturación compara los nombres (su clave_proveedor, del
+     212): sin tildes ni mayúsculas, sin puntos ni comas y sin la forma
+     societaria (S.A.S., Ltda., S.A., E.U.). Y el NIT, solo sus dígitos */
+  clave: t => sinTildes(t).replace(/\s+/g, ' ').trim().replace(/[.,]/g, '').replace(/\b(s ?a ?s|sas|ltda|s ?a|e ?u)\b/g, '')
+    .replace(/[^a-z0-9& ]/g, ' ').replace(/\s+/g, ' ').trim(),
+  digitos: t => String(t || '').replace(/[^0-9kK]/g, '').toUpperCase(),
+  /* Para avisar si el que se va a agregar ya está, como lo buscará Facturación: por el NIT o por el nombre */
+  parecido(nombre, nit) {
+    const n = this.clave(nombre), d = this.digitos(nit);
+    return this.lista.find(x => !x.fusionado_con && ((d.length >= 6 && this.digitos(x.nit) === d) || (n && this.clave(x.nombre) === n))) || null;
+  },
   /* Cuando llega la lista con un formulario abierto, se ponen las opciones
      nuevas, con lo escogido o con lo que se propone (propuesta(), ya con la
      lista). Si ya escogió uno de los de antes de Flota, se deja como está. */
@@ -5002,7 +5104,7 @@ const ProvFact = {
       const s = $('#' + id, m);
       if (!cambio || !s || !document.body.contains(m) || s.value.startsWith('v:')) return;
       const antes = s.value || (propuesta ? propuesta() : ''), vacio = s.querySelector('option[value=""]');
-      s.innerHTML = (vacio ? vacio.outerHTML : '') + this.opciones(antes);
+      s.innerHTML = (vacio ? vacio.outerHTML : '') + this.opciones(antes) + this.opcionNuevo();
     });
   }
 };
@@ -6625,12 +6727,12 @@ const Plano = {
   },
   /* Un arreglo en la historia de una parte */
   itemTl(u, m, k, marcar) {
-    const prev = m.tipo === 'preventivo', prov = Q.provDe(m), c = this.costo(m), otras = (m.partes || []).filter(r => r.k !== k);
+    const prev = m.tipo === 'preventivo', c = this.costo(m), otras = (m.partes || []).filter(r => r.k !== k);
     return '<div class="pm-tl-i"><div class="pm-tl-f"><span>' + esc(Fecha.corta(m.fecha)) + '</span>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') +
         (m.estado === 'taller' ? UI.pill('bad', 'En taller') : '') + '<span class="v">' + (c ? esc(Money.format(c)) : '—') + '</span></div>' +
       '<div class="pm-tl-t">' + esc(Avances.titulo(m)) + (m.componente ? '<span> · ' + esc(m.componente) + '</span>' : '') + '</div>' +
       (m.falla ? '<div class="pm-tl-q"><span>Qué pasó:</span> ' + esc(m.falla) + '</div>' : '') + Avances.lista(m) +
-      '<div class="pm-tl-m">' + (prov ? '<span class="chip">' + Icon('briefcase', '', 11) + esc(prov.nombre) + '</span>' : '') +
+      '<div class="pm-tl-m">' + UI.chipsProv(m, 11) +
         (m.lectura ? '<span class="chip">' + Icon('medidor', '', 11) + esc(m.lectura) + '</span>' : '') +
         ((m.llantas || []).length ? '<span class="chip">' + Icon('disc', '', 11) + esc(m.llantas.map(p => Llantas.nombre(p, true)).join(', ')) + '</span>' : '') +
         (m.llanta ? '<span class="chip" title="La llanta que se puso">' + Icon('refresh', '', 11) + 'Se puso: ' + esc(Llantas.txt(m.llanta) || 'otra llanta') + '</span>' : '') +
@@ -7133,7 +7235,7 @@ const AvancesForm = {
   fotos(m, a) {
     const el = m._avCont.querySelector('[data-av-fotos="' + a.k + '"]');
     if (!el) return;
-    el.innerHTML = a.fotos.map((f, i) => '<div class="foto"><img src="' + attr(f.src) + '" alt="">' +
+    el.innerHTML = a.fotos.map((f, i) => '<div class="foto">' + (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<div class="ph" style="height:104px">' + Icon('image', '', 20) + '</div>') +
       '<button type="button" data-i="' + i + '" title="Quitar la foto">' + Icon('x', '', 12) + '</button>' +
       '<input data-i="' + i + '" value="' + attr(f.txt) + '" placeholder="¿Qué muestra?"></div>').join('');
     $$('input', el).forEach(inp => inp.addEventListener('input', () => { a.fotos[+inp.dataset.i].txt = inp.value; }));
@@ -7143,7 +7245,8 @@ const AvancesForm = {
   /* Los bloques con algo escrito o con fotos, listos para guardar (ver Avances) */
   leer(m) {
     return (m._av || []).filter(a => a.t.trim() || a.fotos.length)
-      .map(a => ({ n: Avances.nueva(a.f || hoyISO, a.h || '', a.t.trim()), fotos: a.fotos.map(f => ({ id: f.id, src: f.src, txt: f.txt })) }));
+      .map(a => ({ n: a.id ? { id: a.id, f: a.f || hoyISO, h: a.h || '', t: a.t.trim(), ts: a.ts || marca() } : Avances.nueva(a.f || hoyISO, a.h || '', a.t.trim()),
+        fotos: a.fotos.map(f => ({ id: f.id, src: f.src, txt: f.txt })) }));
   },
   /* Al cambiar el estado del registro, lo escrito pasa al otro lado: «¿Qué se
      hizo?» al primer avance; los avances, a «¿Qué se hizo?», y sus fotos, a las
@@ -7159,6 +7262,93 @@ const AvancesForm = {
     if (fotos.length) { m._fotos.push(...fotos); if (m._pintarFotos) m._pintarFotos(); }
     m._av = [this.bloque(hoyISO)];
     this.pintar(m);
+  }
+};
+
+/* «Anotar avance» (Juan, 03/11/2026: «que muestre literalmente todo lo que sale
+   cuando uno va a registrar… para que uno pueda editar kilometraje y todo
+   eso»): el mismo formulario del registro, con todo lo del arreglo para
+   corregirlo, sus avances (también se corrigen) y uno nuevo para escribir. El
+   arreglo sigue en el taller: para terminarlo, «Terminar arreglo». Las
+   novedades del preoperacional que atendía no se tocan */
+const EditarArreglo = {
+  poner(m, r) {
+    const u = Q.unidad(r.unidad);
+    m._editar = r.id;
+    /* El plano: sus partes, sus llantas y el cambio de llanta, si lo hubo */
+    PlanoForm.poner(m, u, { partes: (r.partes || []).map(x => x.k), llantas: r.llantas || [] });
+    if (r.llanta) m._ll = { cambio: true, marca: r.llanta.marca || '', medida: r.llanta.medida || '', tipo: r.llanta.tipo || 'nueva', pos: JSON.parse(JSON.stringify(r.llanta.pos || {})) };
+    PlanoForm.pintar(m);
+    $('#mcC', m).value = r.componente || '';
+    $('#mcF', m).value = r.falla || '';
+    $('#mcE', m).value = r.fecha || hoyISO;
+    if ($('#mcL', m)) $('#mcL', m).value = r.lectura || '';
+    $('#mcV', m).value = r.valor ? r.valor.toLocaleString('es-CO') : '';
+    /* Sigue en el taller: el estado no se cambia aquí */
+    m._estado = 'taller';
+    $('#mcEstC', m).innerHTML = '<label>Estado</label><div class="hint mt0">Sigue en el taller desde el ' + esc(Fecha.larga(r.fecha)) + '. Cuando salga, use «Terminar arreglo».</div>';
+    $('#mcTC', m).classList.add('hidden');
+    $('#mcNC', m).classList.remove('hidden');
+    $('#mcSal', m).classList.add('hidden');
+    $('#mcNC .hint', m).textContent = 'Corrija lo que haga falta y escriba lo nuevo en el último avance. Si llegaron varios, «Agregar otro avance».';
+    $('#mcFotosL', m).innerHTML = 'Fotos de cómo llegó <span class="txt-3">(opcional)</span>';
+    /* El taller y quien puso los repuestos */
+    [['mcP', false], ['mcR', true]].forEach(([id, rep]) => {
+      const s = $('#' + id, m), vacio = s.querySelector('option[value=""]');
+      s.innerHTML = (vacio ? vacio.outerHTML : '') + ProvFact.opciones(ProvFact.valor(r, rep)) + ProvFact.opcionNuevo();
+      s.dataset.antes = s.dataset.inicial = s.value;
+      /* Si la lista de Facturación llega después, queda escogido el del arreglo */
+      ProvFact.alAbrir(m, id, () => ProvFact.valor(r, rep));
+    });
+    if (m._ponerMismo) m._ponerMismo(Boolean(r.repMismo));
+    /* Sus órdenes de Facturación */
+    Compras.escoger($('#mcO', m), u, r.fecha, r);
+    /* Las fotos de cómo llegó y los avances, cada uno con las suyas, y uno nuevo al final */
+    const src = f => (f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || '');
+    const fotos = id => Avances.fotos(r, id).map(f => ({ id: f.id, txt: f.txt || '', src: src(f) }));
+    m._fotos = fotos('');
+    m._av = Avances.de(r).map(n => Object.assign(AvancesForm.bloque(n.f), { id: n.id, ts: n.ts, h: n.h || '', t: n.t || '', fotos: fotos(n.id) }))
+      .concat([AvancesForm.bloque(hoyISO)]);
+    AvancesForm.pintar(m);
+    m._pintarFotos();
+    /* Las fotos que ya tenía se bajan al abrirlo */
+    Guardadas.traerArreglo(r).then(n => {
+      if (!n || !document.body.contains(m)) return;
+      const poner = f => { if (!f.src) f.src = src(f); };
+      m._fotos.forEach(poner);
+      m._av.forEach(a => a.fotos.forEach(poner));
+      m._pintarFotos();
+      m._av.forEach(a => AvancesForm.fotos(m, a));
+    });
+    /* El cursor, en el avance nuevo */
+    const nuevo = $('#mcAv [data-av="' + m._av[m._av.length - 1].k + '"] textarea', m);
+    if (nuevo) setTimeout(() => nuevo.focus(), 60);
+  },
+  /* Lo corregido queda en el mismo arreglo */
+  guardar(m, d) {
+    const r = Datos.mantenimientos.find(x => x.id === m._editar), u = r && Q.unidad(r.unidad);
+    if (!u) { Modal.cerrar(m); return; }
+    const antes = new Set((r.notas || []).map(n => n.id)), nuevos = d.notas.filter(n => !antes.has(n.id)).length;
+    const poner = (k, v) => { if (v === undefined || v === '' || (Array.isArray(v) && !v.length)) delete r[k]; else r[k] = v; };
+    r.fecha = d.entrada;
+    poner('componente', d.componente);
+    poner('falla', d.falla);
+    poner('lectura', d.lectura);
+    poner('valor', d.valor || undefined);
+    poner('partes', d.partes);
+    poner('llantas', d.llantas);
+    poner('llanta', d.llanta || undefined);
+    poner('notas', d.notas);
+    r.fotosData = d.fotos.map(f => Object.assign({ id: f.id, txt: f.txt }, f.nota ? { nota: f.nota } : {}));
+    r.fotos = r.fotosData.length;
+    /* El taller y los repuestos solo se tocan si se cambiaron: así un arreglo
+       con un proveedor de antes de Flota no lo pierde */
+    if (ProvFact.cambio(m, 'mcP')) ProvFact.poner(r, d.prov);
+    if (ProvFact.cambio(m, 'mcR') || Boolean(d.repMismo) !== Boolean(r.repMismo)) ProvFact.ponerRep(r, d.rep, d.repMismo);
+    Compras.ponerOrdenes(r, d.ordenes);
+    Modal.cerrar(m);
+    Toast.show('Arreglo de <b>' + esc(UI.placaTxt(u)) + '</b> guardado' + (nuevos ? ', con ' + nuevos + (nuevos === 1 ? ' avance nuevo' : ' avances nuevos') : '') + '.');
+    Router.pintar(true);
   }
 };
 
@@ -8110,6 +8300,63 @@ const Vistas = {
     };
   },
 
+  /* ------------------------------------------------------------ Proveedores
+     La lista de Facturación, la misma para las dos (Juan, 03/11/2026): aquí se
+     ve, se busca y se agregan nuevos; editar, desactivar o juntar repetidos se
+     hace en Facturación. Al lado, lo que cada uno ha hecho en Flota */
+  proveedores() {
+    const titulo = 'Proveedores', sub = 'Talleres y proveedores de repuestos';
+    const head = UI.head('Proveedores', 'Talleres y proveedores de repuestos · la lista de Facturación, la misma para las dos',
+      '<button class="btn btn-primary" data-act="provNuevo">' + Icon('plus', '', 14) + 'Agregar proveedor</button>');
+    if (ProvFact.estado !== 'listo') {
+      ProvFact.traer().then(cambio => { if (cambio && Router.actual().vista === 'proveedores') Router.pintar(true); });
+      if (ProvFact.estado === 'error') return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') + '<div><b>No llegó la lista de Facturación.</b> ' +
+        'Revise el internet. <span class="link" data-act="provReintentar">Intentar otra vez</span></div></div>' };
+      return { titulo, sub, html: head + '<div class="card">' + UI.empty('briefcase', 'Trayendo la lista de Facturación…', '') + '</div>' };
+    }
+    /* Lo que cada uno ha hecho en Flota: como taller y como proveedor de repuestos */
+    const uso = {};
+    const sumar = (x, k, m) => {
+      if (!x) return;
+      const o = uso[x.id] = uso[x.id] || { taller: 0, rep: 0, ult: '' };
+      o[k]++;
+      if (m.fecha > o.ult) o.ult = m.fecha;
+    };
+    Datos.mantenimientos.forEach(m => {
+      const t = m.provFact ? ProvFact.porId(m.provFact) : null;
+      sumar(t, 'taller', m);
+      sumar(m.repMismo ? t : m.repFact ? ProvFact.porId(m.repFact) : null, 'rep', m);
+    });
+    /* Primero los que se usaron hace menos; después, por nombre */
+    const lista = ProvFact.lista.filter(x => x.activo && !x.fusionado_con)
+      .sort((a, b) => ((uso[b.id] || {}).ult || '').localeCompare((uso[a.id] || {}).ult || '') || a.nombre.localeCompare(b.nombre));
+    const filas = lista.map(x => {
+      const o = uso[x.id] || { taller: 0, rep: 0, ult: '' };
+      return '<tr data-buscar="' + attr(sinTildes([x.nombre, x.nit, x.categoria, x.ciudad].join(' ')).toLowerCase()) + '"><td><b>' + esc(x.nombre) + '</b>' +
+          (x.categoria ? '<div class="dias">' + esc(x.categoria) + '</div>' : '') + '</td>' +
+        '<td class="nowrap">' + esc(x.nit || '—') + '</td><td>' + esc(x.ciudad || '—') + '</td>' +
+        '<td class="num">' + (o.taller || '—') + '</td><td class="num">' + (o.rep || '—') + '</td>' +
+        '<td class="nowrap">' + (o.ult ? esc(Fecha.corta(o.ult)) : '—') + '</td></tr>';
+    }).join('');
+    const html = head +
+      '<div class="toolbar"><label class="fbusca">' + Icon('search', '', 14) + '<input id="provBuscar" type="search" placeholder="Buscar por nombre, NIT o ciudad…" autocomplete="off"></label>' +
+        '<span class="txt-3 fs12">' + lista.length + (lista.length === 1 ? ' activo' : ' activos') + ' en Facturación · editar, desactivar o juntar repetidos se hace allá</span></div>' +
+      '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl" id="provTabla"><thead><tr><th>Nombre</th><th>NIT o cédula</th><th>Ciudad</th>' +
+          '<th class="num">Arreglos como taller</th><th class="num">Como proveedor de repuestos</th><th>Último arreglo</th></tr></thead><tbody>' + filas + '</tbody></table></div>' +
+          '<div class="hidden" id="provNada">' + UI.empty('search', 'Ninguno coincide', 'Pruebe con otra palabra, o agréguelo con «Agregar proveedor».') + '</div>'
+        : UI.empty('briefcase', 'La lista está vacía', 'Agregue el primero con «Agregar proveedor».')) + '</div>';
+    return { titulo, sub, html, despues: () => {
+      const inp = $('#provBuscar');
+      if (!inp) return;
+      inp.addEventListener('input', () => {
+        const q = sinTildes(inp.value).toLowerCase().trim();
+        let n = 0;
+        $$('#provTabla tbody tr').forEach(tr => { const si = !q || tr.dataset.buscar.includes(q); tr.classList.toggle('hidden', !si); if (si) n++; });
+        $('#provNada').classList.toggle('hidden', n > 0);
+      });
+    } };
+  },
+
   /* --------------------------------------------------------------- Llantas
      Por vehículo, y las de cada uno por posición (ver LlantasArea) */
   llantas(id) {
@@ -8942,7 +9189,9 @@ const Formatos = {
         [[UI.placaTxt(u), u.clase, d.entrada ? 'entró el ' + Fecha.larga(d.entrada) : ''].filter(Boolean).join(' · '), 'Correctivo N.º ' + d.numero]) +
       this.sec('Unidad', this.campos([[conPlaca ? 'Placa' : 'Código', UI.placaTxt(u)], ['Tipo', TIPOS[u.tipo].nombre + ' · ' + u.clase],
         ['Marca y línea', UI.nombre(u) || '—'], ['Conductor', c ? c.nombre : 'Sin asignar']])) +
-      this.sec('Taller', this.campos([['Taller o proveedor', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'],
+      this.sec('Taller', this.campos([['Taller', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'],
+        /* Quien puso los repuestos (Juan, 03/11/2026) */
+        ['Repuestos', d.repMismo ? 'Los puso el mismo taller' : d.rep ? d.rep.nombre + (d.rep.nit ? ' · NIT ' + d.rep.nit : '') : '—'],
         ['Entró', Fecha.larga(d.entrada)], ['Salió', d.salida ? Fecha.larga(d.salida) : 'Sigue en el taller']])) +
       this.sec('Arreglo', '<div class="dp-arreglo"><div class="dp-plano">' + Plano.svg(k, { mini: true, sel: zonas }) + '</div>' +
         '<div class="dp-fields">' + arreglo.map(x => '<div class="dp-f"><label>' + esc(x[0]) + '</label><span>' + esc(x[1]) + '</span></div>').join('') + '</div></div>') +
@@ -9123,16 +9372,16 @@ Object.assign(Vistas, {
         ' su propio valor. En la lista se ve cuál es; en la ficha del vehículo se puede quitar.</div></div>' : '') +
       '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroMant" data-v="' + s[0] + '">' + s[1] +
         '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div></div>' +
-      '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Trabajo</th><th>Proveedor o taller</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
+      '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Trabajo</th><th>Taller y repuestos</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
         lista.map(m => {
-          const u = Q.unidad(m.unidad), p = Q.provDe(m), prev = m.tipo === 'preventivo', c = Compras.deArreglo(m);
+          const u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', c = Compras.deArreglo(m);
           return '<tr class="row-click" data-act="irUnidad" data-u="' + u.id + '" data-tab="mant">' +
             '<td class="nowrap">' + esc(Fecha.corta(m.fecha)) + '<div class="dias">' + esc(Fecha.hace(m.fecha)) + '</div></td>' +
             '<td>' + UI.unidadCelda(u) + '</td>' +
             '<td>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + '</td>' +
             '<td>' + esc(Avances.titulo(m)) + (m.lectura ? '<div class="dias">' + esc(m.lectura) + '</div>' : '') +
               ((m.partes || []).length ? '<div class="m-partes">' + m.partes.map(x => '<span class="chip">' + esc(Plano.nombre(u, x)) + '</span>').join('') + '</div>' : '') + '</td>' +
-            '<td>' + esc(p ? p.nombre : '—') + '</td>' +
+            '<td>' + esc(UI.provTxt(m)) + '</td>' +
             /* Lo que cuenta (ver Compras): sus órdenes de Facturación cuando ya
                son gasto; si no, su valor */
             '<td class="num">' + (c.valor ? Money.format(c.valor) : m.oc ? '<span class="txt-3" title="Su valor está en la orden de compra">' + esc(m.oc) + '</span>' : '—') +
@@ -9884,7 +10133,7 @@ Object.assign(Ventanas, {
         '<div class="row"><div class="field"><label>Unidad</label><select class="inp" id="mpU">' + Opc.unidades(o.u) + '</select></div>' +
         '<div class="field"><label>Fecha</label><input class="inp" type="date" id="mpF" value="' + hoyISO + '"></div></div>' +
         '<div class="row"><div class="field"><label>Proveedor</label><select class="inp" id="mpP"><option value="">Sin proveedor</option>' +
-          ProvFact.opciones(ProvFact.ultimoPreventivo()) + '</select></div>' +
+          ProvFact.opciones(ProvFact.ultimoPreventivo()) + ProvFact.opcionNuevo() + '</select></div>' +
         '<div class="field"><label>Kilometraje u horómetro</label><input class="inp" id="mpL" placeholder="Ej.: 183.500 km">' +
           '<div class="hint">En un cambio de aceite, desde aquí se cuenta el próximo.</div></div></div>' +
         '<div class="row"><div class="field" style="flex:2 1 220px"><label>Trabajo</label><input class="inp" id="mpT" value="Cambio de aceite y filtros"></div>' +
@@ -9898,6 +10147,7 @@ Object.assign(Ventanas, {
     });
     Dz.bind('mpDz', files => { m._archivo = files[0]; Dz.lista('mpDz', [files[0]], 'documento'); });
     ProvFact.alAbrir(m, 'mpP', () => ProvFact.ultimoPreventivo());
+    ProvFact.listas(m, ['mpP']);
     /* Se propone la última lectura de la unidad, mientras no se escriba otra */
     let propuesta = '';
     const proponer = () => {
@@ -9972,12 +10222,14 @@ Object.assign(Ventanas, {
      preoperacional que atiende). */
   correctivo(o) {
     o = o || {};
-    const u0 = (o.u && Q.unidad(o.u)) || Datos.unidades[0];
+    /* «Anotar avance»: el mismo formulario, con todo lo del arreglo (ver EditarArreglo) */
+    const r0 = o.editar ? Datos.mantenimientos.find(x => x.id === o.editar) : null;
+    const u0 = (r0 && Q.unidad(r0.unidad)) || (o.u && Q.unidad(o.u)) || Datos.unidades[0];
     if (!u0) { Toast.show('Primero registre una unidad en Flota.', 'warn'); return; }
-    const fijo = Boolean(o.fijo);
+    const fijo = Boolean(o.fijo || r0);
     const m = Modal.abrir({
-      titulo: o.cambio ? 'Cambio de llanta · ' + UI.placaTxt(u0) : fijo ? 'Registrar arreglo · ' + UI.placaTxt(u0) : 'Mantenimiento correctivo',
-      sub: fijo ? esc([u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : 'Visita al taller con la parte que se arregló y las fotos de cada cambio', ancho: 'xwide m-hoja',
+      titulo: r0 ? 'Anotar avance · ' + UI.placaTxt(u0) : o.cambio ? 'Cambio de llanta · ' + UI.placaTxt(u0) : fijo ? 'Registrar arreglo · ' + UI.placaTxt(u0) : 'Mantenimiento correctivo',
+      sub: r0 ? esc([r0.numero, u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : fijo ? esc([u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : 'Visita al taller con la parte que se arregló y las fotos de cada cambio', ancho: 'xwide m-hoja',
       cuerpo: '<div class="reg"><div>' +
           (fijo ? '' : '<div class="field"><label>Unidad</label><select class="inp" id="mcU">' + Opc.unidades(u0.id) + '</select></div>') +
           '<div class="field"><label>Parte del vehículo</label><div class="plano-caja claro pl-marcar" id="mcPlano"></div>' +
@@ -9987,7 +10239,7 @@ Object.assign(Ventanas, {
           '<div class="field"><label>Componente</label><input class="inp" id="mcC" placeholder="Ej.: bomba de agua"><div class="sug" id="mcSug"></div></div>' +
           '<div class="field"><label>¿Qué pasó?</label><textarea class="inp" id="mcF" rows="2" placeholder="La falla, o lo que reportó el conductor"></textarea></div>' +
           /* El estado decide lo que sigue (Juan, 03/11/2026): terminado, qué se hizo; si sigue en el taller, el historial */
-          '<div class="field"><label>Estado</label><div class="seg" id="mcEst"><button type="button" class="on" data-v="cerrado">' + Icon('check', '', 13) + 'Terminado</button>' +
+          '<div class="field" id="mcEstC"><label>Estado</label><div class="seg" id="mcEst"><button type="button" class="on" data-v="cerrado">' + Icon('check', '', 13) + 'Terminado</button>' +
             '<button type="button" data-v="taller">' + Icon('tool', '', 13) + 'Sigue en el taller</button></div></div>' +
           '<div class="field" id="mcTC"><label>¿Qué se hizo?</label><textarea class="inp" id="mcT" rows="2" placeholder="El arreglo: qué se cambió o se reparó"></textarea></div>' +
           '<div class="field hidden" id="mcNC"><label>Historial de la reparación</label>' +
@@ -9995,8 +10247,12 @@ Object.assign(Ventanas, {
             '<div id="mcAv"></div></div>' +
           '<div class="row"><div class="field"><label>Entró al taller</label><input class="inp" type="date" id="mcE" value="' + hoyISO + '"></div>' +
             '<div class="field" id="mcLC"><label>Kilometraje</label><input class="inp" id="mcL"></div></div>' +
-          '<div class="row"><div class="field"><label>Taller o proveedor</label><select class="inp" id="mcP"><option value="">Sin taller registrado</option>' + ProvFact.opciones('') + '</select></div>' +
-            '<div class="field"><label>Valor</label><input class="inp" id="mcV" inputmode="numeric" placeholder="Ej.: 2.160.000"></div></div>' +
+          /* El taller (la mano de obra) y quien puso los repuestos (Juan, 03/11/2026) */
+          '<div class="row"><div class="field"><label>Taller</label><select class="inp" id="mcP"><option value="">Sin taller registrado</option>' + ProvFact.opciones('') +
+              ProvFact.opcionNuevo() + '</select><button type="button" class="zchip mt8" id="mcMismo" aria-pressed="false"></button></div>' +
+            '<div class="field" id="mcRC"><label>Proveedor de repuestos</label><select class="inp" id="mcR"><option value="">Sin proveedor de repuestos</option>' +
+              ProvFact.opciones('') + ProvFact.opcionNuevo() + '</select></div></div>' +
+          '<div class="row"><div class="field"><label>Valor</label><input class="inp" id="mcV" inputmode="numeric" placeholder="Ej.: 2.160.000"></div></div>' +
           '<div class="field"><label>Órdenes de Facturación <span class="txt-3">(si tiene)</span></label><div class="oc-lista" id="mcO"></div>' +
             '<div class="hint">Márquela si el arreglo tiene orden. El valor de arriba cuenta hasta que la orden pase a contabilidad; desde ahí cuenta la orden.</div></div>' +
           '<div class="row"><div class="field" id="mcSal"><label>Salió del taller</label><input class="inp" type="date" id="mcS" value="' + hoyISO + '"></div></div>' +
@@ -10014,6 +10270,9 @@ Object.assign(Ventanas, {
     /* Los avances, si sigue en el taller (ver AvancesForm) */
     AvancesForm.montar(m, $('#mcAv', m), 'mc');
     ProvFact.alAbrir(m, 'mcP');
+    ProvFact.alAbrir(m, 'mcR');
+    ProvFact.listas(m, ['mcP', 'mcR']);
+    m._ponerMismo = ProvFact.mismo(m, 'mcMismo', 'mcRC', false);
     /* Desde una novedad: su parte, su pregunta como componente y lo que reportó el conductor */
     const nov = o.nov ? Novedades.de(u0).find(n => n.i === o.nov) : null;
     PlanoForm.poner(m, u0, { partes: [o.p || (nov && nov.parte)].filter(Boolean), llantas: o.pos ? [o.pos] : [], novs: nov ? [nov] : [] });
@@ -10048,7 +10307,8 @@ Object.assign(Ventanas, {
       AvancesForm.pasar(m, $('#mcT', m), taller);
     }));
     const pintar = () => {
-      $('#mcFotos', m).innerHTML = m._fotos.map((f, i) => '<div class="foto"><img src="' + attr(f.src) + '" alt="">' +
+      $('#mcFotos', m).innerHTML = m._fotos.map((f, i) => '<div class="foto">' +
+        (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<div class="ph" style="height:104px">' + Icon('image', '', 20) + '</div>') +
         '<button type="button" data-i="' + i + '" title="Quitar la foto">' + Icon('x', '', 12) + '</button>' +
         '<input data-i="' + i + '" value="' + attr(f.txt) + '" placeholder="¿Qué muestra? Ej.: bomba nueva"></div>').join('');
       $$('#mcFotos input', m).forEach(inp => inp.addEventListener('input', () => { m._fotos[+inp.dataset.i].txt = inp.value; }));
@@ -10058,26 +10318,45 @@ Object.assign(Ventanas, {
     /* Las fotos del taller: a 1.600 px, como las del registro fotográfico */
     Dz.bind('mcDz', files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
       .then(lista => { lista.forEach(a => m._fotos.push({ id: a.id, src: Archivos.vistos.get(a.id).url, txt: '' })); pintar(); }));
+    if (r0) EditarArreglo.poner(m, r0);
   },
 
-  /* Lo que se va haciendo mientras sigue en el taller (ver Avances): la fecha y
-     la hora (se pueden cambiar, por si se anota después), lo que se hizo y sus
-     fotos. Guardar se prende cuando hay algo escrito o una foto */
-  avance(r) {
-    const u = Q.unidad(r.unidad);
-    if (!u) return;
+  /* Un proveedor o taller que no está (Juan, 03/11/2026): queda en la lista de
+     Facturación, la misma para las dos (ver ProvFact.crear). Si ya hay uno con
+     el mismo nombre o NIT, se avisa y se puede usar ese; si no, se deja agregar */
+  provNuevo(o) {
+    o = o || {};
     const m = Modal.abrir({
-      titulo: 'Anotar avance · ' + UI.placaTxt(u), ancho: 'wide m-hoja', sinFoco: true,
-      sub: esc('En el taller desde el ' + Fecha.larga(r.fecha) + (r.numero ? ' · ' + r.numero : '') +
-        ((r.partes || []).length ? ' · ' + r.partes.map(x => Plano.nombre(u, x)).join(', ') : '')),
-      cuerpo: (r.falla ? '<div class="alert a-info mb12">' + Icon('info') + '<div><b>Qué pasó:</b> ' + esc(r.falla) + '</div></div>' : '') +
-        ((r.notas || []).length ? '<div class="field"><label>Lo anotado hasta ahora</label>' + Avances.lista(r) + '</div>' : '') +
-        '<div id="avLista"></div>',
-      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarAvance" data-m="' + attr(r.id) + '" disabled>' +
-        Icon('save', '', 14) + 'Guardar</button>'
+      titulo: 'Agregar proveedor', sub: 'Queda en la lista de Facturación: la misma de talleres y proveedores de repuestos',
+      cuerpo: '<div class="field"><label>Nombre</label><input class="inp" id="pnN" placeholder="Ej.: Taller Diésel La 41" autocomplete="off"></div>' +
+        '<div class="field"><label>Qué hace</label><div class="seg" id="pnT">' + [['Taller', 'Taller'], ['Repuestos', 'Repuestos'], ['Taller y repuestos', 'Las dos cosas']]
+          .map((x, i) => '<button type="button" class="' + (i ? '' : 'on') + '" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div></div>' +
+        /* El NIT completo, con su dígito de verificación, como en Facturación: si no, no encuentra al que ya está */
+        '<div class="row"><div class="field"><label>NIT o cédula <span class="txt-3">(opcional)</span></label><input class="inp" id="pnD" autocomplete="off" placeholder="Ej.: 900.555.444-1">' +
+            '<div class="hint">El NIT con su dígito de verificación.</div></div>' +
+          '<div class="field"><label>Ciudad <span class="txt-3">(opcional)</span></label><input class="inp" id="pnC" placeholder="Ej.: Montería" autocomplete="off"></div></div>' +
+        '<div class="field"><label>Teléfono <span class="txt-3">(opcional)</span></label><input class="inp" id="pnF" inputmode="tel" autocomplete="off"></div>' +
+        '<div id="pnAviso"></div>' +
+        '<div class="hint">Editar, desactivar o juntar proveedores repetidos se hace en Facturación.</div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarProvNuevo" disabled>' + Icon('save', '', 14) + 'Agregar</button>'
     });
-    /* Uno o varios avances (ver AvancesForm); Guardar se prende cuando alguno tiene algo */
-    AvancesForm.montar(m, $('#avLista', m), 'av', () => { $('[data-act="guardarAvance"]', m).disabled = !AvancesForm.hay(m); });
+    m._alCrear = o.alCrear || null;
+    m._cat = 'Taller';
+    $$('#pnT button', m).forEach(b => b.addEventListener('click', () => {
+      m._cat = b.dataset.v;
+      $$('#pnT button', m).forEach(x => x.classList.toggle('on', x === b));
+    }));
+    const revisar = () => {
+      const n = $('#pnN', m).value.trim(), x = ProvFact.parecido(n, $('#pnD', m).value);
+      $('[data-act="guardarProvNuevo"]', m).disabled = !n;
+      m._parecido = x;
+      /* Si está inactivo en Facturación, no se ofrece: hay que activarlo allá */
+      $('#pnAviso', m).innerHTML = !x ? '' : x.activo ? '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>Ya está en la lista: ' + esc(x.nombre) + '</b>' +
+          (x.nit ? ' (NIT ' + esc(x.nit) + ')' : '') + '. <span class="link" data-act="usarProvParecido">Usar ese</span>, o agréguelo de todos modos.</div></div>'
+        : '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>Ya existe en Facturación: ' + esc(x.nombre) + '</b>, pero está inactivo. ' +
+          'Para usarlo, actívelo allá.</div></div>';
+    };
+    ['#pnN', '#pnD'].forEach(s => $(s, m).addEventListener('input', revisar));
   },
 
   inspeccion(o) {
@@ -10624,7 +10903,8 @@ const Leer = {
     /* Si sigue en el taller, los avances que ya tenga, cada uno con sus fotos (ver AvancesForm); las fotos de abajo son las de cómo llegó */
     const av = taller ? AvancesForm.leer(m) : [], notas = av.map(a => a.n);
     return {
-      numero: Num.mc(), unidad: u, prov: ProvFact.leer($('#mcP', m).value), taller, notas,
+      numero: m._editar ? ((Datos.mantenimientos.find(x => x.id === m._editar) || {}).numero || Num.mc()) : Num.mc(), unidad: u, prov: ProvFact.leer($('#mcP', m).value),
+      rep: m._mismo ? null : ProvFact.leer(($('#mcR', m) || {}).value), repMismo: Boolean(m._mismo), taller, notas,
       entrada, salida: taller ? '' : $('#mcS', m).value || entrada,
       trabajo: taller ? '' : $('#mcT', m).value.trim(),
       fotos: m._fotos.concat(...av.map(a => a.fotos.map(f => Object.assign({}, f, { nota: a.n.id })))),
@@ -10723,21 +11003,48 @@ Object.assign(Acciones, {
   /* Un arreglo que quedó «Sigue en el taller»: se termina cuando la unidad
      sale. Mientras sigue allá, se le puede poner lo que se hizo, el valor y
      más fotos. */
-  /* Lo que se va haciendo mientras sigue en el taller (ver Avances) */
+  /* «Anotar avance»: el formulario completo del arreglo, para corregirlo y agregar avances (ver EditarArreglo) */
   anotarAvance(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
-    if (r) Ventanas.avance(r);
+    if (r) Ventanas.correctivo({ editar: r.id });
   },
-  guardarAvance(el) {
-    const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
-    if (!m || !u || el.disabled) return;
-    const av = AvancesForm.leer(m), nf = av.reduce((t, a) => t + a.fotos.length, 0);
-    if (!av.length) return;
-    av.forEach(a => Avances.agregar(r, a.n, a.fotos));
+  /* Los proveedores, en la lista de Facturación (ver ProvFact y Vistas.proveedores) */
+  provNuevo() { Ventanas.provNuevo({}); },
+  provReintentar() { ProvFact.traer(true).then(() => Router.pintar(true)); },
+  usarProvParecido(el) {
+    const m = el.closest('.modal-bd'), x = m && m._parecido;
+    if (!x) return;
     Modal.cerrar(m);
-    Toast.show((av.length === 1 ? 'Avance guardado' : av.length + ' avances guardados') + ' en el arreglo de <b>' + esc(UI.placaTxt(u)) + '</b>' +
-      (nf ? ', con ' + nf + (nf === 1 ? ' foto' : ' fotos') : '') + '.');
-    Router.pintar(true);
+    if (m._alCrear) m._alCrear(x);
+    Toast.show('Se escogió <b>' + esc(x.nombre) + '</b>, que ya estaba en la lista.');
+  },
+  async guardarProvNuevo(el) {
+    const m = el.closest('.modal-bd');
+    if (!m || el.disabled) return;
+    const d = { nombre: $('#pnN', m).value.trim().replace(/\s+/g, ' '), nit: $('#pnD', m).value.trim(), categoria: m._cat,
+      ciudad: $('#pnC', m).value.trim(), telefono: $('#pnF', m).value.trim() };
+    if (!d.nombre) return;
+    el.disabled = true;
+    let res;
+    try { res = await ProvFact.crear(d); } catch (e) {
+      el.disabled = false;
+      const falta = e && (e.status === 404 || /PGRST202|42883/.test(e.codigo || ''));
+      /* Los avisos de Facturación (sin nombre, muy largo) vienen escritos para mostrarlos tal cual */
+      Toast.show(falta ? 'Todavía no se puede: falta que Facturación corra su SQL para crear proveedores.'
+        : e && e.codigo === '42501' ? 'Sin permiso para crear proveedores en Facturación.'
+        : e && e.codigo === 'P0001' && e.message ? esc(e.message) : 'No se pudo agregar: ' + esc((e && e.message) || 'error') + '.', 'err');
+      return;
+    }
+    Modal.cerrar(m);
+    /* Si ya existía pero está inactivo, Facturación no lo activa: no se ofrece hasta que Juan lo active allá */
+    if (!res.x.activo) {
+      Toast.show('<b>' + esc(res.x.nombre) + '</b> ya existe en Facturación, pero está inactivo. Para usarlo, actívelo allá.', 'warn');
+      return;
+    }
+    Toast.show(res.yaEstaba ? 'Ya estaba en la lista: se escogió <b>' + esc(res.x.nombre) + '</b>.'
+      : 'Listo: <b>' + esc(res.x.nombre) + '</b> quedó en la lista de proveedores de Facturación.');
+    if (m._alCrear) m._alCrear(res.x);
+    else if (Router.actual().vista === 'proveedores') Router.pintar(true);
   },
   terminarArreglo(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
@@ -10753,6 +11060,11 @@ Object.assign(Acciones, {
           : '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" id="taT" rows="3" placeholder="El arreglo: qué se cambió o se reparó">' + esc(r.trabajo || '') + '</textarea></div>') +
         '<div class="field" style="max-width:240px"><label>Valor</label><input class="inp" id="taV" inputmode="numeric" placeholder="Ej.: 2.160.000" value="' +
             (r.valor ? attr(r.valor.toLocaleString('es-CO')) : '') + '"></div>' +
+        /* El taller y quien puso los repuestos: muchas veces se sabe al final (Juan, 03/11/2026) */
+        '<div class="row"><div class="field"><label>Taller</label><select class="inp" id="taP"><option value="">Sin taller registrado</option>' +
+            ProvFact.opciones(ProvFact.valor(r)) + ProvFact.opcionNuevo() + '</select><button type="button" class="zchip mt8" id="taMismo" aria-pressed="false"></button></div>' +
+          '<div class="field" id="taRC"><label>Proveedor de repuestos</label><select class="inp" id="taR"><option value="">Sin proveedor de repuestos</option>' +
+            ProvFact.opciones(ProvFact.valor(r, true)) + ProvFact.opcionNuevo() + '</select></div></div>' +
         '<div class="field"><label>Órdenes de Facturación <span class="txt-3">(si tiene)</span></label><div class="oc-lista" id="taO"></div>' +
           '<div class="hint">Márquela si el arreglo tiene orden. El valor de arriba cuenta hasta que la orden pase a contabilidad; desde ahí cuenta la orden.</div></div>' +
         '<div class="row"><div class="field"><label>Estado</label><div class="seg" id="taEst"><button type="button" class="on" data-v="cerrado">' + Icon('check', '', 13) + 'Terminado</button>' +
@@ -10768,6 +11080,10 @@ Object.assign(Acciones, {
     });
     m._estado = 'cerrado';
     Compras.escoger($('#taO', m), u, r.fecha, r);
+    ProvFact.mismo(m, 'taMismo', 'taRC', r.repMismo);
+    ProvFact.listas(m, ['taP', 'taR']);
+    ProvFact.alAbrir(m, 'taP', () => ProvFact.valor(r));
+    ProvFact.alAbrir(m, 'taR', () => ProvFact.valor(r, true));
     /* Las fotos que ya tenía y las que se agreguen, cada una con lo que muestra */
     m._fotos = hay ? [] : (r.fotosData || []).map(f => ({ id: f.id, txt: f.txt || '', src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || '' }));
     const pintar = () => {
@@ -10810,6 +11126,9 @@ Object.assign(Acciones, {
     const valor = Leer.pesos($('#taV', m).value);
     if (valor) r.valor = valor; else delete r.valor;
     Compras.ponerOrdenes(r, Compras.leer($('#taO', m), r));
+    /* Solo si se cambiaron: así un arreglo con un proveedor de antes de Flota no lo pierde */
+    if (ProvFact.cambio(m, 'taP')) ProvFact.poner(r, ProvFact.leer($('#taP', m).value));
+    if (ProvFact.cambio(m, 'taR') || Boolean(m._mismo) !== Boolean(r.repMismo)) ProvFact.ponerRep(r, m._mismo ? null : ProvFact.leer($('#taR', m).value), m._mismo);
     /* Con historial, la nota de cierre y sus fotos son una anotación más; sin historial, como siempre */
     if (hay) {
       const f = terminado ? salida : hoyISO;
@@ -11045,6 +11364,8 @@ Object.assign(Acciones, {
   },
   guardarCorrectivo(el) {
     const m = el.closest('.modal-bd'), d = Leer.correctivo(m);
+    /* «Anotar avance»: lo corregido queda en el mismo arreglo (ver EditarArreglo) */
+    if (m._editar) { EditarArreglo.guardar(m, d); return; }
     /* Si sigue en el taller, se guarda sin «¿Qué se hizo?»: va en el historial (ver Avances) */
     if (!d.taller && !d.trabajo) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#mcT', m).focus(); return; }
     /* Sin la parte, el arreglo no sale en el plano: se avisa, pero se deja guardar */
@@ -11068,6 +11389,7 @@ Object.assign(Acciones, {
       notas: d.notas.length ? d.notas : undefined
     };
     ProvFact.poner(r, d.prov);
+    ProvFact.ponerRep(r, d.rep, d.repMismo);
     Compras.ponerOrdenes(r, d.ordenes);
     Datos.mantenimientos.push(r);
     Modal.cerrar(m);
@@ -11082,7 +11404,7 @@ Object.assign(Acciones, {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     const fotos = () => r.fotosData ? r.fotosData.map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || null, txt: f.txt, nota: f.nota }))
       : Array.from({ length: r.fotos || 0 }, (_, i) => ({ src: null, txt: 'Foto ' + (i + 1) + ' de ' + r.fotos + ' (ejemplo)' }));
-    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.provDe(r), entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos: fotos(),
+    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.provDe(r), rep: Q.repDe(r), repMismo: r.repMismo, entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos: fotos(),
       partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [], llanta: r.llanta, notas: r.notas || [] };
     const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d),
       '<button class="btn mf-left" data-act="guardarPdfCorrectivo" data-m="' + r.id + '">' + Icon('save', '', 14) + 'Guardar el PDF en la unidad</button>');
