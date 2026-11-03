@@ -1226,10 +1226,32 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .dp-foto figcaption{font-size:8pt;padding:1.2mm 2mm;border-top:.6px solid #c3cfe9;background:#edf1fb;color:#193680}
 .dp-vacio{border:1.2px solid #193680;border-top:0;padding:3mm;font-size:8.5pt;color:#4e5d6b}
 /* El historial de la reparación en el PDF: cada anotación con sus fotos debajo (ver Formatos.trabajoCorrectivo) */
-.dp-av{border:1.2px solid #193680;border-top:0;padding:2mm 3mm 3mm}
+/* El historial de la reparación: cada avance en su cuadro, de a dos por fila.
+   Una fila nunca se parte entre dos hojas y el título va con la primera (ver
+   Formatos.trabajoCorrectivo). Las secciones de fotos, igual: de dos en dos */
+.dp-ini{break-inside:avoid}
+.dp-ini > .dp-sec-t{border:1.2px solid #193680}
+.dp-fotos-fila{break-inside:avoid}
+.dp-av-fila{display:flex;gap:3mm;margin-top:2.5mm;break-inside:avoid}
+.dp-ini .dp-av-fila{margin-top:2mm}
+.dp-av{flex:1 1 0;min-width:0;border:1.2px solid #193680;padding:2mm 3mm 2.5mm}
+.dp-av.dp-av-vacio{border:0}
 .dp-av-h{font-size:7.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:#193680}
 .dp-av-t{font-size:8.5pt;margin-top:1mm;white-space:pre-line}
-.dp-av .dp-fotos{padding-top:2mm}
+/* Sus fotos, más pequeñas mientras más tenga: una ocupa el cuadro; dos van lado
+   a lado; hasta cuatro, 2 × 2; más, de a tres */
+.dp-av-fotos{display:grid;gap:2mm;margin-top:2mm}
+.dp-av-1{grid-template-columns:1fr}
+.dp-av-2,.dp-av-4{grid-template-columns:1fr 1fr}
+.dp-av-6{grid-template-columns:repeat(3,1fr)}
+.dp-av-foto{margin:0;border:.6px solid #c3cfe9;break-inside:avoid}
+.dp-av-foto img{width:100%;object-fit:cover;display:block}
+.dp-av-foto img,.dp-av-foto .ph{height:44mm}
+.dp-av-2 img,.dp-av-2 .ph{height:34mm}
+.dp-av-4 img,.dp-av-4 .ph{height:20mm}
+.dp-av-6 img,.dp-av-6 .ph{height:19mm}
+.dp-av-foto figcaption{font-size:7pt;padding:.8mm 1.5mm;border-top:.6px solid #c3cfe9;background:#edf1fb;color:#193680;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dp-sign{margin-top:4mm;display:flex;gap:14mm;justify-content:space-between}
 .dp-sign div{flex:1;text-align:center;font-size:8pt;color:#4e5d6b}
 /* El espacio para firmar, sobre la línea: ahí va la firma del responsable de
@@ -9373,26 +9395,47 @@ const Formatos = {
   },
 
   /* Lo que se hizo. Sin historial, «Trabajo realizado» y sus fotos, como
-     siempre. Con historial (ver Avances), cada anotación con su fecha, su hora
-     y sus fotos debajo, en orden (Juan, 03/11/2026: nada de fotos regadas al
-     final); las del registro, si no van con una anotación, salen antes, como
-     «Al entrar al taller». Las fotos van numeradas en el orden en que salen */
+     siempre. Con historial (ver Avances), primero las fotos de cómo llegó («Al
+     entrar al taller») y después cada avance en su cuadro, de a dos por fila
+     (Juan, 03/11/2026: «2 columnas y 3 filas» por hoja, y que nada se corte):
+     su fecha, su hora, lo que se hizo y sus fotos, más pequeñas mientras más
+     tenga. Una fila nunca se parte entre dos hojas y el título va con la
+     primera. Las fotos van numeradas en el orden en que salen */
   trabajoCorrectivo(d) {
     const u = d.unidad, notas = Avances.de({ notas: d.notas || [] }), fotos = d.fotos || [];
     let i = 0;
-    const grilla = l => '<div class="dp-fotos">' + l.map(f => '<figure class="dp-foto" style="margin:0">' +
-      (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<div class="ph" style="height:58mm">' + ILUS[ilusDe(u)] + '</div>') +
-      '<figcaption>' + (++i) + '. ' + esc(f.txt || 'Sin descripción') + '</figcaption></figure>').join('') + '</div>';
+    const img = (f, alto) => (f.src ? '<img src="' + attr(f.src) + '" alt="">'
+      : '<div class="ph"' + (alto ? ' style="height:' + alto + '"' : '') + '>' + ILUS[ilusDe(u)] + '</div>');
+    /* Sin lo que muestra, solo su número: el avance de arriba ya la explica (Juan, 03/11/2026) */
+    const pie = f => '<figcaption>' + (++i) + '.' + ((f.txt || '').trim() ? ' ' + esc(f.txt.trim()) : '') + '</figcaption>';
+    /* Una sección de fotos, de dos en dos: el título va con la primera fila */
+    const seccion = (t, l) => {
+      const filas = [];
+      for (let j = 0; j < l.length; j += 2) {
+        filas.push('<div class="dp-fotos dp-fotos-fila">' + l.slice(j, j + 2).map(f => '<figure class="dp-foto" style="margin:0">' + img(f, '58mm') + pie(f) + '</figure>').join('') + '</div>');
+      }
+      return '<div class="dp-sec dp-libre"><div class="dp-ini"><div class="dp-sec-t">' + esc(t) + '</div>' + filas[0] + '</div>' + filas.slice(1).join('') + '</div>';
+    };
     if (!notas.length) return '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo || 'Sin descripción todavía.') + '</div>' +
-      this.sec('Registro fotográfico · ' + fotos.length + ' foto(s)', fotos.length ? grilla(fotos) : '<div class="dp-vacio">Todavía no hay fotos.</div>', 'dp-libre');
-    const sueltas = fotos.filter(f => !f.nota || !notas.some(n => n.id === f.nota));
+      (fotos.length ? seccion('Registro fotográfico · ' + fotos.length + ' foto(s)', fotos)
+        : this.sec('Registro fotográfico · 0 foto(s)', '<div class="dp-vacio">Todavía no hay fotos.</div>', 'dp-libre'));
+    /* Las de cómo llegó se numeran primero, porque salen primero */
+    const sueltas = fotos.filter(f => !f.nota || !notas.some(n => n.id === f.nota)), alEntrar = sueltas.length ? seccion('Al entrar al taller · ' + sueltas.length + ' foto(s)', sueltas) : '';
+    const cuadro = n => {
+      const fs = fotos.filter(f => f.nota === n.id), k = fs.length === 1 ? 1 : fs.length === 2 ? 2 : fs.length <= 4 ? 4 : 6;
+      return '<div class="dp-av"><div class="dp-av-h">' + esc(Avances.cuando(n)) + (n.cierre ? ' · Salió del taller' : '') + '</div>' +
+        (n.t ? '<div class="dp-av-t">' + esc(n.t) + '</div>' : '') +
+        (fs.length ? '<div class="dp-av-fotos dp-av-' + k + '">' + fs.map(f => '<figure class="dp-av-foto">' + img(f) + pie(f) + '</figure>').join('') + '</div>' : '') + '</div>';
+    };
+    const filas = [];
+    for (let j = 0; j < notas.length; j += 2) {
+      filas.push('<div class="dp-av-fila">' + cuadro(notas[j]) + (notas[j + 1] ? cuadro(notas[j + 1]) : '<div class="dp-av dp-av-vacio"></div>') + '</div>');
+    }
     return (d.trabajo ? '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo) + '</div>' : '') +
-      (sueltas.length ? this.sec('Al entrar al taller · ' + sueltas.length + ' foto(s)', grilla(sueltas), 'dp-libre') : '') +
-      this.sec('Historial de la reparación · ' + notas.length + (notas.length === 1 ? ' avance' : ' avances'), notas.map(n => {
-        const fs = fotos.filter(f => f.nota === n.id);
-        return '<div class="dp-av"><div class="dp-av-h">' + esc(Avances.cuando(n)) + (n.cierre ? ' · Salió del taller' : '') + '</div>' +
-          (n.t ? '<div class="dp-av-t">' + esc(n.t) + '</div>' : '') + (fs.length ? grilla(fs) : '') + '</div>';
-      }).join(''), 'dp-libre');
+      alEntrar +
+      '<div class="dp-sec dp-libre"><div class="dp-ini"><div class="dp-sec-t">' +
+        esc('Historial de la reparación · ' + notas.length + (notas.length === 1 ? ' avance' : ' avances')) + '</div>' + filas[0] + '</div>' +
+        filas.slice(1).join('') + '</div>';
   },
 
   /* El informe del mes para el área del primer piso */
