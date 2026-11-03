@@ -823,6 +823,52 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 .rk-t i{display:block;height:100%;min-width:3px;background:var(--brand-500);border-radius:0 4px 4px 0}
 .rk-v{font-size:12px;font-weight:650;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .rk-lista{padding:8px 0}
+/* El GPS (ver GPS): la velocidad máxima (azul hasta el límite y rojo lo que
+   pasó, con la raya del límite), los km por día y la semana de un vehículo */
+.vel{position:relative;padding-top:18px}
+.vel-f{display:grid;grid-template-columns:90px minmax(0,1fr) 62px 74px;gap:10px;align-items:center;min-height:28px;font-size:12.5px}
+.vel-f.row-click{cursor:pointer}
+.vel-t{position:relative;height:12px;background:var(--surface-3);border-radius:6px}
+.vel-t i{position:absolute;top:0;bottom:0}
+.vel-t i.ok{left:0;background:var(--brand-400);border-radius:6px}
+.vel-t i.ok.corta{border-radius:6px 0 0 6px}
+.vel-t i.mal{background:var(--dang-500);border-radius:0 6px 6px 0}
+.vel-t::after{content:'';position:absolute;left:var(--lim,66.667%);top:-6px;bottom:-6px;border-left:2px dashed var(--dang-500);opacity:.8}
+.vel-esc{position:absolute;top:0;left:100px;right:146px;height:14px;font-size:10.5px;color:var(--text-3)}
+.vel-esc span{position:absolute;transform:translateX(-50%)}
+.vel-esc .lim{color:var(--dang-700);font-weight:700}
+.vel-v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.vel-v.mal{color:var(--dang-700)}
+.vel-n{font-size:11.5px;color:var(--text-3);white-space:nowrap}
+.vel-n.mal{color:var(--dang-700);font-weight:600}
+.heat td.num,.heat th.num{text-align:center}
+.hm{display:block;border-radius:6px;padding:4px 6px;font-variant-numeric:tabular-nums;font-weight:600;background:rgba(42,82,173,var(--a));color:var(--text)}
+.hm.claro{color:#fff}
+.heat.mes th.num,.heat.mes td.num{padding-left:2px;padding-right:2px}
+.heat.mes .hm{padding:3px 2px;font-size:10.5px}
+.heat tfoot td{font-weight:700;border-top:1px solid var(--border-strong)}
+.rojo{color:var(--dang-700);font-weight:700}
+.sem{display:grid;gap:12px}
+.sem-d{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:start}
+.sem-d > b{font-size:12.5px}
+.sem-d > b span{display:block;font-size:11.5px;color:var(--text-3);font-weight:500}
+.sem-ps{display:flex;flex-wrap:wrap;gap:6px}
+.sem-p{border:1px solid var(--border);border-radius:var(--radius);padding:6px 9px;background:var(--surface);font-size:12px;line-height:1.35}
+.sem-p b{display:block;font-size:12.5px}
+.sem-p b svg{vertical-align:-2px;color:var(--text-3)}
+.sem-p .m{color:var(--text-3);font-size:11.5px}
+.sem-p.puerto{border-color:rgba(18,145,90,.45);background:var(--ok-50)}
+.sem-p.cargue{border-color:rgba(109,74,202,.35);background:var(--violet-50)}
+.sem-p.base{border-color:rgba(37,99,201,.3);background:var(--info-50)}
+.sem-vacio{font-size:12px;color:var(--text-3);padding-top:2px}
+#lgFilas tr.quitado{opacity:.45}
+#lgFilas tr.quitado input{text-decoration:line-through}
+@media (max-width:720px){
+  .vel-f{grid-template-columns:90px minmax(0,1fr) 66px;row-gap:0}
+  .vel-n{grid-column:2 / 4;margin-top:-4px}
+  .vel-esc{left:100px;right:76px}
+  .sem-d{grid-template-columns:1fr;gap:6px}
+}
 .cols{display:flex;align-items:flex-end;gap:10px;height:168px;border-bottom:1px solid var(--border-strong);padding:20px 0 0}
 .col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
 /* La barra no se achica por el número de arriba, que cabe en el relleno de
@@ -2820,7 +2866,32 @@ const Config = {
   responsable: {},
   /* Las listas del área Catálogo que ya se cambiaron, por lista (ver Catalogo).
      Las que no están aquí usan sus valores iniciales. */
-  catalogos: {}
+  catalogos: {},
+  /* El GPS (ver GPS). El límite de velocidad lo pone Flota: 80 km/h (Juan,
+     02/11/2026). Los galones por hora del ralentí, para estimar su costo.
+     Desde cuántos minutos una parada es larga. Los equipos que el GPS llama
+     distinto (nombre en el GPS: id de la unidad). Y los lugares con nombre:
+     lo que contó Juan el 02/11/2026, ubicado con el GPS (la extractora, el
+     patio, Santa Marta y Tequendama), y las estaciones de Distracom que casan
+     con sus tanqueos. Radio en km. Todo se cambia en Flota. */
+  gps: {
+    limite: 80, ralentiGal: 0.8, paradaMin: 45, equipos: {},
+    lugares: [
+      { id: 'patio', n: 'Centro Logístico San Jerónimo', tipo: 'Base', carga: '', la: 8.7325, lo: -75.8440, r: 1 },
+      { id: 'extractora', n: 'Extractora El Gran Sinú', tipo: 'Planta', carga: '', la: 9.2769, lo: -75.8769, r: 1.5 },
+      { id: 'tequendama', n: 'Tequendama', tipo: 'Entrega', carga: 'Almendra', la: 10.5480, lo: -74.1830, r: 3 },
+      { id: 'santamarta', n: 'Santa Marta', tipo: 'Entrega', carga: 'Aceite', la: 11.1850, lo: -74.1900, r: 25 },
+      { id: 'fincas-sur', n: 'Fincas al sur de Montería', tipo: 'Finca', carga: '', la: 8.4500, lo: -75.8450, r: 8 },
+      { id: 'dc-universidad', n: 'Distracom Universidad', tipo: 'Tanqueo', carga: '', la: 8.8050, lo: -75.8490, r: 0.6 },
+      { id: 'dc-corozal', n: 'Distracom Corozal', tipo: 'Tanqueo', carga: '', la: 9.3230, lo: -75.2970, r: 0.6 },
+      { id: 'dc-lapalma', n: 'Distracom La Palma', tipo: 'Tanqueo', carga: '', la: 9.1900, lo: -75.8160, r: 0.6 },
+      { id: 'dc-sanonofre', n: 'Distracom San Onofre', tipo: 'Tanqueo', carga: '', la: 9.7410, lo: -75.5210, r: 0.6 },
+      { id: 'campo', n: 'Campo de la Cruz', tipo: 'Descanso', carga: '', la: 10.379, lo: -74.882, r: 12 },
+      { id: 'ponedera', n: 'Ponedera', tipo: 'Descanso', carga: '', la: 10.643, lo: -74.755, r: 12 },
+      { id: 'sanantero', n: 'San Antero', tipo: 'Descanso', carga: '', la: 9.374, lo: -75.759, r: 12 },
+      { id: 'eldificil', n: 'El Difícil', tipo: 'Descanso', carga: '', la: 9.880, lo: -74.170, r: 15 }
+    ]
+  }
 };
 /* El documento que va junto a la foto de la ficha: el botón sobre la foto, la
    mitad de la foto al arrastrar y el que la hoja de vida imprime al lado de la
@@ -4651,6 +4722,7 @@ const NAV = [
   { id: 'mantenimientos', icono: 'tool', txt: 'Mantenimientos', badge: 'taller', alerta: true },
   { id: 'aceite', icono: 'gota', txt: 'Cambios de aceite', badge: 'aceite', alerta: true },
   { id: 'combustible', icono: 'fuel', txt: 'Combustible' },
+  { id: 'gps', icono: 'pin', txt: 'GPS' },
   { id: 'preoperacionales', icono: 'checkSquare', txt: 'Preoperacionales' },
   { id: 'inspecciones', icono: 'clipboard', txt: 'Inspecciones', badge: 'insp', alerta: true },
   { id: 'comparendos', icono: 'ticket', txt: 'Comparendos', badge: 'comp', alerta: true },
@@ -4658,7 +4730,7 @@ const NAV = [
   { sec: 'Registros' },
   { id: 'conductores', icono: 'personas', txt: 'Conductores', badge: 'conductores' },
   { sec: 'Próximamente' },
-  { id: 'pronto/llantas', icono: 'disc', txt: 'Llantas y GPS', soon: true },
+  { id: 'pronto/llantas', icono: 'disc', txt: 'Llantas', soon: true },
   { sec: 'Sistema' },
   { id: 'catalogo', icono: 'list', txt: 'Catálogo' },
   { id: 'configuracion', icono: 'cog', txt: 'Configuración' }
@@ -4724,7 +4796,9 @@ const UIState = {
   docs: { k: 'todos', t: 'todos', quien: 'todos' },
   unidadId: null, tab: 'info', act: 'todos',
   /* El área Catálogo: la lista escogida, lo que se busca y si se está agregando */
-  catalogo: { lista: 'clases.carga', q: '', agregando: false }
+  catalogo: { lista: 'clases.carga', q: '', agregando: false },
+  /* El área GPS y su pestaña en la ficha: semana o mes, y desde cuándo */
+  gps: { modo: 'semana', desde: null }
 };
 
 /* Los proveedores son de Facturación (Juan, 02/11/2026; su SQL 211): Flota
@@ -5228,6 +5302,367 @@ const Tanqueos = {
       pendientes: pend.length + km.filter(x => !x.t.revisado).length + rinde.length };
   }
 };
+
+/* ==========================================================================
+   El GPS (Juan, 02/11/2026; SQL 028). Juan baja del GPS (gpstracking.plus) el
+   informe «Recorridos y paradas» en JSON y lo carga aquí, sin esperar la API
+   del dueño. Cada fila es un tramo de un vehículo, andando («drive») o
+   detenido («stop»): inicio, fin, km, ralentí (motor encendido sin moverse),
+   velocidad máxima y media, y el punto donde empezó. De «location» (un enlace
+   de Google Maps) solo se sacan las coordenadas: ese HTML nunca se pinta. El
+   nombre del conductor que trae el GPS no se guarda. El GPS solo guarda tres
+   meses, así que flota.gps_tramos es el archivo. Los tramos no van con Sincro:
+   se piden por fechas al abrir el área, la ficha o el Dashboard. Las horas
+   del GPS son de Colombia (UTC-5).
+   El límite de velocidad lo pone Flota y no el GPS: 80 km/h, editable en
+   Configuración (Juan, 02/11/2026). Los lugares con nombre (Config.gps) salen
+   de lo que contó Juan, ubicado con el GPS, y de cruzarlo con Distracom.
+   ========================================================================== */
+const GPS = {
+  /* Lo cargado (gps_archivos): nada · trayendo · listo · error · falta (sin el 028) */
+  estado: 'nada',
+  ZONA: -5 * 3600,
+  TIPOS: ['Base', 'Planta', 'Entrega', 'Finca', 'Tanqueo', 'Descanso', 'Taller', 'Otro'],
+  COLOR: { Base: 'info', Planta: 'violet', Entrega: 'ok', Finca: 'warn', Taller: 'bad' },
+  /* Los pueblos de la región, para las paradas que no están en un lugar con nombre */
+  PUEBLOS: [['Montería', 8.748, -75.881], ['Cereté', 8.886, -75.791], ['Lorica', 9.236, -75.814], ['Sahagún', 8.947, -75.443],
+    ['Planeta Rica', 8.410, -75.586], ['Sincelejo', 9.305, -75.398], ['Corozal', 9.318, -75.293], ['Coveñas', 9.403, -75.680],
+    ['San Antero', 9.374, -75.759], ['Tolú', 9.524, -75.582], ['San Onofre', 9.738, -75.525], ['María La Baja', 9.982, -75.300],
+    ['Arjona', 10.255, -75.344], ['Turbaco', 10.332, -75.413], ['Cartagena', 10.391, -75.479], ['Mahates', 10.233, -75.190],
+    ['Clemencia', 10.567, -75.328], ['Santa Catalina', 10.604, -75.288], ['Barranquilla', 10.968, -74.781], ['Sabanalarga', 10.632, -74.921],
+    ['Campo de la Cruz', 10.379, -74.882], ['Ponedera', 10.643, -74.755], ['Palmar de Varela', 10.740, -74.755], ['Calamar', 10.252, -74.916],
+    ['Plato', 9.790, -74.786], ['El Difícil', 9.847, -74.236], ['Fundación', 10.521, -74.185], ['Aracataca', 10.591, -74.190],
+    ['Ciénaga', 11.007, -74.250], ['Santa Marta', 11.241, -74.199], ['Magangué', 9.241, -74.755], ['Chinú', 9.106, -75.398],
+    ['Ciénaga de Oro', 8.876, -75.621], ['San Pelayo', 8.959, -75.837], ['Momil', 9.238, -75.676], ['Tierralta', 8.172, -76.059],
+    ['Valencia', 8.256, -76.147], ['Pueblo Nuevo', 8.503, -75.508], ['Montelíbano', 7.979, -75.418], ['Caucasia', 7.986, -75.198],
+    ['Medellín', 6.244, -75.581], ['Valledupar', 10.463, -73.253], ['Bosconia', 9.976, -73.890]],
+  /* Lo de cada archivo cargado: archivo, desde, hasta (segundos), tramos */
+  archivos: [],
+  _cache: new Map(),
+  _dias: new Map(),
+
+  /* ---------------- Leer el JSON del GPS ---------------- */
+  seg(s) {
+    const m = String(s == null ? '' : s).trim().match(/^(?:(\d+)d\s*)?(?:(\d+)h\s*)?(?:(\d+)min\s*)?(?:(\d+)s)?$/);
+    return m ? (+m[1] || 0) * 86400 + (+m[2] || 0) * 3600 + (+m[3] || 0) * 60 + (+m[4] || 0) : 0;
+  },
+  num(s) { const n = parseFloat(String(s == null ? '' : s).replace(/[^\d.\-]/g, '')); return isFinite(n) ? n : 0; },
+  /* «aaaa-mm-dd hh:mm:ss» del GPS (hora de Colombia) a segundos */
+  hora(s) {
+    const m = String(s || '').match(/^(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d)(?::(\d\d))?$/);
+    return m ? Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)) / 1000 - this.ZONA : null;
+  },
+  dia(x) { return new Date((x + this.ZONA) * 1000).toISOString().slice(0, 10); },
+  hhmm(x) { return new Date((x + this.ZONA) * 1000).toISOString().slice(11, 16); },
+  medianoche(iso) { const p = iso.split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]) / 1000 - this.ZONA; },
+  DS: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
+  MS: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
+  diaCorto(iso) { const p = iso.split('-').map(Number), d = new Date(Date.UTC(p[0], p[1] - 1, p[2])); return this.DS[d.getUTCDay()] + ' ' + p[2] + ' ' + this.MS[p[1] - 1]; },
+  cuando(x) { return this.diaCorto(this.dia(x)) + ' · ' + this.hhmm(x); },
+  /* Lo que trae un archivo: los equipos con sus tramos. «general»: es el
+     informe «Información general», que no trae los tramos */
+  leer(texto) {
+    let d = null;
+    try { d = JSON.parse(texto); } catch (e) { /* no es un JSON */ }
+    if (!d || typeof d !== 'object' || !Array.isArray(d.items)) return { equipos: [], malas: 0, raro: true };
+    const equipos = [];
+    let malas = 0, general = false;
+    d.items.forEach(it => {
+      const nom = it && it.meta && it.meta['device.name'] ? String(it.meta['device.name'].value || '').trim() : '';
+      if (!nom) return;
+      const filas = it.table && Array.isArray(it.table.rows) ? it.table.rows : null;
+      if (!filas) { general = true; return; }
+      const tramos = [];
+      filas.forEach(r => {
+        const tipo = r && (r.group_key === 'drive' || r.group_key === 'stop') ? r.group_key : null;
+        const a = r ? this.hora(r.start_at) : null, b = r ? this.hora(r.end_at) : null;
+        if (!tipo || a == null || b == null || b < a) { malas++; return; }
+        const ll = String(r.location || '').match(/[?&]q=(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/);
+        tramos.push({ tipo, a, b, km: Math.max(0, this.num(r.distance)), ral: this.seg(r.engine_idle), vmax: Math.round(this.num(r.speed_max)),
+          vprom: Math.round(this.num(r.speed_avg)), la: ll ? +ll[1] : null, lo: ll ? +ll[2] : null });
+      });
+      equipos.push({ nombre: nom, tramos });
+    });
+    return { equipos, malas, general: general && !equipos.length };
+  },
+  /* El vehículo de un equipo del GPS: el que Juan le asignó o el de la misma placa */
+  clave: s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''),
+  unidadDe(nombre) {
+    const asignada = Q.unidad((Config.gps.equipos || {})[nombre]);
+    if (asignada) return asignada;
+    const k = this.clave(nombre);
+    return Datos.unidades.find(u => this.clave(u.placa) === k) || null;
+  },
+  /* Si el GPS lo llama distinto, el vehículo cuyo modelo aparece en el nombre
+     («CARGADOR CLG 835» y la línea CLG835): solo se propone, Juan lo confirma */
+  sugerida(nombre) {
+    const k = this.clave(nombre), l = Datos.unidades.filter(u => this.aplica(u) && this.clave(u.linea).length >= 4 && k.includes(this.clave(u.linea)));
+    return l.length === 1 ? l[0] : null;
+  },
+  aplica(u) { return Boolean(u) && (u.tipo === 'carga' || u.tipo === 'maquinaria'); },
+
+  /* ---------------- La nube ---------------- */
+  idDe(uid, t) { return uid + '-' + t.a + '-' + t.tipo.charAt(0); },
+  fila(uid, t, archivo) {
+    return { id: this.idDe(uid, t), unidad_id: uid, tipo: t.tipo, inicio: new Date(t.a * 1000).toISOString(), fin: new Date(t.b * 1000).toISOString(),
+      km: Math.round(t.km * 100) / 100, ralenti: Math.round(t.ral), vmax: Math.max(0, Math.min(999, t.vmax)), vprom: Math.max(0, Math.min(999, t.vprom)),
+      lat: t.la, lng: t.lo, archivo: String(archivo || '').slice(0, 200) };
+  },
+  /* Lo que llega de la nube, como lo usa la plataforma */
+  deFila(r) {
+    return { id: r.id, u: r.unidad_id, tipo: r.tipo, a: Date.parse(r.inicio) / 1000, b: Date.parse(r.fin) / 1000, km: Number(r.km) || 0, ral: Number(r.ralenti) || 0,
+      vmax: Number(r.vmax) || 0, vprom: Number(r.vprom) || 0, la: r.lat == null ? null : Number(r.lat), lo: r.lng == null ? null : Number(r.lng) };
+  },
+  falta(e) { return Boolean(e && (e.status === 404 || /PGRST205|42P01/.test(e.codigo || ''))); },
+  iso: x => new Date(x * 1000).toISOString(),
+  async leerTodo(ruta) {
+    const todas = [];
+    for (let desde = 0; ; desde += 1000) {
+      const lote = await Nube.pedir(ruta + '&limit=1000&offset=' + desde);
+      todas.push.apply(todas, lote || []);
+      if (!lote || lote.length < 1000) return todas;
+    }
+  },
+  /* Lo cargado de cada archivo (la vista gps_archivos) */
+  traerArchivos(forzar) {
+    if (this._trayendoArch) return this._trayendoArch;
+    if (!forzar && this.estado !== 'nada') return Promise.resolve();
+    this.estado = 'trayendo';
+    this._trayendoArch = this.leerTodo('gps_archivos?select=*&order=desde.desc')
+      .then(l => {
+        this.archivos = l.map(x => ({ archivo: x.archivo, desde: Date.parse(x.desde) / 1000, hasta: Date.parse(x.hasta) / 1000, tramos: +x.tramos || 0, equipos: +x.equipos || 0 }));
+        this.estado = 'listo';
+      })
+      .catch(e => { this.estado = this.falta(e) ? 'falta' : 'error'; this.errorTxt = e.message || ''; })
+      .finally(() => { this._trayendoArch = null; this.alLlegar(); });
+    return this._trayendoArch;
+  },
+  /* Los tramos que tocan [desde, hasta) (segundos), de todos o de una unidad.
+     Se piden con tres días de más a cada lado, para que los viajes del borde
+     tengan su ida y su regreso. Quedan en memoria: devuelve la lista, o null
+     mientras llega (al llegar se pinta otra vez), o { error } */
+  MARGEN: 3 * 86400,
+  tramos(desde, hasta, uid) {
+    const todos = this._cache.get(desde + '|' + hasta + '|');
+    if (uid && todos && todos.lista) return todos.lista.filter(t => t.u === uid);
+    const k = desde + '|' + hasta + '|' + (uid || ''), c = this._cache.get(k);
+    if (c && c.lista) return c.lista;
+    if (c && c.error) return { error: c.error };
+    if (!c) this._traer(k, desde - this.MARGEN, hasta + this.MARGEN, uid);
+    return null;
+  },
+  async _traer(k, desde, hasta, uid) {
+    const c = { trayendo: true };
+    this._cache.set(k, c);
+    try {
+      const filas = await this.leerTodo('gps_tramos?select=*&fin=gt.' + this.iso(desde) + '&inicio=lt.' + this.iso(hasta) +
+        (uid ? '&unidad_id=eq.' + encodeURIComponent(uid) : '') + '&order=unidad_id,inicio');
+      c.lista = filas.map(r => this.deFila(r));
+    } catch (e) {
+      c.error = this.falta(e) ? 'falta' : e.message || 'error';
+      if (c.error === 'falta') this.estado = 'falta';
+    }
+    c.trayendo = false;
+    this.alLlegar();
+  },
+  /* El resumen por día (la vista gps_dias), para el Dashboard */
+  dias(desdeIso, hastaIso) {
+    const k = desdeIso + '|' + hastaIso, c = this._dias.get(k);
+    if (c) return c.lista || null;
+    const nuevo = {};
+    this._dias.set(k, nuevo);
+    this.leerTodo('gps_dias?select=*&dia=gte.' + desdeIso + '&dia=lte.' + hastaIso + '&order=unidad_id,dia')
+      .then(l => { nuevo.lista = l.map(x => ({ u: x.unidad_id, dia: String(x.dia).slice(0, 10), km: Number(x.km) || 0, ral: Number(x.ralenti) || 0, vmax: Number(x.vmax) || 0 })); })
+      .catch(() => { nuevo.lista = []; })
+      .finally(() => this.alLlegar());
+    return null;
+  },
+  /* Al llegar algo, se pinta otra vez la vista que lo espera */
+  alLlegar() {
+    const v = Router.actual().vista;
+    if (v === 'gps' || (v === 'unidad' && UIState.tab === 'gps') || (v === 'inicio' && Sincro.seguro())) Router.pintar(true);
+  },
+  /* Guarda de a 500: lo que ya estaba se pisa con lo mismo (el id no cambia) */
+  async guardar(filas, avance) {
+    for (let i = 0; i < filas.length; i += 500) {
+      await Nube.pedir('gps_tramos?on_conflict=id', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(filas.slice(i, i + 500)) });
+      if (avance) avance(Math.min(filas.length, i + 500), filas.length);
+    }
+    this.olvidar();
+  },
+  async quitarArchivo(archivo) {
+    const v = '"' + String(archivo).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+    await Nube.pedir('gps_tramos?archivo=in.(' + encodeURIComponent(v) + ')', { method: 'DELETE' });
+    this.olvidar();
+  },
+  olvidar() { this._cache.clear(); this._dias.clear(); this.estado = 'nada'; this.archivos = []; },
+  /* Los ids que ya están entre dos fechas (para la vista previa) */
+  async yaEstan(desde, hasta) {
+    const l = await this.leerTodo('gps_tramos?select=id&inicio=gte.' + this.iso(desde) + '&inicio=lte.' + this.iso(hasta) + '&order=id');
+    return new Set(l.map(r => r.id));
+  },
+
+  /* ---------------- Los lugares ---------------- */
+  lugares() { return Config.gps && Array.isArray(Config.gps.lugares) ? Config.gps.lugares : []; },
+  dist(a, b, c, e) { const R = 6371, r = Math.PI / 180, x = (e - b) * r * Math.cos((a + c) / 2 * r), y = (c - a) * r; return Math.sqrt(x * x + y * y) * R; },
+  pueblo(la, lo) {
+    if (la == null || lo == null) return '—';
+    let m = null;
+    this.PUEBLOS.forEach(([n, a, b]) => { const k = this.dist(la, lo, a, b); if (!m || k < m.k) m = { n, k }; });
+    return m.k <= 12 ? m.n : 'Cerca de ' + m.n;
+  },
+  /* El lugar con nombre más pequeño que contiene el punto */
+  lugarDe(la, lo) {
+    if (la == null || lo == null) return null;
+    let m = null;
+    this.lugares().forEach(x => { const r = +x.r || 1; if (this.dist(la, lo, x.la, x.lo) <= r && (!m || r < (+m.r || 1))) m = x; });
+    return m;
+  },
+  nombreDe(p) { return p.l ? p.l.n : this.pueblo(p.la, p.lo); },
+  pill(tipo) { return tipo ? UI.pill(this.COLOR[tipo] || 'nr', tipo) : UI.pill('nr', 'Sin nombre'); },
+
+  /* ---------------- Los períodos ---------------- */
+  /* La semana (de lunes a domingo) o el mes que contiene un día */
+  periodo(modo, iso) {
+    const p = iso.split('-').map(Number), d = Date.UTC(p[0], p[1] - 1, p[2]);
+    const a = modo === 'mes' ? Date.UTC(p[0], p[1] - 1, 1) : d - ((new Date(d).getUTCDay() + 6) % 7) * 864e5;
+    const b = modo === 'mes' ? Date.UTC(p[0], p[1], 1) : a + 7 * 864e5;
+    const dias = [];
+    for (let x = a; x < b; x += 864e5) dias.push(new Date(x).toISOString().slice(0, 10));
+    const ia = dias[0], ib = new Date(b).toISOString().slice(0, 10);
+    return { modo, desdeIso: ia, hastaIso: ib, desde: this.medianoche(ia), hasta: this.medianoche(ib), dias,
+      nombre: modo === 'mes' ? Fecha.mes(Fecha.parse(ia)) : 'Semana del ' + this.diaCorto(ia) + ' al ' + this.diaCorto(dias[6]) };
+  },
+  /* Las semanas o los meses que tienen datos, del más nuevo al más viejo */
+  periodos(modo) {
+    if (!this.archivos.length) return [];
+    const min = Math.min.apply(null, this.archivos.map(x => x.desde)), max = Math.max.apply(null, this.archivos.map(x => x.hasta)) - 1;
+    const out = [];
+    let p = this.periodo(modo, this.dia(max));
+    while (p.hasta > min && out.length < 80) { out.push(p); p = this.periodo(modo, this.dia(p.desde - 43200)); }
+    return out;
+  },
+  actual() {
+    const st = UIState.gps, ps = this.periodos(st.modo);
+    return (st.desde && ps.find(x => x.desdeIso === st.desde)) || ps[0] || this.periodo(st.modo, hoyISO);
+  },
+
+  /* ---------------- Lo que se calcula ---------------- */
+  /* Por vehículo y por día: km, tiempo andando, ralentí, velocidad máxima y
+     tramos por encima del límite. Las paradas largas (en un lugar con nombre,
+     desde 10 min: la fruta se descarga en unos 20 y el tanqueo dura unos 20) y
+     los viajes de entrega. Un tramo «andando» de más de media hora a menos de
+     15 km/h es el camión casi quieto: cuenta como detenido (así queda a un 5 %
+     de lo que dice el GPS). */
+  resumen(tramos, per) {
+    const cfg = Config.gps, lim = +cfg.limite || 80, larga = (+cfg.paradaMin || 45) * 60, corta = 600;
+    const R = { unidades: [], dias: {}, excesos: [], paradas: [], visitas: [], tot: { km: 0, mov: 0, ral: 0, ex: 0, vmax: 0 }, ultimo: 0, per };
+    const porU = new Map();
+    tramos.forEach(t => { if (!porU.has(t.u)) porU.set(t.u, []); porU.get(t.u).push(t); });
+    const nuevo = () => ({ km: 0, mov: 0, ral: 0, vmax: 0, ex: 0 });
+    porU.forEach((lista, uid) => {
+      const u = Q.unidad(uid);
+      if (!u) return;
+      lista.sort((x, y) => x.a - y.a);
+      const dias = R.dias[uid] = {};
+      let acum = 0, desde = 0;
+      lista.forEach(t => {
+        const du = Math.max(1, t.b - t.a), drive = t.tipo === 'drive';
+        const quieto = drive && du > 1800 && t.km / (du / 3600) < 15;
+        const mov = !drive ? 0 : quieto ? Math.min(du, t.km / Math.max(t.vprom, 15) * 3600) : du;
+        const kmAntes = acum;
+        acum += t.km;
+        for (let x = Math.max(t.a, per.desde); x < Math.min(t.b, per.hasta);) {
+          const fin = Math.min(t.b, per.hasta, this.medianoche(this.dia(x)) + 86400), p = (fin - x) / du, dd = this.dia(x);
+          const o = dias[dd] = dias[dd] || nuevo();
+          o.km += t.km * p; o.mov += mov * p; o.ral += t.ral * p;
+          x = fin;
+        }
+        const enPer = t.a >= per.desde && t.a < per.hasta;
+        if (enPer && t.b > R.ultimo) R.ultimo = t.b;
+        if (drive && enPer) {
+          const o = dias[this.dia(t.a)] = dias[this.dia(t.a)] || nuevo();
+          if (t.vmax > o.vmax) o.vmax = t.vmax;
+          if (t.vmax > lim) { o.ex++; R.excesos.push({ u: uid, a: t.a, b: t.b, vmax: t.vmax, km: t.km, la: t.la, lo: t.lo }); }
+        }
+        if (!drive) {
+          const l = this.lugarDe(t.la, t.lo);
+          if (du >= larga || (l && du >= corta)) {
+            R.paradas.push({ u: uid, l, la: t.la, lo: t.lo, a: t.a, b: t.b, dur: du, ral: t.ral, kmAntes, km: kmAntes - desde, enPer });
+            desde = acum;
+          }
+        }
+      });
+      const s = { u, km: 0, mov: 0, ral: 0, vmax: 0, ex: 0, quietos: 0 };
+      Object.keys(dias).forEach(d => { const o = dias[d]; s.km += o.km; s.mov += o.mov; s.ral += o.ral; s.vmax = Math.max(s.vmax, o.vmax); s.ex += o.ex; });
+      s.quietos = per.dias.filter(d => d <= hoyISO && (!dias[d] || dias[d].km < 1)).length;
+      if (s.km < 0.5 && !s.ral) return;
+      R.unidades.push(s);
+      ['km', 'mov', 'ral', 'ex'].forEach(k => { R.tot[k] += s[k]; });
+      R.tot.vmax = Math.max(R.tot.vmax, s.vmax);
+    });
+    R.unidades.sort((a, b) => b.km - a.km);
+    /* Los viajes de entrega: llegó a un lugar de entrega (aceite a Santa Marta,
+       almendra a Tequendama) desde la planta, la base u otra entrega. El
+       regreso termina en la planta, la base o el pueblo de la base. */
+    const tipo = p => (p.l ? p.l.tipo : '');
+    const bases = this.lugares().filter(x => x.tipo === 'Base');
+    const finRegreso = p => ['Planta', 'Base', 'Entrega'].includes(tipo(p)) || (p.dur >= larga && bases.some(x => this.dist(p.la, p.lo, x.la, x.lo) <= 10));
+    R.unidades.forEach(s => {
+      const ps = R.paradas.filter(p => p.u === s.u.id);
+      for (let i = 0; i < ps.length; i++) {
+        if (tipo(ps[i]) !== 'Entrega') continue;
+        let j = i;
+        while (j + 1 < ps.length && ps[j + 1].l === ps[i].l) j++;
+        const llega = ps[i], sale = ps[j];
+        if (llega.a >= per.hasta || sale.b < per.desde) { i = j; continue; }
+        let a = i - 1;
+        while (a >= 0 && !['Planta', 'Base', 'Entrega'].includes(tipo(ps[a]))) a--;
+        let b = j + 1;
+        while (b < ps.length && !finRegreso(ps[b])) b++;
+        const sigue = b < ps.length && tipo(ps[b]) === 'Entrega', deEntrega = a >= 0 && tipo(ps[a]) === 'Entrega';
+        R.visitas.push({ u: s.u.id, lugar: llega.l, carga: deEntrega ? '' : llega.l.carga || '',
+          desde: a >= 0 ? this.nombreDe(ps[a]) : null, salio: a >= 0 ? ps[a].b : null, kmIda: a >= 0 ? llega.kmAntes - ps[a].kmAntes : null,
+          llego: llega.a, seFue: sale.b, espera: sale.b - llega.a, sigueA: sigue ? this.nombreDe(ps[b]) : null,
+          volvioA: b < ps.length && !sigue ? this.nombreDe(ps[b]) : null, llegoBase: b < ps.length && !sigue ? ps[b].a : null,
+          kmReg: b < ps.length && !sigue ? ps[b].kmAntes - sale.kmAntes : null });
+        i = j;
+      }
+    });
+    R.excesos.sort((a, b) => b.vmax - a.vmax || a.a - b.a);
+    return R;
+  },
+  /* Dónde paran: las paradas largas del período, por lugar con nombre o, sin
+     nombre, juntas las que quedan a menos de 1 km */
+  donde(R) {
+    const grupos = [];
+    R.paradas.filter(p => p.enPer && p.la != null).forEach(p => {
+      let g = p.l ? grupos.find(x => x.l === p.l) : grupos.find(x => !x.l && this.dist(p.la, p.lo, x.la, x.lo) <= 1);
+      if (!g) { g = { l: p.l, la: p.la, lo: p.lo, h: 0, n: 0, us: new Set(), ral: 0 }; grupos.push(g); }
+      g.h += p.dur; g.n++; g.us.add(p.u); g.ral += p.ral;
+    });
+    return grupos.sort((a, b) => b.h - a.h);
+  },
+  /* El galón de diésel: lo de Distracom de los últimos 90 días */
+  precio() {
+    const desde = Fecha.rel(-90);
+    let g = 0, v = 0;
+    Tanqueos.lista().forEach(t => { if (t.fecha >= desde && !Tanqueos.esUrea(t)) { g += t.galones; v += t.valor; } });
+    return g ? v / g : 0;
+  },
+  /* El rendimiento del vehículo en Distracom (km por galón), o el de la flota */
+  rinde(u) {
+    const r = Tanqueos.resumen(Tanqueos.de(u)).rinde;
+    return r || Tanqueos.resumen(Tanqueos.lista()).rinde || 0;
+  },
+  horas(s) { const h = s / 3600; return (h >= 10 ? Math.round(h) : Math.round(h * 10) / 10).toLocaleString('es-CO') + ' h'; },
+  hm(s) { const m = Math.round(s / 60), h = Math.floor(m / 60), r = m % 60; return h ? h + ' h' + (r ? ' ' + r + ' min' : '') : r + ' min'; }
+};
+/* La semana o el mes del GPS, en el área y en la ficha */
+document.addEventListener('change', e => {
+  if (e.target && e.target.id === 'gpsPer') { UIState.gps.desde = e.target.value; Router.pintar(true); }
+});
 
 /* Cambios de aceite, con la regla del ingeniero: el próximo cambio es el
    último más la frecuencia; vencido cuando ya no falta nada y próximo cuando
@@ -6276,6 +6711,25 @@ const Vistas = {
         '<div class="rk"><span class="rk-l">— — —</span><span class="rk-t"><i style="width:' + w + '%"></i></span><span class="rk-v txt-3">—</span></div>').join('') + '</div>',
       { flush: true, cls: 'pronto-c', sub, pie: Icon('clock', '', 13) + '<span>' + nota + ' <span class="link" data-ir="' + ir + '">Ver qué viene</span></span>' });
 
+    /* El ralentí de cada vehículo en el período, del GPS (ver GPS, la vista gps_dias) */
+    const ralenti = (() => {
+      const l = GPS.estado === 'falta' ? [] : GPS.dias(per.desde, per.hasta);
+      if (!l) return UI.card('Más tiempo en ralentí', UI.empty('pin', 'Trayendo los recorridos…', ''), { flush: true, sub: 'Horas encendido y quieto' });
+      const porU = {};
+      l.forEach(x => { porU[x.u] = (porU[x.u] || 0) + x.ral; });
+      /* En las máquinas el motor encendido quieto es trabajo: no cuentan */
+      const top = Object.keys(porU).map(id => ({ u: Q.unidad(id), s: porU[id] })).filter(x => x.u && x.u.tipo !== 'maquinaria' && x.s > 0).sort((a, b) => b.s - a.s);
+      if (!top.length) return UI.card('Más tiempo en ralentí', UI.empty('pin', 'Sin recorridos del GPS en ' + per.nombre, 'Se cargan en el área GPS.'),
+        { flush: true, sub: 'Horas encendido y quieto', act: '<span class="link fs12" data-ir="gps">Ver GPS</span>' });
+      const total = top.reduce((t, x) => t + x.s, 0), gal = total / 3600 * (+Config.gps.ralentiGal || 0), precio = GPS.precio();
+      return UI.card('Más tiempo en ralentí', '<div class="rk-lista">' + top.slice(0, 5).map(x => '<div class="rk" data-act="irUnidad" data-u="' + attr(x.u.id) + '" data-tab="gps">' +
+          '<span class="rk-l">' + esc(UI.placaTxt(x.u)) + '</span><span class="rk-t"><i class="k-warn" style="width:' + Math.max(3, Math.round(x.s / top[0].s * 100)) + '%"></i></span>' +
+          '<span class="rk-v">' + esc(GPS.horas(x.s)) + '</span></div>').join('') + '</div>',
+        { flush: true, sub: 'Horas encendido y quieto · ' + esc(Tablero.PERIODOS[p].toLowerCase()), act: '<span class="link fs12" data-ir="gps">Ver GPS</span>',
+          pie: gal && precio ? Icon('fuel', '', 13) + '<span>Toda la flota: ' + esc(GPS.horas(total)) + ', ≈ ' + esc(Math.round(gal).toLocaleString('es-CO')) + ' galones (' +
+            esc(Money.format(gal * precio)) + ')</span>' : '' });
+    })();
+
     const html =
       /* Si no llegaron las órdenes de Facturación, que se sepa (panel) */
       (Compras.estado === 'error' ? Compras.aviso() : '') +
@@ -6314,7 +6768,7 @@ const Vistas = {
       '<div class="grid g2 mb16">' + consumo + rendimiento + '</div>' +
       '<div class="grid g2">' +
         pronto('Mayor gasto en llantas', 'Por vehículo', 'Cuando se registren las llantas.', 'pronto/llantas', [80, 57, 41, 26]) +
-        pronto('Más tiempo en ralentí', 'Horas encendido y quieto', 'Cuando se conecte el GPS.', 'pronto/llantas', [84, 61, 39, 22]) +
+        ralenti +
       '</div>';
     return { titulo: 'Dashboard', sub: 'El balance de la operación', html };
   },
@@ -6460,7 +6914,8 @@ const Vistas = {
     const tabs = [['info', 'Información'], ['actividad', 'Actividad', Actividad.de(u).length], ['docs', 'Documentos', alertas], ['mant', 'Mantenimientos', mants.length]]
       .concat(Preop.aplica(u) ? [['preop', 'Preoperacionales']] : [])
       .concat([['insp', 'Inspecciones'], ['comp', 'Comparendos y accidentes'], ['oc', 'Compras', compras.length]])
-      .concat(Tanqueos.de(u).length ? [['comb', 'Combustible', Tanqueos.de(u).length]] : []);
+      .concat(Tanqueos.de(u).length ? [['comb', 'Combustible', Tanqueos.de(u).length]] : [])
+      .concat(GPS.aplica(u) ? [['gps', 'GPS']] : []);
     const html =
       '<div class="crumbs"><a data-ir="flota">Flota</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
       '<section class="uh">' +
@@ -6774,9 +7229,9 @@ const Vistas = {
       combustible: { icono: 'fuel', t: 'Combustible y ralentí',
         p: 'Llega cuando el ingeniero pase la información de esos procesos. Es lo que la gerencia quiere ver para tomar decisiones.',
         lista: ['Consumo de combustible por unidad', 'Tiempo en ralentí', 'Lo que defina el ingeniero'] },
-      llantas: { icono: 'disc', t: 'Llantas y GPS',
-        p: 'También llegan más adelante, cuando se conozcan esos procesos.',
-        lista: ['Gastos de llantas por unidad', 'GPS: recorridos y tiempo en ralentí'] }
+      llantas: { icono: 'disc', t: 'Llantas',
+        p: 'Llega más adelante, cuando se conozca ese proceso.',
+        lista: ['Gastos de llantas por unidad', 'La vida de cada llanta'] }
     };
     const x = P[id] || P.combustible;
     return {
@@ -8052,6 +8507,209 @@ Object.assign(Vistas, {
     } };
   },
 
+  /* ------------------------------------------------------------------- GPS
+     Los recorridos de cada vehículo (ver GPS). Como la maqueta que aprobó
+     Juan el 02/11/2026: semana o mes, los KPI, la velocidad máxima con la raya
+     del límite, los tramos más rápidos, los km por día, por vehículo, los
+     viajes de entrega, dónde paran y los archivos cargados. */
+  gps() {
+    const titulo = 'GPS', sub = 'Recorridos, paradas y velocidad';
+    const head = UI.head('GPS', 'Recorridos, paradas y velocidad · el informe «Recorridos y paradas» del GPS',
+      '<button class="btn" data-act="lugaresGps">' + Icon('pin', '', 14) + 'Lugares</button>' +
+      '<button class="btn btn-primary" data-act="cargarGps">' + Icon('upload', '', 14) + 'Cargar recorridos del GPS</button>');
+    const caja = (ic, t, p) => head + '<div class="card">' + UI.empty(ic, t, p) + '</div>';
+    if (GPS.estado === 'nada' || GPS.estado === 'trayendo') { GPS.traerArchivos(); return { titulo, sub, html: caja('pin', 'Trayendo los recorridos…', '') }; }
+    if (GPS.estado === 'falta') return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') +
+      '<div><b>Todavía no se puede cargar.</b> Falta correr en Supabase el SQL 028, que crea dónde guardar los recorridos.</div></div>' };
+    if (GPS.estado === 'error') return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') + '<div><b>No llegaron los recorridos.</b> ' +
+      esc(GPS.errorTxt || '') + ' <span class="link" data-act="gpsReintentar">Intentar otra vez</span></div></div>' };
+    if (!GPS.archivos.length) return { titulo, sub, html: caja('pin', 'Todavía no hay recorridos',
+      'En el GPS, en Reportes, baje «Recorridos y paradas» en JSON, con todos los equipos, y cárguelo aquí tal como sale. ' +
+      'Se pueden cargar varios archivos a la vez (por ejemplo, las quincenas de un mes): lo que ya estaba no se repite.') };
+    const per = GPS.actual(), tr = GPS.tramos(per.desde, per.hasta);
+    const barra = this.gpsBarra(per);
+    if (!tr) return { titulo, sub, html: head + barra + '<div class="card">' + UI.empty('pin', 'Trayendo los recorridos de ' + per.nombre.toLowerCase() + '…', '') + '</div>' };
+    if (tr.error) return { titulo, sub, html: head + barra + '<div class="alert a-warn">' + Icon('warn') + '<div><b>No llegaron los recorridos.</b> ' + esc(tr.error) +
+      ' <span class="link" data-act="gpsReintentar">Intentar otra vez</span></div></div>' };
+    const R = GPS.resumen(tr, per), cfg = Config.gps, lim = +cfg.limite || 80, precio = GPS.precio();
+    if (!R.unidades.length) return { titulo, sub, html: head + barra + '<div class="card">' + UI.empty('pin', 'Sin recorridos en ' + per.nombre.toLowerCase(),
+      'Escoja otra semana o mes, o cargue los archivos del GPS de esas fechas.') + '</div>' + this.gpsArchivos() };
+    /* En las máquinas (cargador, retro) el motor encendido sin moverse es
+       trabajo, no ralentí: los KPI de horas y de ralentí son de los camiones */
+    const maq = s => s.u.tipo === 'maquinaria', cam = R.unidades.filter(s => !maq(s)), nMaq = R.unidades.length - cam.length;
+    const T = cam.reduce((t, s) => ({ km: t.km + s.km, mov: t.mov + s.mov, ral: t.ral + s.ral, ex: t.ex, vmax: t.vmax }), { km: 0, mov: 0, ral: 0, ex: R.tot.ex, vmax: R.tot.vmax });
+    const n = v => esc(Math.round(v).toLocaleString('es-CO'));
+    const ralGal = T.ral / 3600 * (+cfg.ralentiGal || 0), conEx = R.unidades.filter(s => s.ex), rapido = R.unidades.slice().sort((a, b) => b.vmax - a.vmax)[0];
+    const kpis = '<div class="grid g4 mb16">' +
+      UI.kpi({ label: 'Km recorridos', icono: 'truck', valor: n(T.km) + ' <small>km</small>',
+        meta: cam.length ? cam.length + (cam.length === 1 ? ' camión' : ' camiones') + ' · ' + n(T.km / cam.length) + ' km en promedio' +
+          (nMaq ? ' · las máquinas van aparte' : '') : 'Solo máquinas' }) +
+      UI.kpi({ label: 'Horas andando', icono: 'clock', color: 'var(--info-500)', valor: n(T.mov / 3600) + ' <small>h</small>',
+        meta: T.mov + T.ral ? 'El ' + Math.round(T.mov / (T.mov + T.ral) * 100) + ' % de las horas de motor' : '' }) +
+      UI.kpi({ label: 'Ralentí', icono: 'fuel', color: 'var(--warn-500)', valor: n(T.ral / 3600) + ' <small>h</small>',
+        meta: 'Motor encendido sin moverse' + (ralGal ? ' · ≈ ' + n(ralGal) + ' gal' + (precio ? ' (' + esc(Money.format(ralGal * precio)) + ')' : '') : '') }) +
+      UI.kpi({ label: 'Excesos de velocidad', icono: 'warn', color: T.ex ? 'var(--dang-500)' : 'var(--ok-500)', valor: n(T.ex) + ' <small>tramos</small>',
+        meta: T.ex ? 'Más de ' + lim + ' km/h, en ' + conEx.length + ' de ' + R.unidades.length + ' vehículos · máx. ' + rapido.vmax + ' km/h' : 'Nadie pasó de ' + lim + ' km/h' }) +
+      '</div>';
+    /* La velocidad máxima: azul hasta el límite y rojo lo que pasó, de 0 a 120 (o más si alguien pasó) */
+    const tope = Math.max(120, Math.ceil(T.vmax / 20) * 20), pct = v => (v / tope * 100).toFixed(2) + '%';
+    const vel = '<div class="vel"><div class="vel-esc">' + [0, tope / 3, lim, tope].map(v => '<span' + (v === lim ? ' class="lim"' : '') + ' style="left:' + pct(v) + '">' +
+        Math.round(v) + '</span>').join('') + '</div>' +
+      R.unidades.slice().sort((a, b) => b.vmax - a.vmax).map(s => {
+        const pasa = s.vmax > lim;
+        return '<div class="vel-f row-click" data-act="irUnidad" data-u="' + attr(s.u.id) + '" data-tab="gps"><span>' + UI.placa(s.u) + '</span>' +
+          '<div class="vel-t" style="--lim:' + pct(lim) + '" title="' + attr(UI.placaTxt(s.u) + ': ' + s.vmax + ' km/h') + '">' +
+          '<i class="ok' + (pasa ? ' corta' : '') + '" style="width:' + pct(Math.min(s.vmax, lim)) + '"></i>' +
+          (pasa ? '<i class="mal" style="left:' + pct(lim) + ';width:' + pct(s.vmax - lim) + '"></i>' : '') + '</div>' +
+          '<span class="vel-v' + (pasa ? ' mal' : '') + '">' + s.vmax + ' km/h</span>' +
+          '<span class="vel-n' + (s.ex ? ' mal' : '') + '">' + (s.ex ? s.ex + (s.ex === 1 ? ' tramo' : ' tramos') : 'Ninguno') + '</span></div>';
+      }).join('') + '</div>';
+    const rapidos = R.excesos.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th><th>Cuándo</th><th class="num">Velocidad</th><th>Cerca de</th></tr></thead><tbody>' +
+        R.excesos.slice(0, 8).map(x => '<tr><td>' + UI.placa(Q.unidad(x.u)) + '</td><td class="nowrap">' + esc(GPS.cuando(x.a)) + '</td>' +
+          '<td class="num rojo nowrap">' + x.vmax + ' km/h</td><td>' + esc(GPS.pueblo(x.la, x.lo)) + '</td></tr>').join('') + '</tbody></table></div>'
+      : UI.empty('check', 'Nadie pasó de ' + lim + ' km/h', '');
+    /* Km por día: entre más azul, más anduvo */
+    const maxDia = Math.max.apply(null, [1].concat(R.unidades.map(s => Math.max.apply(null, [0].concat(per.dias.map(d => (R.dias[s.u.id][d] || {}).km || 0))))));
+    const celda = k => { if (!k || k < 1) return '<td class="num txt-3">—</td>'; const a = 0.08 + 0.62 * k / maxDia;
+      return '<td class="num"><span class="hm' + (a > 0.45 ? ' claro' : '') + '" style="--a:' + a.toFixed(2) + '">' + n(k) + '</span></td>'; };
+    const cab = d => esc(per.modo === 'mes' ? String(+d.slice(8)) : GPS.DS[new Date(d + 'T12:00:00Z').getUTCDay()] + ' ' + (+d.slice(8)));
+    const heat = '<div class="tbl-wrap"><table class="tbl heat' + (per.modo === 'mes' ? ' mes' : '') + '"><thead><tr><th>Vehículo</th>' + per.dias.map(d => '<th class="num">' + cab(d) + '</th>').join('') +
+        '<th class="num">Total</th></tr></thead><tbody>' +
+      R.unidades.map(s => '<tr class="row-click" data-act="irUnidad" data-u="' + attr(s.u.id) + '" data-tab="gps"><td class="nowrap">' + UI.placa(s.u) + '</td>' +
+        per.dias.map(d => celda((R.dias[s.u.id][d] || {}).km)).join('') + '<td class="num"><b>' + n(s.km) + '</b></td></tr>').join('') +
+      '</tbody><tfoot><tr><td>Flota</td>' + per.dias.map(d => '<td class="num">' + n(R.unidades.reduce((t, s) => t + ((R.dias[s.u.id][d] || {}).km || 0), 0)) + '</td>').join('') +
+        '<td class="num">' + n(T.km) + '</td></tr></tfoot></table></div>';
+    const porVeh = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th><th class="num">Km</th><th class="num">Andando</th><th class="num">Ralentí</th>' +
+        '<th class="num">Vel. máx.</th><th class="num">Más de ' + lim + '</th><th class="num">Días quieto</th></tr></thead><tbody>' +
+      R.unidades.map(s => {
+        const pRal = s.mov + s.ral ? Math.round(s.ral / (s.mov + s.ral) * 100) : 0;
+        return '<tr class="row-click" data-act="irUnidad" data-u="' + attr(s.u.id) + '" data-tab="gps"><td>' + UI.unidadCelda(s.u) + '</td>' +
+          '<td class="num nowrap">' + n(s.km) + '</td><td class="num nowrap">' + esc(GPS.horas(s.mov)) + '</td>' +
+          (maq(s) ? '<td class="num nowrap">' + esc(GPS.horas(s.mov + s.ral)) + '<div class="dias">de motor, trabajando</div></td>'
+            : '<td class="num nowrap">' + esc(GPS.horas(s.ral)) + '<div class="dias' + (pRal > 40 ? ' d-warn' : '') + '">' + pRal + ' % del motor</div></td>') +
+          '<td class="num nowrap' + (s.vmax > lim ? ' rojo' : '') + '">' + s.vmax + ' km/h</td><td class="num' + (s.ex ? ' rojo' : '') + '">' + (s.ex || '—') + '</td>' +
+          '<td class="num">' + (s.quietos || '—') + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    const viajes = this.gpsViajes(R, precio);
+    const grupos = GPS.donde(R).slice(0, 10);
+    const donde = grupos.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lugar</th><th>Tipo</th><th class="num">Horas</th><th class="num">Paradas</th>' +
+        '<th class="num">Vehículos</th></tr></thead><tbody>' +
+      grupos.map(g => '<tr><td>' + (g.l ? esc(g.l.n) : esc(GPS.pueblo(g.la, g.lo)) + ' <span class="link fs12" data-act="nombrarLugar" data-la="' + g.la.toFixed(5) +
+          '" data-lo="' + g.lo.toFixed(5) + '">Nombrar</span>') + '</td><td>' + GPS.pill(g.l ? g.l.tipo : '') + '</td><td class="num nowrap">' + esc(GPS.horas(g.h)) + '</td>' +
+        '<td class="num">' + g.n + '</td><td class="num">' + g.us.size + '</td></tr>').join('') + '</tbody></table></div>'
+      : UI.empty('pin', 'Sin paradas largas', '');
+    const html = head + barra + kpis +
+      '<div class="grid g2 mb16">' +
+        UI.card('Velocidad máxima', vel, { sub: 'Límite ' + lim + ' km/h · en rojo, lo que pasó del límite' }) +
+        UI.card('Los tramos más rápidos', rapidos, { flush: true, sub: R.excesos.length ? n(R.excesos.length) + ' por encima de ' + lim + ' km/h' : '' }) +
+      '</div>' +
+      UI.card('Km por día', heat, { flush: true, cls: 'mb16', sub: 'Entre más azul, más anduvo · la raya es un día sin moverse' }) +
+      UI.card('Por vehículo', porVeh, { flush: true, cls: 'mb16', sub: 'Clic en un vehículo para ver sus recorridos' }) +
+      viajes +
+      '<div class="grid g2">' +
+        UI.card('Dónde paran', donde, { flush: true, sub: 'Paradas de ' + (+cfg.paradaMin || 45) + ' min o más · en los lugares con nombre, desde 10 min' }) +
+        this.gpsArchivos() +
+      '</div>';
+    return { titulo, sub, html };
+  },
+  /* La semana o el mes, y hasta cuándo hay datos */
+  gpsBarra(per) {
+    const st = UIState.gps, ps = GPS.periodos(st.modo), ult = GPS.archivos.length ? Math.max.apply(null, GPS.archivos.map(x => x.hasta)) : 0;
+    return '<div class="toolbar"><div class="seg">' + [['semana', 'Semana'], ['mes', 'Mes']].map(([k, t]) =>
+        '<button class="' + (st.modo === k ? 'on' : '') + '" data-act="gpsModo" data-v="' + k + '">' + t + '</button>').join('') + '</div>' +
+      (ps.length ? '<select class="inp" id="gpsPer" style="width:auto">' + ps.map(p => '<option value="' + p.desdeIso + '"' + (p.desdeIso === per.desdeIso ? ' selected' : '') + '>' +
+        esc(p.nombre) + '</option>').join('') + '</select>' : '') +
+      (ult ? '<span class="txt-3 fs12">Datos hasta el ' + esc(GPS.cuando(ult)) + '</span>' : '') + '</div>';
+  },
+  /* Los viajes de entrega: el aceite a Santa Marta y la almendra a Tequendama.
+     El regreso es el que puede ir vacío (eso lo dice la matriz de producido);
+     su diésel sale de los km y del rendimiento de Distracom */
+  gpsViajes(R, precio, solo) {
+    if (!R.visitas.length) return solo ? '' : UI.card('Viajes de entrega', UI.empty('truck', 'Sin entregas en estas fechas',
+      'Salen solas cuando un vehículo para en un lugar de tipo «Entrega» (ver Lugares).'), { cls: 'mb16' });
+    const n = v => esc(Math.round(v).toLocaleString('es-CO'));
+    const filas = R.visitas.map(v => {
+      const u = Q.unidad(v.u), rinde = GPS.rinde(u), gal = v.kmReg && rinde ? v.kmReg / rinde : 0;
+      return '<tr><td>' + UI.placa(u) + '</td><td>' + (v.carga ? UI.pill(v.carga === 'Aceite' ? 'ok' : 'violet', v.carga) : '<span class="txt-3" title="Venía de otra entrega">—</span>') + '</td>' +
+        '<td class="nowrap">' + (v.desde ? esc(v.desde) + '<div class="dias">' + esc(GPS.cuando(v.salio)) + '</div>' : '<span class="txt-3">Antes de estas fechas</span>') + '</td>' +
+        '<td class="num nowrap">' + (v.kmIda ? n(v.kmIda) + ' km' : '—') + '</td>' +
+        '<td class="nowrap">' + esc(v.lugar.n) + '<div class="dias">' + esc(GPS.cuando(v.llego)) + '</div></td>' +
+        '<td class="num nowrap' + (v.espera > 8 * 3600 ? ' rojo' : '') + '">' + esc(GPS.hm(v.espera)) + '</td>' +
+        '<td class="nowrap">' + (v.volvioA ? esc(v.volvioA) + '<div class="dias">' + esc(GPS.cuando(v.llegoBase)) + '</div>'
+          : '<span class="txt-3">' + (v.sigueA ? 'Siguió a ' + esc(v.sigueA) : 'Sigue en camino') + '</span>') + '</td>' +
+        '<td class="num nowrap">' + (v.kmReg ? n(v.kmReg) + ' km' : '—') + '</td>' +
+        '<td class="num nowrap">' + (gal ? (precio ? esc(Money.format(gal * precio)) : '') + '<div class="dias">' + n(gal) + ' gal</div>' : '—') + '</td></tr>';
+    }).join('');
+    const completos = R.visitas.filter(v => v.kmReg), kmReg = completos.reduce((s, v) => s + v.kmReg, 0);
+    const plata = completos.reduce((s, v) => { const r = GPS.rinde(Q.unidad(v.u)); return s + (r ? v.kmReg / r * precio : 0); }, 0);
+    return UI.card('Viajes de entrega', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th><th>Lleva</th><th>Salió de</th><th class="num">Ida</th>' +
+        '<th>Llegó a</th><th class="num">Tiempo allá</th><th>Regresó a</th><th class="num">Regreso</th><th class="num">Diésel del regreso</th></tr></thead><tbody>' + filas +
+        '</tbody></table></div>', { flush: true, cls: 'mb16',
+      sub: R.visitas.length + (R.visitas.length === 1 ? ' entrega' : ' entregas') + (completos.length ? ' · ' + completos.length + (completos.length === 1 ? ' regreso completo, ' : ' regresos completos, ') +
+        n(kmReg) + ' km' + (plata ? ' · ' + esc(Money.format(plata)) + ' de diésel si regresaron vacíos' : '') : '') });
+  },
+  gpsArchivos() {
+    const l = GPS.archivos.slice().sort((a, b) => b.hasta - a.hasta);
+    return UI.card('Archivos cargados', l.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Archivo</th><th>Fechas</th><th class="num">Tramos</th><th></th></tr></thead><tbody>' +
+      l.slice(0, 40).map(a => '<tr><td class="trunc" style="max-width:220px" title="' + attr(a.archivo) + '">' + esc(a.archivo || '—') + '</td>' +
+        '<td class="nowrap">' + esc(GPS.diaCorto(GPS.dia(a.desde)) + ' a ' + GPS.diaCorto(GPS.dia(a.hasta - 1))) + '</td><td class="num">' + esc(a.tramos.toLocaleString('es-CO')) + '</td>' +
+        '<td class="tr"><button class="btn btn-sm btn-ghost btn-icon" data-act="quitarArchivoGps" data-a="' + attr(a.archivo) + '" title="Quitar lo de este archivo" aria-label="Quitar">' +
+          Icon('trash', '', 14) + '</button></td></tr>').join('') + '</tbody></table></div>' : UI.empty('file', 'Ninguno', ''), { flush: true });
+  },
+  /* La ficha de un vehículo: sus recorridos de la semana o el mes */
+  tab_gps(u) {
+    if (GPS.estado === 'nada' || GPS.estado === 'trayendo') { GPS.traerArchivos(); return UI.card('GPS', UI.empty('pin', 'Trayendo los recorridos…', '')); }
+    if (GPS.estado === 'falta') return '<div class="alert a-warn">' + Icon('warn') + '<div><b>Todavía no hay recorridos.</b> Falta correr en Supabase el SQL 028.</div></div>';
+    if (!GPS.archivos.length) return UI.card('GPS', UI.empty('pin', 'Sin recorridos', 'Se cargan en el área GPS, con el informe «Recorridos y paradas».'));
+    const per = GPS.actual(), tr = GPS.tramos(per.desde, per.hasta, u.id), barra = this.gpsBarra(per);
+    if (!tr) return barra + UI.card('GPS', UI.empty('pin', 'Trayendo los recorridos…', ''));
+    if (tr.error) return barra + '<div class="alert a-warn">' + Icon('warn') + '<div><b>No llegaron los recorridos.</b> ' + esc(tr.error) + '</div></div>';
+    const R = GPS.resumen(tr, per), s = R.unidades[0], lim = +Config.gps.limite || 80;
+    if (!s) return barra + UI.card('GPS', UI.empty('pin', 'Sin recorridos en ' + per.nombre.toLowerCase(), 'Escoja otra semana o mes.'));
+    const n = v => esc(Math.round(v).toLocaleString('es-CO')), ds = R.dias[u.id], precio = GPS.precio();
+    const pRal = s.mov + s.ral ? Math.round(s.ral / (s.mov + s.ral) * 100) : 0, ralGal = s.ral / 3600 * (+Config.gps.ralentiGal || 0);
+    const topeDia = Math.max.apply(null, [1].concat(per.dias.map(d => (ds[d] || {}).km || 0)));
+    const cols = '<div class="cols">' + per.dias.map(d => { const k = (ds[d] || {}).km || 0;
+        return '<div class="col" title="' + attr(GPS.diaCorto(d) + ': ' + Math.round(k) + ' km') + '">' + (k >= 1 && per.modo !== 'mes' ? '<span>' + n(k) + '</span>' : '') +
+          (k >= 1 ? '<i style="height:' + Math.max(2, Math.round(k / topeDia * 100)) + '%"></i>' : '') + '</div>'; }).join('') + '</div>' +
+      '<div class="cols-x">' + per.dias.map(d => '<span>' + esc(per.modo === 'mes' ? String(+d.slice(8)) : GPS.DS[new Date(d + 'T12:00:00Z').getUTCDay()] + ' ' + (+d.slice(8))) + '</span>').join('') + '</div>';
+    const exs = R.excesos;
+    const tablaEx = exs.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cuándo</th><th class="num">Velocidad</th><th class="num">Km del tramo</th><th>Cerca de</th></tr></thead><tbody>' +
+        exs.slice(0, 8).map(x => '<tr><td class="nowrap">' + esc(GPS.cuando(x.a)) + '</td><td class="num rojo">' + x.vmax + ' km/h</td><td class="num">' +
+          esc((Math.round(x.km * 10) / 10).toLocaleString('es-CO')) + '</td><td>' + esc(GPS.pueblo(x.la, x.lo)) + '</td></tr>').join('') + '</tbody></table></div>'
+      : UI.empty('check', 'Nunca pasó de ' + lim + ' km/h', '');
+    /* Su semana, día por día: las paradas largas, con su lugar */
+    const clase = { Entrega: ' puerto', Planta: ' cargue', Base: ' base', Tanqueo: ' tanqueo' };
+    const ps = R.paradas.filter(p => p.enPer);
+    const semana = '<div class="sem">' + per.dias.filter(d => d <= hoyISO || ps.some(p => GPS.dia(p.a) === d)).map(d => {
+      const delDia = ps.filter(p => GPS.dia(p.a) === d), k = (ds[d] || {}).km || 0;
+      if (per.modo === 'mes' && !delDia.length && k < 1) return '';
+      return '<div class="sem-d"><b>' + esc(GPS.diaCorto(d)) + '<span>' + (k >= 1 ? n(k) + ' km' : 'Sin moverse') + '</span></b>' +
+        (delDia.length ? '<div class="sem-ps">' + delDia.map(p => { const t = p.l ? p.l.tipo : '';
+          return '<div class="sem-p' + (clase[t] || '') + '"><b>' + (t === 'Tanqueo' ? Icon('fuel', '', 12) + ' ' : '') + esc(GPS.hhmm(p.a) + ' · ' + GPS.nombreDe(p)) + '</b>' +
+            '<span class="m">' + esc(GPS.hm(p.dur) + (p.ral > 600 ? ', motor encendido ' + GPS.hm(p.ral) : '') + (p.km >= 1 ? ' · llegó tras ' + Math.round(p.km).toLocaleString('es-CO') + ' km' : '')) +
+            '</span></div>'; }).join('') + '</div>' : '<div class="sem-vacio">' + (k >= 1 ? 'Solo paradas cortas.' : 'Quieto todo el día.') + '</div>') + '</div>';
+    }).join('') + '</div>';
+    return barra +
+      '<div class="grid g4 mb16">' +
+        UI.kpi({ label: per.modo === 'mes' ? 'Km del mes' : 'Km de la semana', icono: 'truck', valor: n(s.km) + ' <small>km</small>',
+          meta: per.dias.filter(d => d <= hoyISO).length - s.quietos + ' días con movimiento' }) +
+        UI.kpi({ label: 'Horas andando', icono: 'clock', color: 'var(--info-500)', valor: esc(GPS.horas(s.mov)).replace(' h', ' <small>h</small>'),
+          meta: 'Y ' + esc(GPS.horas(s.ral)) + (u.tipo === 'maquinaria' ? ' trabajando quieta' : ' de ralentí') }) +
+        (u.tipo === 'maquinaria' ? UI.kpi({ label: 'Horas de motor', icono: 'fuel', color: 'var(--warn-500)', valor: esc(GPS.horas(s.mov + s.ral)).replace(' h', ' <small>h</small>'),
+            meta: 'Encendido, andando o trabajando quieto' })
+          : UI.kpi({ label: 'Ralentí', icono: 'fuel', color: 'var(--warn-500)', valor: pRal + ' <small>%</small>',
+            meta: 'Del tiempo de motor' + (ralGal && precio ? ' · ≈ ' + esc(Money.format(ralGal * precio)) : '') })) +
+        UI.kpi({ label: 'Velocidad máxima', icono: 'medidor', color: s.vmax > lim ? 'var(--dang-500)' : 'var(--ok-500)', valor: s.vmax + ' <small>km/h</small>',
+          meta: s.ex ? s.ex + (s.ex === 1 ? ' tramo' : ' tramos') + ' por encima de ' + lim : 'Nunca pasó de ' + lim }) +
+      '</div>' +
+      '<div class="grid g2 mb16">' + UI.card('Km por día', cols, { sub: per.nombre }) +
+        UI.card('Por encima de ' + lim + ' km/h', tablaEx, { flush: true, sub: exs.length > 8 ? 'Los 8 más rápidos de ' + exs.length : '' }) + '</div>' +
+      this.gpsViajes(R, precio, true) +
+      UI.card(per.modo === 'mes' ? 'Su mes, día por día' : 'Su semana, día por día', semana,
+        { sub: 'Paradas de ' + (+Config.gps.paradaMin || 45) + ' min o más, y desde 10 min en los lugares con nombre · verde: entrega · morado: planta · azul: base' });
+  },
+
   /* ----------------------------------------------------------- Conductores
      Salen de Recursos Humanos (Juan, 01/11/2026, ver ConductoresRH): aquí no
      se crean ni se retiran */
@@ -8115,6 +8773,17 @@ Object.assign(Vistas, {
           '<div class="field mb0"><label>Se revisan en comparendos</label>' + ORDEN.map(tp => '<label class="flex aic g8 mt8" style="cursor:pointer;font-size:13px">' +
             '<input type="checkbox" data-act="cfgComp" data-tp="' + tp + '"' + (Config.comparendos.includes(tp) ? ' checked' : '') + '>' + esc(TIPOS[tp].plural) + '</label>').join('') + '</div>') +
       '</div>' +
+      /* El GPS (ver GPS): el límite de velocidad lo pone Flota (Juan, 02/11/2026) */
+      UI.card('GPS', '<div class="grid g3">' +
+          '<div class="field mb0"><label>Límite de velocidad</label><div class="flex aic g8"><input class="inp" type="number" min="30" max="150" step="5" id="cfgGpsLim" value="' +
+            Config.gps.limite + '" style="width:90px"><span class="txt-2">km/h</span></div><div class="hint">Lo que pase de aquí sale en rojo en el área GPS.</div></div>' +
+          '<div class="field mb0"><label>Ralentí</label><div class="flex aic g8"><input class="inp" type="number" min="0" max="5" step="0.1" id="cfgGpsGal" value="' +
+            Config.gps.ralentiGal + '" style="width:90px"><span class="txt-2">galones por hora</span></div>' +
+            '<div class="hint">Para estimar lo que cuesta el tiempo con el motor encendido sin moverse.</div></div>' +
+          '<div class="field mb0"><label>Parada larga</label><div class="flex aic g8"><input class="inp" type="number" min="10" max="240" step="5" id="cfgGpsPar" value="' +
+            Config.gps.paradaMin + '" style="width:90px"><span class="txt-2">minutos o más</span></div>' +
+            '<div class="hint">Las que cuentan en «Dónde paran». En los lugares con nombre, desde 10 minutos.</div></div>' +
+        '</div>', { cls: 'mb16', sub: 'Los recorridos que se cargan en el área GPS' }) +
       /* Las partes de cada dibujo del plano de mantenimiento (ver PlanoCfg) */
       UI.card('Planos de mantenimiento', '<div id="cfgPlanos"></div>',
         { cls: 'mb16', sub: 'Las partes de cada dibujo, la parte de cada pregunta del preoperacional y el dibujo de cada clase' }) +
@@ -8170,6 +8839,17 @@ Object.assign(Vistas, {
           Shell.nav('configuracion');
           Toast.show('Ahora queda para revisar el kilometraje que suba más de <b>' + esc(v.toLocaleString('es-CO')) + ' km</b> por día.');
         });
+        /* El GPS: se guarda al cambiar, como lo demás de esta tarjeta */
+        [['#cfgGpsLim', 'limite', 30, 150, 80, v => 'Ahora el límite de velocidad es <b>' + v + ' km/h</b>.'],
+          ['#cfgGpsGal', 'ralentiGal', 0, 5, 0.8, v => 'Ahora el ralentí gasta <b>' + String(v).replace('.', ',') + ' galones por hora</b>.'],
+          ['#cfgGpsPar', 'paradaMin', 10, 240, 45, v => 'Ahora una parada es larga desde <b>' + v + ' minutos</b>.']].forEach(([sel, k, min, max, def, txt]) =>
+          $(sel).addEventListener('change', e => {
+            const n = parseFloat(String(e.target.value).replace(',', '.'));
+            const v = isFinite(n) ? Math.max(min, Math.min(max, Math.round(n * 10) / 10)) : def;
+            e.target.value = v;
+            Config.gps = Object.assign({}, Config.gps, { [k]: v });
+            Toast.show(txt(v));
+          }));
         ['#cfgRinMin', '#cfgRinMax'].forEach(sel => $(sel).addEventListener('change', () => {
           const lee = (s, def) => { const v = Math.round(+$(s).value * 2) / 2; return v >= 1 && v <= 40 ? v : def; };
           const min = lee('#cfgRinMin', Config.rendimiento.min), max = lee('#cfgRinMax', Config.rendimiento.max);
@@ -8528,6 +9208,146 @@ Object.assign(Ventanas, {
   /* Cargar el informe de Distracom (ver Tanqueos): se escogen o se arrastran uno
      o varios CSV (Fleet Control da máximo un mes por archivo), se ve qué trae
      cada uno y nada se guarda hasta «Guardar» */
+  /* Cargar los recorridos del GPS (ver GPS): uno o varios JSON de «Recorridos
+     y paradas», tal como salen. Antes de guardar se ve qué traen */
+  cargaGps() {
+    const m = Modal.abrir({
+      titulo: 'Cargar recorridos del GPS', sub: 'El informe «Recorridos y paradas» del GPS, en JSON y tal como sale', ancho: 'wide', sinFoco: true,
+      cuerpo: Dz.html('gpDz', 'Escoja o arrastre los archivos', 'Uno o varios JSON del GPS, sin editarlos: por ejemplo, las dos quincenas de un mes. Lo que ya estaba no se repite',
+        '.json,application/json', true) + '<div id="gpPrev"></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarGps" disabled>' + Icon('save', '', 14) + 'Guardar</button>'
+    });
+    Dz.bind('gpDz', files => this.previaGps(m, files));
+  },
+  async previaGps(m, files) {
+    const caja = $('#gpPrev', m), g = $('[data-act="guardarGps"]', m), aviso = (k, ic, t) => '<div class="alert a-' + k + ' mt12">' + Icon(ic) + '<div>' + t + '</div></div>';
+    files = [].concat(files);
+    g.disabled = true;
+    g.innerHTML = Icon('save', '', 14) + 'Guardar';
+    m._gps = null;
+    /* Los archivos solo se leen: no se guardan en ninguna parte */
+    $('#gpDzF', m).innerHTML = files.map(f => '<div class="dz-file">' + Icon('file', '', 15) + '<span class="f1 trunc">' + esc(f.name) + '</span>' +
+      '<span class="txt-3 fs11 nowrap">' + Peso.txt(f.size) + ' · solo se lee, no se guarda</span></div>').join('');
+    caja.innerHTML = aviso('info', 'info', 'Leyendo los archivos…');
+    const leidos = [];
+    for (const f of files) leidos.push({ f, r: GPS.leer(await f.text()) });
+    if (!document.body.contains(m)) return;
+    /* Cada equipo con sus tramos de todos los archivos, sin repetir: lo que
+       viene en dos archivos va una vez */
+    const equipos = new Map();
+    let malas = 0, enDos = 0;
+    leidos.forEach(x => {
+      malas += x.r.malas;
+      x.r.equipos.forEach(e => {
+        const q = equipos.get(e.nombre) || { nombre: e.nombre, tramos: new Map() };
+        e.tramos.forEach(t => { const k = t.a + '-' + t.tipo; if (q.tramos.has(k)) enDos++; else q.tramos.set(k, Object.assign({ archivo: x.f.name }, t)); });
+        equipos.set(e.nombre, q);
+      });
+    });
+    const raros = leidos.filter(x => x.r.raro), generales = leidos.filter(x => x.r.general);
+    const avisosArch = (raros.length ? aviso('warn', 'warn', '<b>' + (raros.length === 1 ? 'Un archivo no es del GPS y no se lee' : raros.length + ' archivos no son del GPS y no se leen') +
+        ':</b> ' + raros.map(x => esc(x.f.name)).join(', ') + '.') : '') +
+      (generales.length ? aviso('warn', 'warn', '<b>' + (generales.length === 1 ? 'Un archivo es' : generales.length + ' archivos son') + ' el informe «Información general»</b>, que no trae los tramos: ' +
+        generales.map(x => esc(x.f.name)).join(', ') + '. En el GPS, baje «Recorridos y paradas».') : '');
+    const lista = Array.from(equipos.values()).map(q => { const u = GPS.unidadDe(q.nombre);
+      return { nombre: q.nombre, tramos: Array.from(q.tramos.values()).sort((a, b) => a.a - b.a), u, sug: u ? null : GPS.sugerida(q.nombre) }; })
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+    const todos = [].concat.apply([], lista.map(q => q.tramos));
+    if (!todos.length) {
+      caja.innerHTML = avisosArch || aviso('warn', 'warn', '<b>Los archivos no traen recorridos.</b> ¿Es el informe «Recorridos y paradas» del GPS?');
+      return;
+    }
+    const desde = Math.min.apply(null, todos.map(t => t.a)), hasta = Math.max.apply(null, todos.map(t => t.b));
+    let ya;
+    try { ya = await GPS.yaEstan(desde, hasta); } catch (e) {
+      if (document.body.contains(m)) caja.innerHTML = aviso('warn', 'warn', GPS.falta(e) ? '<b>Todavía no se puede cargar.</b> Falta correr en Supabase el SQL 028.'
+        : '<b>No se pudo revisar lo que ya estaba cargado.</b> ' + esc(e.message || ''));
+      return;
+    }
+    if (!document.body.contains(m)) return;
+    m._gps = { lista, ya };
+    const kmDe = q => q.tramos.reduce((s, t) => s + t.km, 0);
+    const propia = q => q.u && GPS.clave(q.u.placa) === GPS.clave(q.nombre);
+    const dato = (l, v, s) => '<div class="oc-dato"><div class="l">' + esc(l) + '</div><div class="v">' + esc(v) + '</div>' + (s ? '<div class="m">' + esc(s) + '</div>' : '') + '</div>';
+    caja.innerHTML = avisosArch + '<div class="oc-datos mt12">' +
+        dato('Fechas', GPS.diaCorto(GPS.dia(desde)) + ' a ' + GPS.diaCorto(GPS.dia(hasta - 1)), leidos.length + (leidos.length === 1 ? ' archivo' : ' archivos')) +
+        dato('Equipos', String(lista.length), lista.filter(q => !propia(q)).length ? lista.filter(q => !propia(q)).length + ' con otro nombre en el GPS' : 'Todos con su placa') +
+        dato('Tramos', todos.length.toLocaleString('es-CO'), Math.round(todos.reduce((s, t) => s + t.km, 0)).toLocaleString('es-CO') + ' km') + '</div>' +
+      (enDos ? aviso('info', 'info', enDos.toLocaleString('es-CO') + (enDos === 1 ? ' tramo viene' : ' tramos vienen') + ' en más de un archivo y ' + (enDos === 1 ? 'va' : 'van') + ' una sola vez.') : '') +
+      (malas ? aviso('warn', 'warn', malas + (malas === 1 ? ' fila no se entendió y no se carga.' : ' filas no se entendieron y no se cargan.')) : '') +
+      '<div class="oc-sec">Por equipo</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Equipo en el GPS</th><th>Vehículo en Flota</th><th class="num">Tramos</th>' +
+        '<th class="num">Km</th><th class="num">Nuevos</th></tr></thead><tbody>' +
+      lista.map(q => '<tr><td class="mono">' + esc(q.nombre) + '</td><td>' + (propia(q) ? UI.placa(q.u) + ' <span class="txt-3 fs12">' + esc(q.u.clase) + '</span>'
+          : '<select class="inp" data-equipo="' + attr(q.nombre) + '" style="width:auto"><option value="">No cargar</option>' +
+              Opc.unidades(q.u ? q.u.id : q.sug ? q.sug.id : '', false, ['carga', 'maquinaria']) + '</select>' +
+            '<div class="dias' + (q.u ? '' : ' d-warn') + '">' + (q.u ? 'El GPS lo llama distinto: así quedó asignado'
+              : q.sug ? 'El GPS lo llama distinto: por el modelo parece este, revíselo' : 'El GPS lo llama distinto: escoja el vehículo una sola vez') + '</div>') + '</td>' +
+        '<td class="num">' + q.tramos.length.toLocaleString('es-CO') + '</td><td class="num">' + Math.round(kmDe(q)).toLocaleString('es-CO') + '</td>' +
+        '<td class="num" data-nuevos="' + attr(q.nombre) + '"></td></tr>').join('') + '</tbody></table></div>' +
+      '<div id="gpNada"></div>';
+    /* Los nuevos de cada equipo dependen del vehículo escogido */
+    const actualizar = () => {
+      let total = 0;
+      lista.forEach(q => {
+        const s = $('select[data-equipo="' + CSS.escape(q.nombre) + '"]', m), uid = s ? s.value : q.u && q.u.id;
+        const nuevos = uid ? q.tramos.filter(t => !ya.has(GPS.idDe(uid, t))).length : 0;
+        total += nuevos;
+        const celda = $('[data-nuevos="' + CSS.escape(q.nombre) + '"]', m);
+        if (celda) celda.innerHTML = uid ? (nuevos ? nuevos.toLocaleString('es-CO') : '<span class="txt-3">Ya estaban</span>') : '<span class="txt-3">No se carga</span>';
+      });
+      g.disabled = !total;
+      g.innerHTML = Icon('save', '', 14) + (total ? 'Guardar ' + total.toLocaleString('es-CO') + (total === 1 ? ' tramo' : ' tramos') : 'Guardar');
+      $('#gpNada', m).innerHTML = total ? '' : aviso('info', 'info', 'Todo lo de estos archivos ya estaba cargado: no hay nada nuevo.');
+    };
+    $$('select[data-equipo]', m).forEach(s => s.addEventListener('change', actualizar));
+    actualizar();
+  },
+  /* Los lugares del GPS: nombre, tipo, lo que se lleva (en las entregas) y radio */
+  lugaresGps() {
+    const l = GPS.lugares();
+    const fila = (x, i) => '<tr data-i="' + i + '"><td><input class="inp" data-k="n" value="' + attr(x.n) + '" style="min-width:190px"></td>' +
+      '<td><select class="inp" data-k="tipo" style="width:auto">' + GPS.TIPOS.map(t => '<option' + (t === x.tipo ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></td>' +
+      '<td><input class="inp" data-k="carga" value="' + attr(x.carga || '') + '" placeholder="En las entregas" style="width:140px"></td>' +
+      '<td><input class="inp" data-k="r" type="number" min="0.1" max="50" step="0.1" value="' + (+x.r || 1) + '" style="width:80px"></td>' +
+      '<td class="nowrap txt-3 fs12">' + esc(GPS.pueblo(x.la, x.lo)) + '</td>' +
+      '<td class="tr"><button class="btn btn-sm btn-ghost btn-icon" data-act="quitarLugarFila" title="Quitar este lugar" aria-label="Quitar este lugar">' + Icon('trash', '', 14) + '</button></td></tr>';
+    const m = Modal.abrir({
+      titulo: 'Lugares del GPS', ancho: 'wide', sinFoco: true,
+      sub: 'Cada parada sale con el nombre del lugar donde cae. Los nuevos se agregan con «Nombrar», en «Dónde paran».',
+      cuerpo: (l.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nombre</th><th>Tipo</th><th>Lleva</th><th>Radio (km)</th><th>Cerca de</th><th></th></tr></thead>' +
+          '<tbody id="lgFilas">' + l.map(fila).join('') + '</tbody></table></div>' : UI.empty('pin', 'Sin lugares', 'Se agregan con «Nombrar», en «Dónde paran».')) +
+        '<div class="hint mt8">El tipo dice qué se hace ahí: en la base duermen, en la planta cargan y en las entregas descargan lo que llevan (aceite, almendra…). ' +
+          'El radio dice qué tan grande es el sitio.</div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarLugares" disabled>' + Icon('save', '', 14) + 'Guardar</button>'
+    });
+    m._lugares = l.map(x => Object.assign({}, x));
+    const g = $('[data-act="guardarLugares"]', m);
+    m._cambio = () => { g.disabled = estable(this.leerLugares(m)) === estable(m._lugares); };
+    m.addEventListener('input', m._cambio);
+    m.addEventListener('change', m._cambio);
+  },
+  leerLugares(m) {
+    return $$('#lgFilas tr', m).filter(tr => !tr.classList.contains('quitado')).map(tr => {
+      const o = m._lugares[+tr.dataset.i], v = k => $('[data-k="' + k + '"]', tr).value;
+      const r = Math.max(0.1, Math.min(50, +v('r') || +o.r || 1));
+      return Object.assign({}, o, { n: v('n').trim() || o.n, tipo: v('tipo'), carga: v('carga').trim(), r: Math.round(r * 10) / 10 });
+    });
+  },
+  /* Ponerle nombre a un sitio donde paran (desde «Dónde paran») */
+  nombrarLugar(la, lo) {
+    const m = Modal.abrir({
+      titulo: 'Nombrar este lugar', sub: esc(GPS.pueblo(la, lo)) + ' · desde ahora, cada parada aquí sale con este nombre',
+      cuerpo: '<div class="field"><label>Nombre</label><input class="inp" id="nlN" placeholder="Ej.: Finca La Esperanza"></div>' +
+        '<div class="row"><div class="field"><label>Tipo</label><select class="inp" id="nlT">' + GPS.TIPOS.map(t => '<option>' + t + '</option>').join('') + '</select></div>' +
+        '<div class="field"><label>Radio</label><div class="flex aic g8"><input class="inp" id="nlR" type="number" min="0.1" max="50" step="0.1" value="1" style="width:90px">' +
+          '<span class="txt-2">km</span></div></div></div>' +
+        '<div class="field mb0"><label>Lo que se lleva <span class="txt-3">(solo en las entregas)</span></label><input class="inp" id="nlC" placeholder="Ej.: Aceite"></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarLugarNuevo" data-la="' + la + '" data-lo="' + lo + '" disabled>' +
+        Icon('save', '', 14) + 'Guardar</button>'
+    });
+    const n = $('#nlN', m), g = $('[data-act="guardarLugarNuevo"]', m);
+    n.addEventListener('input', () => { g.disabled = !n.value.trim(); });
+  },
   cargaDistracom() {
     const m = Modal.abrir({
       titulo: 'Cargar tanqueos de Distracom', sub: 'El informe «Detalle Tanqueo A Tanqueo» de Fleet Control, en CSV y tal como sale', ancho: 'wide', sinFoco: true,
@@ -9392,6 +10212,101 @@ Object.assign(Acciones, {
     Router.pintar(true);
   },
   /* Los tanqueos de Distracom (ver Tanqueos) */
+  /* ---------------------------------------------------------------- El GPS */
+  cargarGps() {
+    if (GPS.estado === 'falta') { Toast.show('Todavía no se puede: falta correr en Supabase el SQL 028.', 'warn'); return; }
+    Ventanas.cargaGps();
+  },
+  async guardarGps(el) {
+    const m = el.closest('.modal-bd'), x = m && m._gps;
+    if (!x || el.disabled) return;
+    /* Los equipos que el GPS llama distinto quedan asignados para las próximas cargas */
+    const asign = {};
+    $$('select[data-equipo]', m).forEach(s => { asign[s.dataset.equipo] = s.value; });
+    const nuevos = {};
+    Object.keys(asign).forEach(k => { if (asign[k] && asign[k] !== (Config.gps.equipos || {})[k]) nuevos[k] = asign[k]; });
+    if (Object.keys(nuevos).length) Config.gps = Object.assign({}, Config.gps, { equipos: Object.assign({}, Config.gps.equipos, nuevos) });
+    const filas = [];
+    x.lista.forEach(q => {
+      const uid = q.nombre in asign ? asign[q.nombre] : q.u && q.u.id;
+      if (!uid) return;
+      q.tramos.forEach(t => { const f = GPS.fila(uid, t, t.archivo); if (!x.ya.has(f.id)) filas.push(f); });
+    });
+    if (!filas.length) return;
+    el.disabled = true;
+    try {
+      await GPS.guardar(filas, (i, n) => { el.innerHTML = Icon('save', '', 14) + 'Guardando… ' + Math.round(i / n * 100) + ' %'; });
+    } catch (e) {
+      el.disabled = false;
+      el.innerHTML = Icon('save', '', 14) + 'Guardar';
+      Toast.show(GPS.falta(e) ? 'Todavía no se puede: falta correr en Supabase el SQL 028.' : 'No se guardaron los recorridos: ' + esc(e.message || 'error') + '. Intente otra vez.', 'err');
+      return;
+    }
+    Modal.cerrar(m);
+    const ultimo = Math.max.apply(null, filas.map(f => Date.parse(f.fin) / 1000));
+    Toast.show('Listo: se guardaron <b>' + filas.length.toLocaleString('es-CO') + (filas.length === 1 ? ' tramo' : ' tramos') + '</b> del GPS.');
+    UIState.gps.desde = GPS.periodo(UIState.gps.modo, GPS.dia(ultimo - 1)).desdeIso;
+    if (Router.actual().vista === 'gps') Router.pintar(true); else Router.ir('gps');
+  },
+  /* Semana o mes: se queda en las mismas fechas */
+  gpsModo(el) {
+    const v = el.dataset.v, actual = GPS.actual();
+    UIState.gps.modo = v;
+    UIState.gps.desde = GPS.periodo(v, actual.desdeIso).desdeIso;
+    Router.pintar(true);
+  },
+  gpsReintentar() { GPS.olvidar(); Router.pintar(true); },
+  lugaresGps() { Ventanas.lugaresGps(); },
+  quitarLugarFila(el) {
+    const tr = el.closest('tr'), m = el.closest('.modal-bd');
+    tr.classList.toggle('quitado');
+    if (m && m._cambio) m._cambio();
+  },
+  guardarLugares(el) {
+    const m = el.closest('.modal-bd');
+    if (!m || el.disabled) return;
+    const l = Ventanas.leerLugares(m);
+    Config.gps = Object.assign({}, Config.gps, { lugares: l });
+    Modal.cerrar(m);
+    Toast.show('Listo: quedan <b>' + l.length + (l.length === 1 ? ' lugar' : ' lugares') + '</b> con nombre.');
+    Router.pintar(true);
+  },
+  nombrarLugar(el) { Ventanas.nombrarLugar(+el.dataset.la, +el.dataset.lo); },
+  guardarLugarNuevo(el) {
+    const m = el.closest('.modal-bd'), n = $('#nlN', m).value.trim();
+    if (!n) return;
+    const r = Math.max(0.1, Math.min(50, +$('#nlR', m).value || 1));
+    const x = { id: 'l' + marca().toString(36), n, tipo: $('#nlT', m).value, carga: $('#nlC', m).value.trim(), la: +el.dataset.la, lo: +el.dataset.lo, r: Math.round(r * 10) / 10 };
+    Config.gps = Object.assign({}, Config.gps, { lugares: GPS.lugares().concat([x]) });
+    Modal.cerrar(m);
+    Toast.show('Listo: las paradas ahí salen como <b>' + esc(n) + '</b>.');
+    Router.pintar(true);
+  },
+  /* Quitar lo de un archivo (por ejemplo, si un equipo quedó en el vehículo
+     que no era): se puede volver a cargar */
+  quitarArchivoGps(el) {
+    const a = GPS.archivos.find(x => x.archivo === el.dataset.a);
+    if (!a) return;
+    Modal.abrir({
+      titulo: 'Quitar lo de este archivo', sub: esc(a.archivo), sinFoco: true,
+      cuerpo: '<div class="alert a-warn">' + Icon('warn') + '<div><b>Se quitan ' + a.tramos.toLocaleString('es-CO') + ' tramos</b>, del ' + esc(GPS.diaCorto(GPS.dia(a.desde))) + ' al ' +
+        esc(GPS.diaCorto(GPS.dia(a.hasta - 1))) + '. El archivo se puede volver a cargar.</div></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-danger" data-act="confirmarQuitarArchivoGps" data-a="' + attr(a.archivo) + '">' +
+        Icon('trash', '', 14) + 'Quitar</button>'
+    });
+  },
+  async confirmarQuitarArchivoGps(el) {
+    if (el.disabled) return;
+    el.disabled = true;
+    try { await GPS.quitarArchivo(el.dataset.a); } catch (e) {
+      el.disabled = false;
+      Toast.show('No se pudo quitar: ' + esc(e.message || 'error') + '.', 'err');
+      return;
+    }
+    Modal.cerrarTodo();
+    Toast.show('Listo: se quitó lo de <b>' + esc(el.dataset.a) + '</b>.');
+    Router.pintar(true);
+  },
   cargarDistracom() {
     if (Sincro.sinTanqueos) { Toast.show('Todavía no se puede: falta correr en Supabase el SQL 023.', 'warn'); return; }
     Ventanas.cargaDistracom();
@@ -12983,6 +13898,7 @@ const Mapa = {
     poner('configuracion', { clave: 'dias_aviso', valor: config.diasAviso });
     poner('configuracion', { clave: 'km_dia', valor: config.kmDia });
     poner('configuracion', { clave: 'rendimiento', valor: config.rendimiento });
+    poner('configuracion', { clave: 'gps', valor: config.gps });
     if (Object.keys(config.placasDistracom || {}).length) poner('configuracion', { clave: 'distracom_placas', valor: config.placasDistracom });
     poner('configuracion', { clave: 'documentos_obligatorios', valor: config.req });
     poner('configuracion', { clave: 'comparendos', valor: config.comparendos });
@@ -13059,6 +13975,8 @@ const Mapa = {
       kmDia: cfg.km_dia != null ? cfg.km_dia : Config.kmDia,
       rendimiento: cfg.rendimiento && typeof cfg.rendimiento === 'object' && cfg.rendimiento.min < cfg.rendimiento.max ? cfg.rendimiento : Config.rendimiento,
       placasDistracom: cfg.distracom_placas && typeof cfg.distracom_placas === 'object' ? cfg.distracom_placas : {},
+      /* Lo guardado en la nube manda sobre los valores de siempre */
+      gps: Object.assign({}, Config.gps, cfg.gps && typeof cfg.gps === 'object' ? cfg.gps : {}),
       req: cfg.documentos_obligatorios || Config.req,
       comparendos: cfg.comparendos || Config.comparendos,
       planos: cfg.planos && typeof cfg.planos === 'object' ? cfg.planos : Config.planos || {},
