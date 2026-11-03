@@ -5508,7 +5508,36 @@ const Compras = {
       }).join('') : '<div class="oc-vacia">' + esc(vacia || 'Este vehículo no tiene órdenes en Facturación.') + '</div>';
     };
     pintar();
-    if (this.estado !== 'listo') this.traer().then(() => pintar(true));
+    /* Mientras la lista esté abierta se pone al día sola (ver vigilarListas):
+       sale lo que se acabe de crear en Facturación, sin perder lo marcado */
+    caja._pintar = pintar;
+    this._abiertas.add(caja);
+    this.vigilarListas();
+    if (this.estado !== 'listo' || Date.now() - this._cuando > 15000) this.traer(true).then(() => this.repintar());
+  },
+  /* Las listas de órdenes abiertas en una ventana (ver escoger) */
+  _abiertas: new Set(),
+  repintar() {
+    this._abiertas.forEach(c => { if (document.body.contains(c)) c._pintar(true); else this._abiertas.delete(c); });
+  },
+  /* Con alguna abierta, las órdenes se traen cada 20 segundos y apenas se
+     vuelve a la pestaña (por ejemplo, después de crear la orden en
+     Facturación). Cuando ya no hay ninguna, se deja de mirar */
+  vigilarListas() {
+    if (this._vigila) return;
+    const vuelta = () => {
+      this._abiertas.forEach(c => { if (!document.body.contains(c)) this._abiertas.delete(c); });
+      if (!this._abiertas.size) {
+        clearInterval(this._vigila);
+        this._vigila = null;
+        document.removeEventListener('visibilitychange', this._alVolver);
+        return;
+      }
+      if (!document.hidden) this.traer(true).then(cambio => { if (cambio) this.repintar(); });
+    };
+    this._alVolver = () => { if (!document.hidden) vuelta(); };
+    this._vigila = setInterval(vuelta, 20000);
+    document.addEventListener('visibilitychange', this._alVolver);
   },
   /* Lo marcado en esa lista. Lo que el arreglo ya tenía y no salió en ella
      (porque la lista no llegó o porque la orden ya no está) se conserva. */
