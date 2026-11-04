@@ -1471,6 +1471,30 @@ html[data-theme="dark"] .plano .alerta circle{stroke:var(--surface)}
 .uc-zs .chip b,.uc-f b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
 .tab-ic{display:inline-flex;align-items:center;gap:6px}
 .m-partes{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+/* Taller SINUGRAVAS: todas las filas del mismo alto; lo largo en uno o dos renglones (completo al pasar el mouse) */
+.tbl-mant .m-1l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbl-mant .m-trab{max-width:300px}
+.tbl-mant .m-val{max-width:230px;margin-left:auto}
+.tbl-mant .m-2l{max-width:240px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tbl-mant .m-pila{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+/* La unidad se abre con un clic: se marca al pasar el mouse */
+.tbl-mant .m-uni{cursor:pointer}
+.tbl-mant .m-uni .who{border-radius:8px;padding:4px 8px;margin:-4px -8px;max-width:290px;transition:background var(--t-fast)}
+.tbl-mant .m-uni:hover .who{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.tbl-mant .m-uni:hover .who-t b{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+/* La ficha corta del vehículo (ver Ventanas.vehiculo) */
+.vh-top{display:flex;gap:14px;align-items:center}
+.vh-foto{flex:0 0 150px;height:96px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--surface-3);display:flex;align-items:center;justify-content:center}
+.vh-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.vh-foto .ph svg{width:84%}
+.vh-dat{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.vh-pills,.vh-docs{display:flex;flex-wrap:wrap;gap:6px}
+.vh-km{display:flex;align-items:baseline;gap:8px;font-size:12.5px;color:var(--text-3)}
+.vh-km b{font-size:15px;color:var(--text);font-variant-numeric:tabular-nums}
+.vh-km em{font-style:normal}
+.vh-sec{margin-top:16px}
+.vh-sec > .l{display:block;font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.vh-sec .mrow{border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px}
 /* La barra de arriba del plano, la leyenda y las partes en lista */
 .pl-tit{display:flex;align-items:center;gap:12px;min-width:0}
 .pl-tit h1{font-size:18px}
@@ -2755,6 +2779,8 @@ const Fecha = {
   rel(n) { const d = new Date(HOY); d.setDate(d.getDate() + n); return this.iso(d); },
   parse(s) { const p = String(s).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); },
   corta(s) { return s ? this.parse(s).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'; },
+  /* 04/11/2026 */
+  num(s) { return s ? s.split('-').reverse().join('/') : '—'; },
   larga(s) { return s ? this.parse(s).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'; },
   hasta(s) { return Math.round((this.parse(s) - HOY) / 864e5); },
   hace(s) {
@@ -3551,7 +3577,8 @@ const Actividad = {
     Datos.mantenimientos.filter(m => m.unidad === u.id).forEach(m => ev.push({
       fecha: m.fecha, hora: m.hora, ts: m.ts, tipo: m.tipo,
       titulo: (m.tipo === 'preventivo' ? 'Mantenimiento preventivo: ' : 'Mantenimiento correctivo: ') + m.trabajo,
-      det: [prov(m), m.lectura, Compras.valorTxt(m), m.tipo === 'correctivo' ? (m.estado === 'taller' ? 'sigue en el taller' : m.salida ? 'salió el ' + Fecha.corta(m.salida) : '') : '',
+      det: [prov(m), m.lectura, Compras.valorTxt(m), m.tipo === 'correctivo' ? (m.estado === 'programado' ? 'programado para el ' + Programado.txt(Programado.de(m), true)
+        : m.estado === 'taller' ? 'sigue en el taller' : m.salida ? 'salió el ' + Fecha.corta(m.salida) : '') : '',
         m.fotos ? m.fotos + ' fotos' : ''].filter(Boolean).join(' · '),
       adjuntos: Adjuntos.de(m).map(a => ({ n: a.nombre, id: a.id })) }));
     Datos.inspecciones.filter(i => i.unidad === u.id).forEach(i => {
@@ -3781,7 +3808,7 @@ const UI = {
     const u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', valor = Compras.deArreglo(m).valor;
     return '<div class="tl-i" style="--c:' + (prev ? 'var(--info-500)' : 'var(--warn-500)') + '"><span class="tl-dot">' + Icon(prev ? 'tool' : 'camera', '', 10) + '</span>' +
       '<div class="tl-h">' + this.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + '<b>' + esc(Avances.titulo(m)) + '</b>' +
-        (m.estado === 'taller' ? this.pill('bad', 'En taller') : '') + '</div>' +
+        (m.estado === 'taller' ? this.pill('bad', 'En taller') : m.estado === 'programado' ? this.pill('violet', 'Programado · ' + Programado.txt(Programado.de(m), true)) : '') + '</div>' +
       '<div class="tl-m">' + esc(Fecha.larga(m.fecha)) + (m.salida ? ' a ' + esc(Fecha.larga(m.salida)) : '') + ' · ' + esc(this.provTxt(m)) +
         (m.lectura ? ' · ' + esc(m.lectura) : '') + (valor ? ' · ' + Money.format(valor) : '') + (conUnidad && u ? ' · ' + esc(this.placaTxt(u)) : '') + '</div>' +
       (m.falla ? '<div class="tl-m">Qué pasó: ' + esc(m.falla) + '</div>' : '') + Avances.lista(m) +
@@ -3791,7 +3818,9 @@ const UI = {
         (m.oc ? '<span class="chip">' + Icon('cart', '', 12) + esc(m.oc) + '</span>' : '') + this.chipsOrdenes(m, 12) + Pendiente.chips(m, 12) +
         '<button class="btn btn-sm" data-act="' + (prev ? 'pdfPreventivo' : 'pdfCorrectivo') + '" data-m="' + attr(m.id) + '" title="' +
           (prev ? 'El PDF del preventivo' : 'El PDF del arreglo, con sus fotos') + '">' + Icon('pdf', '', 12) + 'Ver PDF</button>' +
-        (m.estado === 'taller' ? '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + m.id + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
+        (m.estado === 'programado' ? '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + m.id + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
+          '<button class="btn btn-sm btn-primary" data-act="ingresoArreglo" data-m="' + m.id + '">' + Icon('check', '', 12) + 'Ingresó</button>'
+          : m.estado === 'taller' ? '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + m.id + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
           '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + m.id + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>'
           : '<button class="btn btn-sm" data-act="editarMant" data-m="' + attr(m.id) + '" title="Corregir lo guardado">' + Icon('edit', '', 12) + 'Editar</button>') +
       '</div></div>';
@@ -7149,7 +7178,7 @@ const Plano = {
   itemTl(u, m, k, marcar) {
     const prev = m.tipo === 'preventivo', c = this.costo(m), otras = (m.partes || []).filter(r => r.k !== k);
     return '<div class="pm-tl-i"><div class="pm-tl-f"><span>' + esc(Fecha.corta(m.fecha)) + '</span>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') +
-        (m.estado === 'taller' ? UI.pill('bad', 'En taller') : '') + '<span class="v">' + (c ? esc(Money.format(c)) : '—') + '</span></div>' +
+        (m.estado === 'taller' ? UI.pill('bad', 'En taller') : m.estado === 'programado' ? UI.pill('violet', 'Programado') : '') + '<span class="v">' + (c ? esc(Money.format(c)) : '—') + '</span></div>' +
       '<div class="pm-tl-t">' + esc(Avances.titulo(m)) + (m.componente ? '<span> · ' + esc(m.componente) + '</span>' : '') + '</div>' +
       (m.falla ? '<div class="pm-tl-q"><span>Qué pasó:</span> ' + esc(m.falla) + '</div>' : '') + Avances.lista(m) +
       '<div class="pm-tl-m">' + UI.chipsProv(m, 11) +
@@ -7164,7 +7193,9 @@ const Plano = {
         ((m.novedades || []).length ? '<span class="chip">' + Icon('checkSquare', '', 11) + 'Vino del preoperacional</span>' : '') +
         (otras.length ? (k === null ? '<span class="chip">' + Icon('tool', '', 11) + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>'
           : '<span class="chip" title="Este arreglo también tocó otras partes">También: ' + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>') : '') +
-        (m.estado === 'taller' ? '<button type="button" class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
+        (m.estado === 'programado' ? '<button type="button" class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
+          '<button type="button" class="btn btn-sm" data-act="ingresoArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Ingresó</button>'
+          : m.estado === 'taller' ? '<button type="button" class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
           '<button type="button" class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>'
           : '<button type="button" class="btn btn-sm" data-act="editarMant" data-m="' + attr(m.id) + '" title="Corregir lo guardado">' + Icon('edit', '', 12) + 'Editar</button>') +
         (marcar ? '<button type="button" class="btn btn-sm" data-act="asignarPartes" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Marcar la parte</button>' : '') +
@@ -7392,13 +7423,14 @@ const NovLista = {
   },
   /* Abiertas: su caso, cómo va, y el enlace para verlo en el taller */
   filaAbierta(c) {
-    const m = c.m, prev = m.tipo === 'preventivo', a = Avances.ultima(m), taller = m.estado === 'taller';
+    const m = c.m, prev = m.tipo === 'preventivo', a = Avances.ultima(m), taller = m.estado === 'taller', prog = m.estado === 'programado';
     return '<tr><td class="nowrap">' + esc(Fecha.corta(c.fecha)) + '<div class="dias">' + this.origen(c.i) + '</div></td>' +
       this.celdaU(c.u) + this.celdaNov(c.u, c.texto, '', '', m.partes || []) +
       '<td><span class="link" data-act="irCaso" data-m="' + attr(m.id) + '" title="Verlo en «Taller SINUGRAVAS»">' + esc((m.numero ? m.numero + ' · ' : '') + (prev ? 'Preventivo' : 'Correctivo')) + '</span>' +
-        '<div class="dias">' + esc(taller ? (a ? 'Último avance ' + Avances.cuando(a) + (a.t ? ': ' + a.t : '') : 'Abierto el ' + Fecha.corta(m.fecha) + ', sin avances todavía')
+        '<div class="dias">' + esc(prog ? 'Programado para el ' + Programado.txt(Programado.de(m), true) + (a ? ' · último avance ' + Avances.cuando(a) : '')
+          : taller ? (a ? 'Último avance ' + Avances.cuando(a) + (a.t ? ': ' + a.t : '') : 'Abierto el ' + Fecha.corta(m.fecha) + ', sin avances todavía')
           : (prev ? 'Hecho el ' + Fecha.corta(m.fecha) : 'Salió del taller el ' + Fecha.corta(m.salida || m.fecha))) + '</div></td>' +
-      '<td>' + UI.pill(taller ? 'bad' : 'ok', taller ? 'En el taller' : 'Terminado') + '</td>' +
+      '<td>' + (prog ? UI.pill('violet', 'Programado') : UI.pill(taller ? 'bad' : 'ok', taller ? 'En el taller' : 'Terminado')) + '</td>' +
       '<td class="tr nowrap">' + this.ojo(c.preop) + '</td></tr>';
   }
 };
@@ -7682,6 +7714,8 @@ const Avances = {
   /* El título del arreglo en las listas: lo que se hizo o, si va por anotaciones, cuántas lleva */
   titulo(m) {
     const n = (m.notas || []).length;
+    /* Un programado: lo que presenta y, si los tiene, sus avances */
+    if (m.estado === 'programado') return m.trabajo || [m.falla || 'Programado', n ? n + (n === 1 ? ' avance' : ' avances') : ''].filter(Boolean).join(' · ');
     return m.trabajo || (n ? (m.estado === 'taller' ? 'En el taller' : 'Reparación') + ' · ' + n + (n === 1 ? ' avance' : ' avances')
       : m.estado === 'taller' ? 'En el taller, sin avances todavía' : 'Sin descripción');
   },
@@ -7921,6 +7955,32 @@ const TallerRep = {
    tiempo de la ficha, en la historia de cada parte y en el historial, con su
    aviso y su filtro). Se ponen con «Editar», «Anotar avance» o «Terminar
    arreglo». Solo los correctivos */
+/* Un correctivo «Programado» (Juan, 04/11/2026): hoy el vehículo no está en
+   el taller, pero ya tiene día y hora para entrar. Se le pueden anotar
+   avances; cuando llega, «Ingresó» lo pasa a «Sigue en el taller» y sigue como
+   siempre. La cita queda en m.programado ({ f, h }), también después de que
+   ingresa, para el historial y el PDF. No cuenta como «en el taller» */
+const Programado = {
+  hora(h) {
+    if (!h) return '';
+    const [a, b] = h.split(':').map(Number);
+    return (a % 12 || 12) + ':' + String(b || 0).padStart(2, '0') + (a < 12 ? ' a. m.' : ' p. m.');
+  },
+  dia: f => Fecha.parse(f).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' }).replace(',', ''),
+  de: m => m.programado || { f: m.fecha, h: '' },
+  /* «jueves 6 de noviembre, 7:00 a. m.»; corto: «06/11/2026 · 7:00 a. m.» */
+  txt(c, corto) { return c && c.f ? (corto ? Fecha.num(c.f) : this.dia(c.f)) + (c.h ? (corto ? ' · ' : ', ') + this.hora(c.h) : '') : ''; },
+  /* Cuánto falta para la cita: «hoy», «mañana», «en 3 días»; si ya pasó, «ayer», «hace 2 días» */
+  falta(f) { const n = Fecha.hasta(f); return n === 0 ? 'hoy' : n === 1 ? 'mañana' : n > 1 ? 'en ' + n + ' días' : n === -1 ? 'ayer' : 'hace ' + -n + ' días'; },
+  vencido: m => m.estado === 'programado' && m.fecha < hoyISO,
+  /* En el formulario: con «Programado», «Entra al taller» con su hora */
+  campos(m, si, r) {
+    $('#mcEL', m).textContent = si ? 'Entra al taller' : 'Entró al taller';
+    $('#mcHC', m).classList.toggle('hidden', !si);
+    if (si && r && r.programado && r.programado.h) $('#mcH', m).value = r.programado.h;
+  }
+};
+
 const Pendiente = {
   NOMBRE: { valor: 'Falta el valor', orden: 'Falta la orden', valorTaller: 'Falta el valor del taller', osTaller: 'Falta la OS del taller',
     valorRep: 'Falta el valor de los repuestos', ocRep: 'Falta la OC de los repuestos' },
@@ -7934,7 +7994,7 @@ const Pendiente = {
      TallerRep.valores). Una orden que todavía no llega de Facturación no se
      sabe de qué lado es ni cuánto vale: no se avisa por ella */
   de(m) {
-    if (m.tipo !== 'correctivo') return [];
+    if (m.tipo !== 'correctivo' || m.estado === 'programado') return [];
     const l = TallerRep.lados(m), v = TallerRep.valores(m), o = TallerRep.ordenesDe(m);
     if (!l.partido || (!l.conT && !l.conR)) return [v.total > 0 || o.dudosas ? '' : 'valor', (m.ordenes || []).length ? '' : 'orden'].filter(Boolean);
     return [l.conT && !(v.t.valor > 0) && !o.dudosas && 'valorTaller', l.conT && !o.t && !o.dudosas && 'osTaller',
@@ -8052,7 +8112,7 @@ const AvancesForm = {
    no se tocan. Guardar se prende solo si algo cambió */
 const EditarArreglo = {
   poner(m, r) {
-    const u = Q.unidad(r.unidad), taller = r.estado === 'taller', notas = (r.notas || []).length > 0;
+    const u = Q.unidad(r.unidad), taller = r.estado === 'taller', prog = r.estado === 'programado', abierto = taller || prog, notas = (r.notas || []).length > 0;
     m._editar = r.id;
     /* El plano: sus partes, sus llantas y el cambio de llanta, si lo hubo */
     PlanoForm.poner(m, u, { partes: (r.partes || []).map(x => x.k), llantas: r.llantas || [] });
@@ -8063,20 +8123,23 @@ const EditarArreglo = {
     $('#mcE', m).value = r.fecha || hoyISO;
     if ($('#mcL', m)) $('#mcL', m).value = r.lectura || '';
     /* El estado, como texto: no se cambia aquí */
-    m._estado = taller ? 'taller' : 'cerrado';
-    m._conAvances = taller || notas;
-    $('#mcEstC', m).innerHTML = '<label>Estado</label><div class="hint mt0">' + esc(taller
-      ? 'Sigue en el taller desde el ' + Fecha.larga(r.fecha) + '. Cuando salga, use «Terminar arreglo».'
+    m._estado = abierto ? r.estado : 'cerrado';
+    m._conAvances = abierto || notas;
+    Programado.campos(m, prog, r);
+    $('#mcEstC', m).innerHTML = '<label>Estado</label><div class="hint mt0">' + esc(prog
+      ? 'Programado para el ' + Programado.txt(Programado.de(r)).replace(/\.?$/, '.') + ' El día y la hora se corrigen abajo; cuando llegue, use «Ingresó».'
+      : taller ? 'Sigue en el taller desde el ' + Fecha.larga(r.fecha) + '. Cuando salga, use «Terminar arreglo».'
       : 'Terminado: salió del taller el ' + Fecha.larga(r.salida || r.fecha) + '. La fecha se corrige abajo.') + '</div>';
     /* «¿Qué se hizo?» si terminó sin avances (o si ya lo tenía escrito); los avances, si los tuvo */
     $('#mcT', m).value = r.trabajo || '';
-    $('#mcTC', m).classList.toggle('hidden', taller || (notas && !r.trabajo));
+    $('#mcTC', m).classList.toggle('hidden', abierto || (notas && !r.trabajo));
     $('#mcNC', m).classList.toggle('hidden', !m._conAvances);
-    $('#mcNC .hint', m).textContent = taller ? 'Corrija lo que haga falta y escriba lo nuevo en el último avance. Si llegaron varios, «Agregar otro avance».'
+    $('#mcNC .hint', m).textContent = abierto ? 'Corrija lo que haga falta y escriba lo nuevo en el último avance. Si llegaron varios, «Agregar otro avance».'
       : 'Los avances que tuvo el arreglo: también se pueden corregir.';
-    $('#mcSal', m).classList.toggle('hidden', taller);
-    if (!taller) $('#mcS', m).value = r.salida || r.fecha || hoyISO;
-    $('#mcFotosL', m).innerHTML = m._conAvances ? 'Fotos de cómo llegó <span class="txt-3">(opcional)</span>' : 'Fotos del arreglo';
+    $('#mcSal', m).classList.toggle('hidden', abierto);
+    if (!abierto) $('#mcS', m).value = r.salida || r.fecha || hoyISO;
+    $('#mcFotosL', m).innerHTML = prog ? 'Fotos de cómo está <span class="txt-3">(opcional)</span>'
+      : m._conAvances ? 'Fotos de cómo llegó <span class="txt-3">(opcional)</span>' : 'Fotos del arreglo';
     /* El taller y quien puso los repuestos */
     [['mcP', false], ['mcR', true]].forEach(([id, rep]) => {
       const s = $('#' + id, m), vacio = s.querySelector('option[value=""]');
@@ -8095,7 +8158,7 @@ const EditarArreglo = {
     const fotos = id => Avances.fotos(r, id).map(f => ({ id: f.id, txt: f.txt || '', src: src(f), tam: f.tam, antes: f.antes }));
     m._fotos = fotos('');
     m._av = Avances.de(r).map(n => Object.assign(AvancesForm.bloque(n.f), { id: n.id, ts: n.ts, h: n.h || '', t: n.t || '', fotos: fotos(n.id) }, n.cierre ? { cierre: true } : {}))
-      .concat(taller || !notas ? [AvancesForm.bloque(hoyISO)] : []);
+      .concat(abierto || !notas ? [AvancesForm.bloque(hoyISO)] : []);
     AvancesForm.pintar(m);
     m._pintarFotos();
     /* Sus adjuntos (ver Adjuntos) */
@@ -8121,7 +8184,7 @@ const EditarArreglo = {
      repuestos van aparte: su lista puede llegar después (ver ProvFact.alAbrir) */
   firma(m) {
     const d = Leer.correctivo(m);
-    return JSON.stringify([d.entrada, d.salida, d.trabajo, d.componente, d.falla, d.lectura, d.valor, d.partes.map(p => p.k), d.llantas, d.llanta, d.repMismo,
+    return JSON.stringify([d.entrada, d.programado ? d.programado.h : '', d.salida, d.trabajo, d.componente, d.falla, d.lectura, d.valor, d.partes.map(p => p.k), d.llantas, d.llanta, d.repMismo,
       d.notas.map(n => [n.id, n.f, n.h, n.t]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort(), d.adjuntos.map(a => a.id), d.valorTaller, d.valorRep, d.aMano || null]);
   },
   /* Guardar, apagado hasta que algo cambie */
@@ -8142,11 +8205,12 @@ const EditarArreglo = {
     /* Terminado: lo que se hizo sigue siendo obligatorio, como al registrarlo */
     const conTrabajo = !$('#mcTC', m).classList.contains('hidden');
     if (conTrabajo && !d.trabajo) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#mcT', m).focus(); return; }
-    if (r.estado !== 'taller' && !conTrabajo && !d.notas.length) { Toast.show('Deje al menos un avance con lo que se hizo.', 'err'); return; }
+    if (r.estado === 'cerrado' && !conTrabajo && !d.notas.length) { Toast.show('Deje al menos un avance con lo que se hizo.', 'err'); return; }
     const antes = new Set((r.notas || []).map(n => n.id)), nuevos = d.notas.filter(n => !antes.has(n.id)).length;
     const poner = (k, v) => { if (v === undefined || v === '' || (Array.isArray(v) && !v.length)) delete r[k]; else r[k] = v; };
     r.fecha = d.entrada;
-    if (r.estado !== 'taller') r.salida = d.salida || r.salida;
+    if (r.estado === 'programado') r.programado = d.programado;
+    if (r.estado === 'cerrado') r.salida = d.salida || r.salida;
     if (conTrabajo) r.trabajo = d.trabajo;
     poner('componente', d.componente);
     poner('falla', d.falla);
@@ -8165,7 +8229,7 @@ const EditarArreglo = {
     if (ProvFact.cambio(m, 'mcR') || Boolean(d.repMismo) !== Boolean(r.repMismo)) ProvFact.ponerRep(r, d.rep, d.repMismo);
     Compras.ponerOrdenes(r, d.ordenes);
     Modal.cerrar(m);
-    Toast.show(r.estado === 'taller'
+    Toast.show(r.estado !== 'cerrado'
       ? 'Arreglo de <b>' + esc(UI.placaTxt(u)) + '</b> guardado' + (nuevos ? ', con ' + nuevos + (nuevos === 1 ? ' avance nuevo' : ' avances nuevos') : '') + '.'
       : 'Listo: el arreglo de <b>' + esc(UI.placaTxt(u)) + '</b> quedó corregido.');
     Router.pintar(true);
@@ -10110,13 +10174,16 @@ const Formatos = {
         .filter(x => d.llanta.pos[x].serial || d.llanta.pos[x].sello).map(x => ['Serial · ' + Llantas.nombre(x, true),
           [d.llanta.pos[x].serial, d.llanta.pos[x].sello ? 'sello ' + d.llanta.pos[x].sello : ''].filter(Boolean).join(' · ')])) : []);
     return this.cabecera('Historial de mantenimiento correctivo', 'Visita al taller con el registro fotográfico de cada cambio', d.numero, null,
-        [[UI.placaTxt(u), u.clase, d.entrada ? 'entró el ' + Fecha.larga(d.entrada) : ''].filter(Boolean).join(' · '), 'Correctivo N.º ' + d.numero]) +
+        [[UI.placaTxt(u), u.clase, d.estado === 'programado' ? 'programado para el ' + Programado.txt(d.programado || { f: d.entrada })
+          : d.entrada ? 'entró el ' + Fecha.larga(d.entrada) : ''].filter(Boolean).join(' · '), 'Correctivo N.º ' + d.numero]) +
       this.sec('Unidad', this.campos([[conPlaca ? 'Placa' : 'Código', UI.placaTxt(u)], ['Tipo', TIPOS[u.tipo].nombre + ' · ' + u.clase],
         ['Marca y línea', UI.nombre(u) || '—'], ['Conductor', c ? c.nombre : 'Sin asignar']])) +
       this.sec('Taller', this.campos([['Taller', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'],
         /* Quien puso los repuestos (Juan, 03/11/2026) */
         ['Repuestos', d.repMismo ? 'Los puso el mismo taller' : d.rep ? d.rep.nombre + (d.rep.nit ? ' · NIT ' + d.rep.nit : '') : '—'],
-        ['Entró', Fecha.larga(d.entrada)], ['Salió', d.salida ? Fecha.larga(d.salida) : 'Sigue en el taller']].concat(TallerRep.campos(d)))) +
+        ...(d.estado === 'programado' ? [['Programado para', Programado.txt(d.programado || { f: d.entrada })], ['Estado', 'Todavía no ingresa al taller']]
+          : [['Entró', Fecha.larga(d.entrada)], ['Salió', d.salida ? Fecha.larga(d.salida) : 'Sigue en el taller']]
+            .concat(d.programado ? [['Estaba programado', Programado.txt(d.programado)]] : []))].concat(TallerRep.campos(d)))) +
       this.sec('Arreglo', '<div class="dp-arreglo"><div class="dp-plano">' + Plano.svg(k, { mini: true, sel: zonas }) + '</div>' +
         '<div class="dp-fields">' + arreglo.map(x => '<div class="dp-f"><label>' + esc(x[0]) + '</label><span>' + esc(x[1]) + '</span></div>').join('') + '</div></div>') +
       (d.falla ? '<div class="dp-obs"><b>Qué pasó</b>' + esc(d.falla) + '</div>' : '') +
@@ -10302,66 +10369,80 @@ Object.assign(Vistas, {
     const f = UIState.mant;
     const todos = Datos.mantenimientos.slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
     const delMes = m => { const d = Fecha.parse(m.fecha); return d.getMonth() === HOY.getMonth() && d.getFullYear() === HOY.getFullYear(); };
-    const taller = todos.filter(m => m.estado === 'taller');
+    const taller = todos.filter(m => m.estado === 'taller'), prog = todos.filter(m => m.estado === 'programado'), vencidos = prog.filter(Programado.vencido);
     const sinOrden = todos.filter(m => Compras.malas(m)), pend = todos.filter(m => Pendiente.de(m).length);
     const ultPrev = todos.find(m => m.tipo === 'preventivo' && /aceite/i.test(m.trabajo || ''));
-    const lista = todos.filter(m => f === 'todos' || (f === 'taller' ? m.estado === 'taller' : f === 'pendientes' ? Pendiente.de(m).length : m.tipo === f));
+    const lista = todos.filter(m => f === 'todos' || (f === 'taller' || f === 'programado' ? m.estado === f : f === 'pendientes' ? Pendiente.de(m).length : m.tipo === f));
     const segs = [['todos', 'Todos', todos.length], ['preventivo', 'Preventivos', todos.filter(m => m.tipo === 'preventivo').length],
-      ['correctivo', 'Correctivos', todos.filter(m => m.tipo === 'correctivo').length], ['taller', 'En taller', taller.length], ['pendientes', 'Sin valor u orden', pend.length]];
+      ['correctivo', 'Correctivos', todos.filter(m => m.tipo === 'correctivo').length], ['taller', 'En taller', taller.length],
+      ['programado', 'Programados', prog.length], ['pendientes', 'Sin valor u orden', pend.length]];
     const html = head + tabs +
       '<div class="grid g4 mb16 mant-kpis mant-kpis-h">' +
         UI.kpi({ label: 'Preventivos del mes', valor: todos.filter(m => m.tipo === 'preventivo' && delMes(m)).length, icono: 'tool', color: 'var(--info-500)', meta: 'Cambios de aceite y otros servicios', act: 'filtroMant', v: 'preventivo' }) +
-        UI.kpi({ label: 'Correctivos del mes', valor: todos.filter(m => m.tipo === 'correctivo' && delMes(m)).length, icono: 'camera', color: 'var(--warn-500)', meta: 'Visitas al taller', act: 'filtroMant', v: 'correctivo' }) +
+        UI.kpi({ label: 'Correctivos del mes', valor: todos.filter(m => m.tipo === 'correctivo' && m.estado !== 'programado' && delMes(m)).length, icono: 'camera', color: 'var(--warn-500)', meta: 'Visitas al taller', act: 'filtroMant', v: 'correctivo' }) +
         UI.kpi({ label: 'En el taller ahora', valor: taller.length, icono: 'warn', color: 'var(--dang-500)', vcolor: taller.length ? 'var(--dang-500)' : '',
-          meta: esc(taller.map(m => UI.placaTxt(Q.unidad(m.unidad))).join(' · ') || 'Ninguna'), act: 'filtroMant', v: 'taller' }) +
+          meta: esc((taller.map(m => UI.placaTxt(Q.unidad(m.unidad))).join(' · ') || 'Ninguna') +
+            (prog.length ? ' · ' + prog.length + (prog.length === 1 ? ' programado' : ' programados') : '')), act: 'filtroMant', v: 'taller' }) +
         UI.kpi({ label: 'Último cambio de aceite', valor: ultPrev ? esc(Fecha.hace(ultPrev.fecha)) : '—', icono: 'clock',
           meta: ultPrev ? esc([UI.placaTxt(Q.unidad(ultPrev.unidad)), (Q.provDe(ultPrev) || {}).nombre].filter(Boolean).join(' · ')) : '' }) +
       '</div>' +
       '<div class="alert a-info mb16 solo-web">' + Icon('info') + '<div><b>Así queda guardado.</b> El PDF de inspección rápida que manda Navitrans por WhatsApp se sube con «Preventivo». ' +
         'En un correctivo, las fotos de cada cambio se juntan en un PDF con el historial de la visita al taller.</div></div>' +
+      (vencidos.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (vencidos.length === 1 ? 'Un arreglo programado no ha ingresado' : vencidos.length + ' arreglos programados no han ingresado') +
+        ':</b> ' + esc(vencidos.map(m => UI.placaTxt(Q.unidad(m.unidad)) + ' (' + Fecha.num(m.fecha) + ')').join(', ')) + '. Si ya llegó, use «Ingresó»; si se movió la cita, cámbiela con un clic en su fila.' +
+        (f === 'programado' ? '' : ' <span class="link" data-act="filtroMant" data-v="programado">Ver los programados</span>') + '</div></div>' : '') +
       (sinOrden.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (sinOrden.length === 1 ? 'Un arreglo tiene una orden' : sinOrden.length + ' arreglos tienen una orden') +
         ' que ya no está en Facturación o que ahora es de otro vehículo.</b> Mientras tanto ' + (sinOrden.length === 1 ? 'cuenta' : 'cuentan') +
         ' su propio valor. En la lista se ve cuál es; en la ficha del vehículo se puede quitar.</div></div>' : '') +
       (pend.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (pend.length === 1 ? 'A un arreglo le falta' : 'A ' + pend.length + ' arreglos les falta') +
-        ' el valor o la orden de Facturación.</b> Quedan pendientes hasta que se pongan, con «Editar» o «Anotar avance». ' +
+        ' el valor o la orden de Facturación.</b> Quedan pendientes hasta que se pongan: un clic en su fila abre el arreglo para completarlo. ' +
         (f === 'pendientes' ? '' : '<span class="link" data-act="filtroMant" data-v="pendientes">Ver cuáles</span>') + '</div></div>' : '') +
       '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroMant" data-v="' + s[0] + '">' + s[1] +
         '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div></div>' +
       '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Trabajo</th><th>Taller y repuestos</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
         lista.map(m => {
           const u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', c = Compras.deArreglo(m);
-          return '<tr class="row-click" data-act="irUnidad" data-u="' + u.id + '" data-tab="mant" data-mid="' + attr(m.id) + '">' +
-            '<td class="nowrap">' + esc(Fecha.corta(m.fecha)) + '<div class="dias">' + esc(Fecha.hace(m.fecha)) + '</div></td>' +
-            '<td>' + UI.unidadCelda(u) + '</td>' +
+          /* Todas las filas del mismo alto (Juan, 04/11/2026): cada dato en uno o
+             dos renglones, y completo al pasar el mouse. El clic en la fila abre
+             el arreglo: «Anotar avance» si sigue en el taller, «Editar» si ya
+             se cerró. La unidad abre su ficha corta (ver Ventanas.vehiculo) */
+          const enTaller = m.estado === 'taller' || m.estado === 'programado', progr = m.estado === 'programado', partes = (m.partes || []).map(x => Plano.nombre(u, x));
+          const novs = (m.novedades || []).map(n => 'Novedad: ' + n.t + ' · ' + (/^m:/.test(n.i) ? 'registrada a mano' : 'preoperacional del ' + Fecha.corta(n.f)));
+          const trab = [m.lectura, partes.join(', '), novs.length === 1 ? 'novedad: ' + m.novedades[0].t : novs.length ? novs.length + ' novedades' : ''].filter(Boolean).join(' · ');
+          /* Lo que cuenta (ver Compras): sus órdenes de Facturación cuando ya
+             son gasto; si no, su valor. Debajo, sus órdenes y lo que falta */
+          const ordenes = [c.esta.length ? c.esta.map(o => o.codigo).join(', ') +
+              (c.deOrden ? '' : ' · ' + ((Compras.ESTADOS[c.esta[0].estado] || [])[1] || 'sin contar todavía').toLowerCase()) : '',
+            c.ids.length && !c.fiable ? 'Con orden de Facturación' : '',
+            /* Con el taller y los repuestos aparte, cuánto es de cada uno (de sus órdenes o lo escrito) */
+            (v => (v.r && v.t.valor > 0 && v.r.valor > 0 ? 'Taller ' + Money.format(v.t.valor) + ' · repuestos ' + Money.format(v.r.valor) : ''))(TallerRep.valores(m))].filter(Boolean);
+          const avisos = [c.ajenas.length ? c.ajenas.map(o => o.codigo).join(', ') + ' ahora es de otro vehículo' : '', c.faltan ? 'La orden ya no está' : '']
+            .concat(Pendiente.de(m).map(k => Pendiente.NOMBRE[k])).filter(Boolean).map((x, i) => (i ? x.charAt(0).toLowerCase() + x.slice(1) : x));
+          return '<tr class="row-click" data-act="' + (enTaller ? 'anotarAvance' : 'editarMant') + '" data-m="' + attr(m.id) + '" title="' +
+              (enTaller ? 'Clic para anotar lo que se va haciendo' : 'Clic para ver o corregir el arreglo') + '" data-mid="' + attr(m.id) + '">' +
+            /* Un programado: el día de la cita, cuánto falta y la hora */
+            '<td class="nowrap">' + esc(Fecha.num(m.fecha)) + (progr ? '<div class="dias' + (Programado.vencido(m) ? ' d-warn' : '') + '">' +
+                esc([Programado.falta(m.fecha), Programado.hora(Programado.de(m).h)].filter(Boolean).join(' · ') + (Programado.vencido(m) ? ' · no ha ingresado' : '')) + '</div>'
+              : '<div class="dias">' + esc(Fecha.hace(m.fecha)) + '</div>') + '</td>' +
+            '<td class="m-uni" data-act="verVehiculo" data-u="' + attr(u.id) + '" title="Ver el vehículo, su conductor y su remolque">' + UI.unidadCelda(u) + '</td>' +
             '<td>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + '</td>' +
-            '<td>' + esc(Avances.titulo(m)) + (m.lectura ? '<div class="dias">' + esc(m.lectura) + '</div>' : '') +
-              /* La novedad que atiende (ver NovLista) */
-              (m.novedades || []).map(n => '<div class="dias m-nov">' + Icon('checkSquare', '', 11) + esc('Novedad: ' + n.t + ' · ' +
-                (/^m:/.test(n.i) ? 'registrada a mano' : 'preoperacional del ' + Fecha.corta(n.f))) + '</div>').join('') +
-              ((m.partes || []).length ? '<div class="m-partes">' + m.partes.map(x => '<span class="chip">' + esc(Plano.nombre(u, x)) + '</span>').join('') + '</div>' : '') + '</td>' +
-            '<td>' + esc(UI.provTxt(m)) + '</td>' +
-            /* Lo que cuenta (ver Compras): sus órdenes de Facturación cuando ya
-               son gasto; si no, su valor */
-            '<td class="num">' + (c.valor ? Money.format(c.valor) : m.oc ? '<span class="txt-3" title="Su valor está en la orden de compra">' + esc(m.oc) + '</span>' : '—') +
-              (c.esta.length ? '<div class="dias">' + esc(c.esta.map(o => o.codigo).join(', ') +
-                  (c.deOrden ? '' : ' · ' + ((Compras.ESTADOS[c.esta[0].estado] || [])[1] || 'sin contar todavía').toLowerCase())) + '</div>' : '') +
-              (c.ajenas.length ? '<div class="dias d-warn" title="Mientras tanto cuenta el valor del arreglo">' + esc(c.ajenas.map(o => o.codigo).join(', ')) +
-                ' ahora es de otro vehículo</div>' : '') +
-              (c.faltan ? '<div class="dias d-warn" title="Mientras tanto cuenta el valor del arreglo">La orden ya no está</div>' : '') +
-              (c.ids.length && !c.fiable ? '<div class="dias">Con orden de Facturación</div>' : '') +
-              /* Con el taller y los repuestos aparte, cuánto es de cada uno (de sus órdenes o lo escrito) */
-              (v => (v.r && v.t.valor > 0 && v.r.valor > 0 ? '<div class="dias">Taller ' + esc(Money.format(v.t.valor)) + ' · repuestos ' +
-                esc(Money.format(v.r.valor)) + '</div>' : ''))(TallerRep.valores(m)) +
-              Pendiente.de(m).map(k => '<div class="dias d-warn">' + Pendiente.NOMBRE[k] + '</div>').join('') + '</td>' +
-            '<td><div class="flex aic g6" style="flex-wrap:wrap">' + UI.clip(m, 12) +
-              (m.fotos ? '<span class="chip" title="Fotos del taller">' + Icon('image', '', 12) + m.fotos + '</span>' : '') +
+            '<td title="' + attr([Avances.titulo(m), m.lectura, partes.join(', ')].concat(novs).filter(Boolean).join('\n')) + '"><div class="m-1l m-trab">' + esc(Avances.titulo(m)) + '</div>' +
+              (trab ? '<div class="dias m-1l m-trab">' + esc(trab) + '</div>' : '') + '</td>' +
+            '<td><div class="m-2l" title="' + attr(UI.provTxt(m)) + '">' + esc(UI.provTxt(m)) + '</div></td>' +
+            '<td class="num"' + (ordenes.length || avisos.length ? ' title="' + attr(ordenes.concat(avisos).join('\n')) + '"' : '') + '>' +
+              (c.valor ? Money.format(c.valor) : m.oc ? '<span class="txt-3">' + esc(m.oc) + '</span>' : '—') +
+              (ordenes.length ? '<div class="dias m-1l m-val">' + esc(ordenes.join(' · ')) + '</div>' : '') +
+              (avisos.length ? '<div class="dias d-warn m-1l m-val">' + esc(avisos.join(' · ')) + '</div>' : '') + '</td>' +
+            '<td><div class="m-pila"><div class="flex aic g6">' + UI.clip(m, 12) +
+              (m.fotos ? '<span class="chip" title="Fotos del taller">' + Icon('image', '', 12) + m.fotos + '</span>' : '') + '</div>' +
               '<button class="btn btn-sm" data-act="' + (prev ? 'pdfPreventivo' : 'pdfCorrectivo') + '" data-m="' + attr(m.id) + '" title="' +
-                (prev ? 'El PDF del preventivo' : 'El PDF del arreglo, con sus fotos') + '">' + Icon('pdf', '', 12) + 'Ver PDF</button>' + '</div></td>' +
-            '<td>' + (m.estado === 'taller' ? '<div class="flex aic g6" style="flex-wrap:wrap">' + UI.pill('bad', 'En taller') +
-              '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '" title="Lo que se va haciendo">' + Icon('edit', '', 12) + 'Anotar</button>' +
-              '<button class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '" title="La unidad salió del taller">' + Icon('check', '', 12) + 'Terminar</button></div>'
-              : '<div class="flex aic g6" style="flex-wrap:wrap">' + UI.pill('nr', 'Cerrado') +
-                '<button class="btn btn-sm" data-act="editarMant" data-m="' + attr(m.id) + '" title="Corregir lo guardado">' + Icon('edit', '', 12) + 'Editar</button></div>') + '</td></tr>';
+                (prev ? 'El PDF del preventivo' : 'El PDF del arreglo, con sus fotos') + '">' + Icon('pdf', '', 12) + 'Ver PDF</button></div></td>' +
+            '<td><div class="m-pila">' + (progr ? UI.pill('violet', 'Programado') +
+              '<button class="btn btn-sm" data-act="ingresoArreglo" data-m="' + attr(m.id) + '" title="El vehículo llegó al taller">' + Icon('check', '', 12) + 'Ingresó</button>'
+              : enTaller ? UI.pill('bad', 'En taller') +
+              '<button class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '" title="La unidad salió del taller">' + Icon('check', '', 12) + 'Terminar</button>'
+              : UI.pill('nr', 'Cerrado') +
+                '<button class="btn btn-sm" data-act="editarMant" data-m="' + attr(m.id) + '" title="Corregir lo guardado">' + Icon('edit', '', 12) + 'Editar</button>') + '</div></td></tr>';
         }).join('') + '</tbody></table></div>' : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.')) + '</div>';
     return { titulo: 'Mantenimientos', sub: 'Preventivos y correctivos', html,
       /* Desde «Abiertas» de Novedades: el caso, resaltado un momento (ver Acciones.irCaso) */
@@ -11085,6 +11166,44 @@ Object.assign(Vistas, {
 });
 
 Object.assign(Ventanas, {
+  /* La ficha corta de un vehículo (Juan, 04/11/2026: «si yo le doy clic donde
+     está la unidad… se abre la ficha en una subventana más pequeña»): la
+     unidad, su conductor y su remolque (o el camión que lo arrastra), el
+     último kilometraje y sus documentos. El conductor y el remolque se abren
+     con un clic; «Ver ficha completa» lleva a la de siempre */
+  vehiculo(u) {
+    if (!u) return;
+    const cd = Q.conductorDe(u), rem = u.tipo === 'carga' && u.remolque ? Q.unidad(u.remolque) : null, cam = u.tipo === 'remolque' ? Q.camionDe(u) : null;
+    const lic = cd ? Est.doc((cd.docs || {}).licencia, 'licencia') : null, vence = cd && cd.docs && cd.docs.licencia && cd.docs.licencia.vence;
+    const ult = Aceite.aplica(u) ? Aceite.actual(u) : null, est = Est.unidad(u);
+    const taller = Datos.mantenimientos.some(m => m.estado === 'taller' && m.unidad === u.id), cita = Datos.mantenimientos.find(m => m.estado === 'programado' && m.unidad === u.id);
+    const fila = (attrs, izq, b, span) => '<div class="mrow"' + attrs + '>' + izq + '<div class="mrow-t"><b>' + b + '</b><span>' + span + '</span></div>' +
+      '<div class="mrow-r">' + Icon('chevR', '', 14) + '</div></div>';
+    const otra = x => fila(' data-act="verVehiculo" data-u="' + attr(x.id) + '" title="Ver su ficha corta"', UI.thumb(x), '<span class="mono">' + esc(UI.placaTxt(x)) + '</span>',
+      esc([x.clase, UI.nombre(x)].filter(Boolean).join(' · ')));
+    const docs = (Config.req[u.tipo] || []).map(t => {
+      const e = Est.doc(u.docs[t], t);
+      return '<span title="' + attr(DOC_TIPOS[t].nombre + ': ' + e.det) + '">' + UI.pill(e.k, DOC_TIPOS[t].corto + ' · ' + e.txt.toLowerCase()) + '</span>';
+    }).join('');
+    Modal.abrir({
+      titulo: UI.placaTxt(u), sub: esc([u.clase || TIPOS[u.tipo].nombre, UI.nombre(u), u.modelo].filter(Boolean).join(' · ')), sinFoco: true,
+      cuerpo: '<div class="vh-top"><div class="vh-foto">' + UI.foto(u) + '</div><div class="vh-dat">' +
+          '<div class="vh-pills">' + (taller ? UI.pill('bad', 'En el taller') : UI.pill('ok', 'Trabajando')) +
+            (cita ? UI.pill('violet', 'Taller programado · ' + Programado.txt(Programado.de(cita), true)) : '') +
+            (est.k === 'nr' ? '' : UI.pill(est.k, 'Documentos: ' + est.txt.toLowerCase())) + '</div>' +
+          (ult ? '<div class="vh-km"><span>' + (u.tipo === 'maquinaria' ? 'Horómetro' : 'Kilometraje') + '</span><b>' + esc(Aceite.fmt(u, ult.valor)) + '</b><em>' +
+            esc(Fecha.hace(ult.fecha)) + '</em></div>' : '') + '</div></div>' +
+        '<div class="vh-sec"><span class="l">Conductor</span>' + (cd
+          ? fila(' data-act="verConductor" data-c="' + attr(cd.id) + '" title="Ver su ficha"', UI.avatar(cd, '', true), esc(cd.nombre),
+            esc([cd.cat ? 'Licencia ' + cd.cat : 'Sin categoría de licencia', lic.k === 'ok' ? 'vigente' : lic.txt.toLowerCase(), vence ? 'vence el ' + Fecha.num(vence) : ''].filter(Boolean).join(' · ')))
+          : '<div class="v vacio">' + (u.tipo === 'remolque' && !cam ? 'Sin camión, sin conductor' : 'Sin conductor asignado') + '</div>') + '</div>' +
+        (u.tipo === 'remolque' ? '<div class="vh-sec"><span class="l">Lo arrastra</span>' + (cam ? otra(cam) : '<div class="v vacio">Ningún camión lo tiene asignado</div>') + '</div>'
+          : u.tipo === 'carga' ? '<div class="vh-sec"><span class="l">Remolque</span>' + (rem ? otra(rem) : '<div class="v vacio">Sin remolque</div>') + '</div>' : '') +
+        (docs ? '<div class="vh-sec"><span class="l">Documentos</span><div class="vh-docs">' + docs + '</div></div>' : ''),
+      pie: '<button class="btn" data-act="cerrarModal">Cerrar</button><button class="btn btn-primary" data-ir="unidad/' + attr(u.id) + '">' + Icon('truck', '', 14) + 'Ver ficha completa</button>'
+    });
+  },
+
   /* Vista previa de un formato, lista para imprimir o guardar como PDF */
   vistaPrevia(titulo, html, extra) {
     const m = Modal.abrir({
@@ -11293,7 +11412,7 @@ Object.assign(Ventanas, {
     if (!u0) { Toast.show('Primero registre una unidad en Flota.', 'warn'); return; }
     const fijo = Boolean(o.fijo || r0);
     const m = Modal.abrir({
-      titulo: r0 ? (r0.estado === 'taller' ? 'Anotar avance · ' : 'Editar arreglo · ') + UI.placaTxt(u0) : o.cambio ? 'Cambio de llanta · ' + UI.placaTxt(u0) : o.caso ? 'Abrir caso · ' + UI.placaTxt(u0) : fijo ? 'Registrar arreglo · ' + UI.placaTxt(u0) : 'Mantenimiento correctivo',
+      titulo: r0 ? (r0.estado === 'taller' ? 'Anotar avance · ' : r0.estado === 'programado' ? 'Programado · ' : 'Editar arreglo · ') + UI.placaTxt(u0) : o.cambio ? 'Cambio de llanta · ' + UI.placaTxt(u0) : o.caso ? 'Abrir caso · ' + UI.placaTxt(u0) : fijo ? 'Registrar arreglo · ' + UI.placaTxt(u0) : 'Mantenimiento correctivo',
       sub: r0 ? esc([r0.numero, u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : fijo ? esc([u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : 'Visita al taller con la parte que se arregló y las fotos de cada cambio', ancho: 'xwide m-hoja',
       cuerpo: '<div class="reg"><div>' +
           (fijo ? '' : '<div class="field"><label>Unidad</label><select class="inp" id="mcU">' + Opc.unidades(u0.id) + '</select></div>') +
@@ -11305,12 +11424,14 @@ Object.assign(Ventanas, {
           '<div class="field"><label>¿Qué pasó?</label><textarea class="inp" id="mcF" rows="2" placeholder="La falla, o lo que reportó el conductor"></textarea></div>' +
           /* El estado decide lo que sigue (Juan, 03/11/2026): terminado, qué se hizo; si sigue en el taller, el historial */
           '<div class="field" id="mcEstC"><label>Estado</label><div class="seg" id="mcEst"><button type="button" class="on" data-v="cerrado">' + Icon('check', '', 13) + 'Terminado</button>' +
-            '<button type="button" data-v="taller">' + Icon('tool', '', 13) + 'Sigue en el taller</button></div></div>' +
+            '<button type="button" data-v="taller">' + Icon('tool', '', 13) + 'Sigue en el taller</button>' +
+            '<button type="button" data-v="programado">' + Icon('calendar', '', 13) + 'Programado</button></div></div>' +
           '<div class="field" id="mcTC"><label>¿Qué se hizo?</label><textarea class="inp" id="mcT" rows="2" placeholder="El arreglo: qué se cambió o se reparó"></textarea></div>' +
           '<div class="field hidden" id="mcNC"><label>Historial de la reparación</label>' +
             '<div class="hint mb12">Los avances que ya tenga, cada uno con su fecha, su hora y sus fotos. Se puede guardar sin ninguno: después se agregan con «Anotar avance».</div>' +
             '<div id="mcAv"></div></div>' +
-          '<div class="row"><div class="field"><label>Entró al taller</label><input class="inp" type="date" id="mcE" value="' + hoyISO + '"></div>' +
+          '<div class="row"><div class="field"><label id="mcEL">Entró al taller</label><input class="inp" type="date" id="mcE" value="' + hoyISO + '"></div>' +
+            '<div class="field hidden" id="mcHC"><label>Hora</label><input class="inp" type="time" id="mcH" value="07:00"></div>' +
             '<div class="field" id="mcLC"><label>Kilometraje</label><input class="inp" id="mcL"></div></div>' +
           /* El taller y los repuestos, cada uno con su valor y su orden (ver TallerRep) */
           TallerRep.html('mc', null) +
@@ -11358,17 +11479,21 @@ Object.assign(Ventanas, {
     });
     $('#mcLlNueva', m).addEventListener('input', e => LlantaForm.escribir(m, e.target));
     $('#mcLlNueva', m).addEventListener('click', e => { const b = e.target.closest('[data-ll-op]'); if (b) LlantaForm.opcion(m, b); });
+    /* Programado y «Sigue en el taller» quedan abiertos: con avances, sin salida
+       ni «¿Qué se hizo?». Programado pide además la hora de la cita */
     $$('#mcEst button', m).forEach(b => b.addEventListener('click', () => {
-      const taller = b.dataset.v === 'taller';
-      if ((m._estado === 'taller') === taller) return;
-      m._estado = b.dataset.v;
+      const v = b.dataset.v, abierto = v !== 'cerrado', antes = m._estado !== 'cerrado';
+      if (m._estado === v) return;
+      m._estado = v;
       $$('#mcEst button', m).forEach(x => x.classList.toggle('on', x === b));
-      $('#mcSal', m).classList.toggle('hidden', taller);
-      $('#mcTC', m).classList.toggle('hidden', taller);
-      $('#mcNC', m).classList.toggle('hidden', !taller);
-      $('#mcFotosL', m).innerHTML = taller ? 'Fotos de cómo llegó <span class="txt-3">(opcional)</span>' : 'Fotos del arreglo';
+      $('#mcSal', m).classList.toggle('hidden', abierto);
+      $('#mcTC', m).classList.toggle('hidden', abierto);
+      $('#mcNC', m).classList.toggle('hidden', !abierto);
+      $('#mcFotosL', m).innerHTML = v === 'programado' ? 'Fotos de cómo está <span class="txt-3">(opcional)</span>'
+        : abierto ? 'Fotos de cómo llegó <span class="txt-3">(opcional)</span>' : 'Fotos del arreglo';
+      Programado.campos(m, v === 'programado');
       /* Lo que ya se escribió pasa al otro lado (ver AvancesForm.pasar) */
-      AvancesForm.pasar(m, $('#mcT', m), taller);
+      if (abierto !== antes) AvancesForm.pasar(m, $('#mcT', m), abierto);
     }));
     /* «Abrir caso» (pestaña Novedades): sigue en el taller, para ir anotando los avances */
     if (o.caso) $('#mcEst button[data-v="taller"]', m).click();
@@ -11981,13 +12106,15 @@ Object.assign(Ventanas, {
 /* Lo que se escribe en los formularios de correctivo y de orden de compra */
 const Leer = {
   correctivo(m) {
-    const u = PlanoForm.u(m), taller = m._estado === 'taller', entrada = $('#mcE', m).value || hoyISO;
+    /* «taller»: sigue abierto (en el taller o programado) */
+    const u = PlanoForm.u(m), taller = m._estado !== 'cerrado', entrada = $('#mcE', m).value || hoyISO;
     /* Si sigue en el taller (o al corregir uno que los tuvo), los avances, cada uno con sus fotos (ver AvancesForm); las fotos de abajo son las de cómo llegó */
     const av = taller || m._conAvances ? AvancesForm.leer(m) : [], notas = av.map(a => a.n);
     const r0 = m._editar ? Datos.mantenimientos.find(x => x.id === m._editar) : null, tr = TallerRep.leer(m, 'mc', r0);
     return {
       numero: (r0 && r0.numero) || Num.mc(), unidad: u, prov: tr.prov, rep: tr.rep, repMismo: tr.repMismo, taller, notas,
       entrada, salida: taller ? '' : $('#mcS', m).value || entrada,
+      programado: m._estado === 'programado' ? { f: entrada, h: $('#mcH', m).value } : null,
       trabajo: taller ? '' : $('#mcT', m).value.trim(),
       fotos: m._fotos.concat(...av.map(a => a.fotos.map(f => Object.assign({}, f, { nota: a.n.id })))),
       adjuntos: (m._adj || []).map(Adjuntos.dato),
@@ -12071,7 +12198,7 @@ Object.assign(Acciones, {
   irCaso(el) {
     const m = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     if (!m) return;
-    Object.assign(UIState, { mantTab: 'historial', mant: m.estado === 'taller' ? 'taller' : 'todos', resaltar: m.id });
+    Object.assign(UIState, { mantTab: 'historial', mant: m.estado === 'taller' ? 'taller' : m.estado === 'programado' ? 'programado' : 'todos', resaltar: m.id });
     Router.pintar(true);
   },
   filtroNov(el) { UIState.novF = el.dataset.v; Router.pintar(true); },
@@ -12198,6 +12325,35 @@ Object.assign(Acciones, {
       : 'Listo: <b>' + esc(res.x.nombre) + '</b> quedó en la lista de proveedores de Facturación.');
     if (m._alCrear) m._alCrear(res.x);
     else if (Router.actual().vista === 'proveedores') Router.pintar(true);
+  },
+  /* «Ingresó» (Juan, 04/11/2026): el programado llegó al taller. Pasa a «Sigue
+     en el taller» con el día y la hora en que entró; la cita queda en su
+     historial, como el primer avance de la visita */
+  ingresoArreglo(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
+    if (!u || r.estado !== 'programado') return;
+    const d = new Date(), hora = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    Modal.abrir({
+      titulo: 'Ingresó al taller · ' + UI.placaTxt(u), sub: esc('Programado para el ' + Programado.txt(Programado.de(r))), sinFoco: true,
+      cuerpo: (r.falla ? '<div class="alert a-info mb12">' + Icon('info') + '<div><b>Lo que presenta:</b> ' + esc(r.falla) + '</div></div>' : '') +
+        '<div class="row"><div class="field"><label>Día en que entró</label><input class="inp" type="date" id="inF" value="' + hoyISO + '"></div>' +
+          '<div class="field"><label>Hora</label><input class="inp" type="time" id="inH" value="' + hora + '"></div></div>' +
+        '<div class="hint">Desde ahora sigue en el taller: con un clic en su fila se anotan los avances, y con «Terminar» se cierra.</div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarIngreso" data-m="' + attr(r.id) + '">' +
+        Icon('check', '', 14) + 'Ingresó</button>'
+    });
+  },
+  guardarIngreso(el) {
+    const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
+    if (!u || r.estado !== 'programado') { Modal.cerrar(m); return; }
+    const f = $('#inF', m).value || hoyISO, h = $('#inH', m).value;
+    r.programado = Programado.de(r);
+    r.estado = 'taller';
+    r.fecha = f;
+    Avances.agregar(r, Avances.nueva(f, h, 'Ingresó al taller (estaba programado para el ' + Programado.txt(r.programado, true) + ')'), []);
+    Modal.cerrar(m);
+    Toast.show('<b>' + esc(UI.placaTxt(u)) + '</b> ingresó al taller el ' + esc(Fecha.larga(f)) + '. Sigue en el taller.');
+    Router.pintar(true);
   },
   terminarArreglo(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
@@ -12534,7 +12690,8 @@ Object.assign(Acciones, {
       trabajo: d.trabajo, fotos: d.fotos.length, fotosData: d.fotos.map(f => Avances.dato(f, f.nota)), numero: d.numero,
       /* Sus adjuntos (ver Adjuntos); el PDF del arreglo no es uno: se arma con «Ver PDF» */
       adjuntos: d.adjuntos.length ? d.adjuntos : undefined,
-      valor: d.valor || undefined, lectura: d.lectura || undefined, estado: d.salida ? 'cerrado' : 'taller', hora: ahora(), ts: marca(),
+      valor: d.valor || undefined, lectura: d.lectura || undefined, estado: d.programado ? 'programado' : d.salida ? 'cerrado' : 'taller', hora: ahora(), ts: marca(),
+      programado: d.programado || undefined,
       /* Lo del plano: las partes, el componente, qué pasó, las llantas y las novedades del preoperacional que atiende */
       partes: d.partes.length ? d.partes : undefined, componente: d.componente || undefined, falla: d.falla || undefined,
       llantas: d.llantas.length ? d.llantas : undefined, novedades: d.novedades.length ? d.novedades : undefined,
@@ -12550,7 +12707,8 @@ Object.assign(Acciones, {
     Datos.mantenimientos.push(r);
     Modal.cerrar(m);
     Toast.show('Correctivo <b>' + esc(d.numero) + '</b> guardado en <b>' + esc(UI.placaTxt(d.unidad)) + '</b>, con su PDF.' +
-      (d.taller ? '<br>Sigue en el taller: con «Anotar avance» se va agregando lo que se haga.' : '') +
+      (d.programado ? '<br>Programado para el ' + esc(Programado.txt(d.programado)) + ': cuando llegue, use «Ingresó».'
+        : d.taller ? '<br>Sigue en el taller: con «Anotar avance» se va agregando lo que se haga.' : '') +
       (d.novedades.length ? '<br>' + (d.novedades.length === 1 ? 'La novedad pasó a «Abiertas»' : 'Las novedades pasaron a «Abiertas»') + '; el caso está en «Taller SINUGRAVAS».' : ''));
     Router.pintar(true);
   },
@@ -12579,7 +12737,7 @@ Object.assign(Acciones, {
       : Array.from({ length: r.fotos || 0 }, (_, i) => ({ src: null, txt: 'Foto ' + (i + 1) + ' de ' + r.fotos + ' (ejemplo)' }));
     const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.provDe(r), rep: Q.repDe(r), repMismo: r.repMismo, entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos: fotos(),
       partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [], llanta: r.llanta, notas: r.notas || [],
-      valor: r.valor, valorTaller: r.valorTaller, valorRep: r.valorRep, aMano: r.aMano, ordenes: r.ordenes || [] };
+      valor: r.valor, valorTaller: r.valorTaller, valorRep: r.valorRep, aMano: r.aMano, ordenes: r.ordenes || [], estado: r.estado, programado: r.programado };
     const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d));
     /* Las fotos se bajan al abrirlo; cuando llegan, el PDF se dibuja otra vez */
     Guardadas.traerArreglo(r).then(n => {
@@ -12915,6 +13073,7 @@ Object.assign(Acciones, {
     Router.pintar(true);
   },
   verConductor(el) { Ventanas.conductor(Q.conductor(el.dataset.c)); },
+  verVehiculo(el) { Ventanas.vehiculo(Q.unidad(el.dataset.u)); },
 
   /* ---------------------------------------------------- Eliminar de verdad */
   eliminarUnidad(el) {
