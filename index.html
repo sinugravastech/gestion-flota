@@ -11714,6 +11714,15 @@ Object.assign(Acciones, {
   planoModo(el) { UIState.plano.modo = el.dataset.v; Router.pintar(true); },
   planoPeriodo(el) { UIState.plano.periodo = el.dataset.v; Router.pintar(true); },
   planoLlanta(el) { const p = el.dataset.pos || null; UIState.plano.llanta = UIState.plano.llanta === p ? null : p; Router.pintar(true); },
+  /* Desde un preoperacional, al plano de su vehículo en Mantenimientos: ahí
+     salen sus novedades con «Registrar el arreglo» (Juan, 04/11/2026). Las
+     novedades se traen otra vez, por si el preoperacional acaba de llegar */
+  irMantPreop(el) {
+    Modal.cerrarTodo();
+    Novedades.olvidar();
+    Object.assign(UIState.plano, { u: el.dataset.u, sel: null, llanta: null });
+    Router.ir('mantenimientos/' + el.dataset.u);
+  },
   irPlano(el) {
     Object.assign(UIState.plano, { u: el.dataset.u, sel: el.dataset.p || null, llanta: null });
     Router.ir('mantenimientos/' + el.dataset.u);
@@ -12791,7 +12800,7 @@ Object.assign(Acciones, {
    ========================================================================== */
 const Preop = {
   COLUMNAS: 'id,unidad_id,conductor_id,placa,tipo_vehiculo,fecha,kilometraje,conductor_nombre,documento,licencia,categoria,vigencia_licencia,' +
-    'supervisor,observaciones,respuestas,buenos,regulares,malos,no_aplica,sin_marcar,firma_ruta,pdf_ruta,pdf_hash,archivos_listos,evidencia,recibido',
+    'supervisor,observaciones,respuestas,buenos,regulares,malos,no_aplica,sin_marcar,firma_ruta,pdf_ruta,pdf_hash,archivos_listos,evidencia,recibido,remolque_id',
   /* El encabezado del formulario: todos se muestran o no, y son obligatorios
      o no, según el formato. Los marcados con true, si el formato no dice
      nada, salen y son obligatorios (como siempre fueron). */
@@ -12894,6 +12903,30 @@ const Preop = {
   },
   km: v => (v == null ? '—' : Math.round(v).toLocaleString('es-CO') + ' km'),
   novedades: p => (p.regulares || 0) + (p.malos || 0),
+  /* Dónde se atienden las novedades de un preoperacional: en el plano de su
+     vehículo y, las del capítulo «Remolque», en el del remolque que llevaba ese
+     día, como las reparte Novedades.de. «faltan»: las que todavía no tienen
+     arreglo ni están marcadas como revisadas (ver Novedades.atendidas) */
+  destinos(p) {
+    if (!this.novedades(p)) return [];
+    const ops = Novedades.opciones(), q = Novedades.preguntas(), R = p.respuestas || {};
+    const nov = Object.keys(R).filter(i => ops[R[i]] && (ops[R[i]].cuenta === 'novedad' || ops[R[i]].cuenta === 'grave'));
+    const rem = p.remolque_id ? nov.filter(i => Novedades.delRemolque(q[i])) : [], propias = nov.filter(i => !rem.includes(i));
+    const de = (u, is) => { const at = Novedades.atendidas(u); return { u, faltan: is.filter(i => !(at[i] && p.fecha <= at[i])).length }; };
+    const u = Q.unidad(p.unidad_id), r = p.remolque_id && Q.unidad(p.remolque_id);
+    return [u && propias.length ? de(u, propias) : null, r && rem.length ? de(r, rem) : null].filter(Boolean);
+  },
+  /* El botón que lleva a Mantenimientos (Juan, 04/11/2026). En la lista, corto;
+     en la ventana, con la placa del remolque si es el suyo */
+  botonMant(p, largo) {
+    return this.destinos(p).map(d => {
+      const placa = UI.placaTxt(d.u), rem = d.u.id !== p.unidad_id;
+      const txt = !d.faltan ? 'Atendidas' : rem ? (largo ? 'Ir al remolque ' + placa : 'Remolque') : largo ? 'Ir a mantenimiento' : 'Mantenimiento';
+      return '<button class="btn' + (largo ? '' : ' btn-sm') + (d.faltan ? '' : ' btn-ghost') + '" data-act="irMantPreop" data-u="' + attr(d.u.id) + '" title="' +
+        attr((d.faltan ? d.faltan + (d.faltan === 1 ? ' novedad sin atender' : ' novedades sin atender') : 'Ya tienen arreglo o están revisadas') + ' · ' + placa) + '">' +
+        Icon(d.faltan ? 'tool' : 'check', '', largo ? 14 : 12) + esc(txt) + '</button> ';
+    }).join('');
+  },
   resultado(p) {
     const n = this.novedades(p);
     return n ? UI.pill(p.malos ? 'bad' : 'warn', n + (n === 1 ? ' novedad' : ' novedades')) : UI.pill('ok', 'Sin novedades');
@@ -12981,7 +13014,7 @@ const Preop = {
           return '<tr class="row-click" data-act="verPreop" data-p="' + attr(p.id) + '"><td class="nowrap"><b>' + esc(this.dia(p.fecha)) + '</b><div class="txt-3 fs11">' +
             esc(this.hora(p.recibido)) + '</div></td><td>' + (u ? UI.unidadCelda(u) : '<b class="mono">' + esc(p.placa || '—') + '</b>') + '</td>' +
             '<td>' + esc(p.conductor_nombre || '—') + '</td><td class="num nowrap">' + esc(this.km(p.kilometraje)) + '</td><td>' + this.resultado(p) + '</td>' +
-            '<td>' + this.evidencia(p) + '</td><td class="tr nowrap">' + this.botonesPdf(p) + '</td></tr>';
+            '<td>' + this.evidencia(p) + '</td><td class="tr nowrap">' + this.botonMant(p) + this.botonesPdf(p) + '</td></tr>';
         }).join('') + '</tbody></table></div>'
       : UI.empty('checkSquare', 'Sin preoperacionales', f.periodo === 'hoy' ? 'Hoy todavía no ha llegado ninguno.' : 'No llegó ninguno en este período.');
     const html = head + (c.error ? this.alertaError(c.error, 'preopRecargar') : '') + kpis +
@@ -13083,6 +13116,7 @@ const Preop = {
   },
   pie(p) {
     return (this.puede('eliminar') ? '<button class="btn btn-ghost btn-del mf-left" data-act="eliminarPreop" data-p="' + attr(p.id) + '">' + Icon('trash', '', 14) + 'Eliminar</button>' : '') +
+      this.botonMant(p, true) +
       (p.archivos_listos ? '<button class="btn" data-act="pdfPreop" data-p="' + attr(p.id) + '">' + Icon('pdf', '', 14) + 'Ver PDF</button>' +
         '<button class="btn" data-act="imprimirPreop" data-p="' + attr(p.id) + '">' + Icon('print', '', 14) + 'Imprimir</button>'
         : '<span class="txt-3 fs12' + (this.puede('eliminar') ? '' : ' mf-left') + '">El PDF todavía no llega: el celular lo sube apenas tenga señal.</span>') +
