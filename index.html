@@ -1521,6 +1521,114 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .nov-ab > b{display:flex;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
 /* La pestaña Novedades: el vehículo lleva a su plano */
 .tbl-nov .nv-u{cursor:pointer}
+/* El área Rutas: la semana por camión y por día (ver Rutas) */
+.rt-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface)}
+.rt-tab{display:grid;grid-template-columns:210px repeat(7,minmax(150px,1fr));min-width:1260px}
+.rt-h{padding:9px 10px;font-size:11px;color:var(--text-3);border-bottom:1px solid var(--border);border-left:1px solid var(--border);background:var(--surface-2)}
+.rt-h.rt-hu{border-left:0;display:flex;align-items:flex-end;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.rt-h b{display:block;color:var(--text);font-size:12.5px}
+.rt-h.hoy{box-shadow:inset 0 -2px 0 var(--accent)}
+.rt-h.hoy b{color:var(--accent)}
+.rt-c.hoy{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.rt-u{display:flex;align-items:center;gap:9px;padding:8px 10px;border-bottom:1px solid var(--border);min-width:0}
+.rt-u > div{min-width:0}
+.rt-u b{display:block;font-size:13px}
+.rt-u span{display:block;font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-u.libre b,.rt-u.libre span{opacity:.6}
+.rt-c{padding:6px;border-bottom:1px solid var(--border);border-left:1px solid var(--border);display:flex;flex-direction:column;gap:5px;min-height:62px}
+.rt-v{all:unset;box-sizing:border-box;display:block;cursor:grab;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);border-radius:6px;padding:5px 8px;line-height:1.3}
+.rt-v:hover,.rt-v:focus-visible{background:color-mix(in srgb,var(--c) 22%,transparent)}
+.rt-v:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* El nombre de la ruta en dos renglones si no cabe (con la bandeja abierta los días quedan más angostos) */
+.rt-v b{font-size:12px;font-weight:650;color:var(--text);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.rt-v span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2)}
+.rt-v em{display:inline-flex;font-style:normal}
+.rt-v .rt-ei{margin-left:auto}
+.rt-v.e-hecho .rt-ei{color:var(--ok-500)}
+.rt-v.e-ruta .rt-ei{color:var(--warn-500)}
+.rt-v.e-no{opacity:.55}
+.rt-v.e-no b{text-decoration:line-through}
+.rt-v.e-no .rt-ei{color:var(--dang-500)}
+.rt-v.rt-arr{opacity:.35}
+.rt-al{color:var(--warn-500)}
+.rt-mas{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;height:22px;border:1px dashed var(--border);border-radius:6px;color:var(--text-3);opacity:0;transition:opacity .15s}
+.rt-c:hover .rt-mas,.rt-mas:focus-visible{opacity:1}
+.rt-mas:hover{color:var(--accent);border-color:var(--accent)}
+.rt-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:6px;flex:0 0 auto}
+.rt-ley{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin-top:10px;font-size:11.5px;color:var(--text-3)}
+.rt-ley span{display:inline-flex;align-items:center;gap:4px}
+.rt-ley-sep{width:1px;height:14px;background:var(--border)}
+.rt-tool .rt-sem{display:flex;align-items:center;gap:8px}
+.rt-sem b{font-size:13.5px;padding:0 4px}
+.rt-dia{margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--surface)}
+.rt-dia-h{display:flex;align-items:center;gap:10px;padding:7px 10px 7px 14px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+.rt-dia-h span{font-size:12px;color:var(--text-3)}
+.rt-dia-h .rt-dia-pdf{margin-left:auto}
+.rt-al-t{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--warn-500);font-weight:600}
+.rt-al-l{margin:3px 0 4px}
+.rt-al-l span{display:block}
+/* Por día: las mismas columnas en todos los días */
+.rt-lista{table-layout:fixed;width:100%}
+.rt-lista td:nth-child(1){width:90px}
+.rt-lista td:nth-child(3){width:90px;text-align:right}
+.rt-lista td:nth-child(4){width:30%}
+.rt-lista td:nth-child(5){width:190px}
+.rt-hist{margin-top:14px;border-top:1px solid var(--border);padding-top:10px;font-size:12.5px}
+.rt-hist > b{display:block;margin-bottom:6px}
+.rt-hist div{display:flex;gap:10px;padding:3px 0;color:var(--text-2)}
+.rt-hist div span{min-width:130px;flex:0 0 auto;color:var(--text-3)}
+.rt-inact td{color:var(--text-3)}
+.rt-inact td b{font-weight:600}
+/* El título de la semana y las casillas de los tipos que se ven */
+.rt-cab{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;margin:2px 0 12px}
+.rt-titulo{font-size:17px;font-weight:700;margin:0;flex:1 1 auto}
+.rt-ver{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.rt-chk{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;border:1px solid var(--border);border-radius:999px;background:var(--surface);
+  font-size:12.5px;cursor:pointer;user-select:none}
+.rt-chk input{margin:0;accent-color:var(--accent);cursor:pointer}
+.rt-chk .rt-dot{margin-right:0}
+.rt-chk:has(input:checked){border-color:color-mix(in srgb,var(--accent) 40%,var(--border));background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.rt-chk:has(input:not(:checked)){color:var(--text-3)}
+/* El arrastre: la casilla de encima se marca */
+.rt-zona{display:flex;gap:12px;align-items:flex-start}
+.rt-zona > .rt-wrap{flex:1 1 auto;min-width:0}
+.rt-c.rt-sobre,.rt-band.rt-sobre{outline:2px dashed var(--accent);outline-offset:-3px;background:color-mix(in srgb,var(--accent) 10%,transparent)}
+/* La bandeja «Por programar», a la derecha: abierta o en una barrita */
+.rt-band{flex:0 0 236px;width:236px;position:sticky;top:72px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);
+  padding:10px;display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 96px);overflow:auto}
+.rt-band.chica{flex-basis:52px;width:52px;padding:8px 6px;align-items:center}
+.rt-band-h{display:flex;align-items:center;gap:6px}
+.rt-band-h b{font-size:13px}
+.rt-band-h .btn{margin-left:auto}
+.rt-band.chica .rt-band-h{flex-direction:column}
+.rt-band.chica .rt-band-h .btn{margin-left:0}
+.rt-band-n{min-width:22px;height:20px;padding:0 6px;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-size:11.5px;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center}
+.rt-band-l{display:flex;flex-direction:column;gap:6px;min-height:110px}
+.rt-band-vacia{display:flex;align-items:center;justify-content:center;gap:6px;text-align:center;border:1.5px dashed var(--border);border-radius:8px;
+  padding:14px 8px;font-size:11.5px;color:var(--text-3)}
+.rt-band-mas{justify-content:center}
+.rt-band-av{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--warn-500);font-weight:600}
+.rt-band-v{writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;color:var(--text-3);letter-spacing:.05em;text-transform:uppercase;margin-top:6px}
+/* En el celular la bandeja va debajo del tablero; en el computador nada cambia */
+@media (max-width:760px){
+  .rt-zona{flex-direction:column;align-items:stretch}
+  .rt-tab{grid-template-columns:118px repeat(7,minmax(140px,1fr));min-width:1098px}
+  .rt-u .thumb{display:none}
+  .rt-band,.rt-band.chica{position:static;width:auto;flex-basis:auto;max-height:none}
+  .rt-band.chica{align-items:stretch}
+  .rt-band.chica .rt-band-h{flex-direction:row}
+  .rt-band.chica .rt-band-h .btn{margin-left:auto}
+  .rt-band-v{display:none}
+}
+/* El PDF de los viajes: un cuadro por día */
+.rt-pr .dp-tbl{border:0;margin:0;table-layout:fixed}
+.rt-pr .dp-tbl tr > :nth-child(1){width:13mm}
+.rt-pr .dp-tbl tr > :nth-child(2){width:30%}
+.rt-pr .dp-tbl tr > :nth-child(3){width:15%}
+.rt-pr .dp-tbl tr > :nth-child(4){width:12mm}
+.rt-pr .dp-tbl tr > :nth-child(5){width:18mm}
+.rt-pr .dp-tbl tr > :nth-child(6){width:20%}
 /* «Abrir caso»: correctivo o preventivo */
 .caso-tipos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .caso-t{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:14px;border:1.5px solid var(--border);border-radius:var(--radius-lg);
@@ -2678,6 +2786,7 @@ const Icon = (() => {
     externo: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>',
     pesos: '<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
     gota: '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>',
+    ruta: '<circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/>',
     medidor: '<path d="M12 14l4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
     sube: '<path d="M7 17L17 7M8 7h9v9"/>',
     baja: '<path d="M7 7l10 10M17 8v9H8"/>',
@@ -3123,7 +3232,11 @@ const Catalogo = {
     { id: 'clases.remolque', titulo: 'Clases de remolques', tipo: 'remolque' },
     { id: 'clases.canoa', titulo: 'Clases de canoas', tipo: 'canoa' },
     /* Una sola lista para registrar conductores y para el preoperacional */
-    { id: 'licencias', titulo: 'Categorías de licencia', inicial: ['C3', 'C2', 'C1', 'B3', 'B2', 'B1', 'A2', 'A1'] }
+    { id: 'licencias', titulo: 'Categorías de licencia', inicial: ['C3', 'C2', 'C1', 'B3', 'B2', 'B1', 'A2', 'A1'] },
+    /* Las del área Rutas (Juan, 04/11/2026). El color de cada tipo de operación
+       en el tablero sigue el orden de su lista (ver Rutas.color) */
+    { id: 'rutas.tipos', titulo: 'Tipos de operación', ruta: 'tipo', inicial: ['Fruta de palma', 'Almendra', 'Aceite', 'Fertilizante', 'Nutricomplemento'] },
+    { id: 'rutas.internos', titulo: 'Tipos internos de ruta', ruta: 'interno', inicial: ['Finca a extractora', 'Despacho de almendra', 'Despacho de aceite', 'Ruta adicional'] }
   ],
   def(id) { return this.LISTAS.find(l => l.id === id) || null; },
   inicial(l) { return (l.tipo ? TIPOS[l.tipo].clases : l.inicial).slice(); },
@@ -3135,17 +3248,21 @@ const Catalogo = {
   /* Dónde se usa, para el subtítulo */
   usoTxt(l) {
     return l.tipo ? 'La clase al crear una unidad y en su hoja de vida (' + TIPOS[l.tipo].plural.toLowerCase() + ')'
+      : l.ruta === 'tipo' ? 'El tipo de operación de cada ruta; el color de sus viajes en el tablero sigue el orden de esta lista'
+      : l.ruta ? 'El tipo interno de cada ruta, como en el Excel de la programación'
       : 'La categoría al registrar un conductor y en el formulario del preoperacional';
   },
   /* Cuántos registros tienen una opción */
   usos(l, valor) {
     return l.tipo ? Datos.unidades.filter(u => u.tipo === l.tipo && u.clase === valor).length
+      : l.ruta ? Datos.rutas.filter(r => r[l.ruta] === valor).length
       : Datos.conductores.filter(c => c.cat === valor).length;
   },
-  usosTxt(l, n) { return n + ' ' + (l.tipo ? (n === 1 ? 'unidad' : 'unidades') : (n === 1 ? 'conductor' : 'conductores')); },
+  usosTxt(l, n) { return n + ' ' + (l.tipo ? (n === 1 ? 'unidad' : 'unidades') : l.ruta ? (n === 1 ? 'ruta' : 'rutas') : (n === 1 ? 'conductor' : 'conductores')); },
   /* «las 3 unidades que la tienen»; con «conserva», «Las 3 unidades que la tienen la conservan» */
   quienes(l, n, conserva) {
     const t = l.tipo ? (n === 1 ? 'la unidad que la tiene' : 'las ' + n + ' unidades que la tienen')
+      : l.ruta ? (n === 1 ? 'la ruta que la tiene' : 'las ' + n + ' rutas que la tienen')
       : (n === 1 ? 'el conductor que la tiene' : 'los ' + n + ' conductores que la tienen');
     return conserva ? t.charAt(0).toUpperCase() + t.slice(1) + (n === 1 ? ' la conserva' : ' la conservan') : t;
   },
@@ -3157,6 +3274,7 @@ const Catalogo = {
     let n = 0;
     if (enRegistros) {
       if (l.tipo) Datos.unidades.forEach(u => { if (u.tipo === l.tipo && u.clase === viejo) { u.clase = nuevo; n++; } });
+      else if (l.ruta) Datos.rutas.forEach(r => { if (r[l.ruta] === viejo) { r[l.ruta] = nuevo; n++; } });
       else Datos.conductores.forEach(c => { if (c.cat === viejo) { c.cat = nuevo; n++; } });
     }
     const dib = l.tipo && (Config.planos || {}).dibujo, a = l.tipo + '|' + viejo, b = l.tipo + '|' + nuevo;
@@ -3271,7 +3389,7 @@ const DOTACION = [
    ========================================================================== */
 const Datos = {
   conductores: [], proveedores: [], unidades: [], mantenimientos: [], ocs: [], accidentes: [],
-  inspecciones: [], informes: [], lecturas: [], actividad: [], tanqueos: [],
+  inspecciones: [], informes: [], lecturas: [], actividad: [], tanqueos: [], rutas: [], viajes: [],
   /* Los conductores y proveedores que se eliminan pasan aquí: ya no salen en
      las listas, pero el historial sigue mostrando su nombre */
   archivo: { conductores: [], proveedores: [] }
@@ -4950,6 +5068,7 @@ const NAV = [
   { sec: 'Operación' },
   { id: 'inicio', icono: 'dashboard', txt: 'Dashboard' },
   { id: 'flota', icono: 'truck', txt: 'Flota', badge: 'unidades' },
+  { id: 'rutas', icono: 'ruta', txt: 'Rutas' },
   { id: 'documentos', icono: 'shield', txt: 'Documentos', badge: 'docs', alerta: true },
   { id: 'mantenimientos', icono: 'tool', txt: 'Mantenimientos', badge: 'taller', alerta: true },
   { id: 'llantas', icono: 'disc', txt: 'Llantas' },
@@ -5034,7 +5153,12 @@ const UIState = {
      Juan los va marcando uno por uno, 02/11/2026) y lo que se ve */
   gps: { modo: 'semana', desde: null, tab: 'resumen', mapa: { ids: [], capas: { viajes: true, paradas: false, excesos: false } } },
   /* El área Llantas: el tipo de vehículo, la llanta escogida y el período */
-  llantas: { tipo: 'todos', u: null, pos: null, periodo: '12' }
+  llantas: { tipo: 'todos', u: null, pos: null, periodo: '12' },
+  /* El área Rutas: la pestaña, la semana que se ve (su lunes; null es la de
+     hoy), por camión o por día, el filtro del maestro, la bandeja «Por
+     programar» abierta o chica (se recuerda en este equipo) y los tipos de
+     operación que se ven en la semana (null: todos, como al entrar) */
+  rutas: { tab: 'semana', semana: null, vista: 'camion', tipo: 'todas', bandeja: Prefs.get('rutasBandeja') || '', ver: null }
 };
 
 /* Los proveedores son de Facturación (Juan, 02/11/2026; su SQL 211): Flota
@@ -16266,7 +16390,10 @@ const Mapa = {
     informes_comparendos: { id: null, mes: null, enviado: null, con_comparendo: 0, extra: {} },
     configuracion: { clave: null, valor: null },
     tanqueos: { id: null, unidad_id: null, placa: '', fecha: null, producto: '', galones: 0, valor: 0, km: null, km_recorrido: null, estacion: '',
-      archivo: '', extra: {} }
+      archivo: '', extra: {} },
+    rutas: { id: null, tipo: '', origen: '', destino: '', cliente: '', interno: '', ton: null, obs: '', activa: true, extra: {} },
+    viajes: { id: null, ruta_id: null, unidad_id: null, conductor_id: null, fecha: null, hora: '', toneladas: null, estado: 'prog', nota: '',
+      cambios: [], extra: {} }
   },
   CONDUCTOR: [['id', 'id'], ['nombre', 'nombre', '', aTexto], ['corto', 'corto', '', aTexto], ['cedula', 'cedula', '', aTexto],
     ['cat', 'categoria', '', aTexto], ['rh', 'rh_id', null, aNumero, aNumero], ['rhTipo', 'tipo', '', aTexto], ['fotoRh', 'foto_path', null, aNulo]],
@@ -16306,6 +16433,12 @@ const Mapa = {
   TANQ: [['id', 'id'], ['unidad', 'unidad_id', null, aNulo], ['placa', 'placa', '', aTexto], ['fecha', 'fecha'], ['producto', 'producto', '', aTexto],
     ['galones', 'galones', 0, x => +x || 0, x => +x || 0], ['valor', 'valor', 0, x => +x || 0, x => +x || 0], ['km', 'km', null, aNumero, aNumero],
     ['rec', 'km_recorrido', null, aNumero, aNumero], ['estacion', 'estacion', '', aTexto], ['archivo', 'archivo', '', aTexto]],
+  /* Una ruta del maestro y un viaje de la semana (ver Rutas y el SQL 029) */
+  RUTA: [['id', 'id'], ['tipo', 'tipo', '', aTexto], ['origen', 'origen', '', aTexto], ['destino', 'destino', '', aTexto], ['cliente', 'cliente', '', aTexto],
+    ['interno', 'interno', '', aTexto], ['ton', 'ton', null, aNumero, aNumero], ['obs', 'obs', '', aTexto], ['activa', 'activa', true, x => x !== false, x => x !== false]],
+  VIAJE: [['id', 'id'], ['ruta', 'ruta_id'], ['unidad', 'unidad_id', null, aNulo], ['conductor', 'conductor_id', null, aNulo], ['fecha', 'fecha', null, aNulo],
+    ['hora', 'hora', '', aTexto], ['ton', 'toneladas', null, aNumero, aNumero], ['estado', 'estado', 'prog'], ['nota', 'nota', '', aTexto],
+    ['cambios', 'cambios', [], x => x || [], x => x || []]],
 
   /* Lo que se sabe del archivo de un documento, para sus columnas */
   _archivo(id) {
@@ -16366,6 +16499,8 @@ const Mapa = {
     (datos.lecturas || []).forEach(l => poner('lecturas', Fila.de(l, this.LECT)));
     (datos.actividad || []).forEach(a => poner('actividad', Fila.de(a, this.ACTIV)));
     (datos.tanqueos || []).forEach(t => poner('tanqueos', Fila.de(t, this.TANQ)));
+    (datos.rutas || []).forEach(r => poner('rutas', Fila.de(r, this.RUTA)));
+    (datos.viajes || []).forEach(v => poner('viajes', Fila.de(v, this.VIAJE)));
 
     /* Los informes de comparendos: el del mes en curso («enviado» hoy) y los
        de los meses anteriores, cada uno con su mes */
@@ -16398,7 +16533,7 @@ const Mapa = {
   /* Las filas de cada tabla → Datos y Config (sin ponerlos todavía) */
   aDatos(filas) {
     const d = { conductores: [], proveedores: [], unidades: [], mantenimientos: [], ocs: [], accidentes: [], inspecciones: [],
-      informes: [], lecturas: [], actividad: [], tanqueos: [], archivo: { conductores: [], proveedores: [] } };
+      informes: [], lecturas: [], actividad: [], tanqueos: [], rutas: [], viajes: [], archivo: { conductores: [], proveedores: [] } };
     const de = { u: {}, c: {}, p: {} };
     (filas.documentos || []).forEach(r => {
       const k = r.unidad_id ? de.u : r.conductor_id ? de.c : de.p, id = r.unidad_id || r.conductor_id || r.proveedor_id;
@@ -16444,6 +16579,8 @@ const Mapa = {
     (filas.lecturas || []).forEach(r => d.lecturas.push(Fila.a(r, this.LECT)));
     (filas.actividad || []).forEach(r => d.actividad.push(Fila.a(r, this.ACTIV)));
     (filas.tanqueos || []).forEach(r => d.tanqueos.push(Fila.a(r, this.TANQ)));
+    (filas.rutas || []).forEach(r => d.rutas.push(Fila.a(r, this.RUTA)));
+    (filas.viajes || []).forEach(r => d.viajes.push(Fila.a(r, this.VIAJE)));
 
     const hoy = Fecha.parse(mesISO(HOY));
     (filas.informes_comparendos || []).forEach(r => {
@@ -16486,9 +16623,11 @@ const mesISO = d => Fecha.iso(new Date(d.getFullYear(), d.getMonth(), 1));
    ========================================================================== */
 const Sincro = {
   ORDEN: ['conductores', 'proveedores', 'unidades', 'documentos', 'fotos', 'mantenimientos', 'inspecciones', 'accidentes',
-    'ordenes_compra', 'lecturas', 'actividad', 'informes_comparendos', 'configuracion', 'tanqueos'],
-  /* Sin el SQL 023 no existe la tabla de los tanqueos: lo demás sigue igual */
+    'ordenes_compra', 'lecturas', 'actividad', 'informes_comparendos', 'configuracion', 'tanqueos', 'rutas', 'viajes'],
+  /* Sin el SQL 023 no existe la tabla de los tanqueos, y sin el 029 las de
+     las rutas y los viajes: lo demás sigue igual */
   sinTanqueos: false,
+  sinRutas: false,
   CLAVE: { configuracion: 'clave' },
   ultimo: {},
   activo: false,
@@ -16543,10 +16682,13 @@ const Sincro = {
         try {
           filas[t] = await Nube.leerTodo(t, this.CLAVE[t]);
           if (t === 'tanqueos') this.sinTanqueos = false;
+          if (t === 'rutas') this.sinRutas = false;
         } catch (e) {
-          if (t !== 'tanqueos' || !(e.status === 404 || /PGRST205|42P01/.test(e.codigo || ''))) throw e;
+          const nueva = t === 'tanqueos' || t === 'rutas' || t === 'viajes';
+          if (!nueva || !(e.status === 404 || /PGRST205|42P01/.test(e.codigo || ''))) throw e;
           filas[t] = [];
-          this.sinTanqueos = true;
+          if (t === 'tanqueos') this.sinTanqueos = true;
+          else this.sinRutas = true;
         }
         listas++;
         if (avance) avance(listas, this.ORDEN.length);
@@ -17020,6 +17162,905 @@ const Router = {
     }
   }
 };
+
+/* ==========================================================================
+   §R  RUTAS — la programación semanal de los viajes (Juan, 04/11/2026), para
+       reemplazar el Excel del cronograma: el maestro de rutas (las 16 del
+       Excel, SQL 029) y la semana de cada camión, en un tablero con una fila
+       por camión y una columna por día. Las fichas se arrastran a otro día o
+       a otro camión (con Ctrl se copian), y la bandeja «Por programar» guarda
+       las que todavía no tienen día o camión. Cada viaje guarda su historial
+       de cambios. Lo que hay que revisar antes de salir avisa, no bloquea.
+   ========================================================================== */
+const Rutas = {
+  /* El color de cada tipo de operación sigue el orden de su lista en
+     Catálogo: verde (fruta de palma), café (almendra), ámbar (aceite),
+     turquesa (fertilizante), morado (nutricomplemento) y los siguientes */
+  COLORES: ['#2f9e5b', '#a8692b', '#d99a1e', '#1c96a4', '#8a5ac2', '#d0566c', '#4f6bd8', '#7a8a2e', '#c2569e', '#5a7a8c'],
+  ESTADOS: { prog: ['Programado', 'info'], ruta: ['En ruta', 'warn'], hecho: ['Hecho', 'ok'], no: ['No se hizo', 'bad'] },
+  DIAS: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+  MES: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
+  /* Lo último que se hizo, para «Deshacer»: viajes nuevos (copia), cómo
+     estaban antes (antes) o los que se quitaron (quitado) */
+  ultimo: null,
+
+  tipos: () => Catalogo.lista('rutas.tipos'),
+  internos: () => Catalogo.lista('rutas.internos'),
+  color(tipo) {
+    const k = Catalogo.clave(tipo), i = this.tipos().findIndex(t => Catalogo.clave(t) === k);
+    return i < 0 ? '#8a94a3' : this.COLORES[i % this.COLORES.length];
+  },
+  punto(tipo) { return '<i class="rt-dot" style="--c:' + this.color(tipo) + '"></i>'; },
+  estIc: e => (e === 'ruta' ? Icon('truck', '', 11) : e === 'hecho' ? Icon('check', '', 11) : e === 'no' ? Icon('x', '', 11) : ''),
+
+  /* ---- Las fechas: la semana va de lunes a domingo ---- */
+  mas(f, n) { const d = Fecha.parse(f); d.setDate(d.getDate() + n); return Fecha.iso(d); },
+  lunes(f) { return this.mas(f, -((Fecha.parse(f).getDay() + 6) % 7)); },
+  semana() { return UIState.rutas.semana || this.lunes(hoyISO); },
+  fechas(l) { return [0, 1, 2, 3, 4, 5, 6].map(i => this.mas(l, i)); },
+  dia(f) { return +f.slice(8) + ' ' + this.MES[+f.slice(5, 7) - 1]; },
+  diaSem(f) { return this.DIAS[(Fecha.parse(f).getDay() + 6) % 7]; },
+  largo(f) { return this.diaSem(f) + ' ' + Fecha.parse(f).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' }); },
+  /* «del 2 al 8 de noviembre», «del 26 de octubre al 1 de noviembre» */
+  semanaTxt(l) {
+    const d = this.mas(l, 6), mes = f => Fecha.parse(f).toLocaleDateString('es-CO', { month: 'long' });
+    const cruza = l.slice(0, 4) !== d.slice(0, 4), año = f => (cruza || f.slice(0, 4) !== hoyISO.slice(0, 4) ? ' de ' + f.slice(0, 4) : '');
+    return 'del ' + +l.slice(8) + (l.slice(5, 7) !== d.slice(5, 7) ? ' de ' + mes(l) + (cruza ? año(l) : '') : '') + ' al ' + +d.slice(8) + ' de ' + mes(d) + año(d);
+  },
+  cuando(t) {
+    const d = new Date(t), h = d.getHours(), f = Fecha.iso(d);
+    return this.dia(f) + (f.slice(0, 4) !== hoyISO.slice(0, 4) ? ' ' + f.slice(0, 4) : '') + ' · ' + (h % 12 || 12) + ':' +
+      String(d.getMinutes()).padStart(2, '0') + (h < 12 ? ' a. m.' : ' p. m.');
+  },
+  tonTxt: n => (n == null ? '—' : (+n).toLocaleString('es-CO') + ' t'),
+  /* Las toneladas se escriben con coma o con punto */
+  tonEsc: n => (n == null ? '' : String(n).replace('.', ',')),
+  tonLeer(s) { const t = String(s || '').trim().replace(/\s/g, '').replace(',', '.'); return t === '' || !isFinite(+t) ? null : +t; },
+
+  /* ---- Los datos ---- */
+  ruta(id) { return Datos.rutas.find(r => r.id === id); },
+  viaje(id) { return Datos.viajes.find(v => v.id === id); },
+  nuevoId: p => p + marca().toString(36) + Math.random().toString(36).slice(2, 6),
+  corto: s => String(s || '').replace(/^(Fca\.|Ext\.)\s*/i, '').replace(/^El\s+/, ''),
+  nombre(r) { return r ? this.corto(r.origen) + ' → ' + this.corto(r.destino) : 'Ruta sin datos'; },
+  /* El nombre largo, como en el Excel: TIPO | ORIGEN → DESTINO | CLIENTE */
+  nombreTMS(r) { return [r.tipo, r.origen + ' → ' + r.destino, r.cliente].filter(x => String(x || '').trim()).join(' | ').toUpperCase(); },
+  /* Programado es con día y con camión; si le falta uno, queda en «Por programar» */
+  programado: v => Boolean(v.unidad && v.fecha),
+  deSemana(l) { const b = this.mas(l, 6); return Datos.viajes.filter(v => this.programado(v) && v.fecha >= l && v.fecha <= b); },
+  bandeja() { return Datos.viajes.filter(v => !this.programado(v)); },
+  /* Los tipos de operación que se ven en la semana (Juan, 04/11/2026: «como
+     cajitas de checklist… por defecto vengan todas seleccionadas»): los del
+     catálogo y los que tengan las rutas aunque ya no estén en él */
+  tiposVer() { const ts = this.tipos(); return ts.concat([...new Set(Datos.rutas.map(r => r.tipo))].filter(t => t && !ts.includes(t))); },
+  visible(v) { const ver = UIState.rutas.ver; return !ver || ver.includes((this.ruta(v.ruta) || {}).tipo); },
+  vistos(l) { return this.deSemana(l).filter(v => this.visible(v)); },
+  /* «aceite», «fruta de palma y aceite»; vacío si se ven todos */
+  queTxt() {
+    const ver = UIState.rutas.ver;
+    if (!ver || !ver.length) return '';
+    const ts = ver.map(t => t.toLowerCase());
+    return ts.length > 1 ? ts.slice(0, -1).join(', ') + ' y ' + ts[ts.length - 1] : ts[0];
+  },
+  /* El título cambia con lo escogido: «Programación de aceite» */
+  titulo() { const ver = UIState.rutas.ver; return !ver ? 'Programación de la semana' : ver.length ? 'Programación de ' + this.queTxt() : 'Programación'; },
+  enOrden: (a, b) => (a.hora || '').localeCompare(b.hora || '') || (a.id < b.id ? -1 : 1),
+  camiones() { return Datos.unidades.filter(u => u.tipo === 'carga').sort((a, b) => String(a.placa).localeCompare(String(b.placa))); },
+  placa(id) { const u = Q.unidad(id); return u ? UI.placaTxt(u) : 'sin camión'; },
+  /* El conductor del viaje: el que se escogió o, si no, el del camión */
+  conductor(v) {
+    if (v.conductor) return Q.conductor(v.conductor);
+    const u = v.unidad ? Q.unidad(v.unidad) : null;
+    return u ? Q.conductorDe(u) : null;
+  },
+  delCamion(uid) {
+    const u = uid ? Q.unidad(uid) : null, c = u ? Q.conductorDe(u) : null;
+    return 'El del camión' + (u ? ' (' + (c ? c.nombre : 'sin asignar') + ')' : '');
+  },
+  /* Al salir o al cerrarse, el viaje se queda con el conductor de ese momento:
+     si después le cambian el conductor al camión, el viaje no cambia */
+  fijarConductor(v) {
+    if (v.estado === 'prog' || v.conductor || !v.unidad) return;
+    const c = this.conductor(v);
+    if (c) v.conductor = c.id;
+  },
+  lugar(v) { return this.programado(v) ? this.diaSem(v.fecha).toLowerCase() + ' ' + this.dia(v.fecha) + ' · ' + this.placa(v.unidad) : '«Por programar»'; },
+  anotar(v, txt) { v.cambios = (v.cambios || []).concat([{ t: new Date().toISOString(), txt }]); },
+
+  /* Lo que hay que revisar antes de salir (avisa, no bloquea): el camión en el
+     taller, sus documentos o los de su remolque vencidos para ese día, el
+     viaje sin conductor o la licencia del conductor vencida. Solo en los que
+     todavía no salen, de hoy en adelante */
+  revisar(v) {
+    if (!this.programado(v) || v.estado !== 'prog' || v.fecha < hoyISO) return [];
+    const u = Q.unidad(v.unidad), out = [];
+    if (!u) return out;
+    const vence = (que, f) => que + (f < hoyISO ? ' venció el ' + this.dia(f) : ' vence el ' + this.dia(f) + ', antes del viaje');
+    const taller = Datos.mantenimientos.find(m => m.estado === 'taller' && m.unidad === u.id);
+    if (taller) out.push(UI.placaTxt(u) + ' está en el taller desde el ' + this.dia(taller.fecha));
+    const rem = u.remolque ? Q.unidad(u.remolque) : null;
+    [u].concat(rem ? [rem] : []).forEach(x => (Config.req[x.tipo] || []).forEach(t => {
+      const d = (x.docs || {})[t];
+      if (DOC_TIPOS[t] && DOC_TIPOS[t].vence && d && d.vence && d.vence < v.fecha) out.push(vence(DOC_TIPOS[t].nombre + ' de ' + UI.placaTxt(x), d.vence));
+    }));
+    const c = this.conductor(v), lic = c && (c.docs || {}).licencia;
+    if (!c) out.push(UI.placaTxt(u) + ' no tiene conductor asignado');
+    else if (lic && lic.vence && lic.vence < v.fecha) out.push(vence('La licencia de ' + c.nombre, lic.vence));
+    return out;
+  },
+  /* En la ventana: otro viaje del mismo camión el mismo día y a la misma hora */
+  cruces(v, id) {
+    if (!this.programado(v) || v.estado !== 'prog' || v.fecha < hoyISO) return [];
+    const o = Datos.viajes.find(x => x.id !== id && x.unidad === v.unidad && x.fecha === v.fecha && (x.hora || '') === (v.hora || '') && x.estado !== 'no');
+    return o ? [this.placa(v.unidad) + ' ya tiene otro viaje ese día a la misma hora: ' + this.nombre(this.ruta(o.ruta))] : [];
+  },
+
+  /* ---- La ficha de un viaje ---- */
+  ficha(v) {
+    const r = this.ruta(v.ruta) || {}, al = this.revisar(v), prog = this.programado(v);
+    const det = prog ? [v.hora, v.ton != null ? this.tonTxt(v.ton) : ''].filter(Boolean).join(' · ')
+      : [v.ton != null ? this.tonTxt(v.ton) : '', v.fecha ? this.diaSem(v.fecha).slice(0, 3).toLowerCase() + ' ' + this.dia(v.fecha) + ' · sin camión'
+        : v.unidad ? this.placa(v.unidad) + ' · sin día' : 'sin día ni camión'].filter(Boolean).join(' · ');
+    const tit = this.nombreTMS(r) + ' · ' + (prog ? this.ESTADOS[v.estado][0] : 'por programar') + (al.length ? ' · Revisar: ' + al.join('; ') : '') +
+      ' · arrástrela para moverla';
+    return '<div class="rt-v e-' + v.estado + '" role="button" tabindex="0" style="--c:' + this.color(r.tipo) + '" data-act="rtViaje" data-v="' + attr(v.id) +
+      '" draggable="true" title="' + attr(tit) + '"><b>' + esc(this.nombre(r)) + '</b><span>' + esc(det) +
+      (al.length ? '<em class="rt-al">' + Icon('warn', '', 11) + '</em>' : '') + (prog && v.estado !== 'prog' ? '<em class="rt-ei">' + this.estIc(v.estado) + '</em>' : '') +
+      '</span></div>';
+  },
+  leyenda() {
+    return '<div class="rt-ley">' + this.tipos().map(t => '<span>' + this.punto(t) + esc(t) + '</span>').join('') +
+      '<span class="rt-ley-sep"></span><span>' + Icon('truck', '', 11) + 'En ruta</span><span>' + Icon('check', '', 11) + 'Hecho</span><span>' + Icon('x', '', 11) + 'No se hizo</span>' +
+      '<span>' + Icon('warn', '', 11) + 'Revisar antes de salir</span><span class="rt-ley-sep"></span><span>' + Icon('mover', '', 11) +
+      'Arrastre una ficha para moverla · con Ctrl se copia</span></div>';
+  },
+
+  /* ---- Por camión: una fila por camión y una columna por día. Primero los
+     que tienen viajes; al final, más suaves, los libres, para soltar en ellos ---- */
+  tablero(l) {
+    /* Con tipos escogidos, primero los camiones con viajes de esos tipos; los
+       demás siguen después, más suaves: libres o con su conductor */
+    const fs = this.fechas(l), vs = this.vistos(l), con = new Set(vs.map(v => v.unidad)), cams = this.camiones();
+    const ocupados = new Set(this.deSemana(l).map(v => v.unidad));
+    const todos = cams.concat([...ocupados].map(id => Q.unidad(id)).filter(u => u && !cams.includes(u)));
+    const us = todos.filter(u => con.has(u.id)).concat(todos.filter(u => !con.has(u.id)));
+    if (!us.length) return '<div class="card">' + UI.empty('truck', 'No hay vehículos de carga', 'Los camiones salen aquí cuando estén registrados en Flota.') + '</div>';
+    return '<div class="rt-zona" id="rtZona"><div class="rt-wrap"><div class="rt-tab"><div class="rt-h rt-hu">Camión</div>' +
+      fs.map(f => '<div class="rt-h' + (f === hoyISO ? ' hoy' : '') + '"><b>' + this.diaSem(f) + '</b><span>' + this.dia(f) + (f === hoyISO ? ' · hoy' : '') + '</span></div>').join('') +
+      us.map(u => {
+        const libre = !con.has(u.id), c = Q.conductorDe(u);
+        return '<div class="rt-u' + (libre ? ' libre' : '') + '">' + UI.thumb(u) + '<div><b class="mono">' + esc(UI.placaTxt(u)) + '</b><span>' +
+            esc(!ocupados.has(u.id) ? 'Libre esta semana' : c ? c.nombre : 'Sin conductor asignado') + '</span></div></div>' +
+          fs.map(f => '<div class="rt-c' + (f === hoyISO ? ' hoy' : '') + '" data-cel data-u="' + attr(u.id) + '" data-f="' + f + '">' +
+            vs.filter(v => v.unidad === u.id && v.fecha === f).sort(this.enOrden).map(v => this.ficha(v)).join('') +
+            '<button type="button" class="rt-mas" data-act="rtNuevo" data-u="' + attr(u.id) + '" data-f="' + f + '" title="' +
+              attr('Agregar un viaje a ' + UI.placaTxt(u) + ' el ' + this.diaSem(f).toLowerCase() + ' ' + this.dia(f)) + '">' + Icon('plus', '', 12) + '</button></div>').join('');
+      }).join('') +
+      '</div></div>' + this.bandejaHtml() + '</div>';
+  },
+  /* La bandeja «Por programar»: las fichas que se dejan mientras se organiza
+     la semana. Se achica a una barrita con su número (Juan, 04/11/2026) */
+  bandejaHtml() {
+    const b = this.bandeja().filter(v => this.visible(v)).sort(this.enOrden), abierta = UIState.rutas.bandeja !== 'chica';
+    return '<aside class="rt-band' + (abierta ? '' : ' chica') + '" data-cel>' +
+      '<div class="rt-band-h">' + (abierta ? '<b>Por programar</b>' : '') + '<span class="rt-band-n" title="Por programar">' + b.length + '</span>' +
+        '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-act="rtBandeja" title="' + (abierta ? 'Achicar la bandeja' : 'Abrir la bandeja') + '">' +
+          Icon(abierta ? 'chevR' : 'back', '', 14) + '</button></div>' +
+      (abierta ? '<div class="rt-band-l">' + b.map(v => this.ficha(v)).join('') +
+          '<div class="rt-band-vacia">' + Icon('mover', '', 14) + 'Suelte aquí las fichas mientras organiza la semana</div></div>' +
+        '<button type="button" class="btn btn-sm rt-band-mas" data-act="rtNuevo" data-f="">' + Icon('plus', '', 12) + 'Viaje sin asignar</button>' +
+        (b.length ? '<div class="rt-band-av">' + Icon('warn', '', 12) + (b.length === 1 ? 'Queda 1 viaje sin programar' : 'Quedan ' + b.length + ' viajes sin programar') + '</div>' : '')
+        : '<div class="rt-band-v">Por programar</div>') +
+      '</aside>';
+  },
+  /* El arrastre: cada casilla y la bandeja reciben fichas; la casilla de
+     encima se marca. Mientras se arrastra, lo que llegue de otros equipos
+     espera (ver Sincro.seguro) */
+  arrastre() {
+    const z = $('#rtZona');
+    if (!z) return;
+    const TIPO = 'application/x-viaje', es = e => Array.from(e.dataTransfer.types || []).includes(TIPO);
+    const limpiar = () => $$('.rt-sobre', z).forEach(x => x.classList.remove('rt-sobre'));
+    const fin = () => { document.documentElement.classList.remove('arrastrando'); limpiar(); $$('.rt-arr', z).forEach(x => x.classList.remove('rt-arr')); };
+    z.addEventListener('dragstart', e => {
+      const v = e.target.closest('.rt-v');
+      if (!v) return;
+      e.dataTransfer.setData(TIPO, v.dataset.v);
+      e.dataTransfer.effectAllowed = 'copyMove';
+      document.documentElement.classList.add('arrastrando');
+      setTimeout(() => v.classList.add('rt-arr'));
+    });
+    z.addEventListener('dragend', fin);
+    /* La ficha es un div (en Firefox un botón no se deja arrastrar): con Enter o espacio se abre */
+    z.addEventListener('keydown', e => {
+      const v = (e.key === 'Enter' || e.key === ' ') && e.target.closest('.rt-v');
+      if (v) { e.preventDefault(); v.click(); }
+    });
+    z.addEventListener('dragover', e => {
+      const c = es(e) && e.target.closest('[data-cel]');
+      if (!c) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = e.ctrlKey || e.altKey ? 'copy' : 'move';
+      if (!c.classList.contains('rt-sobre')) { limpiar(); c.classList.add('rt-sobre'); }
+    });
+    z.addEventListener('dragleave', e => { const c = e.target.closest('[data-cel]'); if (c && !c.contains(e.relatedTarget)) c.classList.remove('rt-sobre'); });
+    z.addEventListener('drop', e => {
+      const c = es(e) && e.target.closest('[data-cel]');
+      if (!c) return;
+      e.preventDefault();
+      const id = e.dataTransfer.getData(TIPO), copiar = e.ctrlKey || e.altKey;
+      fin();
+      this.mover(id, c.dataset.u || null, c.dataset.f || null, copiar);
+    });
+  },
+  /* Mover o copiar (con Ctrl) una ficha: queda en su historial, y se puede
+     deshacer. Al pasar a otro camión, el viaje toma su conductor */
+  mover(id, u, f, copiar) {
+    const v = this.viaje(id);
+    if (!v) return;
+    const dest = u && f ? { unidad: u, fecha: f } : { unidad: null, fecha: null };
+    if (!copiar && v.unidad === dest.unidad && v.fecha === dest.fecha) return;
+    const antes = this.lugar(v);
+    let txt;
+    if (copiar) {
+      const n = { id: this.nuevoId('v'), ruta: v.ruta, unidad: dest.unidad, conductor: null, fecha: dest.fecha, hora: v.hora, ton: v.ton, estado: 'prog', nota: '', cambios: [] };
+      this.anotar(n, 'Se copió del viaje de ' + antes);
+      Datos.viajes.push(n);
+      this.ultimo = { copia: [n.id] };
+      txt = 'Viaje copiado a ' + this.lugar(n);
+    } else {
+      this.ultimo = { antes: [JSON.parse(JSON.stringify(v))] };
+      if (v.unidad !== dest.unidad) v.conductor = null;
+      Object.assign(v, dest);
+      this.fijarConductor(v);
+      this.anotar(v, !dest.unidad ? 'Se pasó a «Por programar»' : antes === '«Por programar»' ? 'Se programó: ' + this.lugar(v) : 'Se movió de ' + antes + ' a ' + this.lugar(v));
+      txt = dest.unidad ? 'Viaje movido a ' + this.lugar(v) : 'Viaje pasado a «Por programar»';
+    }
+    Router.pintar(true);
+    Toast.show(esc(txt) + '. <span class="link" data-act="rtDeshacer">Deshacer</span>');
+  },
+  deshacer() {
+    const u = this.ultimo;
+    if (!u) return;
+    this.ultimo = null;
+    (u.copia || []).forEach(id => { const i = Datos.viajes.findIndex(x => x.id === id); if (i >= 0) Datos.viajes.splice(i, 1); });
+    (u.antes || []).forEach(a => {
+      const v = this.viaje(a.id);
+      if (!v) { Datos.viajes.push(a); return; }
+      Object.keys(v).forEach(k => { delete v[k]; });
+      Object.assign(v, a);
+    });
+    (u.quitado || []).forEach(a => { if (!this.viaje(a.id)) Datos.viajes.push(a); });
+    Router.pintar(true);
+    Toast.show('Listo: se deshizo.');
+  },
+
+  /* ---- Por día: la lista para mandar a los conductores ---- */
+  porDia(l) {
+    const vs = this.vistos(l), que = this.queTxt();
+    if (!vs.length) return '<div class="card">' + UI.empty('calendar', que ? 'No hay viajes de ' + que + ' esta semana' : 'No hay viajes programados esta semana',
+      'Programe uno con «Programar viaje» o con el «+» de cada casilla en «Por camión», o copie la semana anterior.') + '</div>';
+    return this.fechas(l).filter(f => vs.some(v => v.fecha === f)).map(f => {
+      const ds = vs.filter(v => v.fecha === f).sort(this.enOrden), ton = ds.reduce((s, v) => s + (+v.ton || 0), 0);
+      return '<div class="rt-dia"><div class="rt-dia-h"><b>' + esc(this.diaSem(f) + ' ' + this.dia(f)) + (f === hoyISO ? ' · hoy' : '') + '</b><span>' +
+          ds.length + (ds.length === 1 ? ' viaje' : ' viajes') + ' · ' + this.tonTxt(ton) + '</span>' +
+          '<button type="button" class="btn btn-sm btn-ghost rt-dia-pdf" data-act="rtImagen" data-f="' + f + '" title="Copia este día como imagen, para pegarla en el grupo">' +
+            Icon('image', '', 13) + 'Copiar imagen del día</button>' +
+          '<button type="button" class="btn btn-sm btn-ghost" data-act="rtPdf" data-f="' + f + '" title="El PDF de este día, para los conductores">' +
+            Icon('print', '', 13) + 'PDF del día</button></div>' +
+        '<table class="tbl rt-lista"><tbody>' + ds.map(v => {
+          const r = this.ruta(v.ruta) || {}, c = this.conductor(v), al = this.revisar(v);
+          return '<tr class="row-click" data-act="rtViaje" data-v="' + attr(v.id) + '"><td class="nowrap mono">' + esc(v.hora || '—') + '</td><td>' + this.punto(r.tipo) +
+            '<b>' + esc(this.nombre(r)) + '</b><div class="dias">' + esc([r.tipo, r.cliente, v.nota].filter(Boolean).join(' · ')) + '</div></td>' +
+            '<td class="num nowrap">' + this.tonTxt(v.ton) + '</td><td><b class="mono">' + esc(this.placa(v.unidad)) + '</b><div class="dias">' +
+            esc(c ? c.nombre : 'Sin conductor asignado') + '</div></td><td>' + UI.pill(this.ESTADOS[v.estado][1], this.ESTADOS[v.estado][0]) +
+            (al.length ? ' <span class="rt-al-t" title="' + attr(al.join('\n')) + '">' + Icon('warn', '', 12) + 'Revisar</span>' : '') + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }).join('');
+  },
+
+  semanaHtml() {
+    const l = this.semana(), vs = this.vistos(l), nb = this.bandeja().filter(v => this.visible(v)).length, vista = UIState.rutas.vista;
+    const n = k => vs.filter(v => v.estado === k).length, al = vs.filter(v => this.revisar(v).length).length;
+    const ton = vs.filter(v => v.estado !== 'no').reduce((s, v) => s + (+v.ton || 0), 0);
+    const tipos = this.tipos().filter(t => vs.some(v => (this.ruta(v.ruta) || {}).tipo === t)).map(t => t.toLowerCase());
+    const lista = tipos.length > 1 ? tipos.slice(0, -1).join(', ') + ' y ' + tipos[tipos.length - 1] : tipos[0] || '';
+    const enHoy = l <= hoyISO && hoyISO <= this.mas(l, 6);
+    return '<div class="kpis4 mb16">' +
+        UI.kpi({ label: 'Viajes de la semana', valor: vs.length, icono: 'calendar', meta: esc('Semana ' + this.semanaTxt(l)) + (nb ? ' · ' + nb + ' por programar' : '') }) +
+        UI.kpi({ label: 'Hechos', valor: n('hecho') + '<small> de ' + vs.length + '</small>', icono: 'check', color: 'var(--ok-500)',
+          meta: [n('no') ? n('no') + ' no se ' + (n('no') === 1 ? 'hizo' : 'hicieron') : '', n('ruta') ? n('ruta') + ' en ruta' : ''].filter(Boolean).join(' · ') || 'Se marcan en la ventana de cada viaje' }) +
+        UI.kpi({ label: 'Toneladas programadas', valor: ton.toLocaleString('es-CO'), icono: 'truck', meta: lista ? esc(lista.charAt(0).toUpperCase() + lista.slice(1)) : 'Sin viajes esta semana' }) +
+        UI.kpi({ label: 'Para revisar', valor: al, icono: 'warn', color: 'var(--warn-500)', vcolor: al ? 'var(--warn-500)' : '', meta: 'Taller, documentos o licencia antes de salir' }) +
+      '</div>' +
+      '<div class="toolbar rt-tool"><div class="rt-sem"><button type="button" class="btn btn-sm btn-icon" data-act="rtSemana" data-v="-1" title="Semana anterior" aria-label="Semana anterior">' +
+          Icon('back', '', 14) + '</button><b>' + esc('Semana ' + this.semanaTxt(l)) + '</b><button type="button" class="btn btn-sm btn-icon" data-act="rtSemana" data-v="1" title="Semana siguiente" aria-label="Semana siguiente">' +
+          Icon('chevR', '', 14) + '</button>' + (enHoy ? '' : '<button type="button" class="btn btn-sm" data-act="rtSemana" data-v="0">Esta semana</button>') + '</div>' +
+        '<div class="seg">' + [['camion', 'Por camión'], ['dia', 'Por día']].map(o => '<button type="button" class="' + (vista === o[0] ? 'on' : '') + '" data-act="rtVista" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div>' +
+        '<span class="tb-sp"></span><button type="button" class="btn" data-act="rtCopiar">' + Icon('copiar', '', 14) + 'Copiar la semana anterior</button>' +
+        '<button type="button" class="btn" data-act="rtPdf">' + Icon('print', '', 14) + 'PDF para los conductores</button>' +
+        '<button type="button" class="btn" data-act="rtImagen" title="Copia ' + (vista === 'dia' ? 'la lista por día' : 'el tablero') +
+          ' como imagen, con lo que se ve, para pegarla en el grupo">' + Icon('image', '', 14) + 'Copiar imagen</button></div>' +
+      '<div class="rt-cab"><h2 class="rt-titulo">' + esc(this.titulo()) + '</h2>' + this.verHtml() + '</div>' +
+      (UIState.rutas.ver && !UIState.rutas.ver.length ? '<div class="card">' + UI.empty('ruta', 'No hay ningún tipo escogido', 'Marque los tipos de operación que quiere ver.') + '</div>'
+        : vista === 'dia' ? this.porDia(l) : this.tablero(l)) + this.leyenda();
+  },
+  /* Las casillas de los tipos: todas marcadas al entrar */
+  verHtml() {
+    const ver = UIState.rutas.ver;
+    return '<div class="rt-ver"><label class="rt-chk"><input type="checkbox" data-act="rtVerTodos"' + (ver ? '' : ' checked') + '>Todos</label>' +
+      this.tiposVer().map(t => '<label class="rt-chk"><input type="checkbox" data-act="rtVer" data-v="' + attr(t) + '"' + (!ver || ver.includes(t) ? ' checked' : '') + '>' +
+        this.punto(t) + esc(t) + '</label>').join('') + '</div>';
+  },
+
+  /* ---- El maestro de rutas ---- */
+  maestro() {
+    const sem = this.deSemana(this.semana()), usados = [...new Set(Datos.rutas.map(r => r.tipo))];
+    const botones = this.tipos().filter(t => usados.includes(t)).concat(usados.filter(t => !this.tipos().includes(t)));
+    const f = botones.includes(UIState.rutas.tipo) ? UIState.rutas.tipo : 'todas';
+    const orden = t => { const i = this.tipos().indexOf(t); return i < 0 ? 99 : i; };
+    const lista = Datos.rutas.filter(r => f === 'todas' || r.tipo === f)
+      .sort((a, b) => (a.activa === false) - (b.activa === false) || orden(a.tipo) - orden(b.tipo) || (a.id < b.id ? -1 : 1));
+    return '<div class="toolbar"><div class="seg">' + '<button type="button" class="' + (f === 'todas' ? 'on' : '') + '" data-act="rtFiltro" data-v="todas">Todas <span class="seg-n">' + Datos.rutas.length + '</span></button>' +
+        botones.map(t => '<button type="button" class="' + (f === t ? 'on' : '') + '" data-act="rtFiltro" data-v="' + attr(t) + '">' + this.punto(t) + esc(t) + ' <span class="seg-n">' +
+          Datos.rutas.filter(r => r.tipo === t).length + '</span></button>').join('') + '</div>' +
+        '<span class="tb-sp"></span><button type="button" class="btn btn-primary" data-act="rtRuta">' + Icon('plus', '', 14) + 'Nueva ruta</button></div>' +
+      (Datos.rutas.length ? '<div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Ruta</th><th>Tipo de operación</th><th>Cliente o frente</th><th>Tipo interno</th>' +
+        '<th class="num">Ton. estándar</th><th class="num">Viajes esta semana</th><th>Estado</th><th></th></tr></thead><tbody>' +
+        lista.map(r => {
+          const n = sem.filter(v => v.ruta === r.id).length;
+          return '<tr' + (r.activa === false ? ' class="rt-inact"' : '') + '><td><b>' + esc(r.origen + ' → ' + r.destino) + '</b>' + (r.obs ? '<div class="dias">' + esc(r.obs) + '</div>' : '') + '</td>' +
+            '<td class="nowrap">' + this.punto(r.tipo) + esc(r.tipo || '—') + '</td><td>' + esc(r.cliente || '—') + '</td><td>' + esc(r.interno || '—') + '</td>' +
+            '<td class="num">' + this.tonTxt(r.ton) + '</td><td class="num">' + (n || '—') + '</td><td>' + (r.activa === false ? UI.pill('nr', 'Inactiva') : UI.pill('ok', 'Activa')) + '</td>' +
+            '<td class="tr"><button type="button" class="btn btn-sm" data-act="rtRuta" data-r="' + attr(r.id) + '">' + Icon('edit', '', 12) + 'Editar</button></td></tr>';
+        }).join('') + '</tbody></table></div></div>'
+        : '<div class="card">' + UI.empty('ruta', 'Todavía no hay rutas', 'Cree la primera con «Nueva ruta».') + '</div>');
+  },
+
+  vista() {
+    const s = UIState.rutas, titulo = 'Rutas', sub = 'Programación de rutas';
+    this.logoListo();
+    const head = UI.head('Rutas', 'La programación semanal de los viajes y su seguimiento',
+      Sincro.sinRutas ? '' : '<button type="button" class="btn btn-primary" data-act="rtNuevo">' + Icon('plus', '', 14) + 'Programar viaje</button>');
+    if (Sincro.sinRutas) return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') +
+      '<div><b>Todavía no se puede programar.</b> Falta correr en Supabase el SQL 029, que crea dónde guardar las rutas y los viajes.</div></div>' };
+    const tabs = '<div class="tabs">' + [['semana', 'Semana', 'calendar'], ['rutas', 'Rutas', 'ruta']].map(t => '<div class="tab tab-ic' + (s.tab === t[0] ? ' active' : '') +
+      '" data-act="rtTab" data-v="' + t[0] + '">' + Icon(t[2], '', 14) + t[1] +
+      (t[0] === 'rutas' ? '<span class="tb-count">' + Datos.rutas.filter(r => r.activa !== false).length + '</span>' : '') + '</div>').join('') + '</div>';
+    return { titulo, sub, html: head + tabs + (s.tab === 'rutas' ? this.maestro() : this.semanaHtml()), despues: () => this.arrastre() };
+  },
+
+  /* ---- La ventana de un viaje: todo lo suyo, lo que hay que revisar y su
+     historial de cambios. Guardar se prende solo si algo cambió ---- */
+  leer(m) {
+    const e = $('#rtE button.on', m);
+    return { ruta: $('#rtR', m).value, unidad: $('#rtU', m).value || null, conductor: $('#rtC', m).value || null, fecha: $('#rtF', m).value || null,
+      hora: $('#rtH', m).value, ton: this.tonLeer($('#rtT', m).value), estado: e ? e.dataset.v : 'prog', nota: $('#rtN', m).value.trim() };
+  },
+  abrir(id, o) {
+    o = o || {};
+    const v0 = id ? this.viaje(id) : null;
+    if (id && !v0) { Toast.show('Ese viaje ya no está: lo quitaron en otro equipo.', 'warn'); Router.pintar(true); return; }
+    if (!v0 && !Datos.rutas.some(r => r.activa !== false)) { Toast.show('Primero cree una ruta en la pestaña «Rutas».', 'warn'); return; }
+    const l = this.semana(), hoyEn = l <= hoyISO && hoyISO <= this.mas(l, 6);
+    const v = v0 || { ruta: '', unidad: o.u || null, conductor: null, fecha: o.f !== undefined ? o.f || null : hoyEn ? hoyISO : l, hora: '06:00', ton: null, estado: 'prog', nota: '', cambios: [] };
+    const r = v.ruta ? this.ruta(v.ruta) : null, u = v.unidad ? Q.unidad(v.unidad) : null;
+    const opc = (lista, actual) => lista.map(x => '<option value="' + attr(x[0]) + '"' + (x[0] === actual ? ' selected' : '') + '>' + esc(x[1]) + '</option>').join('');
+    /* Las rutas activas, por tipo y en el orden del catálogo; la del viaje aunque esté inactiva */
+    const rutas = Datos.rutas.filter(x => x.activa !== false || x.id === v.ruta), tipos = this.tipos();
+    const grupos = tipos.concat([...new Set(rutas.map(x => x.tipo))].filter(t => !tipos.includes(t)));
+    const rutaSel = '<select class="inp" id="rtR">' + (r ? '' : '<option value="">Escoja la ruta…</option>') + grupos.map(t => {
+      const xs = rutas.filter(x => x.tipo === t).sort((a, b) => (a.id < b.id ? -1 : 1));
+      return xs.length ? '<optgroup label="' + attr(t || 'Sin tipo') + '">' + opc(xs.map(x => [x.id, this.nombre(x) + (x.cliente ? ' · ' + x.cliente : '') + (x.activa === false ? ' (inactiva)' : '')]), v.ruta) + '</optgroup>' : '';
+    }).join('') + '</select>';
+    const cams = this.camiones().concat(u && u.tipo !== 'carga' ? [u] : []);
+    const conds = Datos.conductores.slice().sort((a, b) => a.nombre.localeCompare(b.nombre)), cv = v.conductor ? Q.conductor(v.conductor) : null;
+    if (cv && !conds.includes(cv)) conds.push(cv);
+    const hist = v0 ? '<div class="rt-hist"><b>Historial de cambios</b>' + ((v.cambios || []).length
+      ? v.cambios.map(c => '<div><span>' + esc(this.cuando(c.t)) + '</span>' + esc(c.txt) + '</div>').join('') : '<div><span>—</span>Sin cambios anotados</div>') + '</div>' : '';
+    const m = Modal.abrir({
+      titulo: !v0 ? 'Programar viaje' : this.programado(v) ? 'Viaje · ' + this.placa(v.unidad) + ' · ' + this.diaSem(v.fecha).toLowerCase() + ' ' + this.dia(v.fecha) : 'Viaje · por programar',
+      sub: r ? esc(this.nombreTMS(r)) : 'Ruta, camión, conductor y día', ancho: 'm-hoja',
+      cuerpo: '<div id="rtAl"></div>' +
+        '<div class="field"><label for="rtR">Ruta</label>' + rutaSel + '</div>' +
+        '<div class="row"><div class="field"><label for="rtU">Camión</label><select class="inp" id="rtU"><option value="">Sin camión todavía</option>' +
+            opc(cams.map(x => [x.id, UI.placaTxt(x) + (x.clase ? ' · ' + x.clase : '')]), v.unidad || '') + '</select></div>' +
+          '<div class="field"><label for="rtC">Conductor</label><select class="inp" id="rtC"><option value="">' + esc(this.delCamion(v.unidad)) + '</option>' +
+            opc(conds.map(c => [c.id, c.nombre]), v.conductor || '') + '</select></div></div>' +
+        '<div class="row"><div class="field"><label for="rtF">Día</label><input class="inp" type="date" id="rtF" value="' + attr(v.fecha || '') + '"></div>' +
+          '<div class="field"><label for="rtH">Hora de salida</label><input class="inp" type="time" id="rtH" value="' + attr(v.hora || '') + '"></div>' +
+          '<div class="field"><label for="rtT">Toneladas</label><input class="inp" id="rtT" inputmode="decimal" autocomplete="off" value="' + attr(this.tonEsc(v.ton)) +
+            '" placeholder="' + attr(r ? this.tonEsc(r.ton) : '') + '"></div></div>' +
+        '<div class="hint mb12" id="rtLugar" hidden>Sin día o sin camión, el viaje queda en «Por programar», en la bandeja de la derecha.</div>' +
+        '<div class="field"><label>Estado</label><div class="seg" id="rtE">' + Object.keys(this.ESTADOS).map(k => '<button type="button" data-v="' + k + '" class="' +
+          (v.estado === k ? 'on' : '') + '">' + this.ESTADOS[k][0] + '</button>').join('') + '</div></div>' +
+        '<div class="field mb0"><label for="rtN">Nota <span class="txt-3">(opcional)</span></label><input class="inp" id="rtN" maxlength="200" autocomplete="off" value="' +
+          attr(v.nota || '') + '" placeholder="Ej.: cargar antes de las 10"></div>' + hist,
+      pie: (v0 ? '<button type="button" class="btn btn-ghost btn-del mf-left" data-act="rtQuitar" data-v="' + attr(v0.id) + '">' + Icon('trash', '', 14) + 'Quitar</button>' : '') +
+        '<button type="button" class="btn" data-act="cerrarModal">Cancelar</button><button type="button" class="btn btn-primary" data-act="rtGuardar">' + Icon('save', '', 14) + 'Guardar</button>'
+    });
+    m._id = v0 ? v0.id : '';
+    const g = $('[data-act="rtGuardar"]', m), antes = JSON.stringify(this.leer(m)), t = $('#rtT', m);
+    const revisar = () => {
+      if (!document.body.contains(m)) return;
+      const d = this.leer(m), x = Object.assign({}, v, d), al = this.revisar(x).concat(this.cruces(x, m._id));
+      $('#rtC option[value=""]', m).textContent = this.delCamion(d.unidad);
+      $('#rtAl', m).innerHTML = al.length ? '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>Revisar antes de salir</b><div class="rt-al-l">' +
+        al.map(a => '<span>' + esc(a) + '.</span>').join('') + '</div>Se puede programar igual.</div></div>' : '';
+      $('#rtLugar', m).hidden = this.programado(d);
+      g.disabled = !d.ruta || JSON.stringify(d) === antes;
+    };
+    /* La ruta trae sus toneladas estándar, si no se habían cambiado */
+    let previa = r;
+    $('#rtR', m).addEventListener('change', () => {
+      const r2 = this.ruta($('#rtR', m).value);
+      if (r2 && (!t.value.trim() || t.value.trim() === (previa ? this.tonEsc(previa.ton) : ''))) t.value = this.tonEsc(r2.ton);
+      t.placeholder = r2 ? this.tonEsc(r2.ton) : '';
+      $('.mh-sub', m).textContent = r2 ? this.nombreTMS(r2) : 'Ruta, camión, conductor y día';
+      previa = r2;
+    });
+    t.addEventListener('input', () => { const s = t.value.replace(/[^\d,.]/g, ''); if (s !== t.value) t.value = s; });
+    $$('#rtE button', m).forEach(b => b.addEventListener('click', () => { $$('#rtE button', m).forEach(x => x.classList.toggle('on', x === b)); revisar(); }));
+    ['input', 'change'].forEach(ev => m.addEventListener(ev, () => setTimeout(revisar)));
+    revisar();
+  },
+  /* Lo que cambió, para el historial */
+  diferencias(a, d) {
+    const out = [];
+    if (a.ruta !== d.ruta) out.push('Cambió la ruta de «' + this.nombre(this.ruta(a.ruta)) + '» a «' + this.nombre(this.ruta(d.ruta)) + '»');
+    const la = this.lugar(a), ld = this.lugar(d);
+    if (la !== ld) out.push(!this.programado(d) ? 'Se pasó a «Por programar»' : !this.programado(a) ? 'Se programó: ' + ld : 'Se movió de ' + la + ' a ' + ld);
+    if ((a.conductor || null) !== (d.conductor || null)) { const c = d.conductor ? Q.conductor(d.conductor) : null; out.push('Conductor: ' + (c ? c.nombre : 'el del camión')); }
+    if ((a.hora || '') !== (d.hora || '')) out.push('Hora de salida: ' + (a.hora || '—') + ' → ' + (d.hora || '—'));
+    if ((a.ton == null ? null : +a.ton) !== d.ton) out.push('Toneladas: ' + this.tonTxt(a.ton) + ' → ' + this.tonTxt(d.ton));
+    if (a.estado !== d.estado) out.push('Se marcó «' + this.ESTADOS[d.estado][0] + '»');
+    if ((a.nota || '') !== d.nota) out.push(d.nota ? 'Nota: ' + d.nota : 'Se quitó la nota');
+    return out;
+  },
+  guardar(el) {
+    const m = el.closest('.modal-bd');
+    if (!m || el.disabled) return;
+    const d = this.leer(m);
+    if (!d.ruta) { Toast.show('Escoja la ruta del viaje.', 'warn'); return; }
+    let v = m._id ? this.viaje(m._id) : null;
+    if (m._id && !v) { Modal.cerrar(m); Toast.show('Ese viaje ya no está: lo quitaron en otro equipo.', 'warn'); Router.pintar(true); return; }
+    const antes = v ? JSON.parse(JSON.stringify(v)) : null, notas = antes ? this.diferencias(antes, d) : [];
+    if (!v) v = { id: this.nuevoId('v'), cambios: [] };
+    Object.assign(v, d);
+    this.fijarConductor(v);
+    if (!antes) {
+      this.anotar(v, this.programado(v) ? 'Se programó: ' + this.lugar(v) : 'Se creó en «Por programar»');
+      Datos.viajes.push(v);
+    }
+    notas.forEach(x => this.anotar(v, x));
+    this.ultimo = antes ? { antes: [antes] } : { copia: [v.id] };
+    Modal.cerrar(m);
+    Router.pintar(true);
+    Toast.show((antes ? 'Viaje guardado' : this.programado(v) ? 'Viaje programado: ' + esc(this.lugar(v)) : 'Viaje guardado en «Por programar»') +
+      (this.visible(v) ? '' : ' (no se ve: su tipo no está marcado arriba)') + '. <span class="link" data-act="rtDeshacer">Deshacer</span>');
+  },
+  quitar(el) {
+    const v = this.viaje(el.dataset.v);
+    if (!v) return;
+    Modal.abrir({
+      titulo: 'Quitar el viaje', sub: esc(this.nombre(this.ruta(v.ruta)) + ' · ' + this.lugar(v)), sinFoco: true,
+      cuerpo: '<div class="alert a-warn">' + Icon('warn') + '<div><b>El viaje se quita de la programación</b>, con su historial de cambios.' +
+        (v.estado !== 'prog' ? ' Está marcado como «' + this.ESTADOS[v.estado][0] + '»: si solo cambió algo, mejor corríjalo.' : '') + '</div></div>',
+      pie: '<button type="button" class="btn" data-act="cerrarModal">Cancelar</button><button type="button" class="btn btn-danger" data-act="rtQuitarSi" data-v="' + attr(v.id) + '">' +
+        Icon('trash', '', 14) + 'Quitar</button>'
+    });
+  },
+  quitarSi(el) {
+    const i = Datos.viajes.findIndex(x => x.id === el.dataset.v);
+    if (i < 0) return;
+    this.ultimo = { quitado: Datos.viajes.splice(i, 1) };
+    Modal.cerrarTodo();
+    Router.pintar(true);
+    Toast.show('Viaje quitado. <span class="link" data-act="rtDeshacer">Deshacer</span>');
+  },
+
+  /* ---- Copiar la semana anterior: los mismos días, camiones y horas, como
+     «Programado». Lo que ya está en esta semana no se repite, y las rutas
+     inactivas no se copian ---- */
+  porCopiar() {
+    const l = this.semana(), ant = this.mas(l, -7), previos = this.deSemana(ant).filter(v => this.visible(v));
+    const clave = v => [v.unidad, v.fecha, v.ruta, v.hora || ''].join('|'), hay = new Set(this.deSemana(l).map(clave));
+    const activa = v => (this.ruta(v.ruta) || {}).activa !== false;
+    const copiar = previos.filter(p => activa(p) && !hay.has(clave(Object.assign({}, p, { fecha: this.mas(p.fecha, 7) }))));
+    return { l, ant, previos, copiar, ya: previos.filter(activa).length - copiar.length, inactivas: previos.filter(p => !activa(p)).length };
+  },
+  copiarSemana() {
+    const c = this.porCopiar();
+    const que = this.queTxt(), de = que ? ' de ' + esc(que) : '';
+    if (!c.previos.length) { Toast.show('La semana ' + esc(this.semanaTxt(c.ant)) + ' no tiene viajes' + de + ' para copiar.', 'warn'); return; }
+    const n = c.copiar.length, plural = (k, uno, varios) => (k === 1 ? uno : varios);
+    Modal.abrir({
+      titulo: 'Copiar la semana anterior', sub: esc('De la semana ' + this.semanaTxt(c.ant) + ' a la ' + this.semanaTxt(c.l)), sinFoco: true,
+      cuerpo: '<p class="mb0">' + (n ? 'Se copian <b>' + n + plural(n, ' viaje', ' viajes') + de + '</b> en los mismos días, camiones y horas, como «Programado».' +
+            (que ? ' Solo los de los tipos escogidos arriba.' : '')
+          : c.ya ? 'Los viajes de la semana anterior ya están en esta semana.' : 'No queda nada por copiar.') +
+        (c.ya && n ? ' ' + c.ya + plural(c.ya, ' ya estaba en esta semana y no se repite.', ' ya estaban en esta semana y no se repiten.') : '') +
+        (c.inactivas ? ' ' + c.inactivas + plural(c.inactivas, ' tiene una ruta inactiva y no se copia.', ' tienen rutas inactivas y no se copian.') : '') + '</p>',
+      pie: '<button type="button" class="btn" data-act="cerrarModal">' + (n ? 'Cancelar' : 'Cerrar') + '</button>' +
+        (n ? '<button type="button" class="btn btn-primary" data-act="rtCopiarSi">' + Icon('copiar', '', 14) + 'Copiar ' + n + plural(n, ' viaje', ' viajes') + '</button>' : '')
+    });
+  },
+  copiarSi() {
+    const c = this.porCopiar(), ids = [];
+    c.copiar.forEach(p => {
+      const v = { id: this.nuevoId('v'), ruta: p.ruta, unidad: p.unidad, conductor: null, fecha: this.mas(p.fecha, 7), hora: p.hora, ton: p.ton, estado: 'prog', nota: '', cambios: [] };
+      this.anotar(v, 'Se copió de la semana anterior (' + this.lugar(p) + ')');
+      Datos.viajes.push(v);
+      ids.push(v.id);
+    });
+    this.ultimo = { copia: ids };
+    Modal.cerrarTodo();
+    Router.pintar(true);
+    Toast.show(ids.length ? 'Listo: ' + ids.length + (ids.length === 1 ? ' viaje copiado' : ' viajes copiados') + ' a esta semana. <span class="link" data-act="rtDeshacer">Deshacer</span>'
+      : 'No quedó nada por copiar.', ids.length ? '' : 'warn');
+  },
+
+  /* ---- El PDF para los conductores: la semana o un día, sin los que no se
+     hicieron ---- */
+  pdf(f) {
+    const l = this.semana(), dias = f ? [f] : this.fechas(l), vs = this.vistos(l).filter(v => dias.includes(v.fecha) && v.estado !== 'no');
+    if (!vs.length) { Toast.show('No hay viajes programados ' + (f ? 'ese día' : 'esta semana') + '.', 'warn'); return; }
+    Ventanas.vistaPrevia(f ? 'Viajes del ' + this.largo(f).toLowerCase() : 'Viajes de la semana', this.formato(l, dias, vs, f));
+  },
+  formato(l, dias, vs, f) {
+    const ton = xs => xs.reduce((s, v) => s + (+v.ton || 0), 0), dm = x => x.slice(8) + '/' + x.slice(5, 7);
+    const cuantos = xs => xs.length + (xs.length === 1 ? ' viaje' : ' viajes') + ' · ' + this.tonTxt(ton(xs)), st = this.semanaTxt(l);
+    const tit = this.queTxt() ? this.titulo() : 'Programación de viajes';
+    return Formatos.cabecera(tit, f ? 'Los viajes del día, para los conductores' : 'Los viajes de la semana, para los conductores',
+        f ? dm(f) + '/' + f.slice(0, 4) : dm(l) + ' – ' + dm(this.mas(l, 6)), f ? 'Día' : 'Semana',
+        [f ? this.largo(f) + ' de ' + f.slice(0, 4) : 'Semana ' + st + (/\d{4}$/.test(st) ? '' : ' de ' + this.mas(l, 6).slice(0, 4)), cuantos(vs)]) +
+      dias.filter(x => vs.some(v => v.fecha === x)).map(x => {
+        const ds = vs.filter(v => v.fecha === x).sort(this.enOrden);
+        return '<div class="dp-sec rt-pr"><div class="dp-sec-t">' + esc(this.largo(x) + ' · ' + cuantos(ds)) + '</div><table class="dp-tbl"><thead><tr>' +
+          '<th class="c">Hora</th><th>Ruta</th><th>Cliente o frente</th><th class="c">Ton.</th><th>Camión</th><th>Conductor</th><th>Nota</th></tr></thead><tbody>' +
+          ds.map(v => {
+            const r = this.ruta(v.ruta) || {}, c = this.conductor(v);
+            return '<tr><td class="c">' + esc(v.hora || '—') + '</td><td><b>' + esc((r.origen || '') + ' → ' + (r.destino || '')) + '</b><br>' + esc(r.tipo || '') + '</td>' +
+              '<td>' + esc(r.cliente || '—') + '</td><td class="n">' + esc(v.ton != null ? (+v.ton).toLocaleString('es-CO') : '—') + '</td><td class="nowrap">' + esc(this.placa(v.unidad)) + '</td>' +
+              '<td>' + esc(c ? c.nombre : 'Sin asignar') + '</td><td>' + esc(v.nota || '') + '</td></tr>';
+          }).join('') + '</tbody></table></div>';
+      }).join('') +
+      Formatos.firmas([['Responsable de flota', '']], true) +
+      Formatos.pie(tit + ' · ' + (f ? this.largo(f).toLowerCase() : 'semana ' + this.semanaTxt(l)));
+  },
+
+  /* ---- La imagen para pegar en los grupos (Juan, 04/11/2026: «botones que me
+     permitan copiar toda la semana… en formato imagen, ya que debo estar
+     pasándola a grupos»). Copia lo que se ve: el tablero o la lista por día,
+     con los tipos escogidos y su título; en «Por día», también cada día. Se
+     dibuja aparte, siempre en claro y al doble de tamaño, para que se lea
+     bien en el celular ---- */
+  IMG: { k: 2, borde: '#dde4ea', fondo2: '#f4f7f9', texto: '#161d24', texto2: '#4e5d6b', texto3: '#6b7c8c',
+    letra: '"Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif', mono: '"Cascadia Mono", Consolas, "Roboto Mono", monospace' },
+  logoListo() {
+    if (!this._logoP) {
+      const img = this._logo = new Image();
+      this._logoP = new Promise(ok => { img.onload = img.onerror = () => ok(); });
+      img.src = MARCA.logo;
+    }
+    return this._logoP;
+  },
+  rgba(hex, a) { const n = parseInt(String(hex).slice(1), 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; },
+  caja(g, x, y, w, h, r) { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); },
+  raya(g, x1, y1, x2, y2) { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); },
+  /* El texto en renglones de un ancho; el último lleva «…» si no cabe */
+  renglones(g, txt, ancho, n) {
+    const ps = String(txt || '').split(/\s+/).filter(Boolean), out = [];
+    let r = '';
+    for (let i = 0; i < ps.length; i++) {
+      const p = r ? r + ' ' + ps[i] : ps[i];
+      if (!r || g.measureText(p).width <= ancho) { r = p; continue; }
+      out.push(r);
+      if (out.length === n - 1) { r = ps.slice(i).join(' '); break; }
+      r = ps[i];
+    }
+    if (r) out.push(r);
+    const k = out.length - 1;
+    if (k >= 0 && g.measureText(out[k]).width > ancho) {
+      let t = out[k];
+      while (t.length > 1 && g.measureText(t + '…').width > ancho) t = t.slice(0, -1);
+      out[k] = t.trimEnd() + '…';
+    }
+    return out;
+  },
+  semanaAño(l) { const st = this.semanaTxt(l); return /\d{4}$/.test(st) ? st : st + ' de ' + this.mas(l, 6).slice(0, 4); },
+  cuantos(xs) {
+    const ton = xs.filter(v => v.estado !== 'no').reduce((s, v) => s + (+v.ton || 0), 0);
+    return xs.length + (xs.length === 1 ? ' viaje' : ' viajes') + ' · ' + this.tonTxt(ton);
+  },
+  tiposDe(vs) { return this.tiposVer().filter(t => vs.some(v => (this.ruta(v.ruta) || {}).tipo === t)); },
+  /* Arriba: el logo, el título y de cuándo es */
+  imgCabeza(g, M, titulo, sub) {
+    const I = this.IMG, img = this._logo, h = 46;
+    let x = M;
+    if (img && img.naturalWidth) { const w = h * img.naturalWidth / img.naturalHeight; g.drawImage(img, M, M, w, h); x += w + 20; }
+    else { g.fillStyle = '#132966'; g.font = '800 21px ' + I.letra; g.fillText('SINUGRAVAS', M, M + 30); x += g.measureText('SINUGRAVAS').width + 20; }
+    g.fillStyle = I.borde; g.fillRect(x - 10, M + 4, 1, h - 8);
+    g.fillStyle = I.texto; g.font = '700 23px ' + I.letra; g.fillText(titulo, x, M + 21);
+    g.fillStyle = I.texto3; g.font = '400 14px ' + I.letra; g.fillText(sub, x, M + 42);
+  },
+  /* Abajo: el color de cada tipo que sale y de dónde sale la imagen. Si no
+     cabe en un renglón, lo segundo va debajo (pieAlto lo sabe antes) */
+  pieTxt() { return 'SINUGRAVAS S.A.S. · Sistema de Gestión de Flota · ' + this.cuando(new Date().toISOString()); },
+  pieAncho(g, tipos) {
+    const I = this.IMG;
+    g.font = '400 12.5px ' + I.letra;
+    const x = tipos.reduce((s, t) => s + 15 + g.measureText(t).width + 18, 0);
+    g.font = '400 12px ' + I.letra;
+    return x + g.measureText(this.pieTxt()).width + 10;
+  },
+  pieAlto(W, M, tipos) { return this.pieAncho(document.createElement('canvas').getContext('2d'), tipos) > W - 2 * M ? 20 : 0; },
+  imgPie(g, M, W, y, tipos) {
+    const I = this.IMG, abajo = this.pieAncho(g, tipos) > W - 2 * M, txt = this.pieTxt();
+    let x = M;
+    g.font = '400 12.5px ' + I.letra;
+    tipos.forEach(t => {
+      g.fillStyle = this.color(t); g.beginPath(); g.arc(x + 5, y - 4, 5, 0, Math.PI * 2); g.fill();
+      g.fillStyle = I.texto2; g.fillText(t, x + 15, y);
+      x += 15 + g.measureText(t).width + 18;
+    });
+    g.fillStyle = I.texto3; g.font = '400 12px ' + I.letra;
+    g.fillText(txt, abajo ? M : W - M - g.measureText(txt).width, abajo ? y + 20 : y);
+  },
+  /* El tablero: una fila por camión con viajes y una columna por día */
+  imgTablero(l) {
+    const I = this.IMG, fs = this.fechas(l), vs = this.vistos(l), M = 28, CU = 200, CD = 172, W = M * 2 + CU + CD * 7, AF = CD - 12;
+    const us = [...new Set(vs.map(v => v.unidad))].map(id => Q.unidad(id)).filter(Boolean).sort((a, b) => String(a.placa).localeCompare(String(b.placa)));
+    /* Primero se mide: la ruta de cada ficha en uno o dos renglones */
+    const g0 = document.createElement('canvas').getContext('2d'), lin = new Map();
+    g0.font = '600 12.5px ' + I.letra;
+    vs.forEach(v => lin.set(v.id, this.renglones(g0, this.nombre(this.ruta(v.ruta)), AF - 20, 2)));
+    const alto = v => 12 + lin.get(v.id).length * 16 + 18;
+    const celdas = us.map(u => fs.map(f => vs.filter(v => v.unidad === u.id && v.fecha === f).sort(this.enOrden)));
+    const filas = celdas.map(fila => Math.max(72, ...fila.map(c => c.reduce((s, v) => s + alto(v) + 6, 6))));
+    const HD = 44, top = M + 66, tabla = HD + filas.reduce((s, h) => s + h, 0), H = top + tabla + 30 + this.pieAlto(W, M, this.tiposDe(vs)) + 22, x0 = M, TW = W - 2 * M;
+    const c = document.createElement('canvas');
+    c.width = W * I.k;
+    c.height = H * I.k;
+    const g = c.getContext('2d');
+    g.scale(I.k, I.k);
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, W, H);
+    this.imgCabeza(g, M, this.titulo(), 'Semana ' + this.semanaAño(l) + ' · ' + this.cuantos(vs));
+    g.save();
+    this.caja(g, x0, top, TW, tabla, 10);
+    g.clip();
+    g.fillStyle = I.fondo2; g.fillRect(x0, top, TW, HD);
+    g.fillStyle = I.texto3; g.font = '700 11px ' + I.letra; g.fillText('CAMIÓN', x0 + 14, top + 27);
+    fs.forEach((f, i) => {
+      const x = x0 + CU + i * CD + 12;
+      g.fillStyle = I.texto; g.font = '700 13.5px ' + I.letra; g.fillText(this.diaSem(f), x, top + 19);
+      g.fillStyle = I.texto3; g.font = '400 12px ' + I.letra; g.fillText(this.dia(f), x, top + 35);
+    });
+    g.strokeStyle = I.borde;
+    g.lineWidth = 1;
+    let y = top + HD;
+    us.forEach((u, r) => {
+      const cd = Q.conductorDe(u);
+      this.raya(g, x0, y + 0.5, x0 + TW, y + 0.5);
+      g.fillStyle = I.texto; g.font = '700 15px ' + I.mono; g.fillText(UI.placaTxt(u), x0 + 14, y + 27);
+      g.fillStyle = I.texto3; g.font = '400 12px ' + I.letra;
+      this.renglones(g, cd ? cd.nombre : 'Sin conductor asignado', CU - 28, 2).forEach((t, k) => g.fillText(t, x0 + 14, y + 46 + k * 15));
+      celdas[r].forEach((cel, i) => {
+        const x = x0 + CU + i * CD + 6;
+        let yy = y + 6;
+        cel.forEach(v => {
+          const rt = this.ruta(v.ruta) || {}, col = this.color(rt.tipo), hh = alto(v), no = v.estado === 'no', ls = lin.get(v.id);
+          g.globalAlpha = no ? 0.55 : 1;
+          g.save();
+          this.caja(g, x, yy, AF, hh, 7);
+          g.clip();
+          g.fillStyle = this.rgba(col, 0.14); g.fillRect(x, yy, AF, hh);
+          g.fillStyle = col; g.fillRect(x, yy, 4, hh);
+          g.restore();
+          g.fillStyle = I.texto; g.font = '600 12.5px ' + I.letra;
+          ls.forEach((t, k) => {
+            const ty = yy + 20 + k * 16;
+            g.fillText(t, x + 12, ty);
+            if (no) g.fillRect(x + 12, ty - 4.5, g.measureText(t).width, 1.2);
+          });
+          g.fillStyle = I.texto2; g.font = '400 12px ' + I.letra;
+          g.fillText([v.hora, v.ton != null ? this.tonTxt(v.ton) : '', no ? 'no se hizo' : ''].filter(Boolean).join(' · '), x + 12, yy + 20 + ls.length * 16 + 2);
+          g.globalAlpha = 1;
+          yy += hh + 6;
+        });
+      });
+      y += filas[r];
+    });
+    fs.forEach((f, i) => this.raya(g, x0 + CU + i * CD + 0.5, top, x0 + CU + i * CD + 0.5, top + tabla));
+    g.restore();
+    g.strokeStyle = I.borde;
+    this.caja(g, x0 + 0.5, top + 0.5, TW - 1, tabla - 1, 10);
+    g.stroke();
+    this.imgPie(g, M, W, top + tabla + 30, this.tiposDe(vs));
+    return c;
+  },
+  /* La lista: un cuadro por día, con la hora, la ruta, las toneladas, el
+     camión y su conductor, y la nota */
+  imgLista(l, dias, f) {
+    const I = this.IMG, vs = this.vistos(l).filter(v => dias.includes(v.fecha)), M = 28, W = 940, TW = W - 2 * M;
+    const C = { hora: 16, ruta: 86, ton: 470, cam: 494, nota: 716 }, HF = 54, HD = 42, ds = dias.filter(x => vs.some(v => v.fecha === x));
+    const top = M + 66, H = top + ds.reduce((s, x) => s + HD + vs.filter(v => v.fecha === x).length * HF + 14, 0) + 16 + this.pieAlto(W, M, this.tiposDe(vs)) + 22;
+    const c = document.createElement('canvas');
+    c.width = W * I.k;
+    c.height = H * I.k;
+    const g = c.getContext('2d');
+    g.scale(I.k, I.k);
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, W, H);
+    this.imgCabeza(g, M, f && !this.queTxt() ? 'Programación del ' + this.largo(f).toLowerCase() : this.titulo(),
+      (f ? this.largo(f) + ' de ' + f.slice(0, 4) : 'Semana ' + this.semanaAño(l)) + ' · ' + this.cuantos(vs));
+    let y = top;
+    ds.forEach(x => {
+      const fil = vs.filter(v => v.fecha === x).sort(this.enOrden), alto = HD + fil.length * HF, cu = this.cuantos(fil);
+      g.save();
+      this.caja(g, M, y, TW, alto, 10);
+      g.clip();
+      g.fillStyle = I.fondo2; g.fillRect(M, y, TW, HD);
+      g.fillStyle = I.texto; g.font = '700 15px ' + I.letra; g.fillText(this.largo(x), M + 16, y + 27);
+      g.fillStyle = I.texto3; g.font = '400 13px ' + I.letra; g.fillText(cu, M + TW - 16 - g.measureText(cu).width, y + 27);
+      g.strokeStyle = I.borde;
+      g.lineWidth = 1;
+      fil.forEach((v, i) => {
+        const yy = y + HD + i * HF, rt = this.ruta(v.ruta) || {}, cd = this.conductor(v), no = v.estado === 'no', t = v.ton != null ? this.tonTxt(v.ton) : '—';
+        this.raya(g, M, yy + 0.5, M + TW, yy + 0.5);
+        g.globalAlpha = no ? 0.55 : 1;
+        g.fillStyle = I.texto; g.font = '700 14px ' + I.mono; g.fillText(v.hora || '—', M + C.hora, yy + 24);
+        g.fillStyle = this.color(rt.tipo); g.beginPath(); g.arc(M + C.ruta + 5, yy + 19, 5, 0, Math.PI * 2); g.fill();
+        g.fillStyle = I.texto; g.font = '600 14px ' + I.letra;
+        const nom = this.renglones(g, this.nombre(rt), C.ton - C.ruta - 90, 1)[0] || '';
+        g.fillText(nom, M + C.ruta + 16, yy + 24);
+        if (no) g.fillRect(M + C.ruta + 16, yy + 19, g.measureText(nom).width, 1.3);
+        g.fillStyle = I.texto3; g.font = '400 12px ' + I.letra;
+        g.fillText(this.renglones(g, [rt.tipo, rt.cliente, no ? 'no se hizo' : ''].filter(Boolean).join(' · '), C.ton - C.ruta - 90, 1)[0] || '', M + C.ruta + 16, yy + 42);
+        g.fillStyle = I.texto; g.font = '400 13.5px ' + I.letra; g.fillText(t, M + C.ton - g.measureText(t).width, yy + 24);
+        g.font = '700 14px ' + I.mono; g.fillText(this.placa(v.unidad), M + C.cam, yy + 24);
+        g.fillStyle = I.texto3; g.font = '400 12px ' + I.letra;
+        g.fillText(this.renglones(g, cd ? cd.nombre : 'Sin conductor asignado', C.nota - C.cam - 16, 1)[0] || '', M + C.cam, yy + 42);
+        if (v.nota) {
+          g.fillStyle = I.texto2;
+          this.renglones(g, v.nota, TW - C.nota - 16, 2).forEach((s, k) => g.fillText(s, M + C.nota, yy + 24 + k * 16));
+        }
+        g.globalAlpha = 1;
+      });
+      g.restore();
+      g.strokeStyle = I.borde;
+      this.caja(g, M + 0.5, y + 0.5, TW - 1, alto - 1, 10);
+      g.stroke();
+      y += alto + 14;
+    });
+    this.imgPie(g, M, W, y + 16, this.tiposDe(vs));
+    return c;
+  },
+  /* «Copiar imagen»: va al portapapeles para pegarla con Ctrl + V. Si el
+     navegador no deja copiar, se descarga para adjuntarla */
+  copiarImagen(f) {
+    const l = this.semana(), dias = f ? [f] : this.fechas(l), vs = this.vistos(l).filter(v => dias.includes(v.fecha)), que = this.queTxt();
+    if (!vs.length) { Toast.show('No hay viajes ' + (que ? 'de ' + esc(que) + ' ' : '') + (f ? 'ese día' : 'esta semana') + ' para copiar.', 'warn'); return; }
+    const lista = Boolean(f) || UIState.rutas.vista === 'dia';
+    const titulo = f && !que ? 'Programación del ' + this.largo(f).toLowerCase() : this.titulo();
+    const nombre = 'programacion-' + (que ? sinTildes(que).replace(/[^a-z0-9]+/g, '-') + '-' : '') + (f || 'semana-' + l);
+    const lienzo = this.logoListo().then(() => (lista ? this.imgLista(l, dias, f) : this.imgTablero(l)));
+    const png = lienzo.then(c => new Promise((ok, mal) => c.toBlob(b => (b ? ok(b) : mal(new Error('no se pudo armar la imagen'))), 'image/png')));
+    const listo = () => Toast.show('Imagen copiada: <b>' + esc(titulo) + '</b>. Péguela en el grupo con <b>Ctrl + V</b>.');
+    const bajar = () => lienzo.then(c => {
+      const a = document.createElement('a');
+      a.href = c.toDataURL('image/png');
+      a.download = nombre + '.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      Toast.show('El navegador no dejó copiar la imagen: se descargó como <b>' + esc(nombre) + '.png</b>, para adjuntarla en el grupo.', 'warn');
+    }).catch(e => Toast.show('No se pudo armar la imagen: ' + esc(e.message) + '.', 'err'));
+    if (!navigator.clipboard || !navigator.clipboard.write || typeof ClipboardItem === 'undefined') { bajar(); return; }
+    /* La imagen va como promesa, para que el clic siga valiendo mientras se
+       dibuja; si el navegador no la acepta así, se le da ya lista */
+    const escribir = dato => navigator.clipboard.write([new ClipboardItem({ 'image/png': dato })]);
+    let intento;
+    try { intento = escribir(png); } catch (e) { intento = Promise.reject(e); }
+    intento.then(listo, () => png.then(escribir).then(listo, bajar));
+  },
+
+  /* ---- La ventana de una ruta. El nombre largo del Excel se arma solo. Si
+     ya hay una igual, avisa (no bloquea) ---- */
+  leerRuta(m) {
+    const limpio = x => String(x || '').trim().replace(/\s+/g, ' ');
+    return { tipo: $('#rrTipo', m).value, interno: $('#rrInt', m).value, origen: limpio($('#rrO', m).value), destino: limpio($('#rrD', m).value),
+      cliente: limpio($('#rrC', m).value), ton: this.tonLeer($('#rrT', m).value), obs: limpio($('#rrObs', m).value) };
+  },
+  abrirRuta(id) {
+    const r0 = id ? this.ruta(id) : null;
+    if (id && !r0) { Toast.show('Esa ruta ya no está.', 'warn'); return; }
+    const r = r0 || { tipo: this.tipos()[0] || '', interno: this.internos()[0] || '', origen: '', destino: '', cliente: '', ton: null, obs: '' };
+    const opc = (lista, actual) => (actual && !lista.includes(actual) ? [actual] : []).concat(lista).map(x => '<option' + (x === actual ? ' selected' : '') + '>' + esc(x) + '</option>').join('');
+    const m = Modal.abrir({
+      titulo: r0 ? 'Editar ruta' : 'Nueva ruta', sub: r0 ? esc(this.nombreTMS(r0)) : 'Sale en la lista para programar', ancho: 'm-hoja',
+      cuerpo: '<div id="rrAl"></div>' +
+        '<div class="row"><div class="field"><label for="rrTipo">Tipo de operación</label><select class="inp" id="rrTipo">' + opc(this.tipos(), r.tipo) + '</select></div>' +
+          '<div class="field"><label for="rrInt">Tipo interno</label><select class="inp" id="rrInt">' + opc(this.internos(), r.interno) + '</select></div></div>' +
+        '<div class="row"><div class="field"><label for="rrO">Origen</label><input class="inp" id="rrO" autocomplete="off" value="' + attr(r.origen) + '" placeholder="Ej.: Fca. El Oyeto"></div>' +
+          '<div class="field"><label for="rrD">Destino</label><input class="inp" id="rrD" autocomplete="off" value="' + attr(r.destino) + '" placeholder="Ej.: Ext. El Gran Sinú"></div></div>' +
+        '<div class="row"><div class="field"><label for="rrC">Cliente o frente</label><input class="inp" id="rrC" autocomplete="off" value="' + attr(r.cliente) + '"></div>' +
+          '<div class="field" style="max-width:160px"><label for="rrT">Ton. estándar</label><input class="inp" id="rrT" inputmode="decimal" autocomplete="off" value="' + attr(this.tonEsc(r.ton)) + '"></div></div>' +
+        '<div class="field mb0"><label for="rrObs">Observación <span class="txt-3">(opcional)</span></label><input class="inp" id="rrObs" autocomplete="off" value="' + attr(r.obs || '') + '"></div>' +
+        '<div class="hint mt12" id="rrNom"></div>' +
+        '<div class="hint mt8">Los tipos de operación y los tipos internos se cambian en Catálogo.</div>',
+      pie: (r0 ? '<button type="button" class="btn btn-ghost mf-left" data-act="rtActivar" data-r="' + attr(r0.id) + '">' + Icon(r0.activa === false ? 'eye' : 'eyeOff', '', 14) +
+          (r0.activa === false ? 'Activar' : 'Desactivar') + '</button>' : '') +
+        '<button type="button" class="btn" data-act="cerrarModal">Cancelar</button><button type="button" class="btn btn-primary" data-act="rtGuardarRuta">' + Icon('save', '', 14) + 'Guardar</button>'
+    });
+    m._id = r0 ? r0.id : '';
+    const g = $('[data-act="rtGuardarRuta"]', m), antes = JSON.stringify(this.leerRuta(m)), t = $('#rrT', m);
+    const revisar = () => {
+      if (!document.body.contains(m)) return;
+      const d = this.leerRuta(m), k = x => Catalogo.clave([x.tipo, x.origen, x.destino, x.cliente].join('|'));
+      const igual = d.origen && d.destino && Datos.rutas.find(x => x.id !== m._id && k(x) === k(d));
+      $('#rrNom', m).textContent = 'El nombre largo, como en el Excel, se arma solo: ' + (d.origen || d.destino ? this.nombreTMS(d) : 'TIPO | ORIGEN → DESTINO | CLIENTE') + '.';
+      $('#rrAl', m).innerHTML = igual ? '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>Ya hay una ruta igual</b>' + esc(this.nombreTMS(igual)) +
+        (igual.activa === false ? ' (inactiva)' : '') + '. Se puede guardar igual.</div></div>' : '';
+      g.disabled = !d.origen || !d.destino || JSON.stringify(d) === antes;
+    };
+    t.addEventListener('input', () => { const s = t.value.replace(/[^\d,.]/g, ''); if (s !== t.value) t.value = s; });
+    ['input', 'change'].forEach(ev => m.addEventListener(ev, () => setTimeout(revisar)));
+    revisar();
+  },
+  guardarRuta(el) {
+    const m = el.closest('.modal-bd');
+    if (!m || el.disabled) return;
+    const d = this.leerRuta(m);
+    if (!d.origen || !d.destino) { Toast.show('Escriba el origen y el destino.', 'warn'); return; }
+    let r = m._id ? this.ruta(m._id) : null;
+    if (m._id && !r) { Modal.cerrar(m); Toast.show('Esa ruta ya no está.', 'warn'); return; }
+    if (!r) { r = { id: this.nuevoId('r'), activa: true }; Datos.rutas.push(r); }
+    Object.assign(r, d);
+    Modal.cerrar(m);
+    Router.pintar(true);
+    Toast.show('Ruta guardada: <b>' + esc(this.nombre(r)) + '</b>.');
+  },
+  activar(el) {
+    const r = this.ruta(el.dataset.r);
+    if (!r) return;
+    r.activa = r.activa === false;
+    Modal.cerrarTodo();
+    Router.pintar(true);
+    Toast.show(r.activa ? 'La ruta <b>' + esc(this.nombre(r)) + '</b> está activa otra vez: sale para programar.'
+      : 'La ruta <b>' + esc(this.nombre(r)) + '</b> quedó inactiva: ya no sale para programar. Los viajes que la usaron la conservan.');
+  }
+};
+Vistas.rutas = () => Rutas.vista();
+Object.assign(Acciones, {
+  rtTab(el) { UIState.rutas.tab = el.dataset.v; Router.pintar(true); },
+  rtVista(el) { UIState.rutas.vista = el.dataset.v; Router.pintar(true); },
+  rtSemana(el) { const n = +el.dataset.v; UIState.rutas.semana = n ? Rutas.mas(Rutas.semana(), 7 * n) : null; Router.pintar(true); },
+  rtFiltro(el) { UIState.rutas.tipo = el.dataset.v; Router.pintar(true); },
+  rtViaje(el) { Rutas.abrir(el.dataset.v); },
+  rtNuevo(el) { Rutas.abrir('', { u: el.dataset.u || null, f: el.dataset.f }); },
+  rtGuardar(el) { Rutas.guardar(el); },
+  rtQuitar(el) { Rutas.quitar(el); },
+  rtQuitarSi(el) { Rutas.quitarSi(el); },
+  rtDeshacer() { Rutas.deshacer(); },
+  rtBandeja() { UIState.rutas.bandeja = UIState.rutas.bandeja === 'chica' ? '' : 'chica'; Prefs.set('rutasBandeja', UIState.rutas.bandeja); Router.pintar(true); },
+  rtCopiar() { Rutas.copiarSemana(); },
+  rtCopiarSi() { Rutas.copiarSi(); },
+  rtPdf(el) { Rutas.pdf(el.dataset.f || ''); },
+  rtRuta(el) { Rutas.abrirRuta(el.dataset.r || ''); },
+  rtGuardarRuta(el) { Rutas.guardarRuta(el); },
+  rtActivar(el) { Rutas.activar(el); },
+  rtImagen(el) { Rutas.copiarImagen(el.dataset.f || ''); },
+  /* Las casillas: se marca o se quita un tipo; «Todos» marca o quita todos */
+  rtVer(el) {
+    const ts = Rutas.tiposVer(), ver = new Set(UIState.rutas.ver || ts);
+    if (el.checked) ver.add(el.dataset.v); else ver.delete(el.dataset.v);
+    UIState.rutas.ver = ts.every(t => ver.has(t)) ? null : ts.filter(t => ver.has(t));
+    Router.pintar(true);
+  },
+  rtVerTodos(el) { UIState.rutas.ver = el.checked ? null : []; Router.pintar(true); }
+});
 
 document.addEventListener('click', e => {
   const act = e.target.closest('[data-act]');
