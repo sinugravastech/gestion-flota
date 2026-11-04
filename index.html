@@ -358,6 +358,9 @@ html[data-theme="dark"] .toast{background:#28323c;border:1px solid var(--border)
 .dz-files:empty{display:none}
 .dz-file{display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;background:var(--surface)}
 .dz-file svg{color:var(--dang-500);flex:0 0 auto}
+/* En la columna angosta del preventivo (el PDF de Navitrans), el peso o la nota van debajo del nombre */
+.prev-pdf .dz-file{flex-wrap:wrap;row-gap:3px}
+.prev-pdf .dz-file > .fs11{flex-basis:100%;white-space:normal}
 
 .docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px}
 .doc{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface);
@@ -1214,7 +1217,7 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .dp-tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .dp-tbl td.c,.dp-tbl th.c{text-align:center}
 .dp-tbl tr.tot td{background:#d5def5;color:#132966;font-weight:800}
-.dp-obs{border:1.2px solid #193680;margin-top:2.6mm;padding:2mm 3mm;font-size:8.5pt;min-height:12mm}
+.dp-obs{border:1.2px solid #193680;margin-top:2.6mm;padding:2mm 3mm;font-size:8.5pt;min-height:12mm;white-space:pre-line}
 .dp-obs b{font-size:7.5pt;text-transform:uppercase;display:block;margin-bottom:1mm;color:#193680}
 /* El registro fotográfico se puede partir entre hojas: sin recuadro propio,
    el título y cada foto llevan el suyo (como en la hoja de vida) */
@@ -1253,6 +1256,7 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .dp-av-foto figcaption{font-size:7pt;padding:.8mm 1.5mm;border-top:.6px solid #c3cfe9;background:#edf1fb;color:#193680;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dp-sign{margin-top:4mm;display:flex;gap:14mm;justify-content:space-between}
+.dp-sign.dp-sign-centro{justify-content:center}
 .dp-sign div{flex:1;text-align:center;font-size:8pt;color:#4e5d6b}
 /* El espacio para firmar, sobre la línea: ahí va la firma del responsable de
    flota, un poco montada sobre la línea, como firmada a mano */
@@ -1557,6 +1561,8 @@ span.chip-adj{color:var(--text-3)}
 .tr-bloque{border:1px solid var(--border-strong);border-radius:var(--radius);padding:12px 12px 2px;margin-bottom:12px;background:var(--surface)}
 .tr-bloque>h5{margin:0 0 10px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--text-2)}
 .tr-valor{max-width:220px}
+/* El valor que sale de la orden (ver ValorOrden): con un tono, para saber que lo trae de Facturación; se puede cambiar */
+.inp.de-orden{background:var(--accent-soft)}
 .tr-tot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;border-radius:var(--radius);background:var(--surface-2);
   font-size:13px;margin-bottom:8px}
 .pl-vacio{padding:22px 10px;text-align:center;color:var(--text-3);font-size:12.5px}
@@ -3649,7 +3655,8 @@ const UI = {
         this.clip(m, 12) +
         (m.fotos ? '<span class="chip">' + Icon('image', '', 12) + m.fotos + (m.fotos === 1 ? ' foto' : ' fotos') + '</span>' : '') +
         (m.oc ? '<span class="chip">' + Icon('cart', '', 12) + esc(m.oc) + '</span>' : '') + this.chipsOrdenes(m, 12) + Pendiente.chips(m, 12) +
-        (prev ? '' : '<button class="btn btn-sm" data-act="pdfCorrectivo" data-m="' + attr(m.id) + '" title="El PDF del arreglo, con sus fotos">' + Icon('pdf', '', 12) + 'Ver PDF</button>') +
+        '<button class="btn btn-sm" data-act="' + (prev ? 'pdfPreventivo' : 'pdfCorrectivo') + '" data-m="' + attr(m.id) + '" title="' +
+          (prev ? 'El PDF del preventivo' : 'El PDF del arreglo, con sus fotos') + '">' + Icon('pdf', '', 12) + 'Ver PDF</button>' +
         (m.estado === 'taller' ? '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + m.id + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
           '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + m.id + '">' + Icon('check', '', 12) + 'Terminar arreglo</button>'
           : '<button class="btn btn-sm" data-act="editarMant" data-m="' + attr(m.id) + '" title="Corregir lo guardado">' + Icon('edit', '', 12) + 'Editar</button>') +
@@ -5444,17 +5451,12 @@ const Compras = {
     const halladas = ids.map(id => this.porId(id)).filter(Boolean);
     const esta = halladas.filter(o => o.flota_id === m.unidad), gasto = esta.filter(o => o.es_gasto);
     const deOrden = gasto.length > 0;
-    /* propio: lo que todavía cuenta del valor escrito en el arreglo. Con el
-       taller y los repuestos aparte (ver TallerRep), cada valor cuenta hasta
-       que su orden sea gasto: el del taller, su orden de servicio; el de los
-       repuestos, su orden de compra o de pedido */
-    let propio = deOrden ? 0 : m.valor || 0;
-    if (TallerRep.lados(m).partido) {
-      const gT = gasto.filter(o => o.tipo === 'SERVICIO').length, gR = gasto.length - gT;
-      propio = (gT ? 0 : m.valorTaller || 0) + (gR ? 0 : m.valorRep || 0);
-    }
+    /* Lo que vale (ver TallerRep.valores): cada lado con órdenes, lo de sus
+       órdenes; sin ellas, lo escrito. «propio»: lo que todavía no es gasto, que
+       el Tablero cuenta aparte de las órdenes que ya lo son */
+    const v = TallerRep.valores(m);
     return { ids, fiable, esta, ajenas: fiable ? halladas.filter(o => o.flota_id !== m.unidad) : [], faltan: fiable ? ids.length - halladas.length : 0,
-      deOrden, propio, valor: this.suma(gasto) + propio };
+      deOrden, propio: v.espera, valor: v.total };
   },
   /* ¿Hay que revisarle las órdenes? Alguna ya no llega o es de otro vehículo */
   malas(m) { const c = this.deArreglo(m); return c.faltan + c.ajenas.length; },
@@ -5489,7 +5491,7 @@ const Compras = {
   /* tipos: solo las de esos tipos (ver TallerRep); vacia: lo que se dice si no hay */
   escoger(caja, u, fecha, r, tipos, vacia) {
     if (!caja || !u) return;
-    const pintar = fin => {
+    const dibujar = fin => {
       if (!document.body.contains(caja)) return;
       if (this.estado !== 'listo') {
         caja.innerHTML = '<div class="oc-vacia">' + (this.estado === 'error' || fin ? Icon('warn', '', 14) +
@@ -5507,6 +5509,8 @@ const Compras = {
           '<span class="v">' + esc(Money.format(o.valor)) + '</span>' + this.pill(o) + '</label>';
       }).join('') : '<div class="oc-vacia">' + esc(vacia || 'Este vehículo no tiene órdenes en Facturación.') + '</div>';
     };
+    /* Después de pintarla, lo que depende de lo marcado (el valor que sale de la orden, ver ValorOrden) */
+    const pintar = fin => { dibujar(fin); if (caja._alPintar && document.body.contains(caja)) caja._alPintar(); };
     pintar();
     /* Mientras la lista esté abierta se pone al día sola (ver vigilarListas):
        sale lo que se acabe de crear en Facturación, sin perder lo marcado */
@@ -7014,8 +7018,8 @@ const Plano = {
         (m.fotos ? '<span class="chip">' + Icon('image', '', 11) + m.fotos + (m.fotos === 1 ? ' foto' : ' fotos') + '</span>' : '') +
         (m.oc ? '<span class="chip">' + Icon('cart', '', 11) + esc(m.oc) + '</span>' : '') + UI.chipsOrdenes(m, 11) + Pendiente.chips(m, 11) +
         UI.clip(m, 11) +
-        (prev ? '' : '<button type="button" class="chip chip-btn" data-act="pdfCorrectivo" data-m="' + attr(m.id) + '" title="El PDF del arreglo, con sus fotos">' + Icon('pdf', '', 11) +
-          'Ver PDF</button>') +
+        '<button type="button" class="chip chip-btn" data-act="' + (prev ? 'pdfPreventivo' : 'pdfCorrectivo') + '" data-m="' + attr(m.id) + '" title="' +
+          (prev ? 'El PDF del preventivo' : 'El PDF del arreglo, con sus fotos') + '">' + Icon('pdf', '', 11) + 'Ver PDF</button>' +
         ((m.novedades || []).length ? '<span class="chip">' + Icon('checkSquare', '', 11) + 'Vino del preoperacional</span>' : '') +
         (otras.length ? (k === null ? '<span class="chip">' + Icon('tool', '', 11) + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>'
           : '<span class="chip" title="Este arreglo también tocó otras partes">También: ' + esc(otras.map(r => this.nombre(u, r)).join(', ')) + '</span>') : '') +
@@ -7465,13 +7469,34 @@ const Adjuntos = {
   dato: a => Object.assign({ id: a.id, nombre: a.nombre }, a.tam ? { tam: a.tam } : {}, a.antes > a.tam ? { antes: a.antes } : {})
 };
 
-/* Lo que le falta a un arreglo (Juan, 03/11/2026: «debe quedar como un aviso
-   de que ese arreglo le falta valor y le falta la orden de facturación…
-   Siempre debe tener su orden»). La cotización y la orden llegan días después:
-   mientras no estén, el arreglo queda pendiente a la vista (en la línea de
-   tiempo de la ficha, en la historia de cada parte y en el historial, con su
-   aviso y su filtro). Se ponen con «Editar», «Anotar avance» o «Terminar
-   arreglo». Solo los correctivos */
+/* El valor que sale de la orden (Juan, 03/11/2026: «cuando a mí me llega la
+   cotización de esa orden… le coloco el valor a esa orden… enseguida me
+   debería traer el valor de esa orden acá»; y del preventivo: «sí debería
+   dejarme escribir, pero que se ponga el valor por defecto de la orden a la
+   que yo marque»). Al marcar una orden, el valor se pone solo con el de la
+   orden y la sigue: si Facturación le cambia el valor, se pone al día (en
+   Flota no se guarda copia de la orden). Si se escribe otro, queda ese («a
+   mano»), con «Usar el de la orden» para volver. Sin orden, se escribe como
+   siempre. Lo escrito se guarda aparte: si se quita la orden, vuelve */
+const ValorOrden = {
+  /* Las órdenes marcadas en unas listas, de las que llegan de Facturación */
+  de: cajas => [].concat(...cajas.filter(Boolean).map(c => $$('input:checked', c).map(i => Compras.porId(i.value)))).filter(Boolean),
+  /* os: las órdenes marcadas; escrito: lo escrito; mano: si, con órdenes, se escribió otro valor; usar: volver al de la orden */
+  poner(inp, nota, os, escrito, mano, usar) {
+    const suma = Compras.suma(os), cods = os.map(o => o.codigo).join(', '), sigue = os.length > 0 && !mano;
+    if (!inp.dataset.ph) inp.dataset.ph = inp.placeholder;
+    inp.classList.toggle('de-orden', sigue);
+    const v = sigue ? (suma ? suma.toLocaleString('es-CO') : '') : escrito || '';
+    if (inp.value !== v) inp.value = v;
+    inp.placeholder = sigue ? 'Esperando el valor de la orden' : inp.dataset.ph;
+    if (!nota) return;
+    nota.innerHTML = !os.length ? '' : sigue
+      ? esc(suma ? 'Es el de ' + cods + ', que viene de Facturación. Si lo cambia, queda el que escriba.' : 'Sale solo cuando ' + cods + ' tenga su valor en Facturación.')
+      : esc('Escrito a mano. ' + cods + (suma ? ' dice ' + Money.format(suma) : ' todavía no tiene valor') + '. ') + '<span class="link" data-usar-orden>Usar el de la orden</span>';
+    nota.onclick = e => { if (usar && e.target.closest('[data-usar-orden]')) usar(); };
+  }
+};
+
 /* El taller y los repuestos, cada uno con su valor y su orden (Juan, 03/11/2026:
    «el taller cobra un valor que sería el mecánico y el proveedor cobra otro
    valor que serían los repuestos», y a cada uno su orden de Facturación: al
@@ -7482,27 +7507,34 @@ const Adjuntos = {
      repuestos. Debajo, el valor del arreglo (la suma).
    - «El taller también puso los repuestos»: un solo bloque, un solo valor y las
      dos listas de órdenes.
-   El valor (r.valor) es siempre el total. Aparte, además, r.valorTaller y
-   r.valorRep; el lado de cada orden sale de su tipo. Los arreglos de antes (sin
-   esos dos) y los del mismo taller siguen con un solo valor */
+   El valor de un lado con órdenes es el de sus órdenes (ver ValorOrden y
+   valores); lo que se guarda es lo escrito a mano: r.valor (el total) y,
+   aparte, r.valorTaller y r.valorRep. El lado de cada orden sale de su tipo.
+   Los arreglos de antes (sin esos dos) y los del mismo taller van con un solo
+   valor */
 const TallerRep = {
   html(pre, r) {
     const sel = (id, vacio, v) => '<select class="inp" id="' + pre + id + '"><option value="">' + vacio + '</option>' + ProvFact.opciones(v) + ProvFact.opcionNuevo() + '</select>';
     return '<div class="tr-bloque" id="' + pre + 'TB"><h5 id="' + pre + 'TBt">Taller · el mecánico</h5>' +
         '<div class="field"><label>Taller</label>' + sel('P', 'Sin taller registrado', r ? ProvFact.valor(r) : '') +
           '<button type="button" class="zchip mt8" id="' + pre + 'Mismo" aria-pressed="false"></button></div>' +
-        '<div class="field"><label id="' + pre + 'VTl"></label><input class="inp tr-valor" id="' + pre + 'VT" inputmode="numeric" placeholder="Ej.: 380.000"></div>' +
+        '<div class="field"><label id="' + pre + 'VTl"></label><input class="inp tr-valor" id="' + pre + 'VT" inputmode="numeric" placeholder="Ej.: 380.000">' +
+          '<div class="hint" id="' + pre + 'VTn"></div></div>' +
         '<div class="field"><label>Orden de servicio <span class="txt-3">(OS)</span></label><div class="oc-lista" id="' + pre + 'OT"></div></div>' +
       '</div>' +
       '<div class="tr-bloque" id="' + pre + 'RC"><h5>Repuestos · el proveedor</h5>' +
         '<div class="field"><label>Proveedor de repuestos</label>' + sel('R', 'Sin proveedor de repuestos', r ? ProvFact.valor(r, true) : '') + '</div>' +
-        '<div class="field"><label>Valor de los repuestos</label><input class="inp tr-valor" id="' + pre + 'VR" inputmode="numeric" placeholder="Ej.: 1.250.000"></div>' +
+        '<div class="field"><label>Valor de los repuestos</label><input class="inp tr-valor" id="' + pre + 'VR" inputmode="numeric" placeholder="Ej.: 1.250.000">' +
+          '<div class="hint" id="' + pre + 'VRn"></div></div>' +
         '<div class="field" id="' + pre + 'ORC"><label></label><div class="oc-lista" id="' + pre + 'OR"></div></div>' +
       '</div>' +
       '<div class="tr-tot" id="' + pre + 'Tot"></div>' +
-      '<div class="hint mb12">Cada valor cuenta en el gasto hasta que su orden pase a contabilidad; desde ahí cuenta la orden.</div>';
+      '<div class="hint mb12">Al marcar una orden, el valor se pone solo con el de la orden (lo trae de Facturación) y se puede cambiar; sin orden, se escribe. ' +
+        'Cuenta en el gasto hasta que la orden pase a contabilidad; desde ahí cuenta la orden.</div>';
   },
   montar(m, pre, r) {
+    m._manual = { VT: '', VR: '' };
+    m._mano = { VT: false, VR: false };
     ProvFact.alAbrir(m, pre + 'P', r ? () => ProvFact.valor(r) : undefined);
     ProvFact.alAbrir(m, pre + 'R', r ? () => ProvFact.valor(r, true) : undefined);
     ProvFact.listas(m, [pre + 'P', pre + 'R']);
@@ -7510,7 +7542,21 @@ const TallerRep = {
     /* Al oprimirlo, un solo valor (la suma) y la orden de compra pasa al bloque del taller */
     $('#' + pre + 'Mismo', m).addEventListener('click', () => this.acomodar(m, pre, true));
     m._ponerMismo = v => { poner(v); this.acomodar(m, pre, false); };
-    ['VT', 'VR'].forEach(k => $('#' + pre + k, m).addEventListener('input', () => this.total(m, pre)));
+    /* Lo escrito se guarda aparte; si el lado tiene órdenes, escribir otro
+       valor lo deja «a mano» (ver ValorOrden) */
+    const cajas = k => (k === 'VT' ? (m._mismo ? [$('#' + pre + 'OT', m), $('#' + pre + 'OR', m)] : [$('#' + pre + 'OT', m)]) : [$('#' + pre + 'OR', m)]);
+    ['VT', 'VR'].forEach(k => $('#' + pre + k, m).addEventListener('input', e => {
+      m._manual[k] = e.target.value;
+      if (ValorOrden.de(cajas(k)).length) m._mano[k] = true;
+      this.sincronizar(m, pre);
+    }));
+    /* Al marcar o quitar una orden, el valor vuelve a ser el de las órdenes; si
+       llegan con cambios de Facturación (ver Compras.repintar), se pone al día */
+    ['OT', 'OR'].forEach(k => {
+      const c = $('#' + pre + k, m);
+      c.addEventListener('change', () => { m._mano[k === 'OT' || m._mismo ? 'VT' : 'VR'] = false; this.sincronizar(m, pre); });
+      c._alPintar = () => this.sincronizar(m, pre);
+    });
     this.acomodar(m, pre, false);
   },
   /* Las órdenes de la unidad: las de servicio con el taller; las de compra y de pedido, con los repuestos */
@@ -7518,41 +7564,62 @@ const TallerRep = {
     Compras.escoger($('#' + pre + 'OT', m), u, fecha, r, ['SERVICIO'], 'Este vehículo no tiene órdenes de servicio en Facturación.');
     Compras.escoger($('#' + pre + 'OR', m), u, fecha, r, ['COMPRA', 'PEDIDO'], 'Este vehículo no tiene órdenes de compra ni de pedido en Facturación.');
   },
-  /* Los valores de un arreglo guardado */
+  /* Lo escrito a mano en un arreglo guardado */
   cargar(m, pre, r) {
     const partido = this.lados(r).partido, f = n => (n ? n.toLocaleString('es-CO') : '');
-    $('#' + pre + 'VT', m).value = f(partido ? r.valorTaller : r.valor);
-    $('#' + pre + 'VR', m).value = f(partido ? r.valorRep : 0);
-    this.total(m, pre);
+    m._manual = { VT: f(partido ? r.valorTaller : r.valor), VR: f(partido ? r.valorRep : 0) };
+    const a = r.aMano || {};
+    m._mano = { VT: Boolean(partido ? a.t : a.v), VR: Boolean(partido && a.r) };
+    this.sincronizar(m, pre);
   },
   acomodar(m, pre, sumar) {
-    const mismo = Boolean(m._mismo), orc = $('#' + pre + 'ORC', m), vt = $('#' + pre + 'VT', m), vr = $('#' + pre + 'VR', m);
+    const mismo = Boolean(m._mismo), orc = $('#' + pre + 'ORC', m);
     if (mismo && sumar) {
-      const t = Leer.pesos(vt.value) + Leer.pesos(vr.value);
-      vt.value = t ? t.toLocaleString('es-CO') : '';
-      vr.value = '';
+      const t = Leer.pesos(m._manual.VT) + Leer.pesos(m._manual.VR);
+      m._manual = { VT: t ? t.toLocaleString('es-CO') : '', VR: '' };
+      m._mano = { VT: false, VR: false };
     }
     (mismo ? $('#' + pre + 'TB', m) : $('#' + pre + 'RC', m)).appendChild(orc);
     $('#' + pre + 'TBt', m).textContent = mismo ? 'Taller y repuestos' : 'Taller · el mecánico';
     $('#' + pre + 'VTl', m).innerHTML = mismo ? 'Valor <span class="txt-3">(mano de obra y repuestos)</span>' : 'Valor del taller <span class="txt-3">(mano de obra)</span>';
     $('label', orc).innerHTML = 'Orden de compra <span class="txt-3">(OC u OP' + (mismo ? ' · los repuestos' : '') + ')</span>';
+    this.sincronizar(m, pre);
+  },
+  /* Cada valor: el de sus órdenes marcadas o el escrito (ver ValorOrden) */
+  sincronizar(m, pre) {
+    const ot = $('#' + pre + 'OT', m), or = $('#' + pre + 'OR', m);
+    if (!ot || !or || !m._manual) return;
+    const usar = k => () => { m._mano[k] = false; this.sincronizar(m, pre); };
+    if (m._mismo) ValorOrden.poner($('#' + pre + 'VT', m), $('#' + pre + 'VTn', m), ValorOrden.de([ot, or]), m._manual.VT, m._mano.VT, usar('VT'));
+    else {
+      ValorOrden.poner($('#' + pre + 'VT', m), $('#' + pre + 'VTn', m), ValorOrden.de([ot]), m._manual.VT, m._mano.VT, usar('VT'));
+      ValorOrden.poner($('#' + pre + 'VR', m), $('#' + pre + 'VRn', m), ValorOrden.de([or]), m._manual.VR, m._mano.VR, usar('VR'));
+    }
     this.total(m, pre);
   },
-  /* El valor del arreglo: la suma; con uno solo, no hace falta */
+  /* El valor del arreglo: la suma de lo que se ve; con uno solo, no hace falta */
   total(m, pre) {
     const t = $('#' + pre + 'Tot', m), v = Leer.pesos($('#' + pre + 'VT', m).value) + (m._mismo ? 0 : Leer.pesos($('#' + pre + 'VR', m).value));
     t.classList.toggle('hidden', Boolean(m._mismo));
     t.innerHTML = '<span class="txt-2">Valor del arreglo <span class="txt-3">(taller + repuestos)</span></span><b>' + (v ? esc(Money.format(v)) : '—') + '</b>';
   },
+  /* Lo que se guarda: lo escrito, no el de las órdenes (ese se trae de
+     Facturación cada vez), y de qué lado se escribió otro valor teniendo
+     órdenes (aMano). Si las listas no llegaron, se queda el aMano que tenía */
   leer(m, pre, r) {
-    const mismo = Boolean(m._mismo), vt = Leer.pesos($('#' + pre + 'VT', m).value), vr = mismo ? 0 : Leer.pesos($('#' + pre + 'VR', m).value);
+    const mismo = Boolean(m._mismo), vt = Leer.pesos(m._manual.VT), vr = mismo ? 0 : Leer.pesos(m._manual.VR);
+    const ot = $('#' + pre + 'OT', m), or = $('#' + pre + 'OR', m), con = l => ValorOrden.de(l).length > 0;
+    const t = m._mano.VT && con(mismo ? [ot, or] : [ot]), rr = !mismo && m._mano.VR && con([or]);
+    const aMano = r && ![ot, or].some(c => c.querySelector('input')) ? r.aMano || null
+      : t || rr ? (mismo ? { v: true } : Object.assign({}, t ? { t: true } : {}, rr ? { r: true } : {})) : null;
     return { prov: ProvFact.leer($('#' + pre + 'P', m).value), rep: mismo ? null : ProvFact.leer($('#' + pre + 'R', m).value), repMismo: mismo,
-      valorTaller: vt, valorRep: vr, valor: vt + vr, ordenes: Compras.leerVarias([$('#' + pre + 'OT', m), $('#' + pre + 'OR', m)], r) };
+      valorTaller: vt, valorRep: vr, valor: vt + vr, aMano, ordenes: Compras.leerVarias([ot, or], r) };
   },
-  /* Lo que se guarda: el total y, aparte, cada valor (aunque falte: así se sabe qué se espera); si es el mismo, solo el total */
+  /* El total escrito y, aparte, cada valor (aunque falte: así se sabe qué se espera); si es el mismo, solo el total */
   poner(r, d) {
     if (d.valor) r.valor = d.valor; else delete r.valor;
     if (d.repMismo) { delete r.valorTaller; delete r.valorRep; } else { r.valorTaller = d.valorTaller || 0; r.valorRep = d.valorRep || 0; }
+    if (d.aMano) r.aMano = d.aMano; else delete r.aMano;
   },
   /* De un arreglo (o de lo que se va a imprimir): si va aparte, y si tiene taller y repuestos */
   lados(x) {
@@ -7566,20 +7633,42 @@ const TallerRep = {
     (x.ordenes || []).forEach(id => { const o = Compras.porId(id); if (!o) c.dudosas++; else if (o.tipo === 'SERVICIO') c.t++; else c.r++; });
     return c;
   },
+  /* Lo que vale cada lado: con órdenes (las que llegan de Facturación y son de
+     su vehículo), su suma; sin ninguna, lo escrito. «espera»: lo que todavía no
+     es gasto, que el Tablero cuenta aparte de las órdenes (ver Compras.deArreglo) */
+  valores(x) {
+    const uid = x.unidad && typeof x.unidad === 'object' ? x.unidad.id : x.unidad;
+    const os = (x.ordenes || []).map(id => Compras.porId(id)).filter(o => o && o.flota_id === uid);
+    /* Con órdenes, lo de ellas, salvo que se haya escrito otro a mano: ese cuenta mientras ninguna sea gasto */
+    const a = x.aMano || {};
+    const lado = (l, escrito, mano) => (!l.length ? { orden: false, valor: escrito || 0, espera: escrito || 0 }
+      : mano ? { orden: true, mano: true, valor: escrito || 0, espera: l.some(o => o.es_gasto) ? 0 : escrito || 0 }
+      : { orden: true, valor: Compras.suma(l), espera: Compras.suma(l.filter(o => !o.es_gasto)) });
+    if (!this.lados(x).partido) { const u = lado(os, x.valor, a.v); return { t: u, r: null, total: u.valor, espera: u.espera }; }
+    const t = lado(os.filter(o => o.tipo === 'SERVICIO'), x.valorTaller, a.t), r = lado(os.filter(o => o.tipo !== 'SERVICIO'), x.valorRep, a.r);
+    return { t, r, total: t.valor + r.valor, espera: t.espera + r.espera };
+  },
   codigos(x, tipos) {
     const l = (x.ordenes || []).map(id => Compras.porId(id)).filter(o => o && (!tipos || tipos.includes(o.tipo))).map(o => o.codigo);
     return l.length ? l.join(', ') : this.ordenesDe(x).dudosas ? 'Enlazada en Facturación' : '';
   },
   /* En el PDF: cada uno con su valor y su orden, y el total; si es el mismo, un valor y sus órdenes */
   campos(d) {
-    const l = this.lados(d), plata = n => (n > 0 ? Money.format(n) : 'Por completar');
-    if (!l.partido) return [['Valor', plata(d.valor)], ['Órdenes', this.codigos(d) || '—']];
-    return [['Valor del taller', plata(d.valorTaller)], ['Orden de servicio', this.codigos(d, ['SERVICIO']) || '—']]
-      .concat(l.conR ? [['Valor de repuestos', plata(d.valorRep)], ['Orden de compra', this.codigos(d, ['COMPRA', 'PEDIDO']) || '—']] : [])
-      .concat([['Valor del arreglo', plata((d.valorTaller || 0) + (d.valorRep || 0))]]);
+    const l = this.lados(d), v = this.valores(d), plata = n => (n > 0 ? Money.format(n) : 'Por completar');
+    if (!l.partido) return [['Valor', plata(v.total)], ['Órdenes', this.codigos(d) || '—']];
+    return [['Valor del taller', plata(v.t.valor)], ['Orden de servicio', this.codigos(d, ['SERVICIO']) || '—']]
+      .concat(l.conR ? [['Valor de repuestos', plata(v.r.valor)], ['Orden de compra', this.codigos(d, ['COMPRA', 'PEDIDO']) || '—']] : [])
+      .concat([['Valor del arreglo', plata(v.total)]]);
   }
 };
 
+/* Lo que le falta a un arreglo (Juan, 03/11/2026: «debe quedar como un aviso
+   de que ese arreglo le falta valor y le falta la orden de facturación…
+   Siempre debe tener su orden»). La cotización y la orden llegan días después:
+   mientras no estén, el arreglo queda pendiente a la vista (en la línea de
+   tiempo de la ficha, en la historia de cada parte y en el historial, con su
+   aviso y su filtro). Se ponen con «Editar», «Anotar avance» o «Terminar
+   arreglo». Solo los correctivos */
 const Pendiente = {
   NOMBRE: { valor: 'Falta el valor', orden: 'Falta la orden', valorTaller: 'Falta el valor del taller', osTaller: 'Falta la OS del taller',
     valorRep: 'Falta el valor de los repuestos', ocRep: 'Falta la OC de los repuestos' },
@@ -7589,15 +7678,15 @@ const Pendiente = {
   /* Con el taller y los repuestos aparte (ver TallerRep), por lado: el del
      taller si hay taller; el de los repuestos solo si hay proveedor de
      repuestos. Si es el mismo taller (o un arreglo de antes), un valor y
-     alguna orden. Una orden que todavía no llega de Facturación no se sabe de
-     qué lado es: no se avisa por ella */
+     alguna orden. El valor es el de sus órdenes o, sin ellas, lo escrito (ver
+     TallerRep.valores). Una orden que todavía no llega de Facturación no se
+     sabe de qué lado es ni cuánto vale: no se avisa por ella */
   de(m) {
     if (m.tipo !== 'correctivo') return [];
-    const l = TallerRep.lados(m);
-    if (!l.partido || (!l.conT && !l.conR)) return [m.valor > 0 ? '' : 'valor', (m.ordenes || []).length ? '' : 'orden'].filter(Boolean);
-    const o = TallerRep.ordenesDe(m);
-    return [l.conT && !(m.valorTaller > 0) && 'valorTaller', l.conT && !o.t && !o.dudosas && 'osTaller',
-      l.conR && !(m.valorRep > 0) && 'valorRep', l.conR && !o.r && !o.dudosas && 'ocRep'].filter(Boolean);
+    const l = TallerRep.lados(m), v = TallerRep.valores(m), o = TallerRep.ordenesDe(m);
+    if (!l.partido || (!l.conT && !l.conR)) return [v.total > 0 || o.dudosas ? '' : 'valor', (m.ordenes || []).length ? '' : 'orden'].filter(Boolean);
+    return [l.conT && !(v.t.valor > 0) && !o.dudosas && 'valorTaller', l.conT && !o.t && !o.dudosas && 'osTaller',
+      l.conR && !(v.r.valor > 0) && !o.dudosas && 'valorRep', l.conR && !o.r && !o.dudosas && 'ocRep'].filter(Boolean);
   },
   chips(m, tam) {
     return this.de(m).map(k => '<span class="chip chip-falta" title="' + this.TITULO[k] + '">' + Icon('warn', '', tam) + this.NOMBRE[k] + '</span>').join('');
@@ -7781,7 +7870,7 @@ const EditarArreglo = {
   firma(m) {
     const d = Leer.correctivo(m);
     return JSON.stringify([d.entrada, d.salida, d.trabajo, d.componente, d.falla, d.lectura, d.valor, d.partes.map(p => p.k), d.llantas, d.llanta, d.repMismo,
-      d.notas.map(n => [n.id, n.f, n.h, n.t]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort(), d.adjuntos.map(a => a.id), d.valorTaller, d.valorRep]);
+      d.notas.map(n => [n.id, n.f, n.h, n.t]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort(), d.adjuntos.map(a => a.id), d.valorTaller, d.valorRep, d.aMano || null]);
   },
   /* Guardar, apagado hasta que algo cambie */
   vigilar(m, r) {
@@ -7841,8 +7930,9 @@ const EditarPreventivo = {
      aparte: su lista puede llegar después (ver ProvFact.alAbrir) */
   firma(m, r) {
     const f = m._archivo;
-    return JSON.stringify([$('#mpF', m).value, $('#mpL', m).value.trim(), $('#mpT', m).value.trim(), Leer.pesos($('#mpV', m).value),
-      PlanoForm.escogidas(m).map(p => p.k), Compras.leer($('#mpO', m), r).slice().sort(), f ? [f.name, f.size, f.lastModified] : null]);
+    return JSON.stringify([$('#mpF', m).value, $('#mpL', m).value.trim(), $('#mpT', m).value.trim(), Leer.pesos(m._manualV), Boolean(m._manoV),
+      PlanoForm.escogidas(m).map(p => p.k), Compras.leer($('#mpO', m), r).slice().sort(), f ? [f.name, f.size, f.lastModified] : null,
+      (m._fotos || []).map(x => [x.id, x.txt])]);
   },
   vigilar(m, r) {
     m._editar = r.id;
@@ -7862,13 +7952,16 @@ const EditarPreventivo = {
     if (!u) { Modal.cerrar(m); return; }
     /* El PDF nuevo, si lo cambió: se comprime poco, según la política */
     const a = m._archivo ? await Archivos.conBoton(el, () => Archivos.preparar(m._archivo)) : null;
-    const antes = this.cambio(u, r), partes = PlanoForm.escogidas(m), valor = Leer.pesos($('#mpV', m).value);
+    const antes = this.cambio(u, r), partes = PlanoForm.escogidas(m), valor = Leer.pesos(m._manualV);
     r.fecha = $('#mpF', m).value || r.fecha;
     r.trabajo = $('#mpT', m).value.trim() || 'Cambio de aceite';
     r.lectura = $('#mpL', m).value.trim();
     if (valor) r.valor = valor; else delete r.valor;
+    if (m._manoV && ValorOrden.de([$('#mpO', m)]).length) r.aMano = { v: true }; else delete r.aMano;
     if (partes.length) r.partes = partes; else delete r.partes;
     if (a) { r.adjunto = a.nombre; r.adjuntoId = a.id; }
+    r.fotosData = m._fotos.map(f => Avances.dato(f));
+    if (r.fotosData.length) r.fotos = r.fotosData.length; else { delete r.fotosData; delete r.fotos; }
     /* Solo si se cambió: así un preventivo con un proveedor de antes de Flota no lo pierde */
     if (ProvFact.cambio(m, 'mpP')) ProvFact.poner(r, ProvFact.leer($('#mpP', m).value));
     Compras.ponerOrdenes(r, Compras.leer($('#mpO', m), r));
@@ -9711,10 +9804,11 @@ const Formatos = {
   sec(t, html, cls) { return '<div class="dp-sec' + (cls ? ' ' + cls : '') + '"><div class="dp-sec-t">' + esc(t) + '</div>' + html + '</div>'; },
   /* La firma del responsable de flota sale sobre su línea, con su nombre,
      cédula y profesión (ver Firma); las demás quedan para firmar a mano.
-     Bajo la firma del responsable no va «Elaboró» (Juan, 28/10/2026). */
-  firmas(lista) {
+     Bajo la firma del responsable no va «Elaboró» (Juan, 28/10/2026).
+     «centro»: una sola, en el centro (la del correctivo) */
+  firmas(lista, centro) {
     const r = Firma.datos(), img = Firma.url();
-    return '<div class="dp-sign">' + lista.map(f => {
+    return '<div class="dp-sign' + (centro ? ' dp-sign-centro' : '') + '">' + lista.map(f => {
       const resp = f[0] === 'Responsable de flota' && r.nombre;
       return '<div' + (lista.length === 1 ? ' style="max-width:75mm"' : '') + '><div class="dp-firma">' +
         (resp && img ? '<img src="' + attr(img) + '" alt="Firma de ' + attr(r.nombre) + '">' : '') + '</div><div class="ln"></div>' +
@@ -9725,6 +9819,28 @@ const Formatos = {
   },
   pie(txt) {
     return '<div class="dp-foot"><span><b>' + esc(txt) + '</b></span><span>Generado por el Sistema de Gestión de Flota de SINUGRAVAS S.A.S.</span></div>';
+  },
+
+  /* Un mantenimiento preventivo (Juan, 03/11/2026: «no tengo botón para
+     descargar… el PDF del preventivo»), con el mismo estilo del correctivo: la
+     unidad, el servicio con su valor y sus órdenes (ver TallerRep), las partes
+     que tocó, lo que se hizo y la firma del responsable de flota */
+  preventivo(d) {
+    const u = d.unidad, p = d.prov, c = Q.conductorDe(u), conPlaca = u.tipo === 'carga' || u.tipo === 'remolque', horas = u.tipo === 'maquinaria';
+    const k = Plano.clave(u), partes = d.partes || [], zonas = partes.map(x => (Plano.parte(k, x.k) || {}).zona).filter(Boolean);
+    return this.cabecera('Mantenimiento preventivo', 'Servicio programado de la unidad', Fecha.corta(d.fecha), 'Preventivo del',
+        [[UI.placaTxt(u), u.clase, d.fecha ? 'el ' + Fecha.larga(d.fecha) : ''].filter(Boolean).join(' · '), d.lectura ? (horas ? 'Horómetro ' : 'Kilometraje ') + d.lectura : '']) +
+      this.sec('Unidad', this.campos([[conPlaca ? 'Placa' : 'Código', UI.placaTxt(u)], ['Tipo', TIPOS[u.tipo].nombre + ' · ' + u.clase],
+        ['Marca y línea', UI.nombre(u) || '—'], ['Conductor', c ? c.nombre : 'Sin asignar']])) +
+      this.sec('Servicio', this.campos([['Proveedor', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'], ['Fecha', Fecha.larga(d.fecha)],
+        [horas ? 'Horómetro' : 'Kilometraje', d.lectura || '—']].concat(TallerRep.campos(d)).concat(d.adjunto ? [['Adjunto', d.adjunto]] : []))) +
+      (partes.length ? this.sec('Partes que tocó', '<div class="dp-arreglo"><div class="dp-plano">' + Plano.svg(k, { mini: true, sel: zonas }) + '</div>' +
+        '<div class="dp-fields"><div class="dp-f"><label>Partes</label><span>' + esc(partes.map(x => Plano.nombre(u, x)).join(', ')) + '</span></div></div></div>') : '') +
+      /* Lo que se hizo y, si tiene, sus fotos de dos en dos, como en el correctivo */
+      ((d.fotos || []).length ? this.trabajoCorrectivo({ unidad: u, notas: [], trabajo: d.trabajo || '—', fotos: d.fotos })
+        : '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo || '—') + '</div>') +
+      this.firmas([['Responsable de flota', '']], true) +
+      this.pie('Mantenimiento preventivo · ' + UI.placaTxt(u) + ' · ' + Fecha.corta(d.fecha));
   },
 
   /* El historial de una visita al taller, con una foto por cambio */
@@ -9751,7 +9867,8 @@ const Formatos = {
         '<div class="dp-fields">' + arreglo.map(x => '<div class="dp-f"><label>' + esc(x[0]) + '</label><span>' + esc(x[1]) + '</span></div>').join('') + '</div></div>') +
       (d.falla ? '<div class="dp-obs"><b>Qué pasó</b>' + esc(d.falla) + '</div>' : '') +
       this.trabajoCorrectivo(d) +
-      this.firmas([['Responsable de flota', 'Recibe la unidad'], ['Conductor', 'Entrega y recibe'], ['Taller', 'Hizo el trabajo']]) +
+      /* Solo la del responsable de flota, en el centro (Juan, 03/11/2026) */
+      this.firmas([['Responsable de flota', '']], true) +
       this.pie('Mantenimiento correctivo ' + d.numero);
   },
 
@@ -9969,14 +10086,14 @@ Object.assign(Vistas, {
                 ' ahora es de otro vehículo</div>' : '') +
               (c.faltan ? '<div class="dias d-warn" title="Mientras tanto cuenta el valor del arreglo">La orden ya no está</div>' : '') +
               (c.ids.length && !c.fiable ? '<div class="dias">Con orden de Facturación</div>' : '') +
-              /* Con el taller y los repuestos aparte, cuánto es de cada uno */
-              (TallerRep.lados(m).partido && m.valorTaller > 0 && m.valorRep > 0 ? '<div class="dias">Taller ' + esc(Money.format(m.valorTaller)) + ' · repuestos ' +
-                esc(Money.format(m.valorRep)) + '</div>' : '') +
+              /* Con el taller y los repuestos aparte, cuánto es de cada uno (de sus órdenes o lo escrito) */
+              (v => (v.r && v.t.valor > 0 && v.r.valor > 0 ? '<div class="dias">Taller ' + esc(Money.format(v.t.valor)) + ' · repuestos ' +
+                esc(Money.format(v.r.valor)) + '</div>' : ''))(TallerRep.valores(m)) +
               Pendiente.de(m).map(k => '<div class="dias d-warn">' + Pendiente.NOMBRE[k] + '</div>').join('') + '</td>' +
             '<td><div class="flex aic g6" style="flex-wrap:wrap">' + UI.clip(m, 12) +
               (m.fotos ? '<span class="chip" title="Fotos del taller">' + Icon('image', '', 12) + m.fotos + '</span>' : '') +
-              (prev ? '' : '<button class="btn btn-sm" data-act="pdfCorrectivo" data-m="' + attr(m.id) + '" title="El PDF del arreglo, con sus fotos">' + Icon('pdf', '', 12) +
-                'Ver PDF</button>') + '</div></td>' +
+              '<button class="btn btn-sm" data-act="' + (prev ? 'pdfPreventivo' : 'pdfCorrectivo') + '" data-m="' + attr(m.id) + '" title="' +
+                (prev ? 'El PDF del preventivo' : 'El PDF del arreglo, con sus fotos') + '">' + Icon('pdf', '', 12) + 'Ver PDF</button>' + '</div></td>' +
             '<td>' + (m.estado === 'taller' ? '<div class="flex aic g6" style="flex-wrap:wrap">' + UI.pill('bad', 'En taller') +
               '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '" title="Lo que se va haciendo">' + Icon('edit', '', 12) + 'Anotar</button>' +
               '<button class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '" title="La unidad salió del taller">' + Icon('check', '', 12) + 'Terminar</button></div>'
@@ -10716,7 +10833,7 @@ Object.assign(Ventanas, {
     if (o.editar && !u0) return;
     const m = Modal.abrir({
       titulo: r0 ? 'Editar preventivo · ' + UI.placaTxt(u0) : 'Mantenimiento preventivo',
-      sub: r0 ? esc([u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : 'Cambio de aceite y el PDF de inspección rápida de Navitrans', ancho: 'm-hoja',
+      sub: r0 ? esc([u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : 'Cambio de aceite o servicio, con el PDF de Navitrans y las fotos', ancho: 'm-hoja',
       cuerpo:
         /* Al corregirlo, la unidad no se cambia: va en el título */
         '<div class="row"><div class="field' + (r0 ? ' hidden' : '') + '"><label>Unidad</label><select class="inp" id="mpU">' + Opc.unidades(r0 ? u0.id : o.u) + '</select></div>' +
@@ -10725,17 +10842,48 @@ Object.assign(Ventanas, {
           ProvFact.opciones(r0 ? ProvFact.valor(r0) : ProvFact.ultimoPreventivo()) + ProvFact.opcionNuevo() + '</select></div>' +
         '<div class="field"><label>Kilometraje u horómetro</label><input class="inp" id="mpL" placeholder="Ej.: 183.500 km"' + (r0 ? ' value="' + attr(r0.lectura || '') + '"' : '') + '>' +
           '<div class="hint">En un cambio de aceite, desde aquí se cuenta el próximo.</div></div></div>' +
-        '<div class="row"><div class="field" style="flex:2 1 220px"><label>Trabajo</label><input class="inp" id="mpT" value="' + attr(r0 ? r0.trabajo || '' : 'Cambio de aceite y filtros') + '"></div>' +
-        '<div class="field" style="flex:1 1 140px"><label>Valor</label><input class="inp" id="mpV" inputmode="numeric" placeholder="Ej.: 850.000"' +
-          (r0 && r0.valor ? ' value="' + attr(r0.valor.toLocaleString('es-CO')) + '"' : '') + '></div></div>' +
+        /* Con espacio para describirlo (Juan, 03/11/2026: «una que otra vez el mantenimiento preventivo se puede alargar») */
+        '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" id="mpT" rows="3" placeholder="Ej.: cambio de aceite y filtros, engrase general">' +
+          esc(r0 ? r0.trabajo || '' : 'Cambio de aceite y filtros') + '</textarea></div>' +
+        '<div class="field" style="max-width:300px"><label>Valor</label><input class="inp" id="mpV" inputmode="numeric" placeholder="Ej.: 850.000"' +
+          (r0 && r0.valor ? ' value="' + attr(r0.valor.toLocaleString('es-CO')) + '"' : '') + '><div class="hint" id="mpVn"></div></div>' +
         '<div class="field"><label>Órdenes de Facturación <span class="txt-3">(si tiene)</span></label><div class="oc-lista" id="mpO"></div>' +
           '<div class="hint">Márquela si el preventivo tiene orden. El valor de arriba cuenta hasta que la orden pase a contabilidad; desde ahí cuenta la orden.</div></div>' +
         '<div class="field"><label>¿Qué partes tocó? <span class="txt-3">(opcional)</span></label><div class="reg-sel" id="mcSel"></div>' +
           '<div class="hint">Si las marca, este preventivo también sale en el plano de la unidad.</div></div>' +
-        Dz.html('mpDz', 'PDF de inspección rápida', 'El que manda Navitrans por WhatsApp: arrástrelo aquí o haga clic', 'application/pdf,image/*', false),
+        /* El PDF de Navitrans, pequeño, y al lado las fotos, cada una con lo que muestra (Juan, 03/11/2026) */
+        '<div class="row"><div class="field prev-pdf" style="flex:1 1 200px"><label>PDF de inspección rápida</label>' +
+            Dz.html('mpDz', '<span class="solo-web">Arrastre aquí el PDF</span><span class="solo-cel">Subir el PDF</span>', 'El que manda Navitrans por WhatsApp',
+              'application/pdf,image/*', false) + '</div>' +
+          '<div class="field" style="flex:2 1 300px"><label>Fotos del mantenimiento <span class="txt-3">(opcional)</span></label>' +
+            Dz.camara('mpFz') + Dz.html('mpFz', '<span class="solo-web">Arrastre aquí las fotos</span><span class="solo-cel">Escoger de la galería</span>',
+              '<span class="solo-web">Puede soltar varias a la vez; a cada una se le escribe qué muestra</span>', 'image/*', true) + '</div></div>' +
+        '<div class="fotos" id="mpFotos"></div>',
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarPreventivo">' + Icon('save', '', 14) + 'Guardar</button>'
     });
     Dz.bind('mpDz', files => { m._archivo = files[0]; Dz.lista('mpDz', [files[0]], 'documento'); });
+    /* Las fotos, cada una con lo que muestra y su peso (como las del arreglo, a 1.600 px) */
+    m._fotos = r0 ? (r0.fotosData || []).map(f => ({ id: f.id, txt: f.txt || '', tam: f.tam, antes: f.antes,
+      src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : '' })) : [];
+    const pintarFotos = () => {
+      $('#mpFotos', m).innerHTML = m._fotos.map((f, i) => '<div class="foto">' +
+        (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<div class="ph" style="height:104px">' + Icon('image', '', 20) + '</div>') +
+        '<button type="button" data-i="' + i + '" title="Quitar la foto">' + Icon('x', '', 12) + '</button>' +
+        Peso.linea(f) + '<input data-i="' + i + '" value="' + attr(f.txt) + '" placeholder="¿Qué muestra? Ej.: filtro nuevo"></div>').join('');
+      $$('#mpFotos input', m).forEach(inp => inp.addEventListener('input', () => { m._fotos[+inp.dataset.i].txt = inp.value; }));
+      $$('#mpFotos button', m).forEach(b => b.addEventListener('click', () => { m._fotos.splice(+b.dataset.i, 1); pintarFotos(); }));
+      /* Al corregirlo, para prender Guardar (ver EditarPreventivo.vigilar) */
+      if (m._alCambiar) m._alCambiar();
+    };
+    Dz.bind('mpFz', files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
+      .then(lista => { lista.forEach(a => m._fotos.push({ id: a.id, src: Archivos.vistos.get(a.id).url, txt: '' })); pintarFotos(); }));
+    pintarFotos();
+    /* Las que ya tenía se bajan al abrirlo */
+    if (r0) Guardadas.traerArreglo(r0).then(n => {
+      if (!n || !document.body.contains(m)) return;
+      m._fotos.forEach(f => { if (!f.src && f.id && Archivos.vistos.has(f.id)) f.src = Archivos.vistos.get(f.id).url; });
+      pintarFotos();
+    });
     /* El PDF que ya tiene: si se sube otro, lo reemplaza */
     if (r0 && r0.adjuntoId) $('#mpDzF', m).innerHTML = '<div class="dz-file">' + UI.file(r0.adjunto, r0.adjuntoId) +
       '<span class="txt-3 fs11">El que tiene ahora. Para cambiarlo, suba el nuevo arriba.</span></div>';
@@ -10759,6 +10907,15 @@ Object.assign(Ventanas, {
     const ordenes = () => Compras.escoger($('#mpO', m), Q.unidad($('#mpU', m).value), $('#mpF', m).value || hoyISO, r0);
     $('#mpU', m).addEventListener('change', ordenes);
     ordenes();
+    /* El valor: al marcar una orden, se pone el de la orden (de Facturación, en
+       vivo) y se puede cambiar a mano; sin ninguna, se escribe (ver ValorOrden) */
+    m._manualV = $('#mpV', m).value;
+    m._manoV = Boolean(r0 && r0.aMano && r0.aMano.v);
+    const valorOrden = () => ValorOrden.poner($('#mpV', m), $('#mpVn', m), ValorOrden.de([$('#mpO', m)]), m._manualV, m._manoV, () => { m._manoV = false; valorOrden(); });
+    $('#mpV', m).addEventListener('input', e => { m._manualV = e.target.value; if (ValorOrden.de([$('#mpO', m)]).length) m._manoV = true; valorOrden(); });
+    $('#mpO', m).addEventListener('change', () => { m._manoV = false; valorOrden(); });
+    $('#mpO', m)._alPintar = valorOrden;
+    valorOrden();
     if (r0) EditarPreventivo.vigilar(m, r0);
   },
 
@@ -11517,7 +11674,7 @@ const Leer = {
       trabajo: taller ? '' : $('#mcT', m).value.trim(),
       fotos: m._fotos.concat(...av.map(a => a.fotos.map(f => Object.assign({}, f, { nota: a.n.id })))),
       adjuntos: (m._adj || []).map(Adjuntos.dato),
-      valor: tr.valor, valorTaller: tr.valorTaller, valorRep: tr.valorRep, ordenes: tr.ordenes,
+      valor: tr.valor, valorTaller: tr.valorTaller, valorRep: tr.valorRep, aMano: tr.aMano, ordenes: tr.ordenes,
       componente: $('#mcC', m).value.trim(), falla: $('#mcF', m).value.trim(), lectura: Aceite.aplica(u) ? $('#mcL', m).value.trim() : '',
       partes: PlanoForm.escogidas(m), llantas: m._partes.includes('llantas') ? m._llantas.slice() : [], llanta: LlantaForm.leer(m),
       novedades: m._novs.map(n => ({ i: n.i, f: n.fecha, p: n.preop, t: n.texto }))
@@ -11880,9 +12037,12 @@ Object.assign(Acciones, {
     const fecha = $('#mpF', m).value || hoyISO, trabajo = $('#mpT', m).value.trim() || 'Cambio de aceite', lectura = $('#mpL', m).value.trim();
     const partes = PlanoForm.escogidas(m);
     const r = {
-      id: 'mt' + Date.now(), unidad: u.id, tipo: 'preventivo', fecha, trabajo, lectura, valor: Leer.pesos($('#mpV', m).value) || undefined,
+      id: 'mt' + Date.now(), unidad: u.id, tipo: 'preventivo', fecha, trabajo, lectura, valor: Leer.pesos(m._manualV) || undefined,
+      aMano: m._manoV && ValorOrden.de([$('#mpO', m)]).length ? { v: true } : undefined,
       adjunto: a ? a.nombre : 'Inspección rápida ' + u.placa + '.pdf', adjuntoId: a ? a.id : undefined, estado: 'cerrado', hora: ahora(), ts: marca(),
-      partes: partes.length ? partes : undefined
+      partes: partes.length ? partes : undefined,
+      /* Sus fotos, con lo que muestran y su peso (ver Avances.dato) */
+      fotos: m._fotos.length || undefined, fotosData: m._fotos.length ? m._fotos.map(f => Avances.dato(f)) : undefined
     };
     ProvFact.poner(r, ProvFact.leer($('#mpP', m).value));
     Compras.ponerOrdenes(r, Compras.leer($('#mpO', m)));
@@ -12025,13 +12185,30 @@ Object.assign(Acciones, {
   },
   /* PDF de un correctivo ya registrado. Los de ejemplo no tienen fotos reales:
      se ve dónde irían. */
+  /* El PDF de un preventivo (ver Formatos.preventivo) */
+  pdfPreventivo(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
+    if (!r) return;
+    const fotos = () => (r.fotosData || []).map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : null, txt: f.txt }));
+    const d = { unidad: Q.unidad(r.unidad), prov: Q.provDe(r), fecha: r.fecha, lectura: r.lectura, trabajo: r.trabajo, partes: r.partes || [],
+      adjunto: r.adjuntoId ? r.adjunto : '', valor: r.valor, aMano: r.aMano, ordenes: r.ordenes || [], fotos: fotos() };
+    const v = Ventanas.vistaPrevia('Mantenimiento preventivo', Formatos.preventivo(d));
+    /* Las fotos se bajan al abrirlo; cuando llegan, el PDF se dibuja otra vez */
+    Guardadas.traerArreglo(r).then(n => {
+      if (!n || !document.body.contains(v)) return;
+      d.fotos = fotos();
+      const html = Formatos.preventivo(d);
+      $('.doc-page', v).innerHTML = html;
+      v._doc = '<div class="doc-page">' + html + '</div>';
+    });
+  },
   pdfCorrectivo(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     const fotos = () => r.fotosData ? r.fotosData.map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || null, txt: f.txt, nota: f.nota }))
       : Array.from({ length: r.fotos || 0 }, (_, i) => ({ src: null, txt: 'Foto ' + (i + 1) + ' de ' + r.fotos + ' (ejemplo)' }));
     const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.provDe(r), rep: Q.repDe(r), repMismo: r.repMismo, entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos: fotos(),
       partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [], llanta: r.llanta, notas: r.notas || [],
-      valor: r.valor, valorTaller: r.valorTaller, valorRep: r.valorRep, ordenes: r.ordenes || [] };
+      valor: r.valor, valorTaller: r.valorTaller, valorRep: r.valorRep, aMano: r.aMano, ordenes: r.ordenes || [] };
     const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d));
     /* Las fotos se bajan al abrirlo; cuando llegan, el PDF se dibuja otra vez */
     Guardadas.traerArreglo(r).then(n => {
