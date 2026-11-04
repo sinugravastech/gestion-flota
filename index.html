@@ -1823,6 +1823,8 @@ html[data-theme="dark"] .reg-sel .zchip.on{background:var(--accent-soft);color:v
 .campo-ed{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px}
 .campo-ed:last-child{border-bottom:0}
 .campo-fijo{grid-column:2 / -1;display:inline-flex;align-items:center;gap:6px;color:var(--text-3);font-size:12px}
+/* «Del sistema» del ancho de «Obligatorio», para que «Mostrar» quede en línea en todas las filas */
+.campo-fijo.campo-sis{grid-column:auto;min-width:84px}
 .campo-ed label,#preopEd .field .flex label{display:inline-flex;align-items:center;gap:6px;color:var(--text-2);cursor:pointer;font-size:12.5px}
 .siempre{color:var(--text-3);font-size:11.5px;grid-column:2 / span 2;text-align:right}
 .barra-guardar{position:sticky;bottom:0;display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;padding:12px 0;
@@ -13290,6 +13292,9 @@ const Preop = {
       const k = c[0], v = this.campo(k);
       /* La fecha no se escoge: el sistema pone la del día en que llega */
       if (k === 'fecha') return '<div class="campo-ed"><span>' + esc(c[1]) + '</span><span class="campo-fijo">' + Icon('lock', '', 12) + 'Automática: la del día en que llega</span></div>';
+      /* La licencia, la categoría y el vencimiento salen del sistema: el conductor no los escribe */
+      if (['licencia', 'categoria', 'vigencia'].includes(k)) return '<div class="campo-ed"><span>' + esc(c[1]) + '</span>' +
+        ck(v.mostrar, 'Mostrar', 'data-pe-campo="' + k + '" data-pe-que="mostrar"') + '<span class="campo-fijo campo-sis">' + Icon('lock', '', 12) + 'Del sistema</span></div>';
       return '<div class="campo-ed"><span>' + esc(c[1]) + '</span>' +
         ck(v.mostrar, 'Mostrar', 'data-pe-campo="' + k + '" data-pe-que="mostrar"') + ck(v.obligatorio, 'Obligatorio', 'data-pe-campo="' + k + '" data-pe-que="obligatorio"') + '</div>';
     }).join(''), { sub: 'Quitar un campo es quitarle «Mostrar»', cls: 'mb16' });
@@ -13678,6 +13683,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
 .sel:focus, .inp:focus, .area:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px var(--azul-ring); }
 .ayuda { font-size: 11.5px; color: var(--gris); margin-top: 5px; }
 .ayuda.mal { color: var(--aviso); font-weight: 600; }
+.ayuda.bien { color: var(--ok); font-weight: 600; }
 .placa { display: inline-flex; align-items: center; height: 32px; padding: 0 11px; border: 2px solid var(--tinta); border-radius: 6px; font-family: var(--mono); font-weight: 700; font-size: 17px; letter-spacing: .09em; background: #fff; white-space: nowrap; }
 .placa.peq { height: 26px; font-size: 14px; padding: 0 8px; border-width: 1.5px; }
 .veh { display: flex; align-items: center; gap: 12px; background: var(--azul-cl2); border: 1px solid var(--azul-cl); border-radius: 12px; padding: 10px 12px; margin: -2px 0 12px; }
@@ -13697,11 +13703,10 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
 .mini > #cVig { flex-grow: 1.3; }
 .mini > div:not([hidden]) ~ div { border-left: 1px solid var(--borde); }
 .mini small { display: block; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--gris); margin-bottom: 2px; }
-.mini-inp { width: 100%; border: 0; border-bottom: 1.5px dashed var(--borde); font: inherit; font-size: 14px; font-weight: 600; color: var(--tinta); background: transparent; padding: 1px 0 2px; -webkit-appearance: none; appearance: none; border-radius: 0; min-height: 24px; }
-.mini-inp:focus { outline: none; border-bottom-color: var(--azul); }
-/* La fecha sin el iconito: toda la casilla abre el calendario */
-.mini-inp[type=date] { position: relative; }
-.mini-inp[type=date]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
+/* Lo del conductor sale del sistema: se ve, pero no se escribe */
+.mini-v { display: block; font-size: 14px; font-weight: 600; color: var(--tinta); min-height: 24px; padding: 1px 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-v.vacio { color: var(--gris); font-weight: 500; }
+.lb-km2 { margin-top: 12px; }
 /* Verificación: todas las secciones a la vista, una debajo de otra, como el
    formulario de siempre: nada se esconde, así nadie cree que ya terminó */
 .sec { background: #fff; border: 1px solid var(--borde); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
@@ -13824,17 +13829,20 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       <div class="veh" id="vehRes" hidden></div>
       <div class="campo" id="cTipo"><span class="lb" id="lbTipo">Tipo de vehículo</span><select class="sel" id="tipoVeh"></select></div>
       <div class="campo" id="cKm"><span class="lb" id="lbKm">Kilometraje de hoy</span>
-        <input class="inp" id="km" type="number" inputmode="decimal" min="0" step="any" placeholder="Ej. 125000" autocomplete="off"><p class="ayuda" id="kmAyuda" hidden></p></div>
+        <input class="inp" id="km" type="text" inputmode="numeric" placeholder="Ej. 125.000" autocomplete="off"><p class="ayuda" id="kmAyuda" hidden></p>
+        <span class="lb lb-km2" id="lbKm2">Repita el kilometraje</span>
+        <input class="inp" id="km2" type="text" inputmode="numeric" placeholder="Escríbalo otra vez" autocomplete="off"><p class="ayuda" id="km2Ayuda" hidden></p></div>
     </div>
     <div class="tj" id="tjCond">
       <div class="tj-h"><span class="tj-n" id="nCond">2</span>Conductor</div>
       <div class="campo" id="cCond"><span class="lb" id="lbCond">Nombre y apellidos</span><select class="sel" id="cond"></select></div>
       <div class="cond" id="condRes" hidden></div>
       <div class="mini" id="condMini">
-        <div id="cLic"><small id="lbLic">Licencia</small><input class="mini-inp" id="licencia" autocomplete="off"></div>
-        <div id="cCat"><small id="lbCat">Categoría</small><select class="mini-inp" id="catLic"></select></div>
-        <div id="cVig"><small id="lbVig">Vence</small><input class="mini-inp" id="vigLic" type="date"></div>
+        <div id="cLic"><small id="lbLic">Licencia</small><b class="mini-v" id="licencia"></b></div>
+        <div id="cCat"><small id="lbCat">Categoría</small><b class="mini-v" id="catLic"></b></div>
+        <div id="cVig"><small id="lbVig">Vence</small><b class="mini-v" id="vigLic"></b></div>
       </div>
+      <p class="ayuda" id="condNota" hidden>Vienen del sistema: si algo está mal, avísele al responsable de flota.</p>
     </div>
   </section>
 
@@ -13948,13 +13956,10 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
   /* ==========================================================================
      Lo que viene del sistema: el formato, las unidades y los conductores
      ========================================================================== */
-  const D = { formato: null, unidades: [], conductores: [], categorias: [] };
+  const D = { formato: null, unidades: [], conductores: [] };
   const ST = {};      // la respuesta de cada ítem
   const NOTAS = {};   // lo que escribió el conductor en cada novedad («¿Qué se ve?»)
   const TIPOS = { carga: 'Vehículo de carga', remolque: 'Remolque', maquinaria: 'Maquinaria', canoa: 'Canoa' };
-  /* Las categorías de licencia vienen del área Catálogo del sistema; si no
-     llegan, estas, que son las mismas con que empieza el catálogo */
-  const CATEGORIAS = ['C3', 'C2', 'C1', 'B3', 'B2', 'B1', 'A2', 'A1'];
   const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
   const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   /* Los campos del encabezado: cada uno se muestra o no, y es obligatorio o
@@ -13968,13 +13973,14 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     kilometraje: { el: 'km', caja: 'cKm', lb: 'lbKm', nombre: 'Kilometraje de hoy' },
     documento: { el: 'cond', nombre: 'Documento de identidad', fijo: true },
     nombre: { el: 'cond', nombre: 'Nombre y apellidos', fijo: true },
-    licencia: { el: 'licencia', caja: 'cLic', lb: 'lbLic', nombre: 'Licencia' },
-    categoria: { el: 'catLic', caja: 'cCat', lb: 'lbCat', nombre: 'Categoría' },
-    vigencia: { el: 'vigLic', caja: 'cVig', lb: 'lbVig', nombre: 'Vence' },
+    /* Del sistema: el conductor no los escribe, así que nunca son obligatorios */
+    licencia: { el: 'licencia', caja: 'cLic', lb: 'lbLic', nombre: 'Licencia', sistema: true },
+    categoria: { el: 'catLic', caja: 'cCat', lb: 'lbCat', nombre: 'Categoría', sistema: true },
+    vigencia: { el: 'vigLic', caja: 'cVig', lb: 'lbVig', nombre: 'Vence', sistema: true },
     observaciones: { el: 'obs', caja: 'tjObs', lb: 'lbObs', nombre: 'Observaciones' }
   };
   const campo = k => Object.assign({ mostrar: true, obligatorio: Boolean(CAMPOS[k] && CAMPOS[k].fijo) }, ((D.formato || {}).campos || {})[k]);
-  const pide = k => { const c = campo(k); return c.mostrar && c.obligatorio; };
+  const pide = k => { const c = campo(k); return c.mostrar && c.obligatorio && !(CAMPOS[k] && CAMPOS[k].sistema); };
 
   /* Las respuestas de cada ítem (los botones) y los colores también salen del
      formato. «cuenta» dice qué es cada respuesta: bien, novedad, novedad grave
@@ -14010,6 +14016,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
   const claseDe = u => u.clase || TIPOS[u.tipo] || 'Vehículo';
   /* En el sistema, un conductor sin cédula queda con «—» */
   const cedulaDe = c => (c && c.cedula && c.cedula !== '—' ? c.cedula : '');
+  const categoriaDe = c => (c && c.categoria ? String(c.categoria).toUpperCase() : '');
   /* «1000000001» → «1.000.000.001» */
   const cedulaTxt = c => (/^\d+$/.test(c || '') ? miles(c) : c || '');
   /* «THX523» → «THX 523», como se ve en el sistema */
@@ -14060,7 +14067,6 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     /* El conductor se escoge por el nombre; si el nombre no se muestra, por la cédula */
     const porNombre = campo('nombre').mostrar, cs = D.conductores, sin = cs.length ? '' : 'No hay conductores registrados';
     opciones($('cond'), sin || 'Seleccionar…', cs.map(c => ({ v: c.id, t: porNombre ? c.nombre : cedulaTxt(cedulaDe(c)) || 'Sin cédula · ' + c.nombre })));
-    opciones($('catLic'), '—', (D.categorias.length ? D.categorias : CATEGORIAS).map(k => ({ v: k, t: k })));
 
     /* Lo que se muestra y lo obligatorio (con *), como quedó en el sistema */
     const ver = k => campo(k).mostrar, et = k => CAMPOS[k].nombre + (pide(k) ? ' *' : '');
@@ -14068,6 +14074,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       $(CAMPOS[k].caja).hidden = !ver(k);
       $(CAMPOS[k].lb).textContent = et(k);
     });
+    $('lbKm2').textContent = 'Repita el kilometraje' + (pide('kilometraje') ? ' *' : '');
     /* El tipo sale de la placa; se pregunta solo si la placa no se muestra */
     $('cTipo').hidden = !ver('tipo') || ver('placa');
     $('lbTipo').textContent = et('tipo');
@@ -14113,8 +14120,8 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
 
   /* Debajo del kilometraje: cuánto subió desde la última lectura */
   function ayudaKm() {
-    const u = campo('placa').mostrar ? unidad($('placa').value) : null, v = $('km').value.trim(), a = $('kmAyuda');
-    a.hidden = !(u && u.km != null && v !== '' && !isNaN(Number(v)));
+    const u = campo('placa').mostrar ? unidad($('placa').value) : null, v = kmDe($('km')), a = $('kmAyuda');
+    a.hidden = !(u && u.km != null && v !== '');
     if (a.hidden) return;
     const dif = Number(v) - Number(u.km);
     a.className = 'ayuda' + (dif < 0 || dif > 5000 ? ' mal' : '');
@@ -14122,7 +14129,34 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       : dif > 5000 ? miles(dif) + ' km más que la última lectura. Revise que esté bien.' : miles(dif) + ' km más que la última lectura.';
   }
 
-  /* Al escoger el conductor se llena todo lo suyo */
+  /* El kilometraje con sus puntos de miles mientras se escribe (Juan,
+     03/11/2026: «1.340.000»). Solo enteros, porque el punto es el de los
+     miles; lo que se manda sigue siendo solo los dígitos (kmDe) */
+  const kmDe = el => el.value.replace(/\D/g, '');
+  function formatearKm(el) {
+    const v = el.value, fin = el.selectionStart == null ? v.length : el.selectionStart;
+    const d = v.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 12), t = d ? miles(d) : '';
+    if (t === v) return;
+    /* El cursor queda detrás de los mismos dígitos que tenía antes */
+    let n = Math.min(v.slice(0, fin).replace(/\D/g, '').length, d.length), i = 0;
+    while (n > 0 && i < t.length) { if (t[i] !== '.') n--; i++; }
+    el.value = t;
+    if (document.activeElement === el) el.setSelectionRange(i, i);
+  }
+
+  /* El kilometraje se escribe dos veces y tienen que ser iguales (Juan,
+     03/11/2026: «para evitar siempre errores»). Mientras se escribe el de
+     abajo y va siendo el comienzo del de arriba, no se avisa nada */
+  function revisarKm2(escribiendo) {
+    const a = kmDe($('km')), b = kmDe($('km2')), p = $('km2Ayuda'), igual = b !== '' && a === b;
+    p.hidden = b === '' || (!igual && escribiendo && a.startsWith(b));
+    p.className = 'ayuda ' + (igual ? 'bien' : 'mal');
+    p.textContent = igual ? '✓ Coincide con el de arriba.' : 'No coincide con el de arriba. Revíselo.';
+  }
+
+  /* Al escoger el conductor sale todo lo suyo. La licencia, la categoría y el
+     vencimiento son los del sistema y aquí no se cambian (Juan, 03/11/2026:
+     «la que sale ahí es la que llena recursos humanos y debe ser la que vale») */
   function elegirConductor(id) {
     const c = conductor(id), caja = $('condRes');
     $('cond').value = c ? id : '';
@@ -14133,11 +14167,11 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
         (campo('documento').mostrar && cedulaDe(c) ? '<span>CC ' + esc(cedulaTxt(cedulaDe(c))) + '</span>' : '') + '</div>' +
         (vence ? (vence < Fecha.hoy() ? '<span class="pill mal">Licencia vencida</span>' : '<span class="pill ok">Licencia vigente</span>') : '');
     }
-    $('licencia').value = cedulaDe(c);
-    const cat = c && c.categoria ? String(c.categoria).toUpperCase() : '';
-    if (cat && ![...$('catLic').options].some(o => o.value === cat)) $('catLic').add(new Option(cat, cat));
-    $('catLic').value = cat;
-    $('vigLic').value = c && c.licencia_vence ? c.licencia_vence : '';
+    const dato = (el, v) => { $(el).textContent = c ? v || 'Sin registrar' : '—'; $(el).classList.toggle('vacio', !v); };
+    dato('licencia', cedulaTxt(cedulaDe(c)));
+    dato('catLic', categoriaDe(c));
+    dato('vigLic', c && c.licencia_vence ? Fecha.dmy(c.licencia_vence) : '');
+    $('condNota').hidden = !c || $('condMini').hidden;
     pintarSub();
   }
 
@@ -15025,14 +15059,12 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     if (pide('placa') && !$('placa').value) return falta('placa', $('placa'));
     if (pide('tipo') && !tipoActual()) return campo('placa').mostrar ? falta('placa', $('placa')) : falta('tipo', $('tipoVeh'));
     if (campo('kilometraje').mostrar) {
-      const km = $('km'), v = km.value.trim();
-      if ((km.validity && km.validity.badInput) || (v && !/^\d{1,12}(\.\d{1,2})?$/.test(v))) return falta('kilometraje', km, 'El kilometraje no es válido: escríbalo solo con números');
-      if (!v && pide('kilometraje')) return falta('kilometraje', km);
+      const v = kmDe($('km')), v2 = kmDe($('km2'));
+      if (!v && pide('kilometraje')) return falta('kilometraje', $('km'));
+      if (v && !v2) return falta('kilometraje', $('km2'), 'Falta: repetir el kilometraje');
+      if (v2 !== v) { revisarKm2(false); return falta('kilometraje', $('km2'), 'Los dos kilometrajes no coinciden: revíselos'); }
     }
     if ((pide('documento') || pide('nombre')) && !$('cond').value) return falta(campo('nombre').mostrar ? 'nombre' : 'documento', $('cond'));
-    if (pide('licencia') && !$('licencia').value.trim()) return falta('licencia', $('licencia'));
-    if (pide('categoria') && !$('catLic').value) return falta('categoria', $('catLic'));
-    if (pide('vigencia') && !$('vigLic').value) return falta('vigencia', $('vigLic'));
     return true;
   }
 
@@ -15048,13 +15080,13 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     const total = Object.keys(ST).length, faltan = Object.values(ST).filter(v => !v).length;
     if (faltan) l.push(faltan === total ? 'No ha marcado ningún ítem de la verificación.' : 'Faltan ' + faltan + ' de ' + total + ' ítems por marcar.');
     if (!Firma.hay()) l.push('No ha firmado.');
-    const u = campo('placa').mostrar ? unidad($('placa').value) : null, km = $('km').value.trim();
+    const u = campo('placa').mostrar ? unidad($('placa').value) : null, km = kmDe($('km'));
     if (u && u.km != null && km !== '' && campo('kilometraje').mostrar) {
       const nuevo = Number(km), ultimo = Number(u.km), cuando = u.km_fecha ? ' el ' + Fecha.dmy(u.km_fecha) : '';
       if (nuevo < ultimo) l.push('El kilometraje (' + kmTxt(km) + ') es menor que el último registrado para ' + placaTxt(u.placa) + ': ' + kmTxt(u.km) + ' km' + cuando + '.');
       else if (nuevo - ultimo > 5000) l.push('El kilometraje (' + kmTxt(km) + ') está ' + miles(nuevo - ultimo) + ' km por encima del último registrado para ' + placaTxt(u.placa) + ' (' + kmTxt(u.km) + ' km' + cuando + ').');
     }
-    const vig = $('vigLic').value;
+    const cv = conductor($('cond').value), vig = cv && cv.licencia_vence;
     if (vig && vig < Fecha.hoy() && campo('vigencia').mostrar) l.push('La licencia de conducción aparece vencida desde el ' + Fecha.dmy(vig) + '.');
     return l;
   }
@@ -15087,11 +15119,12 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
       });
       const datos = {
         fecha: Fecha.hoy(),   // la de hoy; el sistema igual pone la del día en que llega
-        kilometraje: ver('kilometraje') ? $('km').value.trim() : '',
+        kilometraje: ver('kilometraje') ? kmDe($('km')) : '',
         tipo_vehiculo: tipoActual(),
-        licencia: ver('licencia') ? $('licencia').value.trim() : '',
-        categoria: ver('categoria') ? $('catLic').value : '',
-        vigencia_licencia: ver('vigencia') ? $('vigLic').value : '',
+        /* Lo del conductor, como está en el sistema */
+        licencia: ver('licencia') ? cedulaDe(c) : '',
+        categoria: ver('categoria') ? categoriaDe(c) : '',
+        vigencia_licencia: ver('vigencia') && c && c.licencia_vence ? c.licencia_vence : '',
         observaciones: ver('observaciones') ? $('obs').value.trim() : ''
       };
       const e = {
@@ -15132,7 +15165,8 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
   }
 
   function limpiar() {
-    ['placa', 'tipoVeh', 'km', 'cond', 'licencia', 'catLic', 'vigLic', 'obs'].forEach(id => { $(id).value = ''; });
+    ['placa', 'tipoVeh', 'km', 'km2', 'cond', 'obs'].forEach(id => { $(id).value = ''; });
+    $('km2Ayuda').hidden = true;
     pintarFecha();
     pintarLista();
     elegirPlaca('');
@@ -15159,7 +15193,6 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     $('demoB').innerHTML = '<b>MODO DEMOSTRACIÓN</b><span>' + (b && b.sucio ? 'Con sus cambios sin guardar' : 'Conductores de ejemplo') + ' · No se envía nada</span>';
     return {
       formato,
-      categorias: d && d.categorias,
       unidades: d && d.unidades && d.unidades.length ? d.unidades
         : [{ id: 'demo-u', placa: 'EJE123', tipo: 'carga', clase: 'Vehículo de ejemplo', km: 125000, km_fecha: Fecha.sumar(hoy, -1) }],
       conductores: [
@@ -15190,7 +15223,6 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
     D.formato = d.formato;
     D.unidades = d.unidades || [];
     D.conductores = d.conductores || [];
-    D.categorias = Array.isArray(d.categorias) ? d.categorias.filter(k => typeof k === 'string' && k.trim()) : [];
     pintarFormulario();
     paso = 1;
     Pantalla.ver('form');
@@ -15222,7 +15254,18 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
 
       $('placa').addEventListener('change', ev => elegirPlaca(ev.target.value));
       $('cond').addEventListener('change', ev => elegirConductor(ev.target.value));
-      $('km').addEventListener('input', ayudaKm);
+      /* El kilometraje: con sus puntos mientras se escribe, dos veces, y sin
+         pegar ni copiar, para que se escriba de verdad (Juan, 03/11/2026) */
+      ['km', 'km2'].forEach(id => {
+        const el = $(id);
+        el.addEventListener('input', () => { formatearKm(el); ayudaKm(); revisarKm2(id === 'km2'); });
+        el.addEventListener('blur', () => revisarKm2(false));
+        el.addEventListener('beforeinput', ev => { if (/^insertFrom/.test(ev.inputType || '')) ev.preventDefault(); });
+        ['paste', 'drop', 'copy', 'cut', 'dragstart'].forEach(t => el.addEventListener(t, ev => {
+          ev.preventDefault();
+          if (t === 'paste' || t === 'drop') showToast('El kilometraje se escribe con el teclado: aquí no se puede pegar', 'err');
+        }));
+      });
       $('secciones').addEventListener('click', ev => {
         const b = ev.target.closest('.res button');
         if (b) responder(b);
