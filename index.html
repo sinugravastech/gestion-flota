@@ -1519,6 +1519,8 @@ html[data-theme="dark"] .zchip.sel{box-shadow:0 0 0 2px var(--accent-soft)}
 html[data-theme="dark"] .nov-ab{color:var(--warn-500)}
 html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .nov-ab > b{display:flex;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+/* La pestaña Novedades: el vehículo lleva a su plano */
+.tbl-nov .nv-u{cursor:pointer}
 .nov-q{color:var(--text);margin:4px 0 9px;font-size:12.5px}
 .nov-acc{display:flex;gap:6px;flex-wrap:wrap}
 .pm-tl{position:relative;padding-left:18px}
@@ -6847,7 +6849,7 @@ const Plano = {
         meta: esc(taller.map(m => Q.unidad(m.unidad)).filter(Boolean).map(u => UI.placaTxt(u)).join(' · ') || 'Ninguna'), act: 'filtroMant', v: 'taller' }) +
       UI.kpi({ label: 'Novedades sin arreglar', valor: listo ? nNov : '…', icono: 'checkSquare', color: 'var(--dang-500)', vcolor: nNov ? 'var(--dang-500)' : '',
         meta: !listo ? (Novedades.error ? 'No se pudieron revisar los preoperacionales' : 'Revisando los preoperacionales…')
-          : nNov ? esc(conNov.map(x => UI.placaTxt(x[0])).join(' · ')) + ' · del preoperacional' : 'Del preoperacional, últimos ' + Novedades.DIAS + ' días' }) +
+          : nNov ? esc(conNov.map(x => UI.placaTxt(x[0])).join(' · ')) : 'Del preoperacional y las registradas a mano', act: 'tabMant', v: 'novedades' }) +
       UI.kpi({ label: 'Gasto en 12 meses', valor: esc(Money.format(gasto)), icono: 'pesos', meta: masGasta ? 'La parte que más gasta: ' + esc(masGasta) : 'Talleres y órdenes de compra' }) +
       '</div>';
     const filtros = [['todos', 'Todos', us.length]].concat(ORDEN.map(t => [t, TIPOS[t].plural, us.filter(u => u.tipo === t).length]).filter(x => x[2]));
@@ -6931,7 +6933,7 @@ const Plano = {
           act: masG ? 'planoParte' : '', v: masG ? masG.k : '' }) +
       '</div>' +
       '<div class="grid pl-grid">' + dibujo + '<div>' + this.panel(u, k, sel, lista, pp, novs) + '</div></div>' +
-      (otras.length ? UI.card('Otras novedades del preoperacional', otras.map(n => this.cajaNovedad(u, n)).join(''),
+      (otras.length ? UI.card('Otras novedades', otras.map(n => this.cajaNovedad(u, n)).join(''),
         { cls: 'mt16', sub: 'No corresponden a una parte del dibujo. Se cambia en Configuración.' }) : '') +
       (sinParte.length ? UI.card('Sin parte marcada', '<div class="pm-tl">' + sinParte.map(m => this.itemTl(u, m, '', true)).join('') + '</div>',
         { cls: 'mt16', sub: 'Correctivos del período sin la parte del vehículo: márquela para que salgan en el plano' }) : '') +
@@ -6998,13 +7000,14 @@ const Plano = {
   },
   cajaNovedad(u, n) {
     return '<div class="nov-ab' + (n.grave ? ' grave' : '') + '"><b>' + Icon('warn', '', 12) + (n.grave ? 'Novedad grave sin arreglar' : 'Novedad sin arreglar') + '</b>' +
-      esc('Preoperacional ' + (n.fecha === hoyISO ? 'de hoy' : 'del ' + Fecha.corta(n.fecha)) + ' · ' + Preop.hora(n.recibido) + (n.conductor ? ' · ' + n.conductor : '') +
+      esc(n.manual ? 'Registrada a mano ' + (n.fecha === hoyISO ? 'hoy' : 'el ' + Fecha.corta(n.fecha))
+        : 'Preoperacional ' + (n.fecha === hoyISO ? 'de hoy' : 'del ' + Fecha.corta(n.fecha)) + ' · ' + Preop.hora(n.recibido) + (n.conductor ? ' · ' + n.conductor : '') +
         (n.veces > 1 ? ' · reportada ' + n.veces + ' veces desde el ' + Fecha.corta(n.primera) : '')) +
-      '<div class="nov-q"><b>' + esc((n.num ? n.num + ' ' : '') + n.texto) + '</b> · ' + esc(n.resp) + (n.nota ? ' · «' + esc(n.nota) + '»' : '') + '</div>' +
+      '<div class="nov-q"><b>' + esc((n.num ? n.num + ' ' : '') + n.texto) + '</b>' + (n.manual ? '' : ' · ' + esc(n.resp)) + (n.nota ? ' · «' + esc(n.nota) + '»' : '') + '</div>' +
       '<div class="nov-acc"><button class="btn btn-sm ' + (n.grave ? 'btn-danger' : 'btn-primary') + '" data-act="registrarArreglo" data-u="' + attr(u.id) + '" data-nov="' + attr(n.i) + '"' +
           (n.parte ? ' data-p="' + attr(n.parte) + '"' : '') + '>' + Icon('tool', '', 12) + 'Registrar el arreglo</button>' +
         '<button class="btn btn-sm" data-act="revisarNovedad" data-u="' + attr(u.id) + '" data-nov="' + attr(n.i) + '">' + Icon('check', '', 12) + 'Marcar como revisada</button>' +
-        '<button class="btn btn-sm btn-ghost" data-act="verPreop" data-p="' + attr(n.preop) + '">' + Icon('eye', '', 12) + 'Ver el preoperacional</button></div></div>';
+        (n.preop ? '<button class="btn btn-sm btn-ghost" data-act="verPreop" data-p="' + attr(n.preop) + '">' + Icon('eye', '', 12) + 'Ver el preoperacional</button>' : '') + '</div></div>';
   },
   /* Un arreglo en la historia de una parte */
   itemTl(u, m, k, marcar) {
@@ -7061,12 +7064,14 @@ const Plano = {
 };
 
 /* Las novedades del preoperacional (lo que el conductor marcó como regular o
-   malo) de los últimos días. Una novedad queda atendida cuando se registra el
+   malo) del último año, y las que se registran a mano (u.novedades, ver
+   Ventanas.novedad). Una novedad queda atendida cuando se registra el
    arreglo que vino de ella o cuando se marca como revisada; si el conductor la
    vuelve a reportar después, sale otra vez. Los preoperacionales no se tocan:
-   lo atendido queda en el arreglo o en la unidad. */
+   lo atendido queda en el arreglo o en la unidad. Antes eran 30 días; ahora
+   una sin atender no se pierde con el tiempo (Juan, 04/11/2026) */
 const Novedades = {
-  DIAS: 30,
+  DIAS: 365,
   filas: null, porUnidad: new Map(), porRemolque: new Map(), t: 0, error: null, trayendo: null,
   listo() { return Boolean(this.filas) && !this.error; },
   pedir() {
@@ -7124,10 +7129,23 @@ const Novedades = {
   /* ¿La pregunta es del capítulo «Remolque»? Lo de ahí va al remolque que
      arrastraba el camión ese día (Juan, 02/11/2026) */
   delRemolque(d) { return Boolean(d && /remolque/i.test(Preop.tituloSec(d.sec))); },
-  /* Las novedades sin atender de una unidad: una por pregunta, con la más
-     reciente y cuántas veces se reportó. Un camión no se queda con lo del
-     capítulo «Remolque» si ese día llevaba remolque; el remolque lo recibe. */
+  /* Las novedades sin atender de una unidad: las del preoperacional y las
+     registradas a mano, la más reciente primero */
   de(u) {
+    if (!u) return [];
+    return this.dePreop(u).concat(this.aMano(u)).sort((a, b) => String(b.recibido).localeCompare(String(a.recibido)));
+  },
+  /* Las registradas a mano, mientras no se atiendan. Su pregunta es «m:» y su id */
+  aMano(u) {
+    const at = this.atendidas(u);
+    return (u.novedades || []).filter(x => !at['m:' + x.id]).map(x => ({ i: 'm:' + x.id, manual: true, texto: x.t, num: '', resp: x.grave ? 'Grave' : 'Novedad',
+      grave: Boolean(x.grave), nota: '', fecha: x.f, recibido: new Date(x.ts || Fecha.parse(x.f)).toISOString(), conductor: '', por: x.por || '', preop: '',
+      veces: 1, primera: x.f, parte: x.parte || '' }));
+  },
+  /* Las del preoperacional: una por pregunta, con la más reciente y cuántas
+     veces se reportó. Un camión no se queda con lo del capítulo «Remolque» si
+     ese día llevaba remolque; el remolque lo recibe. */
+  dePreop(u) {
     if (!this.filas || !u) return [];
     const q = this.preguntas(), ops = this.opciones(), at = this.atendidas(u), k = Plano.clave(u), por = {};
     const fuentes = (this.porUnidad.get(u.id) || []).map(p => [p, i => !(p.remolque_id && this.delRemolque(q[i]))])
@@ -7150,6 +7168,105 @@ const Novedades = {
         nota: (x.p.notas || {})[x.i] || '', fecha: x.p.fecha, recibido: x.p.recibido, conductor: x.p.conductor_nombre || '', preop: x.p.id,
         veces: x.veces, primera: x.primera, parte: d ? Plano.deLaPregunta(k, d.it, d.sec) : '' };
     }).sort((a, b) => String(b.recibido).localeCompare(String(a.recibido)));
+  }
+};
+
+/* La pestaña «Novedades» de Mantenimientos (Juan, 04/11/2026: «todas en forma
+   de lista, ya no en forma de maquetas»). Las del preoperacional llegan solas
+   (ver Novedades) y las demás se registran a mano (Ventanas.novedad). Cada una
+   se atiende abriendo su caso, un arreglo que sigue en el taller con sus
+   avances, o marcándola como revisada. Queda ligada al vehículo y sale también
+   en su plano. */
+const NovLista = {
+  /* Sin atender: las de Novedades.de de cada vehículo, las graves primero */
+  pendientes() {
+    return Datos.unidades.reduce((t, u) => t.concat(Novedades.de(u).map(n => Object.assign({ u }, n))), [])
+      .sort((a, b) => (b.grave - a.grave) || String(b.recibido).localeCompare(String(a.recibido)));
+  },
+  /* Con caso: cada novedad que atiende un arreglo (ver Leer.correctivo) */
+  casos() {
+    return Datos.mantenimientos.reduce((t, m) => {
+      const u = Q.unidad(m.unidad);
+      return u ? t.concat((m.novedades || []).map(n => ({ u, m, i: n.i, texto: n.t, fecha: n.f }))) : t;
+    }, []);
+  },
+  /* Las que se marcaron como revisadas (ver Acciones.guardarRevisada) */
+  revisadas() {
+    return Datos.unidades.reduce((t, u) => t.concat((u.preopRevisadas || []).map(r => ({ u, r, i: r.i, texto: r.t, fecha: r.f,
+      cierre: r.ts ? Fecha.iso(new Date(r.ts)) : r.f }))), []);
+  },
+  vista() {
+    Novedades.pedir();
+    const f = UIState.novF, fu = UIState.novU, deU = l => (fu ? l.filter(x => x.u.id === fu) : l);
+    const pend = this.pendientes(), casos = this.casos();
+    const taller = casos.filter(c => c.m.estado === 'taller').sort((a, b) => String(b.m.fecha).localeCompare(String(a.m.fecha)));
+    const cerradas = casos.filter(c => c.m.estado !== 'taller').map(c => Object.assign({ cierre: c.m.salida || c.m.fecha }, c))
+      .concat(this.revisadas()).sort((a, b) => String(b.cierre).localeCompare(String(a.cierre)));
+    const lista = deU(f === 'taller' ? taller : f === 'cerradas' ? cerradas : pend);
+    const segs = [['pend', 'Sin atender', deU(pend).length], ['taller', 'En el taller', deU(taller).length], ['cerradas', 'Cerradas', deU(cerradas).length]];
+    const us = Datos.unidades.slice().sort((a, b) => UI.placaTxt(a).localeCompare(UI.placaTxt(b)));
+    const toolbar = '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroNov" data-v="' + s[0] + '">' + s[1] +
+        '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div>' +
+      '<select class="inp inp-sm" id="novU" style="width:auto"><option value="">Todos los vehículos</option>' +
+        us.map(u => '<option value="' + attr(u.id) + '"' + (fu === u.id ? ' selected' : '') + '>' + esc(UI.placaTxt(u)) + '</option>').join('') + '</select>' +
+      '<span class="tb-sp"></span><button class="btn btn-primary" data-act="nuevaNovedad"' + (fu ? ' data-u="' + attr(fu) + '"' : '') + '>' +
+        Icon('plus', '', 14) + 'Nueva novedad</button></div>';
+    const COL = { pend: 'Reportó', taller: 'Avance', cerradas: 'Cómo se cerró' }[f];
+    const vacia = { pend: ['check', 'Nada sin atender', 'Las novedades del preoperacional llegan aquí solas. Lo que usted vea o le avisen se registra con «Nueva novedad».'],
+      taller: ['tool', 'Ningún caso abierto', 'Con «Abrir caso» la novedad pasa al taller y ahí se anotan sus avances.'],
+      cerradas: ['clipboard', 'Todavía no hay cerradas', 'Aquí quedan las arregladas y las revisadas.'] }[f];
+    return (Novedades.listo() ? '' : Novedades.aviso()) + toolbar +
+      '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl tbl-nov"><thead><tr><th>Reportada</th><th>Vehículo</th><th>Novedad</th><th>' + COL +
+          '</th><th>Estado</th><th></th></tr></thead><tbody>' +
+          lista.map(x => (f === 'taller' ? this.filaTaller(x) : f === 'cerradas' ? this.filaCerrada(x) : this.filaPend(x))).join('') + '</tbody></table></div>'
+        : UI.empty(vacia[0], vacia[1], vacia[2])) + '</div>';
+  },
+  despues() {
+    const s = $('#novU');
+    if (s) s.addEventListener('change', e => { UIState.novU = e.target.value; Router.pintar(true); });
+  },
+  esMano: i => /^m:/.test(String(i)),
+  /* El vehículo: al tocarlo se abre su plano */
+  celdaU: u => '<td class="nv-u" data-act="irPlano" data-u="' + attr(u.id) + '" title="Ver su plano">' + UI.unidadCelda(u) + '</td>',
+  /* Lo reportado: la pregunta (o lo escrito a mano), lo que se ve y las partes */
+  celdaNov(u, texto, num, nota, partes) {
+    return '<td><b>' + esc((num ? num + ' ' : '') + texto) + '</b>' + (nota ? '<div class="dias">«' + esc(nota) + '»</div>' : '') +
+      (partes.length ? '<div class="m-partes">' + partes.map(x => '<span class="chip">' + esc(Plano.nombre(u, x)) + '</span>').join('') + '</div>' : '') + '</td>';
+  },
+  filaPend(n) {
+    const u = n.u;
+    return '<tr><td class="nowrap">' + esc(Fecha.corta(n.fecha)) + '<div class="dias">' + esc(Fecha.hace(n.fecha) + (n.veces > 1 ? ' · ' + n.veces + ' veces' : '')) + '</div></td>' +
+      this.celdaU(u) + this.celdaNov(u, n.texto, n.num, n.nota, n.parte ? [{ k: n.parte }] : []) +
+      '<td>' + (n.manual ? 'A mano<div class="dias">' + esc(n.por ? n.por.split('@')[0] : 'En Flota') + '</div>'
+        : esc(n.conductor || 'Sin conductor') + '<div class="dias">Preoperacional</div>') + '</td>' +
+      '<td>' + UI.pill(n.grave ? 'bad' : 'warn', n.resp) + '</td>' +
+      '<td class="tr nowrap"><button class="btn btn-sm ' + (n.grave ? 'btn-danger' : 'btn-primary') + '" data-act="abrirCaso" data-u="' + attr(u.id) + '" data-nov="' + attr(n.i) + '"' +
+        (n.parte ? ' data-p="' + attr(n.parte) + '"' : '') + ' title="Abre el arreglo: sigue en el taller y ahí se anotan los avances">' + Icon('tool', '', 12) + 'Abrir caso</button> ' +
+        '<button class="btn btn-sm" data-act="revisarNovedad" data-u="' + attr(u.id) + '" data-nov="' + attr(n.i) + '" title="Se revisó y no hubo que arreglar nada">' +
+          Icon('check', '', 12) + 'Revisada</button>' +
+        (n.preop ? ' <button class="btn btn-sm btn-ghost btn-icon" data-act="verPreop" data-p="' + attr(n.preop) + '" title="Ver el preoperacional" aria-label="Ver el preoperacional">' +
+          Icon('eye', '', 13) + '</button>' : '') + '</td></tr>';
+  },
+  filaTaller(c) {
+    const m = c.m, a = Avances.ultima(m);
+    return '<tr><td class="nowrap">' + esc(Fecha.corta(c.fecha)) + '<div class="dias">' + (this.esMano(c.i) ? 'A mano' : 'Preoperacional') + '</div></td>' +
+      this.celdaU(c.u) + this.celdaNov(c.u, c.texto, '', '', m.partes || []) +
+      '<td>' + esc('En el taller desde el ' + Fecha.corta(m.fecha)) +
+        '<div class="dias">' + esc(a ? 'Último avance ' + Avances.cuando(a) + (a.t ? ': ' + a.t : '') : 'Sin avances todavía') + '</div></td>' +
+      '<td>' + UI.pill('bad', 'En el taller') + '</td>' +
+      '<td class="tr nowrap"><button class="btn btn-sm btn-primary" data-act="anotarAvance" data-m="' + attr(m.id) + '" title="Lo que se va haciendo">' + Icon('edit', '', 12) + 'Anotar avance</button> ' +
+        '<button class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '" title="La unidad salió del taller">' + Icon('check', '', 12) + 'Terminar</button></td></tr>';
+  },
+  filaCerrada(c) {
+    /* Lo que se hizo: el trabajo o, si tuvo avances, el último (el de la salida, ver Avances) */
+    const m = c.m, a = m && Avances.ultima(m), hecho = m ? m.trabajo || (a && a.t) || '' : '';
+    return '<tr><td class="nowrap">' + esc(Fecha.corta(c.fecha)) + '<div class="dias">' + (this.esMano(c.i) ? 'A mano' : 'Preoperacional') + '</div></td>' +
+      this.celdaU(c.u) + this.celdaNov(c.u, c.texto, '', '', m ? m.partes || [] : []) +
+      '<td>' + (m ? esc('Salió del taller el ' + Fecha.corta(c.cierre)) + (hecho ? '<div class="dias">' + esc(hecho) + '</div>' : '')
+        : esc('Revisada el ' + Fecha.corta(c.cierre)) + '<div class="dias">' + esc(c.r.nota || 'No hubo que arreglar nada') + '</div>') + '</td>' +
+      '<td>' + UI.pill(m ? 'ok' : 'nr', m ? 'Arreglada' : 'Revisada') + '</td>' +
+      '<td class="tr nowrap">' + (m ? '<button class="btn btn-sm" data-act="pdfCorrectivo" data-m="' + attr(m.id) + '" title="El PDF del arreglo, con sus fotos">' +
+        Icon('pdf', '', 12) + 'Ver PDF</button>' : '') + '</td></tr>';
   }
 };
 
@@ -8220,10 +8337,10 @@ const PlanoForm = {
     if (nv) {
       const txt = n => (n.num ? n.num + ' ' : '') + n.texto + ' · ' + n.resp + (n.nota ? ' · «' + n.nota + '»' : '') + ' · ' + (n.fecha === hoyISO ? 'hoy' : Fecha.corta(n.fecha));
       const ligadas = m._novs, otras = Novedades.de(u).filter(n => n.parte && m._partes.includes(n.parte) && !ligadas.some(x => x.i === n.i));
-      nv.innerHTML = (ligadas.length ? '<div class="alert a-info mb12">' + Icon('checkSquare') + '<div><b>' + (ligadas.length === 1 ? 'Viene del preoperacional'
-          : 'Atiende ' + ligadas.length + ' novedades del preoperacional') + '</b>' +
+      nv.innerHTML = (ligadas.length ? '<div class="alert a-info mb12">' + Icon('checkSquare') + '<div><b>' + (ligadas.length === 1 ? (ligadas[0].manual ? 'Viene de una novedad registrada a mano' : 'Viene del preoperacional')
+          : 'Atiende ' + ligadas.length + ' novedades') + '</b>' +
           ligadas.map(n => '<div>' + esc(txt(n)) + ' <span class="link" data-act="regNov" data-nov="' + attr(n.i) + '">Quitar</span></div>').join('') +
-          (ligadas.length === 1 ? 'Al guardar, la novedad queda como arreglada.' : 'Al guardar, las novedades quedan como arregladas.') + '</div></div>' : '') +
+          (ligadas.length === 1 ? 'Al guardar, la novedad pasa a este arreglo.' : 'Al guardar, las novedades pasan a este arreglo.') + '</div></div>' : '') +
         otras.map(n => '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>Esta parte tiene una novedad sin arreglar</b><div>' + esc(txt(n)) + '</div>' +
           '<span class="link" data-act="regNov" data-nov="' + attr(n.i) + '">Este arreglo la atiende</span></div></div>').join('');
     }
@@ -9747,6 +9864,8 @@ const Acciones = {
 Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
   /* Mantenimientos: la pestaña (por vehículo o historial) y el tipo de unidad */
   mantTab: 'vehiculos', mantTipo: 'todos',
+  /* La pestaña Novedades: sin atender, en el taller o cerradas, y el vehículo */
+  novF: 'pend', novU: '',
   /* El plano de una unidad: la parte y la llanta escogidas, el color y el período */
   plano: { u: null, sel: null, llanta: null, modo: 'arreglos', periodo: '12' },
   /* Combustible: el mes escogido («aaaa-mm»); si no, el último con tanqueos.
@@ -10037,8 +10156,14 @@ Object.assign(Vistas, {
     const head = UI.head('Mantenimientos', 'Preventivos con Navitrans y correctivos en el taller',
       '<button class="btn" data-act="nuevoPreventivo">' + Icon('tool', '', 14) + 'Preventivo</button>' +
       '<button class="btn btn-primary" data-act="nuevoCorrectivo">' + Icon('camera', '', 14) + 'Correctivo</button>');
-    const tabs = '<div class="tabs">' + [['vehiculos', 'Por vehículo', 'truck'], ['historial', 'Historial', 'list']].map(t => '<div class="tab tab-ic' +
-      (UIState.mantTab === t[0] ? ' active' : '') + '" data-act="tabMant" data-v="' + t[0] + '">' + Icon(t[2], '', 14) + t[1] + '</div>').join('') + '</div>';
+    /* «Novedades», con cuántas faltan por atender (Juan, 04/11/2026) */
+    Novedades.pedir();
+    const nPend = Novedades.listo() ? NovLista.pendientes().length : 0;
+    const tabs = '<div class="tabs">' + [['vehiculos', 'Por vehículo', 'truck'], ['novedades', 'Novedades', 'warn'], ['historial', 'Historial', 'list']].map(t => '<div class="tab tab-ic' +
+      (UIState.mantTab === t[0] ? ' active' : '') + '" data-act="tabMant" data-v="' + t[0] + '">' + Icon(t[2], '', 14) + t[1] +
+      (t[0] === 'novedades' && nPend ? '<span class="tb-count">' + nPend + '</span>' : '') + '</div>').join('') + '</div>';
+    if (UIState.mantTab === 'novedades') return { titulo: 'Mantenimientos', sub: 'Las novedades de todos los vehículos', html: head + tabs + NovLista.vista(),
+      despues: () => NovLista.despues() };
     if (UIState.mantTab !== 'historial') return { titulo: 'Mantenimientos', sub: 'Por vehículo, con el plano de cada uno', html: head + tabs + Plano.vistaFlota(),
       despues: () => Plano.buscador() };
     const f = UIState.mant;
@@ -10952,6 +11077,37 @@ Object.assign(Ventanas, {
   /* La frecuencia y el último cambio de una unidad. El último cambio se
      actualiza solo al registrar un cambio de aceite; aquí se corrige o se
      pone el primero. */
+  /* Una novedad que no vino del preoperacional: se vio, la avisaron o salió en
+     una inspección (Juan, 04/11/2026). Queda en la unidad (u.novedades) y sale
+     en la pestaña Novedades y en su plano, como las del preoperacional */
+  novedad(uid) {
+    const us = Datos.unidades.slice().sort((a, b) => UI.placaTxt(a).localeCompare(UI.placaTxt(b)));
+    const m = Modal.abrir({
+      titulo: 'Nueva novedad', sub: 'Algo que hay que revisar o arreglar en un vehículo', ancho: 'm-hoja',
+      cuerpo:
+        '<div class="row"><div class="field" style="flex:1 1 200px"><label>Vehículo</label><select class="inp" id="nvU"><option value="">Escoja el vehículo…</option>' +
+          us.map(u => '<option value="' + attr(u.id) + '"' + (u.id === uid ? ' selected' : '') + '>' + esc(UI.placaTxt(u) + ' · ' + (u.clase || TIPOS[u.tipo].nombre)) + '</option>').join('') +
+          '</select></div>' +
+        '<div class="field" style="flex:1 1 200px"><label>Parte del vehículo <span class="txt-3">(opcional)</span></label><select class="inp" id="nvP"></select></div></div>' +
+        '<div class="field"><label>¿Qué pasa?</label><textarea class="inp" id="nvT" rows="3" placeholder="Ej.: el conductor avisó por teléfono que suena la suspensión delantera"></textarea></div>' +
+        '<div class="row"><div class="field" style="flex:0 1 180px"><label>Fecha</label><input class="inp" type="date" id="nvF" value="' + hoyISO + '" max="' + hoyISO + '"></div>' +
+          '<div class="field" style="flex:1 1 200px"><label>¿Qué tan grave?</label><div class="seg" id="nvG"><button type="button" class="on" data-v="0">Novedad</button>' +
+            '<button type="button" data-v="1">Grave</button></div></div></div>' +
+        '<div class="hint">Sale en «Novedades» y en el plano del vehículo, igual que las del preoperacional. Desde ahí se abre su caso.</div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarNovedad" disabled>' + Icon('save', '', 14) + 'Guardar</button>'
+    });
+    const partes = () => {
+      const u = Q.unidad($('#nvU', m).value);
+      $('#nvP', m).innerHTML = '<option value="">' + (u ? 'Sin parte' : 'Primero el vehículo') + '</option>' +
+        (u ? Plano.visibles(Plano.clave(u)).map(x => '<option value="' + attr(x.k) + '">' + esc(x.n) + '</option>').join('') : '');
+    };
+    /* Guardar se prende con el vehículo y lo que pasa */
+    const revisar = () => { $('[data-act="guardarNovedad"]', m).disabled = !$('#nvU', m).value || !$('#nvT', m).value.trim(); };
+    $('#nvU', m).addEventListener('change', () => { partes(); revisar(); });
+    $('#nvT', m).addEventListener('input', revisar);
+    $$('#nvG button', m).forEach(b => b.addEventListener('click', () => $$('#nvG button', m).forEach(x => x.classList.toggle('on', x === b))));
+    partes();
+  },
   controlAceite(u) {
     const a = u.aceite || {}, med = Aceite.medida(u);
     Modal.abrir({
@@ -10982,7 +11138,7 @@ Object.assign(Ventanas, {
     if (!u0) { Toast.show('Primero registre una unidad en Flota.', 'warn'); return; }
     const fijo = Boolean(o.fijo || r0);
     const m = Modal.abrir({
-      titulo: r0 ? (r0.estado === 'taller' ? 'Anotar avance · ' : 'Editar arreglo · ') + UI.placaTxt(u0) : o.cambio ? 'Cambio de llanta · ' + UI.placaTxt(u0) : fijo ? 'Registrar arreglo · ' + UI.placaTxt(u0) : 'Mantenimiento correctivo',
+      titulo: r0 ? (r0.estado === 'taller' ? 'Anotar avance · ' : 'Editar arreglo · ') + UI.placaTxt(u0) : o.cambio ? 'Cambio de llanta · ' + UI.placaTxt(u0) : o.caso ? 'Abrir caso · ' + UI.placaTxt(u0) : fijo ? 'Registrar arreglo · ' + UI.placaTxt(u0) : 'Mantenimiento correctivo',
       sub: r0 ? esc([r0.numero, u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : fijo ? esc([u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : 'Visita al taller con la parte que se arregló y las fotos de cada cambio', ancho: 'xwide m-hoja',
       cuerpo: '<div class="reg"><div>' +
           (fijo ? '' : '<div class="field"><label>Unidad</label><select class="inp" id="mcU">' + Opc.unidades(u0.id) + '</select></div>') +
@@ -11031,8 +11187,10 @@ Object.assign(Ventanas, {
     LlantaForm.poner(m, u0, o.cambio);
     if (o.cambio) { $('#mcC', m).value = 'Llantas'; $('#mcT', m).value = 'Cambio de llanta'; }
     if (nov) {
-      $('#mcC', m).value = nov.texto;
-      $('#mcF', m).value = 'Reportado en el preoperacional ' + (nov.fecha === hoyISO ? 'de hoy' : 'del ' + Fecha.corta(nov.fecha)) + (nov.conductor ? ' por ' + nov.conductor : '') +
+      /* La registrada a mano trae lo que pasa, no una pregunta: el componente es su parte */
+      $('#mcC', m).value = nov.manual ? (nov.parte ? Plano.nombre(u0, { k: nov.parte }) : '') : nov.texto;
+      $('#mcF', m).value = nov.manual ? 'Registrada a mano ' + (nov.fecha === hoyISO ? 'hoy' : 'el ' + Fecha.corta(nov.fecha)) + ': ' + nov.texto.replace(/[.\s]+$/, '') + '.'
+        : 'Reportado en el preoperacional ' + (nov.fecha === hoyISO ? 'de hoy' : 'del ' + Fecha.corta(nov.fecha)) + (nov.conductor ? ' por ' + nov.conductor : '') +
         ': ' + nov.texto + ', ' + String(nov.resp).toLowerCase() + (nov.nota ? ' («' + nov.nota + '»)' : '') + '.';
     }
     PlanoForm.unidad(m);
@@ -11057,6 +11215,8 @@ Object.assign(Ventanas, {
       /* Lo que ya se escribió pasa al otro lado (ver AvancesForm.pasar) */
       AvancesForm.pasar(m, $('#mcT', m), taller);
     }));
+    /* «Abrir caso» (pestaña Novedades): sigue en el taller, para ir anotando los avances */
+    if (o.caso) $('#mcEst button[data-v="taller"]', m).click();
     const pintar = () => {
       $('#mcFotos', m).innerHTML = m._fotos.map((f, i) => '<div class="foto">' +
         (f.src ? '<img src="' + attr(f.src) + '" alt="">' : '<div class="ph" style="height:104px">' + Icon('image', '', 20) + '</div>') +
@@ -11714,14 +11874,14 @@ Object.assign(Acciones, {
   planoModo(el) { UIState.plano.modo = el.dataset.v; Router.pintar(true); },
   planoPeriodo(el) { UIState.plano.periodo = el.dataset.v; Router.pintar(true); },
   planoLlanta(el) { const p = el.dataset.pos || null; UIState.plano.llanta = UIState.plano.llanta === p ? null : p; Router.pintar(true); },
-  /* Desde un preoperacional, al plano de su vehículo en Mantenimientos: ahí
-     salen sus novedades con «Registrar el arreglo» (Juan, 04/11/2026). Las
-     novedades se traen otra vez, por si el preoperacional acaba de llegar */
+  /* Desde un preoperacional, a la pestaña «Novedades» de Mantenimientos, con
+     las de su vehículo, para atenderlas (Juan, 04/11/2026). Las novedades se
+     traen otra vez, por si el preoperacional acaba de llegar */
   irMantPreop(el) {
     Modal.cerrarTodo();
     Novedades.olvidar();
-    Object.assign(UIState.plano, { u: el.dataset.u, sel: null, llanta: null });
-    Router.ir('mantenimientos/' + el.dataset.u);
+    Object.assign(UIState, { mantTab: 'novedades', novF: 'pend', novU: el.dataset.u });
+    Router.ir('mantenimientos');
   },
   irPlano(el) {
     Object.assign(UIState.plano, { u: el.dataset.u, sel: el.dataset.p || null, llanta: null });
@@ -11729,6 +11889,20 @@ Object.assign(Acciones, {
   },
   novReintentar() { Novedades.olvidar(); Novedades.error = null; Novedades.pedir(); Router.pintar(true); },
   registrarArreglo(el) { Ventanas.correctivo({ u: el.dataset.u, fijo: true, p: el.dataset.p, pos: el.dataset.pos, nov: el.dataset.nov }); },
+  /* Pestaña Novedades (ver NovLista): abrir el caso, filtrar y registrar una a mano */
+  abrirCaso(el) { Ventanas.correctivo({ u: el.dataset.u, fijo: true, p: el.dataset.p, nov: el.dataset.nov, caso: true }); },
+  filtroNov(el) { UIState.novF = el.dataset.v; Router.pintar(true); },
+  nuevaNovedad(el) { Ventanas.novedad(el.dataset.u); },
+  guardarNovedad(el) {
+    const m = el.closest('.modal-bd'), u = Q.unidad($('#nvU', m).value), t = $('#nvT', m).value.trim();
+    if (!u || !t) return;
+    (u.novedades = u.novedades || []).push({ id: 'nv' + marca(), f: $('#nvF', m).value || hoyISO, t, parte: $('#nvP', m).value || '',
+      grave: $('#nvG button.on', m).dataset.v === '1', por: Cuenta.correo || '', ts: marca() });
+    Modal.cerrar(m);
+    UIState.novF = 'pend';
+    Toast.show('Novedad de <b>' + esc(UI.placaTxt(u)) + '</b> registrada: sale en «Novedades» y en su plano.');
+    Router.pintar(true);
+  },
   /* En la ventana de un arreglo: tocar una parte, una llanta, un componente o una novedad */
   regParte(el) {
     const m = el.closest('.modal-bd');
