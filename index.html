@@ -1090,6 +1090,11 @@ html[data-theme="dark"] .mx-si{color:var(--ok-500)}
 .visor.real{padding:12px}
 .visor-pdf{width:100%;height:72vh;border:0;border-radius:6px;background:#fff;display:block}
 .visor-img{max-width:100%;max-height:72vh;border-radius:6px;box-shadow:var(--sh-2);display:block}
+/* La hoja de una orden, como sale en Facturación (ver Ventanas.orden): a lo
+   ancho de la ventana; con un clic se acerca */
+.visor.or-hoja{display:block;text-align:center}
+.or-hoja .lupa{width:min(100%,860px);border-radius:4px}
+.or-hoja .lupa > img{width:100%;height:auto;display:block}
 .lic-pdf{width:100%;height:64vh;border:0;border-radius:8px;background:#fff;display:block}
 /* Mientras se comprime un archivo */
 .spin{width:13px;height:13px;border:2px solid var(--border-strong);border-top-color:var(--accent);border-radius:50%;
@@ -5609,7 +5614,12 @@ const Compras = {
       es_gasto: o.es_gasto === true, flota_id: txt(o.flota_id), proveedor: txt(o.proveedor), nit: txt(o.nit), concepto: txt(o.concepto), items,
       subtotal: num(o.subtotal), iva: num(o.iva), retencion: num(o.retencion), rete_ica: num(o.rete_ica), flete: num(o.flete),
       total: num(o.total), valor: num(o.valor != null ? o.valor : o.total), factura_numero: txt(o.factura_numero),
-      factura_fecha: dia(o.factura_fecha), pagada_en: dia(o.pagada_en), contado: o.contado === true, completa: Array.isArray(o.items)
+      factura_fecha: dia(o.factura_fecha), pagada_en: dia(o.pagada_en), contado: o.contado === true, completa: Array.isArray(o.items),
+      /* La hoja de la orden (el 214 de Facturación, 05/11/2026): la ruta de su
+         imagen tal como llega (Flota no la arma), cuándo se subió y cuándo
+         cambió la orden. «conHoja»: Facturación ya comparte las hojas */
+      hoja: /^orden\/[^/]+\/hoja-[0-9a-z]+\.(webp|jpg)$/.test(txt(o.hoja)) ? txt(o.hoja) : null,
+      hoja_actualizada: txt(o.hoja_actualizada) || null, actualizado: txt(o.actualizado) || null, conHoja: 'hoja' in o
     };
   },
   /* El consecutivo es uno solo para OC, OS y OP («OS-401-26»): las del mismo
@@ -5625,6 +5635,30 @@ const Compras = {
   porId(id) {
     if (this._mapaDe !== this.lista) { this._mapa = new Map(this.lista.map(o => [o.orden_id, o])); this._mapaDe = this.lista; }
     return this._mapa.get(id) || null;
+  },
+  /* La hoja de una orden, para el ojito (ver Ventanas.orden): la guardada en
+     este equipo o, si no está, la de Facturación, con la sesión de quien mira
+     y el tipo con que llega (WebP o JPG). Cada versión de la hoja tiene su
+     propio nombre, así que la guardada nunca queda vieja */
+  _hojas: new Map(),
+  async hoja(o) {
+    if (this._hojas.has(o.hoja)) return this._hojas.get(o.hoja);
+    const k = 'facturacion:' + o.hoja;
+    let blob = await Cache.leer(k);
+    if (!blob) {
+      const tk = await Nube.token();
+      if (!tk) throw errorNube('La sesión se cerró.', { sesion: true });
+      const r = await Nube._fetch(NUBE.url + '/storage/v1/object/authenticated/facturacion/' + o.hoja.split('/').map(encodeURIComponent).join('/'),
+        { headers: { apikey: NUBE.llave, Authorization: 'Bearer ' + tk } }, 30000);
+      if (!r.ok) throw errorNube(r.status === 400 || r.status === 404 ? 'Facturación no la tiene, o Flota no la puede ver.' : 'Facturación respondió con el error ' + r.status + '.',
+        { status: r.status });
+      blob = await r.blob();
+      if (!/^image\/(webp|jpeg)$/.test(blob.type)) throw errorNube('No llegó como imagen.');
+      Cache.poner(k, blob);
+    }
+    const h = { url: URL.createObjectURL(blob), tipo: blob.type };
+    this._hojas.set(o.hoja, h);
+    return h;
   },
   /* ---------------- Los arreglos con sus órdenes ---------------- */
   /* El arreglo de una orden, si lo tiene y es de su mismo vehículo */
@@ -11318,10 +11352,12 @@ Object.assign(Ventanas, {
   },
 
   /* Lo que dice una orden de Facturación (Juan, 04/11/2026: «un ojito que
-     permita ver… y así yo determino si esa es la orden correcta»): su número,
-     su fecha, el proveedor, los artículos con sus valores y los totales, como
-     llegan de Facturación (su 210). La hoja impresa, con el membrete, el logo y
-     la firma, es de Facturación: Flota no tiene esos datos */
+     permita ver… y así yo determino si esa es la orden correcta»). Desde el 214
+     de Facturación (05/11/2026) se ve la hoja misma, la imagen de lo que sale
+     impreso, con el membrete, el logo y las firmas (Juan: «que se vea
+     exactamente la orden del PDF»). Si la orden todavía no tiene hoja, o no se
+     pudo traer, sale lo que llega en el 210: su número, su fecha, el
+     proveedor, los artículos con sus valores y los totales */
   orden(o) {
     if (!o) { Toast.show('Esa orden ya no llega de Facturación.', 'warn'); return; }
     const u = Q.unidad(o.flota_id), it = o.items || [], tipo = Compras.TIPOS[o.tipo] || 'Orden', est = (Compras.ESTADOS[o.estado] || [])[1] || o.estado || '—';
@@ -11341,12 +11377,36 @@ Object.assign(Ventanas, {
       '<table class="dp-tbl or-tot"><tbody>' + tot.map(x => '<tr><td>' + esc(x[0]) + '</td><td class="n">' + esc(x[2] + Money.format(x[1])) + '</td></tr>').join('') +
         '<tr class="tot"><td>Total</td><td class="n">' + esc(Money.format(o.total || o.valor)) + '</td></tr></tbody></table>' +
       (o.factura_numero ? '<div class="dp-obs"><b>Factura</b>' + esc(o.factura_numero + (o.factura_fecha ? ' · ' + Fecha.num(o.factura_fecha) : '')) + '</div>' : '');
-    Modal.abrir({
+    const datos = nota => '<div class="alert a-info mb12">' + Icon('info') + '<div>' + nota + '</div></div>' +
+      '<div class="preview-shell"><div class="doc-page">' + doc + '</div></div>';
+    const asi = 'así viene la orden: su número, el proveedor, los artículos y los valores.';
+    const m = Modal.abrir({
       titulo: tipo + ' ' + (o.codigo || ''), sub: esc([o.proveedor, o.fecha ? Fecha.larga(o.fecha) : '', est].filter(Boolean).join(' · ')), ancho: 'xwide', sinFoco: true,
-      cuerpo: '<div class="alert a-info mb12">' + Icon('info') + '<div>Así viene la orden de Facturación: su número, el proveedor, los artículos y los valores. ' +
-          'La hoja impresa, con el membrete, el logo y la firma, se saca en Facturación.</div></div>' +
-        '<div class="preview-shell"><div class="doc-page">' + doc + '</div></div>',
+      cuerpo: '<div id="orCuerpo">' + (o.hoja
+        ? '<div class="flex aic g8 txt-2" style="justify-content:center;padding:48px 16px"><span class="spin"></span>Trayendo la hoja de Facturación…</div>'
+        : datos(o.conHoja ? 'Facturación todavía no ha guardado la hoja de esta orden. Mientras tanto, ' + asi
+          : 'Así viene la orden de Facturación: su número, el proveedor, los artículos y los valores. La hoja impresa, con el membrete, el logo y la firma, se saca en Facturación.')) +
+        '</div>',
       pie: '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
+    });
+    if (!o.hoja) return;
+    Compras.hoja(o).then(h => {
+      if (!document.body.contains(m)) return;
+      /* Si la orden cambió después de subirse su hoja, la subida nueva no ha
+         llegado (por ejemplo, sin internet): se avisa, y se pueden ver los
+         datos al día. Facturación la pone al día sola */
+      const vieja = o.actualizado && o.hoja_actualizada && Date.parse(o.hoja_actualizada) < Date.parse(o.actualizado), cambio = new Date(o.actualizado);
+      $('#orCuerpo', m).innerHTML = (vieja ? '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>La orden cambió en Facturación después de esta hoja</b> (el ' +
+          esc(Fecha.num(Fecha.iso(cambio)) + ', ' + cambio.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })) +
+          '). Puede que la hoja no muestre ese cambio; Facturación la pone al día sola.' +
+          '<div class="mt8"><button type="button" class="btn btn-sm" id="orAlDia">' + Icon('list', '', 13) + 'Ver los datos al día</button></div></div></div>' : '') +
+        '<div class="visor real or-hoja">' + Lupa.html(h.url, tipo + ' ' + (o.codigo || '') + ', como sale en Facturación') + '</div>';
+      if (vieja) $('#orAlDia', m).addEventListener('click', () => { $('#orCuerpo', m).innerHTML = datos('Así viene ahora la orden en Facturación: su número, el proveedor, los artículos y los valores.'); });
+      $('.modal-f', m).insertAdjacentHTML('afterbegin', '<a class="btn" href="' + attr(h.url) + '" download="' + attr((o.codigo || 'orden') + (h.tipo === 'image/jpeg' ? '.jpg' : '.webp')) + '">' +
+        Icon('download', '', 14) + 'Descargar</a>');
+    }).catch(e => {
+      if (!document.body.contains(m)) return;
+      $('#orCuerpo', m).innerHTML = datos('<b>No se pudo traer la hoja de Facturación.</b> ' + esc(e.message) + ' Mientras tanto, ' + asi);
     });
   },
 
