@@ -301,7 +301,6 @@ html:has(#modals > .modal-bd){overflow:hidden;padding-right:var(--barra,0px)}
 .oc-op input{flex:none;margin:0}
 .oc-op .t{flex:1;min-width:0}
 .oc-op .t>span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.oc-op .t>.n{font-size:11px;color:var(--warn-700);white-space:normal}
 .oc-op .v{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text-2)}
 .oc-vacia{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:12.5px;color:var(--text-3)}
 .chip[data-act],.alert[data-act]{cursor:pointer}
@@ -1722,12 +1721,23 @@ span.chip-adj{color:var(--text-3)}
 .reg > .reg-der{grid-column:2;grid-row:1 / span 2}
 .reg > .reg-or{grid-column:1;grid-row:2;align-self:start}
 @media(max-width:860px){.reg > .reg-der,.reg > .reg-or{grid-column:auto;grid-row:auto}}
-/* La lista de órdenes: el ojito de cada una y «Ver las anteriores» */
+/* La lista de órdenes: el ojito de cada una y, en gris, las que ya están en
+   otro mantenimiento. Si se marca una de esas, vuelve a verse normal y dice
+   lo que pasa al guardar */
 .oc-op .oc-ver{flex:none;color:var(--text-3)}
 .oc-op .oc-ver:hover{color:var(--accent)}
-.oc-mas{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:7px 10px;font-size:12px;font-weight:600;
-  color:var(--accent);cursor:pointer;border-top:1px solid var(--border)}
-.oc-mas:hover{background:var(--surface-2)}
+.oc-op.ya{background:var(--surface-2)}
+.oc-op.ya .t>span:first-child,.oc-op.ya .v{color:var(--text-3)}
+.oc-op.ya > .pill{opacity:.6}
+.oc-op.ya:has(input:checked){background:var(--surface)}
+.oc-op.ya:has(input:checked) .t>span:first-child,.oc-op.ya:has(input:checked) .v{color:inherit}
+.oc-op.ya:has(input:checked) > .pill{opacity:1}
+.oc-op .t>.ya-n{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px;margin-top:3px;font-size:11px;white-space:normal;overflow:visible}
+.oc-op .ya-tag{flex:0 1 auto;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 8px;border-radius:10px;
+  background:var(--surface-3);color:var(--text-2);font-weight:600}
+.oc-op .ya-pasa{display:none;color:var(--warn-700);font-weight:600}
+.oc-op.ya:has(input:checked) .ya-pasa{display:inline}
+html[data-theme="dark"] .oc-op .ya-pasa{color:var(--warn-500)}
 /* El ojito de una orden: sus totales a la derecha */
 .dp-tbl th.n{text-align:right}
 .dp-tbl.or-tot{width:85mm;margin-left:auto}
@@ -5677,8 +5687,10 @@ const Compras = {
     return h;
   },
   /* ---------------- Los arreglos con sus órdenes ---------------- */
-  /* El arreglo de una orden, si lo tiene y es de su mismo vehículo */
-  arregloDe(o) { return Datos.mantenimientos.find(m => m.unidad === o.flota_id && (m.ordenes || []).includes(o.orden_id)) || null; },
+  /* El arreglo de una orden, si lo tiene y es de su mismo vehículo; con «fuera», otro que no sea ese */
+  arregloDe(o, fuera) {
+    return Datos.mantenimientos.find(m => m.unidad === o.flota_id && (m.ordenes || []).includes(o.orden_id) && (!fuera || m.id !== fuera.id)) || null;
+  },
   /* Un arreglo con sus órdenes: las que están en Facturación y son de su
      vehículo («esta»), las que ahora son de otro vehículo («ajenas»), cuántas
      ya no llegan y lo que cuenta. Las ajenas y las que faltan cuentan como si
@@ -5730,8 +5742,6 @@ const Compras = {
      de fecha más cercana primero. Si todavía no han llegado, se piden y la
      lista se pinta cuando lleguen. */
   /* tipos: solo las de esos tipos (ver TallerRep); vacia: lo que se dice si no hay */
-  /* Cuántas órdenes salen de una vez en la lista de un arreglo (ver escoger) */
-  VER: 3,
   escoger(caja, u, fecha, r, tipos, vacia) {
     if (!caja || !u) return;
     const dibujar = fin => {
@@ -5742,22 +5752,25 @@ const Compras = {
         return;
       }
       const marcadas = caja.querySelector('input') ? $$('input:checked', caja).map(i => i.value) : (r && r.ordenes) || [];
-      /* La más reciente arriba (Juan, 04/11/2026: «necesito que siempre salga la
-         más reciente asociada a ese vehículo»); de las anteriores salen las
-         marcadas, y las demás con «Ver las anteriores» */
-      const todas = this.de(u).filter(o => !tipos || tipos.includes(o.tipo));
-      const li = caja._todas ? todas : todas.filter((o, i) => i < this.VER || marcadas.includes(o.orden_id)), ocultas = todas.length - li.length;
+      /* Todas las del vehículo, la más reciente arriba (Juan, 04/11/2026), en su
+         cuadro con su propia barra (Juan, 05/11/2026: «me deben salir todas,
+         porque a veces puede que yo genere muchas órdenes»). Las que ya están en
+         otro mantenimiento salen en gris, con cuál es, para ver de una las
+         libres. Se pueden marcar igual: al guardar pasan a este (ver ponerOrdenes) */
+      const li = this.de(u).filter(o => !tipos || tipos.includes(o.tipo)), arriba = caja.scrollTop;
       caja.innerHTML = li.length ? li.map(o => {
-        const otro = this.arregloDe(o), ajeno = otro && (!r || otro.id !== r.id);
-        return '<label class="oc-op"><input type="checkbox" value="' + attr(o.orden_id) + '"' + (marcadas.includes(o.orden_id) ? ' checked' : '') + '>' +
+        const otro = this.arregloDe(o, r), f = otro ? Fecha.num(otro.fecha) : '';
+        const ya = !otro ? '' : otro.tipo === 'preventivo' ? 'Ya está en el preventivo del ' + f : 'Ya está en ' + (otro.numero ? otro.numero + ' · ' + f : 'el arreglo del ' + f);
+        return '<label class="oc-op' + (otro ? ' ya' : '') + '"' + (otro ? ' title="' + attr(ya + '. Si la marca aquí, al guardar pasa a este.') + '"' : '') + '>' +
+          '<input type="checkbox" value="' + attr(o.orden_id) + '"' + (marcadas.includes(o.orden_id) ? ' checked' : '') + '>' +
           '<span class="t"><span><b class="mono">' + esc(o.codigo) + '</b> · ' + esc(o.fecha ? Fecha.num(o.fecha) : 'sin fecha') + ' · ' + esc(o.proveedor || this.resumen(o)) + '</span>' +
-          (ajeno ? '<span class="n">Va con el arreglo del ' + esc(Fecha.corta(otro.fecha)) + '; si la marca, pasa a este</span>' : '') + '</span>' +
+          (otro ? '<span class="ya-n"><span class="ya-tag">' + esc(ya) + '</span><span class="ya-pasa">Al guardar, pasa a este.</span></span>' : '') + '</span>' +
           '<span class="v">' + esc(Money.format(o.valor)) + '</span>' + this.pill(o) +
           '<button type="button" class="btn btn-sm btn-ghost btn-icon oc-ver" data-act="verOrden" data-o="' + attr(o.orden_id) + '" title="Ver la orden: lo que dice en Facturación" aria-label="Ver la orden">' +
             Icon('eye', '', 14) + '</button></label>';
-      }).join('') + (ocultas ? '<button type="button" class="oc-mas" data-act="ordenesAnteriores">' + Icon('chevD', '', 13) +
-          (ocultas === 1 ? 'Ver la anterior' : 'Ver las ' + ocultas + ' anteriores') + '</button>' : '')
-        : '<div class="oc-vacia">' + esc(vacia || 'Este vehículo no tiene órdenes en Facturación.') + '</div>';
+      }).join('') : '<div class="oc-vacia">' + esc(vacia || 'Este vehículo no tiene órdenes en Facturación.') + '</div>';
+      /* Al ponerse al día no se pierde por dónde iba */
+      caja.scrollTop = arriba;
     };
     /* Después de pintarla, lo que depende de lo marcado (el valor que sale de la orden, ver ValorOrden) */
     const pintar = fin => { dibujar(fin); if (caja._alPintar && document.body.contains(caja)) caja._alPintar(); };
@@ -13410,14 +13423,8 @@ Object.assign(Acciones, {
   },
   verConductor(el) { Ventanas.conductor(Q.conductor(el.dataset.c)); },
   verVehiculo(el) { if (!Ventanas.vehiculoAbierto(el.dataset.u)) Ventanas.vehiculo(Q.unidad(el.dataset.u)); },
-  /* Las órdenes de un arreglo: el ojito de cada una y «Ver las anteriores» (ver Compras.escoger) */
+  /* El ojito de cada orden de un arreglo (ver Compras.escoger) */
   verOrden(el) { Ventanas.orden(Compras.porId(el.dataset.o)); },
-  ordenesAnteriores(el) {
-    const caja = el.closest('.oc-lista');
-    if (!caja || !caja._pintar) return;
-    caja._todas = true;
-    caja._pintar(true);
-  },
 
   /* ---------------------------------------------------- Eliminar de verdad */
   eliminarUnidad(el) {
