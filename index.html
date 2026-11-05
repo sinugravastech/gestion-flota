@@ -1503,6 +1503,8 @@ html[data-theme="dark"] .plano .alerta circle{stroke:var(--surface)}
 .vh-sec{margin-top:16px}
 .vh-sec > .l{display:block;font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
 .vh-sec .mrow{border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px}
+.vh-sec .mrow.quieta{cursor:default}
+.vh-sec .mrow.quieta:hover{background:none}
 /* La barra de arriba del plano, la leyenda y las partes en lista */
 .pl-tit{display:flex;align-items:center;gap:12px;min-width:0}
 .pl-tit h1{font-size:18px}
@@ -1734,6 +1736,10 @@ span.chip-adj{color:var(--text-3)}
 .tr-valor{max-width:220px}
 /* El valor que sale de la orden (ver ValorOrden): con un tono, para saber que lo trae de Facturación; se puede cambiar */
 .inp.de-orden{background:var(--accent-soft)}
+/* Lo que dice la orden del taller o del proveedor (ver ProvOrden) */
+.field .prov-nota:empty{display:none}
+.field .prov-nota.aviso{color:var(--warn-700)}
+html[data-theme="dark"] .field .prov-nota.aviso{color:var(--warn-500)}
 .tr-tot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;border-radius:var(--radius);background:var(--surface-2);
   font-size:13px;margin-bottom:8px}
 .pl-vacio{padding:22px 10px;text-align:center;color:var(--text-3);font-size:12.5px}
@@ -5337,10 +5343,12 @@ const ProvFact = {
       s.addEventListener('change', () => {
         if (s.value !== 'nuevo:') { s.dataset.antes = s.value; return; }
         s.value = s.dataset.antes || '';
-        /* Con lo que se escribió en el buscador, si no lo encontró */
-        const nombre = s.dataset.buscado || '';
+        /* Con lo que se escribió en el buscador, si no lo encontró, o con el
+           nombre y el NIT de una orden (ver ProvOrden) */
+        const nombre = s.dataset.buscado || '', nit = s.dataset.nitBuscado || '';
         delete s.dataset.buscado;
-        Ventanas.provNuevo({ nombre, alCrear: x => {
+        delete s.dataset.nitBuscado;
+        Ventanas.provNuevo({ nombre, nit, alCrear: x => {
           ids.forEach(otro => {
             const o = $('#' + otro, m);
             if (!o) return;
@@ -5351,6 +5359,7 @@ const ProvFact = {
           s.value = 'f:' + x.id;
           s.dataset.antes = s.value;
           if (m._alCambiar) m._alCambiar();
+          if (s._alCrear) s._alCrear();
         } });
       });
     });
@@ -5380,6 +5389,13 @@ const ProvFact = {
   parecido(nombre, nit) {
     const n = this.clave(nombre), d = this.digitos(nit);
     return this.lista.find(x => !x.fusionado_con && ((d.length >= 6 && this.digitos(x.nit) === d) || (n && this.clave(x.nombre) === n))) || null;
+  },
+  /* El proveedor de una orden de Facturación (ver ProvOrden): primero por el
+     NIT y, si la orden no lo trae o no coincide, por el nombre */
+  deOrden(o) {
+    if (!o || this.estado !== 'listo') return null;
+    const d = this.digitos(o.nit), n = this.clave(o.proveedor || ''), vivo = this.lista.filter(x => !x.fusionado_con);
+    return (d.length >= 6 && vivo.find(x => this.digitos(x.nit) === d)) || (n && vivo.find(x => this.clave(x.nombre) === n)) || null;
   },
   /* Cuando llega la lista con un formulario abierto, se ponen las opciones
      nuevas, con lo escogido o con lo que se propone (propuesta(), ya con la
@@ -7850,6 +7866,61 @@ const ValorOrden = {
   }
 };
 
+/* El taller o el proveedor de repuestos, desde la orden marcada (Juan,
+   05/11/2026: «si yo selecciono dicha orden, pues ya me traiga enseguida el
+   nombre del proveedor, si es una orden de compra, o el nombre del taller, si
+   es una orden de servicio»). Al marcar una orden, el campo se pone con el
+   proveedor de la orden, buscado en la lista de Facturación (ver
+   ProvFact.deOrden). Se puede escoger otro: se queda el escogido, con un aviso
+   que no bloquea. Al abrir un arreglo guardado no se cambia nada: solo se
+   avisa si no coincide */
+const ProvOrden = {
+  /* sel: la lista del proveedor; nota: donde se explica; os: las órdenes
+     marcadas, la que manda primero; poner: si se acaba de marcar o quitar una
+     orden de ese lado */
+  aplicar(sel, nota, os, poner) {
+    if (!sel || !nota) return;
+    const bus = sel._bus && sel._bus.inp;
+    if (!os.length || ProvFact.estado !== 'listo') {
+      nota.innerHTML = '';
+      sel._antesOrden = '';
+      if (bus) bus.classList.remove('de-orden');
+      return;
+    }
+    const o = os[0], x = ProvFact.deOrden(o), v = x && x.activo ? 'f:' + x.id : '';
+    if (poner && v && sel.value !== v) {
+      const antes = ProvFact.leer(sel.value);
+      sel._antesOrden = antes ? antes.nombre : '';
+      sel.value = sel.dataset.antes = v;
+    }
+    const igual = Boolean(v) && sel.value === v;
+    if (!igual) sel._antesOrden = '';
+    if (bus) bus.classList.toggle('de-orden', igual);
+    const n = new Set(os.map(y => ProvFact.clave(y.proveedor || '') || ProvFact.digitos(y.nit)).filter(Boolean)).size;
+    nota.classList.toggle('aviso', !igual);
+    nota.innerHTML = !v
+      ? esc('La ' + o.codigo + ' es de «' + (o.proveedor || 'sin nombre') + '», que no está en la lista de proveedores.') +
+        ' <span class="link" data-prov-orden="nuevo">Agregarlo</span>'
+      : igual ? esc('Sale de la ' + o.codigo + ', de Facturación.' + (sel._antesOrden ? ' Antes estaba ' + sel._antesOrden + '.' : '') +
+          (n > 1 ? ' Las órdenes son de ' + n + ' proveedores: quedó el de la ' + o.codigo + '.' : ''))
+      : esc('La ' + o.codigo + ' es de ' + x.nombre + '.') + ' <span class="link" data-prov-orden="usar">Usar el de la orden</span>';
+    nota.onclick = e => {
+      const a = e.target.closest('[data-prov-orden]');
+      if (!a) return;
+      if (a.dataset.provOrden === 'usar') {
+        sel.value = sel.dataset.antes = v;
+        this.aplicar(sel, nota, os, false);
+        return;
+      }
+      /* «+ Agregar», con el nombre y el NIT de la orden (ver ProvFact.listas) */
+      sel.dataset.buscado = o.proveedor || '';
+      sel.dataset.nitBuscado = o.nit || '';
+      sel.value = 'nuevo:';
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+  }
+};
+
 /* El taller y los repuestos, cada uno con su valor y su orden (Juan, 03/11/2026:
    «el taller cobra un valor que sería el mecánico y el proveedor cobra otro
    valor que serían los repuestos», y a cada uno su orden de Facturación: al
@@ -7870,13 +7941,15 @@ const TallerRep = {
     const sel = (id, vacio, v) => '<select class="inp" id="' + pre + id + '"><option value="">' + vacio + '</option>' + ProvFact.opciones(v) + ProvFact.opcionNuevo() + '</select>';
     return '<div class="tr-bloque" id="' + pre + 'TB"><h5 id="' + pre + 'TBt">Taller · el mecánico</h5>' +
         '<div class="field"><label>Taller</label>' + sel('P', 'Sin taller registrado', r ? ProvFact.valor(r) : '') +
+          '<div class="hint prov-nota" id="' + pre + 'Pn"></div>' +
           '<button type="button" class="zchip mt8" id="' + pre + 'Mismo" aria-pressed="false"></button></div>' +
         '<div class="field"><label id="' + pre + 'VTl"></label><input class="inp tr-valor" id="' + pre + 'VT" inputmode="numeric" placeholder="Ej.: 380.000">' +
           '<div class="hint" id="' + pre + 'VTn"></div></div>' +
         '<div class="field"><label>Orden de servicio <span class="txt-3">(OS)</span></label><div class="oc-lista" id="' + pre + 'OT"></div></div>' +
       '</div>' +
       '<div class="tr-bloque" id="' + pre + 'RC"><h5>Repuestos · el proveedor</h5>' +
-        '<div class="field"><label>Proveedor de repuestos</label>' + sel('R', 'Sin proveedor de repuestos', r ? ProvFact.valor(r, true) : '') + '</div>' +
+        '<div class="field"><label>Proveedor de repuestos</label>' + sel('R', 'Sin proveedor de repuestos', r ? ProvFact.valor(r, true) : '') +
+          '<div class="hint prov-nota" id="' + pre + 'Rn"></div></div>' +
         '<div class="field"><label>Valor de los repuestos</label><input class="inp tr-valor" id="' + pre + 'VR" inputmode="numeric" placeholder="Ej.: 1.250.000">' +
           '<div class="hint" id="' + pre + 'VRn"></div></div>' +
         '<div class="field" id="' + pre + 'ORC"><label></label><div class="oc-lista" id="' + pre + 'OR"></div></div>' +
@@ -7910,12 +7983,32 @@ const TallerRep = {
       c.addEventListener('change', () => { m._mano[k === 'OT' || m._mismo ? 'VT' : 'VR'] = false; this.sincronizar(m, pre); });
       c._alPintar = () => this.sincronizar(m, pre);
     });
+    /* El taller y el proveedor de repuestos, desde la orden que se marque (ver
+       ProvOrden): al marcarla, al escoger otro, al agregar uno y al llegar la
+       lista de Facturación */
+    ['OT', 'OR'].forEach(k => $('#' + pre + k, m).addEventListener('change', () => this.provOrden(m, pre, k)));
+    [pre + 'P', pre + 'R'].forEach(id => {
+      const s = $('#' + id, m);
+      s.addEventListener('change', () => this.provOrden(m, pre));
+      s._alCrear = () => this.provOrden(m, pre);
+    });
+    ProvFact.traer().then(() => { if (document.body.contains(m)) this.provOrden(m, pre); });
     this.acomodar(m, pre, false);
   },
   /* Las órdenes de la unidad: las de servicio con el taller; las de compra y de pedido, con los repuestos */
   ordenes(m, pre, u, fecha, r) {
     Compras.escoger($('#' + pre + 'OT', m), u, fecha, r, ['SERVICIO'], 'Este vehículo no tiene órdenes de servicio en Facturación.');
     Compras.escoger($('#' + pre + 'OR', m), u, fecha, r, ['COMPRA', 'PEDIDO'], 'Este vehículo no tiene órdenes de compra ni de pedido en Facturación.');
+  },
+  /* El taller y el proveedor de repuestos, desde sus órdenes (ver ProvOrden).
+     k: la lista donde se acaba de marcar o quitar una orden. Con «El taller
+     también puso los repuestos», el taller sale de la OS o, si no hay, de la OC */
+  provOrden(m, pre, k) {
+    const ot = $('#' + pre + 'OT', m), or = $('#' + pre + 'OR', m);
+    if (!ot || !or) return;
+    const mismo = Boolean(m._mismo);
+    ProvOrden.aplicar($('#' + pre + 'P', m), $('#' + pre + 'Pn', m), ValorOrden.de(mismo ? [ot, or] : [ot]), k === 'OT' || (mismo && k === 'OR'));
+    ProvOrden.aplicar($('#' + pre + 'R', m), $('#' + pre + 'Rn', m), mismo ? [] : ValorOrden.de([or]), !mismo && k === 'OR');
   },
   /* Lo escrito a mano en un arreglo guardado */
   cargar(m, pre, r) {
@@ -7948,6 +8041,7 @@ const TallerRep = {
       ValorOrden.poner($('#' + pre + 'VT', m), $('#' + pre + 'VTn', m), ValorOrden.de([ot]), m._manual.VT, m._mano.VT, usar('VT'));
       ValorOrden.poner($('#' + pre + 'VR', m), $('#' + pre + 'VRn', m), ValorOrden.de([or]), m._manual.VR, m._mano.VR, usar('VR'));
     }
+    this.provOrden(m, pre);
     this.total(m, pre);
   },
   /* El valor del arreglo: la suma de lo que se ve; con uno solo, no hace falta */
@@ -11324,15 +11418,20 @@ Object.assign(Ventanas, {
     const lic = cd ? Est.doc((cd.docs || {}).licencia, 'licencia') : null, vence = cd && cd.docs && cd.docs.licencia && cd.docs.licencia.vence;
     const ult = Aceite.aplica(u) ? Aceite.actual(u) : null, est = Est.unidad(u);
     const taller = Datos.mantenimientos.some(m => m.estado === 'taller' && m.unidad === u.id), cita = Datos.mantenimientos.find(m => m.estado === 'programado' && m.unidad === u.id);
-    const fila = (attrs, izq, b, span) => '<div class="mrow"' + attrs + '>' + izq + '<div class="mrow-t"><b>' + b + '</b><span>' + span + '</span></div>' +
-      '<div class="mrow-r">' + Icon('chevR', '', 14) + '</div></div>';
-    const otra = x => fila(' data-act="verVehiculo" data-u="' + attr(x.id) + '" title="Ver su ficha corta"', UI.thumb(x), '<span class="mono">' + esc(UI.placaTxt(x)) + '</span>',
-      esc([x.clase, UI.nombre(x)].filter(Boolean).join(' · ')));
+    const fila = (attrs, izq, b, span, quieta) => '<div class="mrow' + (quieta ? ' quieta' : '') + '"' + attrs + '>' + izq + '<div class="mrow-t"><b>' + b + '</b><span>' + span + '</span></div>' +
+      (quieta ? '' : '<div class="mrow-r">' + Icon('chevR', '', 14) + '</div>') + '</div>';
+    /* Si su ficha ya está abierta detrás (Juan, 05/11/2026), se ve pero no se
+       abre otra encima: se vuelve a ella con la X de esta */
+    const otra = x => {
+      const atras = this.vehiculoAbierto(x.id);
+      return fila(atras ? ' title="Su ficha está abierta detrás: ciérrela con la X para volver a ella"' : ' data-act="verVehiculo" data-u="' + attr(x.id) + '" title="Ver su ficha corta"',
+        UI.thumb(x), '<span class="mono">' + esc(UI.placaTxt(x)) + '</span>', esc([x.clase, UI.nombre(x)].filter(Boolean).join(' · ')), atras);
+    };
     const docs = (Config.req[u.tipo] || []).map(t => {
       const e = Est.doc(u.docs[t], t);
       return '<span title="' + attr(DOC_TIPOS[t].nombre + ': ' + e.det) + '">' + UI.pill(e.k, DOC_TIPOS[t].corto + ' · ' + e.txt.toLowerCase()) + '</span>';
     }).join('');
-    Modal.abrir({
+    const m = Modal.abrir({
       titulo: UI.placaTxt(u), sub: esc([u.clase || TIPOS[u.tipo].nombre, UI.nombre(u), u.modelo].filter(Boolean).join(' · ')), sinFoco: true,
       cuerpo: '<div class="vh-top"><div class="vh-foto">' + UI.foto(u) + '</div><div class="vh-dat">' +
           '<div class="vh-pills">' + (taller ? UI.pill('bad', 'En el taller') : UI.pill('ok', 'Trabajando')) +
@@ -11349,7 +11448,11 @@ Object.assign(Ventanas, {
         (docs ? '<div class="vh-sec"><span class="l">Documentos</span><div class="vh-docs">' + docs + '</div></div>' : ''),
       pie: '<button class="btn" data-act="cerrarModal">Cerrar</button><button class="btn btn-primary" data-ir="unidad/' + attr(u.id) + '">' + Icon('truck', '', 14) + 'Ver ficha completa</button>'
     });
+    /* Para saber que esta ficha está abierta (ver vehiculoAbierto) */
+    m.dataset.vehiculo = u.id;
   },
+  /* ¿Está abierta la ficha corta de esa unidad? */
+  vehiculoAbierto: id => $$('#modals .modal-bd').some(x => x.dataset.vehiculo === id),
 
   /* Lo que dice una orden de Facturación (Juan, 04/11/2026: «un ojito que
      permita ver… y así yo determino si esa es la orden correcta»). Desde el 214
@@ -11444,7 +11547,8 @@ Object.assign(Ventanas, {
         '<div class="row"><div class="field' + (r0 || nov ? ' hidden' : '') + '"><label>Unidad</label><select class="inp" id="mpU">' + Opc.unidades(r0 ? u0.id : o.u) + '</select></div>' +
         '<div class="field"><label>Fecha</label><input class="inp" type="date" id="mpF" value="' + attr(r0 ? r0.fecha : hoyISO) + '"></div></div>' +
         '<div class="row"><div class="field"><label>Proveedor</label><select class="inp" id="mpP"><option value="">Sin proveedor</option>' +
-          ProvFact.opciones(r0 ? ProvFact.valor(r0) : ProvFact.ultimoPreventivo()) + ProvFact.opcionNuevo() + '</select></div>' +
+          ProvFact.opciones(r0 ? ProvFact.valor(r0) : ProvFact.ultimoPreventivo()) + ProvFact.opcionNuevo() + '</select>' +
+          '<div class="hint prov-nota" id="mpPn"></div></div>' +
         '<div class="field"><label>Kilometraje u horómetro</label><input class="inp" id="mpL" placeholder="Ej.: 183.500 km"' + (r0 ? ' value="' + attr(r0.lectura || '') + '"' : '') + '>' +
           '<div class="hint">En un cambio de aceite, desde aquí se cuenta el próximo.</div></div></div>' +
         /* Con espacio para describirlo (Juan, 03/11/2026: «una que otra vez el mantenimiento preventivo se puede alargar») */
@@ -11521,7 +11625,13 @@ Object.assign(Ventanas, {
     const valorOrden = () => ValorOrden.poner($('#mpV', m), $('#mpVn', m), ValorOrden.de([$('#mpO', m)]), m._manualV, m._manoV, () => { m._manoV = false; valorOrden(); });
     $('#mpV', m).addEventListener('input', e => { m._manualV = e.target.value; if (ValorOrden.de([$('#mpO', m)]).length) m._manoV = true; valorOrden(); });
     $('#mpO', m).addEventListener('change', () => { m._manoV = false; valorOrden(); });
-    $('#mpO', m)._alPintar = valorOrden;
+    /* El proveedor, desde la orden que se marque (ver ProvOrden) */
+    const provOrden = poner => ProvOrden.aplicar($('#mpP', m), $('#mpPn', m), ValorOrden.de([$('#mpO', m)]), poner);
+    $('#mpO', m).addEventListener('change', () => provOrden(true));
+    $('#mpP', m).addEventListener('change', () => provOrden(false));
+    $('#mpP', m)._alCrear = () => provOrden(false);
+    $('#mpO', m)._alPintar = () => { valorOrden(); provOrden(false); };
+    ProvFact.traer().then(() => { if (document.body.contains(m)) provOrden(false); });
     valorOrden();
     if (r0) EditarPreventivo.vigilar(m, r0);
   },
@@ -11775,8 +11885,8 @@ Object.assign(Ventanas, {
           'Para usarlo, actívelo allá.</div></div>';
     };
     ['#pnN', '#pnD'].forEach(s => $(s, m).addEventListener('input', revisar));
-    /* Lo que se escribió en el buscador y no se encontró */
-    if (o.nombre) { $('#pnN', m).value = o.nombre; revisar(); }
+    /* Lo que se escribió en el buscador y no se encontró, o el nombre y el NIT de una orden */
+    if (o.nombre || o.nit) { $('#pnN', m).value = o.nombre || ''; $('#pnD', m).value = o.nit || ''; revisar(); }
   },
 
   inspeccion(o) {
@@ -13299,7 +13409,7 @@ Object.assign(Acciones, {
     Router.pintar(true);
   },
   verConductor(el) { Ventanas.conductor(Q.conductor(el.dataset.c)); },
-  verVehiculo(el) { Ventanas.vehiculo(Q.unidad(el.dataset.u)); },
+  verVehiculo(el) { if (!Ventanas.vehiculoAbierto(el.dataset.u)) Ventanas.vehiculo(Q.unidad(el.dataset.u)); },
   /* Las órdenes de un arreglo: el ojito de cada una y «Ver las anteriores» (ver Compras.escoger) */
   verOrden(el) { Ventanas.orden(Compras.porId(el.dataset.o)); },
   ordenesAnteriores(el) {
