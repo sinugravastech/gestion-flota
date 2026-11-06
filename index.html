@@ -976,6 +976,27 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 .col i{display:block;flex-shrink:0;width:100%;max-width:38px;background:var(--brand-500);border-radius:4px 4px 0 0}
 .col span{font-size:10.5px;font-weight:650;color:var(--text-2);margin-bottom:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .cols-x{display:flex;gap:10px;padding-top:6px}
+/* Lo de antes de Flota, del Excel del ingeniero anterior (ver Historico): suma, en gris */
+.rk-t{display:flex}
+.rk-t i.ex{background:var(--ink-300)}
+.rk-t i:not(:last-child){border-radius:0}
+.col i.ex{background:var(--ink-300)}
+.col i.ex + i{border-radius:0}
+.cols-ley{display:flex;gap:14px;justify-content:flex-end;flex-wrap:wrap;font-size:11px;color:var(--text-3);padding-top:8px}
+.cols-ley span{display:inline-flex;align-items:center;gap:5px}
+.cols-ley i{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--brand-500)}
+.cols-ley i.ex{background:var(--ink-300)}
+html[data-theme="dark"] .cols-ley i{background:var(--brand-400)}
+html[data-theme="dark"] .rk-t i.ex,html[data-theme="dark"] .col i.ex,html[data-theme="dark"] .cols-ley i.ex{background:var(--ink-500)}
+.hx-tbl tbody tr{cursor:pointer}
+.hx-tbl tbody tr:hover{background:var(--surface-2)}
+.hx-tbl .num{text-align:right}
+.hx-q{min-width:200px;max-width:380px}
+.hx-ds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px}
+.hx-d{display:flex;flex-direction:column;gap:2px;font-size:13px;min-width:0}
+.hx-d span{font-size:11.5px;color:var(--text-3);font-weight:650}
+.hx-d b{font-weight:500;overflow-wrap:anywhere}
+@media (max-width:600px){.hx-ds{grid-template-columns:1fr}.hx-tbl{min-width:980px}}
 .cols-x span{flex:1;min-width:0;text-align:center;font-size:11px;color:var(--text-3)}
 .cols-x span.fut{opacity:.45}
 html[data-theme="dark"] .rk-t i,html[data-theme="dark"] .col i{background:var(--brand-400)}
@@ -5973,10 +5994,74 @@ const Tablero = {
   gastos() {
     return Compras.gastos()
       .concat(Datos.mantenimientos.filter(m => !m.oc).map(m => ({ fecha: m.fecha, unidad: m.unidad, valor: Compras.deArreglo(m).propio })).filter(g => g.valor > 0))
-      .concat(Tanqueos.gastos());
+      .concat(Tanqueos.gastos())
+      /* Lo de antes de Flota, del Excel del ingeniero anterior: suma, marcado (ver Historico) */
+      .concat(Historico.gastos());
   },
   en(r) { return this.gastos().filter(g => g.fecha >= r.desde && g.fecha <= r.hasta); },
   suma: l => l.reduce((s, g) => s + g.valor, 0)
+};
+
+/* Los costos de mantenimiento de antes de Flota: las intervenciones del Excel
+   del ingeniero anterior (hoja «04_OT_INTERVENCIONES», enero a agosto de
+   2026), que Juan revisó línea por línea. Entran con el SQL 031 a
+   flota.historico_excel, que la plataforma solo lee, como Facturación con su
+   Excel viejo. Suman en el gasto (Juan, 06/11/2026: «que sumen»), pero se ven
+   aparte: la pastilla gris «Excel», gris en las gráficas y un aviso al abrir
+   una línea. Se traen una vez; sin el SQL 031 no hay nada y todo sigue igual. */
+const Historico = {
+  ETIQUETA: 'Excel del ingeniero anterior',
+  lista: [],
+  estado: 'nada',
+  _trayendo: null,
+  async leer() {
+    const todas = [];
+    for (let desde = 0; ; desde += 1000) {
+      const lote = await Nube.pedir('historico_excel?select=*&order=fecha.asc,id.asc&limit=1000&offset=' + desde);
+      todas.push.apply(todas, lote || []);
+      if (!lote || lote.length < 1000) return todas;
+    }
+  },
+  /* La primera vez que hace falta; cuando llega, se pinta otra vez */
+  pedir() {
+    if (this._trayendo || this.estado !== 'nada' || !Datos.unidades.length) return;
+    this.estado = 'trayendo';
+    const k = x => String(x || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    this._trayendo = this.leer()
+      .then(l => {
+        this.lista = l.map(x => Object.assign({}, x, { valor: +x.valor || 0, unidad: x.placa ? (Datos.unidades.find(u => k(u.placa) === k(x.placa)) || {}).id || null : null }));
+        this.estado = 'listo';
+        if (this.lista.length) Router.pintar(true);
+      })
+      .catch(e => {
+        this.estado = e && (e.status === 404 || /PGRST205|42P01/.test(e.codigo || '')) ? 'falta' : 'error';
+        /* Si fue la conexión, se vuelve a intentar en un minuto */
+        if (this.estado === 'error') setTimeout(() => { if (this.estado === 'error') { this.estado = 'nada'; this.pedir(); } }, 60000);
+      })
+      .finally(() => { this._trayendo = null; });
+  },
+  de(u) { return this.lista.filter(x => x.unidad === u.id).sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')) || String(b.id).localeCompare(String(a.id))); },
+  /* Para el Dashboard, como los demás gastos, con su marca */
+  gastos() { this.pedir(); return this.lista.filter(x => x.fecha && x.valor > 0).map(x => ({ fecha: x.fecha, unidad: x.unidad, valor: x.valor, excel: true })); },
+  suma: (l, desde) => l.filter(x => x.fecha && (!desde || x.fecha >= desde)).reduce((t, x) => t + x.valor, 0),
+  /* «… · $3,2 M del Excel», para lo que suma este gasto */
+  meta: v => (v ? ' · ' + esc(Money.compacto(v)) + ' del Excel' : ''),
+  /* La tarjeta «Antes de Flota» de un vehículo: sus líneas desde «desde», con la pastilla gris */
+  tarjeta(u, desde, cls) {
+    this.pedir();
+    const l = this.de(u).filter(x => !desde || (x.fecha && x.fecha >= desde));
+    if (!l.length) return '';
+    const total = l.reduce((t, x) => t + x.valor, 0);
+    return UI.card('Antes de Flota · ' + this.ETIQUETA,
+      '<div class="tbl-wrap"><table class="tbl hx-tbl"><thead><tr><th>Fecha</th><th>Origen</th><th>Tipo</th><th>Parte</th><th>Qué se hizo</th><th>Proveedor</th>' +
+        '<th class="num">Valor</th></tr></thead><tbody>' +
+      l.map(x => '<tr data-act="verHistorico" data-h="' + attr(x.id) + '" title="Ver la línea del Excel">' +
+        '<td class="nowrap">' + esc(x.fecha ? Fecha.num(x.fecha) : 'Sin fecha') + '</td><td>' + UI.pill('nr', 'Excel') + '</td><td>' + esc(x.tipo || '—') + '</td>' +
+        '<td>' + esc(x.parte || '—') + '</td><td class="hx-q">' + esc(x.trabajo || x.falla || x.repuestos || '—') + '</td><td>' + esc(x.proveedor || '—') + '</td>' +
+        '<td class="num nowrap">' + esc(Money.format(x.valor)) + '</td></tr>').join('') + '</tbody></table></div>',
+      { flush: true, cls, sub: 'Copiado del Excel: solo para consultar · ' + l.length + (l.length === 1 ? ' línea · ' : ' líneas · ') + esc(Money.format(total)) +
+        ', que suman en el gasto' });
+  }
 };
 
 /* El combustible, solo con los tanqueos de Distracom (Juan, 31/10/2026). Juan
@@ -7201,7 +7286,9 @@ const Plano = {
     const lista = us.filter(u => f === 'todos' || u.tipo === f);
     const del12 = Datos.mantenimientos.filter(m => m.fecha >= desde);
     const taller = Datos.mantenimientos.filter(m => m.estado === 'taller');
-    const gasto = del12.reduce((s, m) => s + this.costo(m), 0);
+    /* Con lo del Excel del ingeniero anterior, que suma (ver Historico) */
+    const exFlota = Historico.suma(Historico.lista, desde), gasto = del12.reduce((s, m) => s + this.costo(m), 0) + exFlota;
+    Historico.pedir();
     /* La parte que más gasta en toda la flota, por su nombre */
     const porNombre = {};
     del12.forEach(m => {
@@ -7219,7 +7306,8 @@ const Plano = {
       UI.kpi({ label: 'Novedades sin arreglar', valor: listo ? nNov : '…', icono: 'checkSquare', color: 'var(--dang-500)', vcolor: nNov ? 'var(--dang-500)' : '',
         meta: !listo ? (Novedades.error ? 'No se pudieron revisar los preoperacionales' : 'Revisando los preoperacionales…')
           : nNov ? esc(conNov.map(x => UI.placaTxt(x[0])).join(' · ')) : 'Del preoperacional y las registradas a mano', act: 'tabMant', v: 'novedades' }) +
-      UI.kpi({ label: 'Gasto en 12 meses', valor: esc(Money.format(gasto)), icono: 'pesos', meta: masGasta ? 'La parte que más gasta: ' + esc(masGasta) : 'Talleres y órdenes de compra' }) +
+      UI.kpi({ label: 'Gasto en 12 meses', valor: esc(Money.format(gasto)), icono: 'pesos',
+        meta: (masGasta ? 'La parte que más gasta: ' + esc(masGasta) : 'Talleres y órdenes de compra') + Historico.meta(exFlota) }) +
       '</div>';
     const filtros = [['todos', 'Todos', us.length]].concat(ORDEN.map(t => [t, TIPOS[t].plural, us.filter(u => u.tipo === t).length]).filter(x => x[2]));
     const chips = '<label class="mant-buscar">' + Icon('search', '', 16) + '<input class="inp" id="mantBuscar" type="search" placeholder="Buscar placa…" ' +
@@ -7228,7 +7316,7 @@ const Plano = {
     const tarjeta = u => {
       const k = this.clave(u), ar = this.arreglos(u, desde), pp = this.porParte(ar), nov = listo ? Novedades.de(u) : [];
       const top = this.visibles(k).filter(p => pp[p.k]).sort((a, b) => pp[b.k].n - pp[a.k].n).slice(0, 3);
-      const g = ar.reduce((s, m) => s + this.costo(m), 0);
+      const exU = Historico.suma(Historico.de(u), desde), g = ar.reduce((s, m) => s + this.costo(m), 0) + exU;
       const enTaller = taller.some(m => m.unidad === u.id);
       const est = enTaller ? UI.pill('bad', 'En el taller')
         : nov.length ? '<span title="Del preoperacional, sin arreglar">' + UI.pill('warn', nov.length === 1 ? '1 novedad' : nov.length + ' novedades') + '</span>' : '';
@@ -7241,8 +7329,9 @@ const Plano = {
           '<div class="uc-mm">' + esc(UI.nombre(u) || PLANOS[k].nombre) + '</div>' +
           '<div class="uc-zs">' + (top.length ? top.map(p => '<span class="chip">' + esc(p.n) + ' <b>' + pp[p.k].n + '</b></span>').join('')
             : '<span class="chip">' + (ar.length ? 'Sin partes marcadas' : 'Sin arreglos en 12 meses') + '</span>') + '</div></div>' +
-        '<div class="uc-f"><span>' + Icon('tool', '', 12) + (ar.length ? ar.length + (ar.length === 1 ? ' arreglo' : ' arreglos') + ' en 12 meses' : 'Ningún arreglo en 12 meses') +
-          '</span><b>' + esc(Money.format(g)) + '</b></div></article>';
+        '<div class="uc-f"><span>' + Icon('tool', '', 12) + (ar.length ? ar.length + (ar.length === 1 ? ' arreglo' : ' arreglos') + ' en 12 meses'
+            : exU ? 'Costos del Excel anterior' : 'Ningún arreglo en 12 meses') +
+          '</span><b' + (exU ? ' title="' + attr('Incluye ' + Money.format(exU) + ' del ' + Historico.ETIQUETA) + '"' : '') + '>' + esc(Money.format(g)) + '</b></div></article>';
     };
     return kpis + chips + (lista.length ? '<div class="ugrid mant-grid" id="mantGrid">' + lista.map(tarjeta).join('') + '</div>' +
         '<div class="card hidden" id="mantNada">' + UI.empty('search', 'Ninguna placa coincide', 'Pruebe con otra o borre la búsqueda.') + '</div>'
@@ -7262,7 +7351,8 @@ const Plano = {
     const xs = sel && pp[sel.k], maxG = Math.max.apply(null, Object.values(pp).map(x => x.gasto).concat([0]));
     const etq = !sel || !sel.zona ? '' : this.etiqueta(k, sel.zona, sel.n, st.modo === 'gasto' ? (xs && xs.gasto ? this.pesos(xs.gasto) : 'sin gasto')
       : xs ? xs.n + (xs.n === 1 ? ' arreglo' : ' arreglos') : 'sin arreglos');
-    const gasto = lista.reduce((s, m) => s + this.costo(m), 0), prev = lista.filter(m => m.tipo === 'preventivo').length;
+    const exP = Historico.suma(Historico.de(u), this.desde(st.periodo));
+    const gasto = lista.reduce((s, m) => s + this.costo(m), 0) + exP, prev = lista.filter(m => m.tipo === 'preventivo').length;
     const top = campo => vis.filter(p => pp[p.k] && pp[p.k][campo] > 0).sort((a, b) => pp[b.k][campo] - pp[a.k][campo])[0];
     const masN = top('n'), masG = top('gasto');
     const enPer = { anio: 'este año', '12': 'en 12 meses', todo: 'en total' }[st.periodo];
@@ -7295,13 +7385,15 @@ const Plano = {
         '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button></div>').join('') +
       '<div class="kpis4 mant-kpis">' +
         UI.kpi({ label: 'Arreglos ' + enPer, valor: lista.length, icono: 'tool', meta: (lista.length - prev) + (lista.length - prev === 1 ? ' correctivo · ' : ' correctivos · ') + prev + (prev === 1 ? ' preventivo' : ' preventivos') }) +
-        UI.kpi({ label: 'Gasto ' + enPer, valor: esc(Money.format(gasto)), icono: 'pesos', meta: 'Talleres y órdenes de compra' }) +
+        UI.kpi({ label: 'Gasto ' + enPer, valor: esc(Money.format(gasto)), icono: 'pesos', meta: 'Talleres y órdenes de compra' + Historico.meta(exP) }) +
         UI.kpi({ label: 'Más arreglos', valor: masN ? esc(masN.n) : '—', icono: 'refresh', color: 'var(--warn-500)', meta: masN ? resumen(masN) : 'Ninguna parte con arreglos',
           act: masN ? 'planoParte' : '', v: masN ? masN.k : '' }) +
         UI.kpi({ label: 'Más gasto', valor: masG ? esc(masG.n) : '—', icono: 'pesos', color: 'var(--warn-500)', meta: masG ? resumen(masG) : 'Ninguna parte con gasto',
           act: masG ? 'planoParte' : '', v: masG ? masG.k : '' }) +
       '</div>' +
       '<div class="grid pl-grid">' + dibujo + '<div>' + this.panel(u, k, sel, lista, pp, novs) + '</div></div>' +
+      /* Lo de antes de Flota, del Excel del ingeniero anterior (ver Historico) */
+      Historico.tarjeta(u, this.desde(st.periodo), 'mt16') +
       (otras.length ? UI.card('Otras novedades', otras.map(n => this.cajaNovedad(u, n)).join(''),
         { cls: 'mt16', sub: 'No corresponden a una parte del dibujo. Se cambia en Configuración.' }) : '') +
       (sinParte.length ? UI.card('Sin parte marcada', '<div class="pm-tl">' + sinParte.map(m => this.itemTl(u, m, '', true)).join('') + '</div>',
@@ -9136,29 +9228,36 @@ const Vistas = {
     }
 
     /* Los vehículos que más gasto llevan en el período */
-    const porU = {};
-    gastos.forEach(g => { if (g.unidad) porU[g.unidad] = (porU[g.unidad] || 0) + g.valor; });
-    const top = Object.keys(porU).map(id => ({ u: Q.unidad(id), v: porU[id] })).filter(x => x.u).sort((a, b) => b.v - a.v).slice(0, 6);
-    const general = Tablero.suma(gastos.filter(g => !g.unidad || !Q.unidad(g.unidad)));
+    /* Lo del Excel del ingeniero anterior suma, pero va en gris (ver Historico) */
+    const porU = {}, porUx = {};
+    gastos.forEach(g => { if (g.unidad) { porU[g.unidad] = (porU[g.unidad] || 0) + g.valor; if (g.excel) porUx[g.unidad] = (porUx[g.unidad] || 0) + g.valor; } });
+    const top = Object.keys(porU).map(id => ({ u: Q.unidad(id), v: porU[id], ex: porUx[id] || 0 })).filter(x => x.u).sort((a, b) => b.v - a.v).slice(0, 6);
+    const exTotal = Tablero.suma(gastos.filter(g => g.excel));
+    const sinU = g => !g.unidad || !Q.unidad(g.unidad);
+    const general = Tablero.suma(gastos.filter(g => sinU(g) && !g.excel)), generalEx = Tablero.suma(gastos.filter(g => sinU(g) && g.excel));
     const ranking = top.length ? '<div class="rk-lista">' + top.map(x =>
-        '<div class="rk" data-act="irUnidad" data-u="' + x.u.id + '" data-tab="actividad" title="' + attr(UI.placaTxt(x.u) + ': ' + Money.format(x.v)) + '">' +
-          '<span class="rk-l">' + esc(UI.placaTxt(x.u)) + '</span><span class="rk-t"><i style="width:' + Math.round(x.v / top[0].v * 100) + '%"></i></span>' +
+        '<div class="rk" data-act="irUnidad" data-u="' + x.u.id + '" data-tab="actividad" title="' + attr(UI.placaTxt(x.u) + ': ' + Money.format(x.v) +
+          (x.ex ? ' (' + Money.format(x.ex) + ' del ' + Historico.ETIQUETA + ')' : '')) + '">' +
+          '<span class="rk-l">' + esc(UI.placaTxt(x.u)) + '</span><span class="rk-t">' + (x.v - x.ex > 0 ? '<i style="width:' + Math.round((x.v - x.ex) / top[0].v * 100) + '%"></i>' : '') +
+            (x.ex ? '<i class="ex" style="width:' + Math.round(x.ex / top[0].v * 100) + '%"></i>' : '') + '</span>' +
           '<span class="rk-v">' + esc(Money.compacto(x.v)) + '</span></div>').join('') + '</div>'
       : UI.empty('pesos', 'Sin gastos en este período', 'Se llena con las órdenes de compra y el valor de los mantenimientos.');
 
     /* El gasto de cada mes: los últimos seis, o los doce del año */
     const y = HOY.getFullYear(), mo = HOY.getMonth();
     const meses = p === 'anio' ? Array.from({ length: 12 }, (_, i) => new Date(y, i, 1)) : Array.from({ length: 6 }, (_, i) => new Date(y, mo - 5 + i, 1));
-    const porMes = meses.map(d => Tablero.suma(Tablero.en({ desde: Fecha.iso(d), hasta: Fecha.iso(new Date(d.getFullYear(), d.getMonth() + 1, 0)) })));
+    const porMesL = meses.map(d => Tablero.en({ desde: Fecha.iso(d), hasta: Fecha.iso(new Date(d.getFullYear(), d.getMonth() + 1, 0)) }));
+    const porMes = porMesL.map(l => Tablero.suma(l)), porMesX = porMesL.map(l => Tablero.suma(l.filter(g => g.excel)));
     const tope = Math.max.apply(null, porMes.concat([1])), iMax = porMes.indexOf(Math.max.apply(null, porMes));
     const nombreMes = d => d.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
     const columnas = '<div class="cols">' + meses.map((d, i) => {
-        const v = porMes[i], actual = d.getMonth() === mo && d.getFullYear() === y;
-        return '<div class="col" title="' + attr(Fecha.mes(d) + ': ' + Money.format(v)) + '">' +
+        const v = porMes[i], x = porMesX[i], actual = d.getMonth() === mo && d.getFullYear() === y, alto = n => Math.max(2, Math.round(n / tope * 100));
+        return '<div class="col" title="' + attr(Fecha.mes(d) + ': ' + Money.format(v) + (x ? ' (' + Money.format(x) + ' del ' + Historico.ETIQUETA + ')' : '')) + '">' +
           (v && (actual || i === iMax) ? '<span>' + esc(Money.compacto(v)) + '</span>' : '') +
-          (v ? '<i style="height:' + Math.max(2, Math.round(v / tope * 100)) + '%"></i>' : '') + '</div>';
+          (x ? '<i class="ex" style="height:' + alto(x) + '%"></i>' : '') + (v - x > 0 ? '<i style="height:' + alto(v - x) + '%"></i>' : '') + '</div>';
       }).join('') + '</div>' +
-      '<div class="cols-x">' + meses.map(d => '<span' + (d > HOY ? ' class="fut"' : '') + '>' + esc(nombreMes(d)) + '</span>').join('') + '</div>';
+      '<div class="cols-x">' + meses.map(d => '<span' + (d > HOY ? ' class="fut"' : '') + '>' + esc(nombreMes(d)) + '</span>').join('') + '</div>' +
+      (porMesX.some(Boolean) ? '<div class="cols-ley"><span><i></i>Flota</span><span><i class="ex"></i>' + Historico.ETIQUETA + '</span></div>' : '');
 
     /* Lo que vence: primero lo vencido, luego lo que vence pronto */
     const proximos = venc.concat(porv).sort((a, b) => Fecha.hasta(a.d.vence) - Fecha.hasta(b.d.vence));
@@ -9333,7 +9432,7 @@ const Vistas = {
         UI.kpi({ label: 'En operación', valor: operan + '<small> de ' + u.length + '</small>', icono: 'truck', act: 'filtroMant', v: 'taller',
           meta: enTaller.size ? enTaller.size + ' en el taller · ' + Math.round(operan / u.length * 100) + ' % disponible' : 'Ninguna en el taller' }) +
         UI.kpi({ label: p === 'trimestre' ? 'Gasto del trimestre' : 'Gasto de ' + per.nombre, valor: esc(Money.compacto(total)), icono: 'pesos', color: 'var(--info-500)',
-          meta: delta, ir: 'compras' }) +
+          meta: delta + Historico.meta(exTotal), ir: 'compras' }) +
         UI.kpi({ label: 'Documentos', valor: venc.length ? venc.length + (venc.length === 1 ? ' vencido' : ' vencidos') : 'Al día', icono: 'shield',
           color: venc.length ? 'var(--dang-500)' : 'var(--ok-500)', vcolor: venc.length ? 'var(--dang-500)' : '',
           meta: porv.length + (porv.length === 1 ? ' vence' : ' vencen') + ' en ' + Config.diasAviso + ' días', act: 'filtroDocs', v: venc.length ? 'bad' : 'warn' }) +
@@ -9344,7 +9443,8 @@ const Vistas = {
       '<div class="grid g2 mb16">' +
         UI.card('Vehículos que más gasto llevan', ranking,
           { flush: true, sub: 'Compras, mantenimientos y combustible · ' + esc(Tablero.PERIODOS[p].toLowerCase()),
-            pie: general ? Icon('cart', '', 13) + '<span>Además, ' + esc(Money.compacto(general)) + ' en compras generales, sin un vehículo.</span>' : '' }) +
+            pie: general || generalEx ? Icon('cart', '', 13) + '<span>Además, ' + [general ? esc(Money.compacto(general)) + ' en compras generales' : '',
+              generalEx ? esc(Money.compacto(generalEx)) + ' del Excel' : ''].filter(Boolean).join(' y ') + ', sin un vehículo.</span>' : '' }) +
         UI.card('Gasto por mes', columnas, { sub: p === 'anio' ? 'Los meses de ' + y : 'Últimos seis meses', act: '<span class="link fs12" data-ir="compras">Ver compras</span>' }) +
       '</div>' +
       '<div class="grid g3 mb16">' +
@@ -9662,7 +9762,8 @@ const Vistas = {
     const act = '<button class="btn btn-sm" data-act="nuevoPreventivo" data-u="' + u.id + '">' + Icon('tool', '', 12) + 'Preventivo</button>' +
       '<button class="btn btn-sm btn-primary" data-act="nuevoCorrectivo" data-u="' + u.id + '">' + Icon('camera', '', 12) + 'Correctivo</button>';
     return Plano.tarjetaFicha(u) + UI.card('Historial de mantenimientos', ms.length ? '<div class="tl">' + ms.map(m => UI.itemMant(m, false)).join('') + '</div>'
-      : UI.empty('tool', 'Sin mantenimientos registrados', 'Registre el primero con los botones de arriba.'), { sub: ms.length + ' registro(s)', act });
+      : UI.empty('tool', 'Sin mantenimientos registrados', 'Registre el primero con los botones de arriba.'), { sub: ms.length + ' registro(s)', act }) +
+      Historico.tarjeta(u, '', 'mt16');
   },
   tab_insp(u) {
     const li = Datos.inspecciones.filter(i => i.unidad === u.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
@@ -10104,6 +10205,22 @@ const Ventanas = {
       titulo: nombre, sub: 'Sin archivo', ancho: 'wide', sinFoco: true,
       cuerpo: '<div class="alert a-info">' + Icon('info') + '<div><b>Este registro no tiene el archivo guardado.</b> ' +
         'Se anotó sin adjuntarlo. Para tenerlo aquí, súbalo otra vez.</div></div>',
+      pie: '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
+    });
+  },
+
+  /* Una línea del Excel del ingeniero anterior (ver Historico): solo para consultar */
+  historico(x) {
+    const u = x.unidad && Q.unidad(x.unidad), dato = (l, v) => (v ? '<div class="hx-d"><span>' + l + '</span><b>' + esc(v) + '</b></div>' : '');
+    Modal.abrir({
+      titulo: [x.id, u ? UI.placaTxt(u) : x.placa_excel].filter(Boolean).join(' · '), sinFoco: true,
+      sub: esc([Historico.ETIQUETA, x.fecha ? Fecha.larga(x.fecha) : 'sin fecha'].join(' · ')),
+      cuerpo: '<div class="alert a-info mb16">' + Icon('file') + '<div><b>Copiado del Excel del ingeniero anterior</b>, hoja «' + esc(x.hoja || '04_OT_INTERVENCIONES') + '». ' +
+          'Es solo para consultar: no tiene seguimiento, fotos ni órdenes. Suma en el gasto del vehículo.</div></div>' +
+        '<div class="hx-ds">' + dato('Tipo', x.tipo) + dato('Parte', x.parte) + dato('Falla o novedad', x.falla) + dato('Trabajo ejecutado', x.trabajo) +
+          dato('Repuestos', x.repuestos) + dato('Proveedor', x.proveedor || x.proveedor_excel) + dato('Factura', x.factura) +
+          dato('Valor de los repuestos', x.valor_repuestos ? Money.format(+x.valor_repuestos) : '') + dato('Valor de la mano de obra', x.valor_mano ? Money.format(+x.valor_mano) : '') +
+          dato('Total', Money.format(x.valor)) + dato('Nota', x.nota) + '</div>',
       pie: '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
     });
   },
@@ -13367,6 +13484,8 @@ Object.assign(Acciones, {
       pie: '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
     });
   },
+  /* Una línea del Excel del ingeniero anterior (ver Ventanas.historico) */
+  verHistorico(el) { const x = Historico.lista.find(y => String(y.id) === el.dataset.h); if (x) Ventanas.historico(x); },
   /* Los proveedores, en la lista de Facturación (ver ProvFact y Vistas.proveedores) */
   provNuevo() { Ventanas.provNuevo({}); },
   provReintentar() { ProvFact.traer(true).then(() => Router.pintar(true)); },
