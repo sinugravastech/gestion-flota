@@ -4553,6 +4553,9 @@ const Firma = {
    primera vez que hace falta; sin conexión, la hoja lo avisa. */
 const PdfImagen = {
   BASE: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/',
+  /* Las huellas (sha384) de pdf.min.js y de su trabajador: si lo que llega no es eso, no se usa */
+  HUELLA: 'sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e',
+  HUELLA_TRABAJADOR: 'sha384-SnzOobpRMLXZ52iJvZm/C0fYw0OQemTXzTjIsdsfMcrCtCEe9qgzxTd3RSklO5x2',
   hechas: new Map(),
   fallos: new Set(),
   _lib: null,
@@ -4561,13 +4564,19 @@ const PdfImagen = {
     return this._lib || (this._lib = new Promise((ok, mal) => {
       const s = document.createElement('script');
       s.src = this.BASE + 'pdf.min.js';
+      s.integrity = this.HUELLA;
+      s.crossOrigin = 'anonymous';
       s.onload = () => {
         if (!window.pdfjsLib) { this._lib = null; mal(new Error('pdf.js')); return; }
-        /* El trabajador de pdf.js viene de otro sitio: se arranca desde un blob
-           que lo importa, que sí lo deja el navegador */
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
-          new Blob(['importScripts("' + this.BASE + 'pdf.worker.min.js");'], { type: 'text/javascript' }));
-        ok(window.pdfjsLib);
+        /* El trabajador de pdf.js viene de otro sitio: se baja con su huella y
+           se arranca desde un blob, que sí lo deja el navegador */
+        fetch(this.BASE + 'pdf.worker.min.js', { integrity: this.HUELLA_TRABAJADOR })
+          .then(r => (r.ok ? r.blob() : Promise.reject(new Error('pdf.js'))))
+          .then(b => {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([b], { type: 'text/javascript' }));
+            ok(window.pdfjsLib);
+          })
+          .catch(() => { this._lib = null; mal(new Error('Sin conexión')); });
       };
       s.onerror = () => { this._lib = null; mal(new Error('Sin conexión')); };
       document.head.appendChild(s);
@@ -4576,7 +4585,7 @@ const PdfImagen = {
   async de(url) {
     if (this.hechas.has(url)) return this.hechas.get(url);
     const lib = await this.lib();
-    const pdf = await lib.getDocument({ data: await (await fetch(url)).arrayBuffer() }).promise;
+    const pdf = await lib.getDocument({ data: await (await fetch(url)).arrayBuffer(), isEvalSupported: false }).promise;
     try {
       const pag = await pdf.getPage(1), vp = pag.getViewport({ scale: 2 });
       const c = document.createElement('canvas');
@@ -4585,7 +4594,7 @@ const PdfImagen = {
       const g = c.getContext('2d');
       g.fillStyle = '#fff';
       g.fillRect(0, 0, c.width, c.height);
-      await pag.render({ canvasContext: g, viewport: vp }).promise;
+      await pag.render({ canvasContext: g, viewport: vp, intent: 'print' }).promise;
       const img = c.toDataURL('image/jpeg', 0.9);
       this.hechas.set(url, img);
       return img;
