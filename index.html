@@ -1749,6 +1749,11 @@ span.chip-adj{color:var(--text-3)}
 .cs-fotos .cs-f button{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
 .cs-tl{margin-top:18px}
 .cs-nuevo.hidden + .cs-tl{margin-top:0}
+/* Debajo del texto, los componentes que nombra (ver Menciona) */
+.cs-nuevo .cs-sug{margin:2px 0 4px;align-items:center}
+.cs-nuevo .cs-sug:empty{display:none}
+.cs-sug-l{font-size:11px;color:var(--text-3);margin-right:2px}
+.sug .chip.ya,.sug .chip.ya:hover{cursor:default;opacity:.8;border-color:var(--accent);color:var(--accent)}
 .cs-it{display:grid;grid-template-columns:14px minmax(0,1fr);gap:12px;padding-bottom:18px;position:relative}
 .cs-it:before{content:'';position:absolute;left:6px;top:16px;bottom:0;width:2px;background:var(--border)}
 .cs-it:last-child:before{display:none}
@@ -8817,6 +8822,54 @@ const Comp = {
   }
 };
 
+/* Los componentes que nombra un texto (Juan, 06/11/2026: «cuando uno esté
+   escribiendo… vayan saliendo abajo sugerencias de hashtags para uno ir
+   escogiéndolos»; ver Ventanas.caso). Se comparan las palabras sin tildes, en
+   singular y sin las de relleno; «cambio» también es de relleno, porque «se
+   cambió la caja» no habla de la «Caja de cambios». La palabra que se está
+   escribiendo cuenta desde 4 letras («cruc» → Crucetas). Solo reconoce los
+   nombres de la lista: «clutch» no da «Embrague». */
+const Menciona = {
+  NO: new Set('a al ante cambio cambios con de del desde e el en entre es esta este fue ha la las le les lo los mas muy no o para pero por que se si sin sobre su sus tambien un una uno unos unas y ya'.split(' ')),
+  raiz(w) {
+    if (w.length > 4 && w.endsWith('ces')) return w.slice(0, -3) + 'z';
+    if (w.length > 4 && /[rnldj]es$/.test(w)) return w.slice(0, -2);
+    if (w.length > 3 && w.endsWith('s')) return w.slice(0, -1);
+    return w;
+  },
+  palabras(t) { return sinTildes(t).split(/[^a-z0-9]+/).filter(w => w.length > 1 && !this.NO.has(w)).map(w => this.raiz(w)); },
+  igual: (a, b) => a === b || (Math.min(a.length, b.length) >= 4 && Math.abs(a.length - b.length) <= 2 && (a.startsWith(b) || b.startsWith(a))),
+  /* Los de la unidad u que nombra el texto, máximo 8: primero los de las
+     partes del arreglo (suyas) y lo que se nombra entero antes que a medias */
+  de(u, texto, suyas) {
+    const k = Plano.clave(u), dichas = this.palabras(texto), w = (sinTildes(texto).match(/[a-z0-9]{4,}$/) || [''])[0];
+    const fin = this.NO.has(w) ? '' : this.raiz(w);
+    const donde = x => { const i = dichas.findIndex(y => this.igual(x, y)); return i >= 0 ? i : fin && x.startsWith(fin) ? dichas.length - 1 : -1; };
+    let l = [];
+    Plano.visibles(k).forEach(p => PlanoForm.comps(k, p).forEach(c => {
+      const cw = this.palabras(c), pos = cw.map(donde);
+      if (cw.length && pos[0] >= 0) {
+        l.push({ c, p, cw, entero: pos.every(i => i >= 0), en: Math.min(...pos.filter(i => i >= 0)), suya: suyas.includes(p.k), toca: cw.filter((x, i) => pos[i] >= 0) });
+      }
+    }));
+    /* De otra parte, solo si dice algo que no dice lo de sus partes; a medias y
+       con una sola palabra («bomba», «motor») no, salvo que esa palabra sola
+       sea otro componente («cámaras»: las de Eléctrico y las de freno) */
+    const deSuyas = new Set(l.filter(x => x.suya).flatMap(x => x.toca));
+    const solas = new Set(l.filter(x => !x.suya && x.entero && x.cw.length === 1).map(x => x.cw[0]));
+    if (suyas.length) l = l.filter(x => x.suya || (x.toca.some(y => !deSuyas.has(y)) && (x.entero || x.toca.length > 1 || solas.has(x.cw[0]))));
+    /* El más largo gana: «Rodamiento central» quita «Rodamientos» */
+    const enteros = l.filter(x => x.entero);
+    l = l.filter(x => !x.entero || !enteros.some(y => y.cw.length > x.cw.length && x.cw.every(z => y.cw.includes(z))));
+    /* Lo que va a medias sobra si su primera palabra ya la tiene uno entero: de
+       varias palabras («aceite de la caja») o, de una sola, en la misma parte */
+    l = l.filter(x => x.entero || !l.some(y => y.entero && (y.suya || !x.suya) && y.cw.includes(x.cw[0]) && (y.cw.length > 1 || y.p.k === x.p.k)));
+    const peso = x => (x.suya ? 0 : 2) + (x.entero ? 0 : 1), vistos = new Set();
+    return l.sort((a, b) => peso(a) - peso(b) || a.en - b.en)
+      .filter(x => { const q = Catalogo.clave(x.c); return !vistos.has(q) && vistos.add(q); }).slice(0, 8);
+  }
+};
+
 const PlanoForm = {
   u(m) { return Q.unidad(m._uid); },
   /* Los componentes de una parte: los de Configuración y los de fábrica */
@@ -12058,7 +12111,7 @@ Object.assign(Ventanas, {
             : ' · en el taller desde el ' + Fecha.num(r.fecha))),
       cuerpo: '<div class="cs"><div class="cs-main">' +
           '<div class="cs-nuevo" id="csCaja"><textarea class="inp" id="csT" rows="2" placeholder="¿Qué hay de nuevo en el taller?"></textarea>' +
-            '<div class="cs-fotos" id="csFotos"></div>' +
+            '<div class="sug cs-sug" id="csSug"></div><div class="cs-fotos" id="csFotos"></div>' +
             '<div class="cs-nuevo-a"><label class="btn btn-sm" title="Las fotos del avance; también se pueden soltar en esta caja">' + Icon('camera', '', 13) + 'Fotos' +
                 '<input type="file" id="csArch" accept="image/*" multiple hidden></label>' +
               '<button type="button" class="zchip" id="csEspera" aria-pressed="false" title="Márquelo mientras el taller espera los repuestos">' +
@@ -12085,7 +12138,31 @@ Object.assign(Ventanas, {
       esp.innerHTML = Icon(m._espera ? 'check' : 'clock', '', 11) + 'Esperando repuestos';
     };
     esp.addEventListener('click', () => { m._espera = !m._espera; ponerEspera(); });
-    $('#csT', m).addEventListener('input', revisar);
+    /* Debajo del texto, los componentes que nombra (Juan, 06/11/2026: «vayan
+       saliendo abajo sugerencias de hashtags para uno ir escogiéndolos»): se
+       tocan y quedan en el arreglo al anotar el avance (ver Menciona y
+       Acciones.anotarCaso). Los que ya tiene salen con su ✓ */
+    m._sel = [];
+    const sug = $('#csSug', m), mismo = (a, b) => Catalogo.clave(a) === Catalogo.clave(b);
+    m._pintarSug = () => {
+      const rr = Datos.mantenimientos.find(x => x.id === r.id) || r, ks = (rr.partes || []).map(x => x.k), ya = Comp.de(rr);
+      const l = Menciona.de(u, $('#csT', m).value, ks);
+      const todos = l.concat(m._sel.filter(x => !l.some(y => mismo(y.c, x.c))).map(x => Object.assign({ suya: ks.includes(x.p.k) }, x)));
+      sug.innerHTML = todos.length ? '<span class="cs-sug-l">Componentes que menciona:</span>' + todos.map(x => {
+        const esYa = ya.some(c => mismo(c, x.c)), on = esYa || m._sel.some(y => mismo(y.c, x.c));
+        return '<button type="button" class="chip' + (on ? ' on' : '') + (esYa ? ' ya' : '') + '" data-v="' + attr(x.c) + '" data-p="' + attr(x.p.k) + '" aria-pressed="' + on + '" title="' +
+          (esYa ? 'Ya está en el arreglo' : on ? 'Quitarlo' : 'Agregarlo al arreglo') + '"' + (esYa ? ' disabled' : '') + '>' + (on ? Icon('check', '', 10) : '') + esc(x.c) +
+          (x.suya ? '' : '<span class="sug-p"> · ' + esc(x.p.n) + '</span>') + '</button>';
+      }).join('') : '';
+    };
+    sug.addEventListener('click', e => {
+      const b = e.target.closest('button.chip');
+      if (!b || b.disabled) return;
+      const i = m._sel.findIndex(x => mismo(x.c, b.dataset.v)), p = Plano.visibles(Plano.clave(u)).find(x => x.k === b.dataset.p);
+      if (i >= 0) m._sel.splice(i, 1); else if (p) m._sel.push({ c: b.dataset.v, p: { k: p.k, n: p.n } });
+      m._pintarSug();
+    });
+    $('#csT', m).addEventListener('input', () => { revisar(); m._pintarSug(); });
     /* Las fotos del avance, a 1.600 px como las del arreglo; también se sueltan en la caja */
     const recibir = files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
       .then(l => { l.forEach(a => m._fotos.push({ id: a.id, src: Archivos.vistos.get(a.id).url, txt: '' })); m._pintarFotos(); });
@@ -12099,7 +12176,7 @@ Object.assign(Ventanas, {
       $$('#csFotos button', m).forEach(b => b.addEventListener('click', () => { m._fotos.splice(+b.dataset.i, 1); m._pintarFotos(); }));
       revisar();
     };
-    m._pintarCaso = () => this.pintarCaso(m, r);
+    m._pintarCaso = () => { this.pintarCaso(m, r); m._pintarSug(); };
     ponerEspera();
     m._pintarCaso();
     /* Las fotos que ya tiene se bajan al abrirlo */
@@ -12973,13 +13050,25 @@ Object.assign(Acciones, {
     /* Cuándo pasó (Juan, 05/11/2026: «no es la hora actual, sino algo que pasó hace 2 horas»): lo de la caja */
     Avances.agregar(r, Object.assign(Avances.nueva($('#csF', m).value || hoyISO, $('#csH', m).value || ahora(), t), m._espera ? { espera: true } : {}), m._fotos);
     if (m._espera) r.espera = true; else delete r.espera;
+    /* Los componentes que se tocaron debajo del texto (ver Menciona): al arreglo y, si son de otra parte, esa parte también */
+    const nuevos = (m._sel || []).filter(x => !Comp.de(r).some(c => Catalogo.clave(c) === Catalogo.clave(x.c)));
+    if (nuevos.length) {
+      const comps = Comp.de(r).concat(nuevos.map(x => x.c));
+      r.componentes = comps;
+      r.componente = Comp.texto(comps);
+      r.partes = r.partes || [];
+      nuevos.forEach(x => { if (!r.partes.some(z => z.k === x.p.k)) r.partes.push({ k: x.p.k, n: x.p.n }); });
+    }
+    m._sel = [];
     $('#csT', m).value = '';
     $('#csF', m).value = hoyISO;
     $('#csH', m).value = ahora();
     m._fotos = [];
     m._pintarFotos();
     m._pintarCaso();
-    Toast.show('Avance anotado en <b>' + esc(UI.placaTxt(u)) + '</b>' + (r.espera ? ': esperando repuestos.' : '.'));
+    const y = l => (l.length > 1 ? l.slice(0, -1).join(', ') + ' y ' + l[l.length - 1] : l[0] || '');
+    Toast.show('Avance anotado en <b>' + esc(UI.placaTxt(u)) + '</b>' + (nuevos.length ? ' con ' + esc(y(nuevos.map(x => x.c))) : '') +
+      (r.espera ? ': esperando repuestos.' : '.'));
     Router.pintar(true);
   },
   /* Desde el resumen del caso: «Editar todo» (y «+ Relacionar una orden», que baja a las órdenes), «Terminar arreglo» e «Ingresó» */
