@@ -1089,18 +1089,6 @@ html[data-theme="dark"] .mx-si{color:var(--ok-500)}
 .visor.real{padding:12px}
 .visor-pdf{width:100%;height:72vh;border:0;border-radius:6px;background:#fff;display:block}
 .visor-img{max-width:100%;max-height:72vh;border-radius:6px;box-shadow:var(--sh-2);display:block}
-/* «Firmar factura» (ver Sello): la hoja a la izquierda; a la derecha, el sello de cerca y los datos */
-.ff{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;align-items:start}
-.ff-prev,.ff-zoom{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff}
-.ff-prev{min-height:240px;display:grid}
-.ff-prev canvas,.ff-zoom canvas{display:block;width:100%;height:auto}
-.ff-zoom{margin-bottom:14px}
-.ff-zoom:empty{display:none}
-.ff-msg{place-self:center;display:flex;align-items:center;gap:8px;color:#555;font-size:13px;padding:40px 16px;text-align:center}
-.ff-d{display:flex;gap:8px;align-items:baseline;margin-bottom:12px;font-size:13px}
-.ff-d .l{width:64px;flex:none;color:var(--text-3);font-size:11.5px;font-weight:650}
-.ff-nota{font-size:12px;color:var(--text-2);line-height:1.5;margin:12px 0 0}
-@media (max-width:760px){.ff{grid-template-columns:1fr}.ff-prev{order:2}}
 /* La hoja de una orden, como sale en Facturación (ver Ventanas.orden): a lo
    ancho de la ventana; con un clic se acerca */
 .visor.or-hoja{display:block;text-align:center}
@@ -4605,125 +4593,6 @@ const PdfImagen = {
   }
 };
 
-/* El sello de aprobación de una factura adjunta (Juan, 06/11/2026: le piden
-   «que yo mande esa misma factura… pero firmada, para que sea… una
-   aprobación mía»; de tres propuestas escogió la franja, «más pequeño y más
-   literalmente metido a la esquina superior derecha… y si las toca, que sea
-   un poco más transparente»). Una franja de 7,5 × 1,3 cm en la esquina
-   superior derecha de la primera hoja, en azul transparente y sin fondo:
-   APROBADO, la firma del responsable de flota con su nombre, y la placa, la
-   orden y la fecha. Se dibuja con pdf-lib (ver Compresor.lib) sobre una
-   copia: el adjunto no cambia. Una foto se vuelve antes una hoja de PDF. */
-const Sello = {
-  TINTA: [34, 69, 153],
-  OP: 0.78,
-  /* Lo que se puede firmar: un PDF o una foto */
-  puede: nombre => /\.(pdf|jpe?g|png|webp)$/i.test(nombre || ''),
-  /* Con firma digital (como en Compresor.pdf): en la copia sellada esa firma deja de valer */
-  digital(L, doc) {
-    const N = n => L.PDFName.of(n);
-    const dic = o => (o instanceof L.PDFDict ? o : o && o.dict instanceof L.PDFDict ? o.dict : null);
-    return doc.context.enumerateIndirectObjects().some(([, o]) => { const d = dic(o); return d && (d.get(N('FT')) === N('Sig') || d.get(N('Type')) === N('Sig') || d.has(N('ByteRange'))); });
-  },
-  /* El PDF del adjunto o, si es una foto, una hoja del ancho de una carta con la foto entera */
-  async base(L, blob, nombre) {
-    const b = new Uint8Array(await blob.arrayBuffer());
-    if (/pdf/i.test(blob.type) || /\.pdf$/i.test(nombre || '')) {
-      const doc = await L.PDFDocument.load(b, { updateMetadata: false });
-      return { doc, digital: this.digital(L, doc) };
-    }
-    const doc = await L.PDFDocument.create();
-    let img;
-    if (/png/i.test(blob.type)) img = await doc.embedPng(b);
-    else if (/jpe?g/i.test(blob.type)) img = await doc.embedJpg(b);
-    else {
-      const bmp = await createImageBitmap(blob), c = document.createElement('canvas');
-      c.width = bmp.width;
-      c.height = bmp.height;
-      c.getContext('2d').drawImage(bmp, 0, 0);
-      if (bmp.close) bmp.close();
-      img = await doc.embedJpg(new Uint8Array(await (await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.9))).arrayBuffer()));
-    }
-    const W = 612, H = Math.round(W * img.height / img.width);
-    doc.addPage([W, H]).drawImage(img, { x: 0, y: 0, width: W, height: H });
-    return { doc, digital: false };
-  },
-  /* La copia sellada. d: la firma (el PNG, o null), el nombre, la placa, la orden y la fecha */
-  async sellar(blob, nombre, d) {
-    const L = await Compresor.lib();
-    const { doc, digital } = await this.base(L, blob, nombre);
-    const pag = doc.getPage(0), cb = pag.getCropBox(), giro = ((pag.getRotation().angle % 360) + 360) % 360;
-    /* Se dibuja como se ve la hoja: si viene girada, el sello sigue arriba a la derecha y derecho */
-    const de = giro === 90 || giro === 270, VW = de ? cb.height : cb.width, VH = de ? cb.width : cb.height;
-    const M = { 90: [0, 1, -1, 0, cb.x + cb.width, cb.y], 180: [-1, 0, 0, -1, cb.x + cb.width, cb.y + cb.height], 270: [0, -1, 1, 0, cb.x, cb.y + cb.height] }[giro] ||
-      [1, 0, 0, 1, cb.x, cb.y];
-    const tinta = L.rgb(this.TINTA[0] / 255, this.TINTA[1] / 255, this.TINTA[2] / 255), op = this.OP;
-    const B = await doc.embedFont(L.StandardFonts.HelveticaBold), R = await doc.embedFont(L.StandardFonts.Helvetica);
-    /* Lo que Helvetica no sabe escribir va sin tilde */
-    const txt = x => { try { B.widthOfTextAtSize(x, 1); return x; } catch (e) { return x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7e]/g, '?'); } };
-    const ancho = (x, t, f, sp) => (f || B).widthOfTextAtSize(x, t) + (sp || 0) * Math.max(0, x.length - 1);
-    const t = (x, px, py, size, f) => pag.drawText(x, { x: px, y: py, size, font: f || B, color: tinta, opacity: op });
-    const centro = (x, cx, py, size, f, sp) => {
-      if (sp) pag.pushOperators(L.setCharacterSpacing(sp));
-      t(x, cx - ancho(x, size, f, sp) / 2, py, size, f);
-      if (sp) pag.pushOperators(L.setCharacterSpacing(0));
-    };
-    const caja = (x, y, w, h, r, g) => pag.drawSvgPath('M ' + r + ' 0 H ' + (w - r) + ' Q ' + w + ' 0 ' + w + ' ' + r + ' V ' + (h - r) + ' Q ' + w + ' ' + h + ' ' + (w - r) + ' ' + h +
-      ' H ' + r + ' Q 0 ' + h + ' 0 ' + (h - r) + ' V ' + r + ' Q 0 0 ' + r + ' 0 Z', { x, y, borderColor: tinta, borderWidth: g, borderOpacity: op });
-    /* 212 × 37 pt, a 7 pt del borde de arriba y a 8,5 del de la derecha, en tres casillas */
-    const W = 212, H = 37, c1 = 64, c2 = 80, x0 = VW - 8.5 - W, yt = VH - 7;
-    const raya = x => pag.drawLine({ start: { x, y: yt - 6 }, end: { x, y: yt - H + 6 }, thickness: 0.4, color: tinta, opacity: op });
-    pag.pushOperators(L.pushGraphicsState(), L.concatTransformationMatrix(...M));
-    caja(x0, yt, W, H, 4, 1.1);
-    caja(x0 + 2.2, yt - 2.2, W - 4.4, H - 4.4, 2.8, 0.4);
-    raya(x0 + c1);
-    raya(x0 + c1 + c2);
-    centro('APROBADO', x0 + c1 / 2 + 1, yt - 17.5, 8.4, B, 0.6);
-    centro('SINUGRAVAS S.A.S.', x0 + c1 / 2 + 1, yt - 26, 4.2, B, 0.5);
-    if (d.firma) {
-      try {
-        const img = await doc.embedPng(d.firma), k = Math.min(20 / img.height, 62 / img.width);
-        pag.drawImage(img, { x: x0 + c1 + (c2 - img.width * k) / 2, y: yt - 26.5, width: img.width * k, height: img.height * k, opacity: 0.88 });
-      } catch (e) { /* sin la imagen: queda el nombre */ }
-    }
-    const nom = txt(String(d.nombre || 'Responsable de flota').toLocaleUpperCase('es'));
-    centro(nom, x0 + c1 + c2 / 2, yt - 31, Math.min(4.1, (c2 - 6) / ancho(nom, 1)), B);
-    const xr = x0 + c1 + c2 + 6, lw = ancho('ORDEN ', 5.1, R);
-    [['PLACA', d.placa], ['ORDEN', d.orden], ['FECHA', d.fecha]].forEach(([l, v], i) => {
-      const py = yt - 12.5 - i * 8.2, val = txt(String(v || '—'));
-      t(l, xr, py, 5.1, R);
-      t(val, xr + lw, py, Math.min(5.1, (W - c1 - c2 - 10 - lw) / ancho(val, 1)), B);
-    });
-    pag.pushOperators(L.popGraphicsState());
-    return { bytes: await doc.save(), digital };
-  },
-  /* Para verla: la primera hoja entera y, de cerca, la esquina con el sello entero (8,1 × 1,6 cm) */
-  async vista(bytes, hoja, zoom) {
-    const lib = await PdfImagen.lib(), pdf = await lib.getDocument({ data: bytes.slice() }).promise;
-    try {
-      const pag = await pdf.getPage(1), base = pag.getViewport({ scale: 1 }), px = window.devicePixelRatio || 1;
-      const pintar = async (vp, w, h) => {
-        const c = document.createElement('canvas');
-        c.width = Math.round(w);
-        c.height = Math.round(h);
-        const g = c.getContext('2d');
-        g.fillStyle = '#fff';
-        g.fillRect(0, 0, c.width, c.height);
-        await pag.render({ canvasContext: g, viewport: vp }).promise;
-        return c;
-      };
-      const k = Math.min(3, Math.max(1, (hoja.clientWidth || 520) * px / base.width)), vp = pag.getViewport({ scale: k });
-      const c = await pintar(vp, vp.width, vp.height);
-      const cm = 72 / 2.54, zw = 8.1 * cm, zh = 1.6 * cm, zk = Math.min(4, Math.max(2, (zoom.clientWidth || 360) * px / zw));
-      const z = await pintar(pag.getViewport({ scale: zk, offsetX: -(base.width - zw) * zk, offsetY: 0 }), zw * zk, zh * zk);
-      hoja.innerHTML = '';
-      hoja.appendChild(c);
-      zoom.innerHTML = '';
-      zoom.appendChild(z);
-    } finally { pdf.destroy(); }
-  }
-};
-
 const Archivos = {
   vistos: new Map(),
   /* ver: la versión del archivo (la marca de cuando se subió), en los que se
@@ -8076,18 +7945,9 @@ const Avances = {
    van en m.adjuntos; en el preventivo, su PDF de Navitrans (adjuntoId). El PDF
    del arreglo no es un adjunto: se arma cuando se pide, con «Ver PDF» */
 const Adjuntos = {
-  /* El PDF del preventivo lleva aparte si se firmó (adjuntoFirma), con su id: si se cambia el PDF, ya no cuenta */
-  de: m => (m.adjuntoId ? [Object.assign({ id: m.adjuntoId, nombre: m.adjunto || 'Adjunto' },
-    m.adjuntoFirma && m.adjuntoFirma.id === m.adjuntoId ? { firmada: m.adjuntoFirma } : {})] : []).concat(m.adjuntos || []),
-  /* Lo que se guarda de cada uno: su archivo, su nombre, lo que pesaba y pesa (ver Peso.foto) y, si ya se firmó, cuándo (ver Sello) */
-  dato: a => Object.assign({ id: a.id, nombre: a.nombre }, a.tam ? { tam: a.tam } : {}, a.antes > a.tam ? { antes: a.antes } : {}, a.firmada ? { firmada: a.firmada } : {}),
-  /* El mantenimiento de un archivo, si es uno de sus adjuntos */
-  mantDe: id => (id && Datos.mantenimientos.find(m => Adjuntos.de(m).some(a => a.id === id))) || null,
-  /* Que ya se firmó (ver Sello): la fecha y la orden que llevó el sello */
-  marcarFirmada(m, id, f) {
-    if (m.adjuntoId === id) m.adjuntoFirma = Object.assign({ id }, f);
-    else (m.adjuntos || []).forEach(a => { if (a.id === id) a.firmada = f; });
-  }
+  de: m => (m.adjuntoId ? [{ id: m.adjuntoId, nombre: m.adjunto || 'Adjunto' }] : []).concat(m.adjuntos || []),
+  /* Lo que se guarda de cada uno: su archivo, su nombre y lo que pesaba y pesa (ver Peso.foto) */
+  dato: a => Object.assign({ id: a.id, nombre: a.nombre }, a.tam ? { tam: a.tam } : {}, a.antes > a.tam ? { antes: a.antes } : {})
 };
 
 /* El valor que sale de la orden (Juan, 03/11/2026: «cuando a mí me llega la
@@ -10221,16 +10081,12 @@ const Ventanas = {
       const pdf = /pdf/i.test(v.tipo) || /\.pdf$/i.test(nombre);
       const peso = v.antes > v.tam ? Peso.txt(v.antes) + ' → ' + Peso.txt(v.tam) + ' (−' + Peso.ahorro(v.antes, v.tam) + ' %)'
         : (v.tam ? Peso.txt(v.tam) + ' · ' : '') + 'tal cual se adjuntó';
-      /* La factura de un mantenimiento se puede firmar (ver Sello) */
-      const dm = Adjuntos.mantDe(id), adj = dm && Adjuntos.de(dm).find(x => x.id === id), firmar = adj && (pdf || /^image\//i.test(v.tipo));
       Modal.abrir({
-        titulo: nombre, sub: esc(peso + (adj && adj.firmada ? ' · firmada el ' + Fecha.num(adj.firmada.f) : '')), ancho: 'xwide', sinFoco: true,
+        titulo: nombre, sub: esc(peso), ancho: 'xwide', sinFoco: true,
         cuerpo: '<div class="visor real">' + (pdf ? '<iframe class="visor-pdf" src="' + attr(v.url) + '" title="' + attr(nombre) + '"></iframe>'
           : Lupa.html(v.url, nombre, 'visor-img')) + '</div>',
         pie: '<a class="btn" href="' + attr(v.url) + '" download="' + attr(nombre) + '">' + Icon('download', '', 14) + 'Descargar</a>' +
           (pdf ? '<button class="btn" data-act="imprimirVisor">' + Icon('print', '', 14) + 'Imprimir</button>' : '') +
-          (firmar ? '<button class="btn" data-act="firmarFactura" data-m="' + attr(dm.id) + '" data-id="' + attr(id) + '" title="Una copia con el sello de aprobación">' +
-            Icon('edit', '', 14) + 'Firmar</button>' : '') +
           '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
       });
       return;
@@ -10241,77 +10097,6 @@ const Ventanas = {
         'Se anotó sin adjuntarlo. Para tenerlo aquí, súbalo otra vez.</div></div>',
       pie: '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
     });
-  },
-
-  /* Firmar una factura adjunta (ver Sello): a la izquierda, la primera hoja
-     con el sello; a la derecha, el sello de cerca, la orden y la fecha. Se
-     descarga o se comparte la copia (ver Acciones.descargarFirmada); el
-     adjunto no cambia y queda anotado que se firmó */
-  async firmarFactura(r, a) {
-    const u = Q.unidad(r.unidad);
-    if (!u || !a) return;
-    const ords = Compras.deArreglo(r).esta, antes = a.firmada || {}, resp = Firma.datos();
-    const comparte = (() => { try { return Boolean(navigator.canShare && navigator.canShare({ files: [new File(['x'], 'x.pdf', { type: 'application/pdf' })] })); } catch (e) { return false; } })();
-    const m = Modal.abrir({
-      titulo: 'Firmar factura · ' + UI.placaTxt(u), ancho: 'xwide', sinFoco: true,
-      sub: esc([a.nombre, r.numero, [u.clase, UI.nombre(u)].filter(Boolean).join(' · ')].filter(Boolean).join(' · ')),
-      cuerpo: '<div class="ff"><div class="ff-prev" id="ffPrev"><div class="ff-msg"><span class="spin"></span>Preparando la copia firmada…</div></div><div>' +
-        '<div class="ff-zoom" id="ffZoom"></div>' +
-        '<div class="ff-d"><span class="l">Placa</span><b>' + esc(UI.placaTxt(u)) + '</b></div>' +
-        '<div class="field"><label for="ffO">Orden de la factura</label><select class="inp" id="ffO">' +
-          ords.map(o => '<option value="' + attr(o.codigo) + '"' + (o.codigo === antes.o ? ' selected' : '') + '>' + esc(o.codigo + ' · ' + (o.tipo === 'SERVICIO' ? 'Taller' : 'Repuestos')) +
-            '</option>').join('') + '<option value=""' + (antes.o === '' || !ords.length ? ' selected' : '') + '>Sin orden</option></select></div>' +
-        '<div class="field"><label for="ffF">Fecha de la firma</label><input class="inp" type="date" id="ffF" value="' + hoyISO + '"></div>' +
-        '<div class="ff-d"><span class="l">Firma</span>' + esc(resp.nombre ? resp.nombre + ' · Responsable de flota' : 'Responsable de flota') + '</div>' +
-        '<div id="ffAv"></div>' +
-        '<p class="ff-nota">El sello va en la esquina superior derecha de la primera hoja. ' + (a.firmada ? 'Ya se firmó el ' + esc(Fecha.num(a.firmada.f)) + '. ' : '') +
-          'La factura que adjuntó no cambia: esta es una copia firmada.</p></div></div>',
-      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><span class="f1"></span>' +
-        (comparte ? '<button class="btn" data-act="compartirFirmada" disabled>' + Icon('send', '', 14) + 'Compartir</button>' : '') +
-        '<button class="btn btn-primary" data-act="descargarFirmada" disabled>' + Icon('download', '', 14) + 'Descargar firmada</button>'
-    });
-    m.dataset.m = r.id;
-    m.dataset.adj = a.id;
-    m._nombre = String(a.nombre || 'Factura').replace(/\.[a-z0-9]{2,5}$/i, '') + ' - firmada.pdf';
-    const caja = $('#ffPrev', m), botones = () => $$('[data-act="descargarFirmada"],[data-act="compartirFirmada"]', m);
-    const error = x => { caja.innerHTML = '<div class="ff-msg">' + x + '</div>'; $('#ffZoom', m).innerHTML = ''; botones().forEach(b => { b.disabled = true; }); };
-    /* El archivo, que se baja de la nube si todavía no está en este equipo, y la firma */
-    let v = Archivos.vistos.get(a.id);
-    if (!v && Nube.conocido(Nube.claveDe(a.id))) {
-      const b = await Nube.bajar(Nube.claveDe(a.id));
-      if (b) { Archivos.registrar(a.id, b, a.nombre, Nube.meta(Nube.claveDe(a.id)).antes); v = Archivos.vistos.get(a.id); }
-    }
-    if (!document.body.contains(m)) return;
-    if (!v) { error('No se pudo abrir la factura. Revise el internet e intente otra vez.'); return; }
-    const archivo = await (await fetch(v.url)).blob();
-    await Firma.traer().catch(() => false);
-    const fu = Firma.url(), firma = fu ? new Uint8Array(await (await fetch(fu)).arrayBuffer()) : null;
-    if (!document.body.contains(m)) return;
-    if (!firma) $('#ffAv', m).innerHTML = '<div class="alert a-warn mb12">' + Icon('warn') + '<div>No hay firma guardada en Configuración: el sello sale con el nombre, sin la firma.</div></div>';
-    let vez = 0;
-    const hacer = async () => {
-      const n = ++vez, o = $('#ffO', m).value, f = $('#ffF', m).value || hoyISO;
-      botones().forEach(b => { b.disabled = true; });
-      try {
-        const res = await Sello.sellar(archivo, a.nombre, { firma, nombre: resp.nombre, placa: UI.placaTxt(u), orden: o, fecha: Fecha.num(f) });
-        if (n !== vez || !document.body.contains(m)) return;
-        await Sello.vista(res.bytes, caja, $('#ffZoom', m));
-        if (n !== vez || !document.body.contains(m)) return;
-        m._bytes = res.bytes;
-        m._datos = { f, o };
-        if (res.digital && !$('#ffDig', m)) $('#ffAv', m).insertAdjacentHTML('beforeend', '<div class="alert a-warn mb12" id="ffDig">' + Icon('warn') +
-          '<div>Este PDF trae firma digital del proveedor: la copia sellada ya no la conserva. El adjunto sí la conserva.</div></div>');
-        botones().forEach(b => { b.disabled = false; });
-      } catch (e) {
-        if (n !== vez) return;
-        const x = String((e && e.message) || '');
-        error(/conexi|pdf-lib|pdf\.js/i.test(x) ? 'Sin conexión: no se pudo preparar el sello. Revise el internet e intente otra vez.'
-          : /encrypt/i.test(x) ? 'Este PDF está protegido con clave: no se puede sellar.' : 'No se pudo sellar este archivo (' + esc(x || 'error') + ').');
-      }
-    };
-    $('#ffO', m).addEventListener('change', hacer);
-    $('#ffF', m).addEventListener('change', hacer);
-    hacer();
   },
 
   /* Editar la hoja de vida en un solo formulario, por las mismas secciones en
@@ -13568,51 +13353,10 @@ Object.assign(Acciones, {
     const u = Q.unidad(r.unidad);
     Modal.abrir({
       titulo: 'Adjuntos' + (u ? ' · ' + UI.placaTxt(u) : ''), sub: esc([r.numero, Fecha.larga(r.fecha)].filter(Boolean).join(' · ')), ancho: 'm-hoja', sinFoco: true,
-      cuerpo: '<div class="dz-files">' + l.map(a => '<div class="dz-file">' + UI.file(a.nombre, a.id) + '<span class="f1"></span>' +
-        (a.firmada ? UI.pill('ok', 'Firmada el ' + Fecha.num(a.firmada.f)) : '') +
-        (Sello.puede(a.nombre) ? '<button class="btn btn-sm" data-act="firmarFactura" data-m="' + attr(r.id) + '" data-id="' + attr(a.id) + '" title="Una copia con el sello de aprobación">' +
-          Icon('edit', '', 13) + 'Firmar</button>' : '') +
-        '<span class="txt-3 fs11 nowrap">' + esc(Peso.foto(a.tam, a.antes)) + '</span></div>').join('') + '</div>',
+      cuerpo: '<div class="dz-files">' + l.map(a => '<div class="dz-file">' + UI.file(a.nombre, a.id) + '<span class="f1"></span><span class="txt-3 fs11 nowrap">' +
+        esc(Peso.foto(a.tam, a.antes)) + '</span></div>').join('') + '</div>',
       pie: '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
     });
-  },
-  /* La factura adjunta, firmada con el sello (ver Ventanas.firmarFactura y Sello) */
-  firmarFactura(el) {
-    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), a = r && Adjuntos.de(r).find(x => x.id === el.dataset.id);
-    if (a) Ventanas.firmarFactura(r, a);
-  },
-  descargarFirmada(el) {
-    const m = el.closest('.modal-bd');
-    if (!m || !m._bytes || el.disabled) return;
-    const url = URL.createObjectURL(new Blob([m._bytes], { type: 'application/pdf' })), link = document.createElement('a');
-    link.href = url;
-    link.download = m._nombre;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-    Acciones.anotarFirmada(m, 'Se descargó');
-  },
-  async compartirFirmada(el) {
-    const m = el.closest('.modal-bd');
-    if (!m || !m._bytes || el.disabled) return;
-    try {
-      await navigator.share({ files: [new File([m._bytes], m._nombre, { type: 'application/pdf' })], title: m._nombre });
-    } catch (e) {
-      if (!e || e.name !== 'AbortError') Toast.show('No se pudo compartir desde este equipo: use «Descargar firmada».', 'err');
-      return;
-    }
-    Acciones.anotarFirmada(m, 'Se compartió');
-  },
-  /* Queda anotado en el adjunto que se firmó, con la fecha y la orden del sello */
-  anotarFirmada(m, hecho) {
-    const r = Datos.mantenimientos.find(x => x.id === m.dataset.m);
-    if (r && m._datos) {
-      Adjuntos.marcarFirmada(r, m.dataset.adj, { f: m._datos.f, o: m._datos.o });
-      Router.pintar(true);
-    }
-    Modal.cerrar(m);
-    Toast.show(hecho + ' la factura firmada: <b>' + esc(m._nombre) + '</b>.');
   },
   /* Los proveedores, en la lista de Facturación (ver ProvFact y Vistas.proveedores) */
   provNuevo() { Ventanas.provNuevo({}); },
