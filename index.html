@@ -1089,6 +1089,18 @@ html[data-theme="dark"] .mx-si{color:var(--ok-500)}
 .visor.real{padding:12px}
 .visor-pdf{width:100%;height:72vh;border:0;border-radius:6px;background:#fff;display:block}
 .visor-img{max-width:100%;max-height:72vh;border-radius:6px;box-shadow:var(--sh-2);display:block}
+/* «Firmar factura» (ver Sello): la hoja a la izquierda; a la derecha, el sello de cerca y los datos */
+.ff{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;align-items:start}
+.ff-prev,.ff-zoom{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff}
+.ff-prev{min-height:240px;display:grid}
+.ff-prev canvas,.ff-zoom canvas{display:block;width:100%;height:auto}
+.ff-zoom{margin-bottom:14px}
+.ff-zoom:empty{display:none}
+.ff-msg{place-self:center;display:flex;align-items:center;gap:8px;color:#555;font-size:13px;padding:40px 16px;text-align:center}
+.ff-d{display:flex;gap:8px;align-items:baseline;margin-bottom:12px;font-size:13px}
+.ff-d .l{width:64px;flex:none;color:var(--text-3);font-size:11.5px;font-weight:650}
+.ff-nota{font-size:12px;color:var(--text-2);line-height:1.5;margin:12px 0 0}
+@media (max-width:760px){.ff{grid-template-columns:1fr}.ff-prev{order:2}}
 /* La hoja de una orden, como sale en Facturación (ver Ventanas.orden): a lo
    ancho de la ventana; con un clic se acerca */
 .visor.or-hoja{display:block;text-align:center}
@@ -1754,6 +1766,18 @@ span.chip-adj{color:var(--text-3)}
 .cs-nuevo .cs-sug:empty{display:none}
 .cs-sug-l{font-size:11px;color:var(--text-3);margin-right:2px}
 .sug .chip.ya,.sug .chip.ya:hover{cursor:default;opacity:.8;border-color:var(--accent);color:var(--accent)}
+/* Debajo de «¿Qué pasó?» al abrir el caso (ver Ventanas.correctivo); y la hora de entrada, angosta */
+.sug.f-sug{align-items:center}
+.sug.f-sug:empty{display:none}
+.row>#mcEHC{flex:0 1 128px}
+/* Lo que supone por el síntoma (ver Sintomas): punteado hasta que se toca */
+.sug .chip.supone{border-style:dashed;border-color:var(--border-strong);background:transparent}
+.sug .chip.supone.on{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.f-sug .sug-g + .sug-g{margin-top:4px}
+.f-sug .cs-sug-l b{font-weight:600;color:var(--text-2)}
+.ctag .sug-p{opacity:.7;font-weight:400}
+.cat-v .cat-sin{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.cat-v .cat-sin .chip{font-size:11px;padding:1px 7px;color:var(--text-2)}
 .cs-it{display:grid;grid-template-columns:14px minmax(0,1fr);gap:12px;padding-bottom:18px;position:relative}
 .cs-it:before{content:'';position:absolute;left:6px;top:16px;bottom:0;width:2px;background:var(--border)}
 .cs-it:last-child:before{display:none}
@@ -3376,10 +3400,12 @@ const Catalogo = {
     /* Las del área Rutas (Juan, 04/11/2026). El color de cada tipo de operación
        en el tablero sigue el orden de su lista (ver Rutas.color) */
     { id: 'rutas.tipos', titulo: 'Tipos de operación', ruta: 'tipo', inicial: ['Fruta de palma', 'Almendra', 'Aceite', 'Fertilizante', 'Nutricomplemento'] },
-    { id: 'rutas.internos', titulo: 'Tipos internos de ruta', ruta: 'interno', inicial: ['Finca a extractora', 'Despacho de almendra', 'Despacho de aceite', 'Ruta adicional'] }
+    { id: 'rutas.internos', titulo: 'Tipos internos de ruta', ruta: 'interno', inicial: ['Finca a extractora', 'Despacho de almendra', 'Despacho de aceite', 'Ruta adicional'] },
+    /* Lo que se escribe en «¿Qué pasó?» y los componentes que sugiere (Juan, 06/11/2026; ver Sintomas) */
+    { id: 'sintomas', titulo: 'Síntomas del taller', sintomas: true, inicial: () => Sintomas.INICIAL }
   ],
   def(id) { return this.LISTAS.find(l => l.id === id) || null; },
-  inicial(l) { return (l.tipo ? TIPOS[l.tipo].clases : l.inicial).slice(); },
+  inicial(l) { return (l.tipo ? TIPOS[l.tipo].clases : typeof l.inicial === 'function' ? l.inicial() : l.inicial).slice(); },
   lista(id) {
     const c = (Config.catalogos || {})[id];
     return Array.isArray(c) && c.length ? c.slice() : this.inicial(this.def(id));
@@ -3387,7 +3413,8 @@ const Catalogo = {
   clases(tipo) { return this.lista('clases.' + tipo); },
   /* Dónde se usa, para el subtítulo */
   usoTxt(l) {
-    return l.tipo ? 'La clase al crear una unidad y en su hoja de vida (' + TIPOS[l.tipo].plural.toLowerCase() + ')'
+    return l.sintomas ? 'Al abrir un caso, lo que se escribe en «¿Qué pasó?» sugiere estos componentes, y usted decide cuáles son'
+      : l.tipo ? 'La clase al crear una unidad y en su hoja de vida (' + TIPOS[l.tipo].plural.toLowerCase() + ')'
       : l.ruta === 'tipo' ? 'El tipo de operación de cada ruta; el color de sus viajes en el tablero sigue el orden de esta lista'
       : l.ruta ? 'El tipo interno de cada ruta, como en el Excel de la programación'
       : 'La categoría al registrar un conductor y en el formulario del preoperacional';
@@ -4574,6 +4601,125 @@ const PdfImagen = {
       const img = c.toDataURL('image/jpeg', 0.9);
       this.hechas.set(url, img);
       return img;
+    } finally { pdf.destroy(); }
+  }
+};
+
+/* El sello de aprobación de una factura adjunta (Juan, 06/11/2026: le piden
+   «que yo mande esa misma factura… pero firmada, para que sea… una
+   aprobación mía»; de tres propuestas escogió la franja, «más pequeño y más
+   literalmente metido a la esquina superior derecha… y si las toca, que sea
+   un poco más transparente»). Una franja de 7,5 × 1,3 cm en la esquina
+   superior derecha de la primera hoja, en azul transparente y sin fondo:
+   APROBADO, la firma del responsable de flota con su nombre, y la placa, la
+   orden y la fecha. Se dibuja con pdf-lib (ver Compresor.lib) sobre una
+   copia: el adjunto no cambia. Una foto se vuelve antes una hoja de PDF. */
+const Sello = {
+  TINTA: [34, 69, 153],
+  OP: 0.78,
+  /* Lo que se puede firmar: un PDF o una foto */
+  puede: nombre => /\.(pdf|jpe?g|png|webp)$/i.test(nombre || ''),
+  /* Con firma digital (como en Compresor.pdf): en la copia sellada esa firma deja de valer */
+  digital(L, doc) {
+    const N = n => L.PDFName.of(n);
+    const dic = o => (o instanceof L.PDFDict ? o : o && o.dict instanceof L.PDFDict ? o.dict : null);
+    return doc.context.enumerateIndirectObjects().some(([, o]) => { const d = dic(o); return d && (d.get(N('FT')) === N('Sig') || d.get(N('Type')) === N('Sig') || d.has(N('ByteRange'))); });
+  },
+  /* El PDF del adjunto o, si es una foto, una hoja del ancho de una carta con la foto entera */
+  async base(L, blob, nombre) {
+    const b = new Uint8Array(await blob.arrayBuffer());
+    if (/pdf/i.test(blob.type) || /\.pdf$/i.test(nombre || '')) {
+      const doc = await L.PDFDocument.load(b, { updateMetadata: false });
+      return { doc, digital: this.digital(L, doc) };
+    }
+    const doc = await L.PDFDocument.create();
+    let img;
+    if (/png/i.test(blob.type)) img = await doc.embedPng(b);
+    else if (/jpe?g/i.test(blob.type)) img = await doc.embedJpg(b);
+    else {
+      const bmp = await createImageBitmap(blob), c = document.createElement('canvas');
+      c.width = bmp.width;
+      c.height = bmp.height;
+      c.getContext('2d').drawImage(bmp, 0, 0);
+      if (bmp.close) bmp.close();
+      img = await doc.embedJpg(new Uint8Array(await (await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.9))).arrayBuffer()));
+    }
+    const W = 612, H = Math.round(W * img.height / img.width);
+    doc.addPage([W, H]).drawImage(img, { x: 0, y: 0, width: W, height: H });
+    return { doc, digital: false };
+  },
+  /* La copia sellada. d: la firma (el PNG, o null), el nombre, la placa, la orden y la fecha */
+  async sellar(blob, nombre, d) {
+    const L = await Compresor.lib();
+    const { doc, digital } = await this.base(L, blob, nombre);
+    const pag = doc.getPage(0), cb = pag.getCropBox(), giro = ((pag.getRotation().angle % 360) + 360) % 360;
+    /* Se dibuja como se ve la hoja: si viene girada, el sello sigue arriba a la derecha y derecho */
+    const de = giro === 90 || giro === 270, VW = de ? cb.height : cb.width, VH = de ? cb.width : cb.height;
+    const M = { 90: [0, 1, -1, 0, cb.x + cb.width, cb.y], 180: [-1, 0, 0, -1, cb.x + cb.width, cb.y + cb.height], 270: [0, -1, 1, 0, cb.x, cb.y + cb.height] }[giro] ||
+      [1, 0, 0, 1, cb.x, cb.y];
+    const tinta = L.rgb(this.TINTA[0] / 255, this.TINTA[1] / 255, this.TINTA[2] / 255), op = this.OP;
+    const B = await doc.embedFont(L.StandardFonts.HelveticaBold), R = await doc.embedFont(L.StandardFonts.Helvetica);
+    /* Lo que Helvetica no sabe escribir va sin tilde */
+    const txt = x => { try { B.widthOfTextAtSize(x, 1); return x; } catch (e) { return x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7e]/g, '?'); } };
+    const ancho = (x, t, f, sp) => (f || B).widthOfTextAtSize(x, t) + (sp || 0) * Math.max(0, x.length - 1);
+    const t = (x, px, py, size, f) => pag.drawText(x, { x: px, y: py, size, font: f || B, color: tinta, opacity: op });
+    const centro = (x, cx, py, size, f, sp) => {
+      if (sp) pag.pushOperators(L.setCharacterSpacing(sp));
+      t(x, cx - ancho(x, size, f, sp) / 2, py, size, f);
+      if (sp) pag.pushOperators(L.setCharacterSpacing(0));
+    };
+    const caja = (x, y, w, h, r, g) => pag.drawSvgPath('M ' + r + ' 0 H ' + (w - r) + ' Q ' + w + ' 0 ' + w + ' ' + r + ' V ' + (h - r) + ' Q ' + w + ' ' + h + ' ' + (w - r) + ' ' + h +
+      ' H ' + r + ' Q 0 ' + h + ' 0 ' + (h - r) + ' V ' + r + ' Q 0 0 ' + r + ' 0 Z', { x, y, borderColor: tinta, borderWidth: g, borderOpacity: op });
+    /* 212 × 37 pt, a 7 pt del borde de arriba y a 8,5 del de la derecha, en tres casillas */
+    const W = 212, H = 37, c1 = 64, c2 = 80, x0 = VW - 8.5 - W, yt = VH - 7;
+    const raya = x => pag.drawLine({ start: { x, y: yt - 6 }, end: { x, y: yt - H + 6 }, thickness: 0.4, color: tinta, opacity: op });
+    pag.pushOperators(L.pushGraphicsState(), L.concatTransformationMatrix(...M));
+    caja(x0, yt, W, H, 4, 1.1);
+    caja(x0 + 2.2, yt - 2.2, W - 4.4, H - 4.4, 2.8, 0.4);
+    raya(x0 + c1);
+    raya(x0 + c1 + c2);
+    centro('APROBADO', x0 + c1 / 2 + 1, yt - 17.5, 8.4, B, 0.6);
+    centro('SINUGRAVAS S.A.S.', x0 + c1 / 2 + 1, yt - 26, 4.2, B, 0.5);
+    if (d.firma) {
+      try {
+        const img = await doc.embedPng(d.firma), k = Math.min(20 / img.height, 62 / img.width);
+        pag.drawImage(img, { x: x0 + c1 + (c2 - img.width * k) / 2, y: yt - 26.5, width: img.width * k, height: img.height * k, opacity: 0.88 });
+      } catch (e) { /* sin la imagen: queda el nombre */ }
+    }
+    const nom = txt(String(d.nombre || 'Responsable de flota').toLocaleUpperCase('es'));
+    centro(nom, x0 + c1 + c2 / 2, yt - 31, Math.min(4.1, (c2 - 6) / ancho(nom, 1)), B);
+    const xr = x0 + c1 + c2 + 6, lw = ancho('ORDEN ', 5.1, R);
+    [['PLACA', d.placa], ['ORDEN', d.orden], ['FECHA', d.fecha]].forEach(([l, v], i) => {
+      const py = yt - 12.5 - i * 8.2, val = txt(String(v || '—'));
+      t(l, xr, py, 5.1, R);
+      t(val, xr + lw, py, Math.min(5.1, (W - c1 - c2 - 10 - lw) / ancho(val, 1)), B);
+    });
+    pag.pushOperators(L.popGraphicsState());
+    return { bytes: await doc.save(), digital };
+  },
+  /* Para verla: la primera hoja entera y, de cerca, la esquina con el sello entero (8,1 × 1,6 cm) */
+  async vista(bytes, hoja, zoom) {
+    const lib = await PdfImagen.lib(), pdf = await lib.getDocument({ data: bytes.slice() }).promise;
+    try {
+      const pag = await pdf.getPage(1), base = pag.getViewport({ scale: 1 }), px = window.devicePixelRatio || 1;
+      const pintar = async (vp, w, h) => {
+        const c = document.createElement('canvas');
+        c.width = Math.round(w);
+        c.height = Math.round(h);
+        const g = c.getContext('2d');
+        g.fillStyle = '#fff';
+        g.fillRect(0, 0, c.width, c.height);
+        await pag.render({ canvasContext: g, viewport: vp }).promise;
+        return c;
+      };
+      const k = Math.min(3, Math.max(1, (hoja.clientWidth || 520) * px / base.width)), vp = pag.getViewport({ scale: k });
+      const c = await pintar(vp, vp.width, vp.height);
+      const cm = 72 / 2.54, zw = 8.1 * cm, zh = 1.6 * cm, zk = Math.min(4, Math.max(2, (zoom.clientWidth || 360) * px / zw));
+      const z = await pintar(pag.getViewport({ scale: zk, offsetX: -(base.width - zw) * zk, offsetY: 0 }), zw * zk, zh * zk);
+      hoja.innerHTML = '';
+      hoja.appendChild(c);
+      zoom.innerHTML = '';
+      zoom.appendChild(z);
     } finally { pdf.destroy(); }
   }
 };
@@ -7930,9 +8076,18 @@ const Avances = {
    van en m.adjuntos; en el preventivo, su PDF de Navitrans (adjuntoId). El PDF
    del arreglo no es un adjunto: se arma cuando se pide, con «Ver PDF» */
 const Adjuntos = {
-  de: m => (m.adjuntoId ? [{ id: m.adjuntoId, nombre: m.adjunto || 'Adjunto' }] : []).concat(m.adjuntos || []),
-  /* Lo que se guarda de cada uno: su archivo, su nombre y lo que pesaba y pesa (ver Peso.foto) */
-  dato: a => Object.assign({ id: a.id, nombre: a.nombre }, a.tam ? { tam: a.tam } : {}, a.antes > a.tam ? { antes: a.antes } : {})
+  /* El PDF del preventivo lleva aparte si se firmó (adjuntoFirma), con su id: si se cambia el PDF, ya no cuenta */
+  de: m => (m.adjuntoId ? [Object.assign({ id: m.adjuntoId, nombre: m.adjunto || 'Adjunto' },
+    m.adjuntoFirma && m.adjuntoFirma.id === m.adjuntoId ? { firmada: m.adjuntoFirma } : {})] : []).concat(m.adjuntos || []),
+  /* Lo que se guarda de cada uno: su archivo, su nombre, lo que pesaba y pesa (ver Peso.foto) y, si ya se firmó, cuándo (ver Sello) */
+  dato: a => Object.assign({ id: a.id, nombre: a.nombre }, a.tam ? { tam: a.tam } : {}, a.antes > a.tam ? { antes: a.antes } : {}, a.firmada ? { firmada: a.firmada } : {}),
+  /* El mantenimiento de un archivo, si es uno de sus adjuntos */
+  mantDe: id => (id && Datos.mantenimientos.find(m => Adjuntos.de(m).some(a => a.id === id))) || null,
+  /* Que ya se firmó (ver Sello): la fecha y la orden que llevó el sello */
+  marcarFirmada(m, id, f) {
+    if (m.adjuntoId === id) m.adjuntoFirma = Object.assign({ id }, f);
+    else (m.adjuntos || []).forEach(a => { if (a.id === id) a.firmada = f; });
+  }
 };
 
 /* El valor que sale de la orden (Juan, 03/11/2026: «cuando a mí me llega la
@@ -8236,6 +8391,7 @@ const Programado = {
   campos(m, si, r) {
     $('#mcCita', m).classList.toggle('hidden', !si);
     $('#mcEC', m).classList.toggle('hidden', si);
+    $('#mcEHC', m).classList.toggle('hidden', si);
     if (si && r) {
       $('#mcEP', m).value = r.fecha || hoyISO;
       if (r.programado && r.programado.h) $('#mcH', m).value = r.programado.h;
@@ -8383,6 +8539,7 @@ const EditarArreglo = {
     Comp.poner(m, Comp.de(r));
     $('#mcF', m).value = r.falla || '';
     $('#mcE', m).value = r.fecha || hoyISO;
+    $('#mcEH', m).value = r.horaEntrada || '';
     if ($('#mcL', m)) $('#mcL', m).value = r.lectura || '';
     /* El estado, como texto: no se cambia aquí */
     m._estado = abierto ? r.estado : 'cerrado';
@@ -8446,7 +8603,7 @@ const EditarArreglo = {
      repuestos van aparte: su lista puede llegar después (ver ProvFact.alAbrir) */
   firma(m) {
     const d = Leer.correctivo(m);
-    return JSON.stringify([d.entrada, d.programado ? d.programado.h : '', d.salida, d.trabajo, d.componente, d.falla, d.lectura, d.valor, d.partes.map(p => p.k), d.llantas, d.llanta, d.repMismo,
+    return JSON.stringify([d.entrada, d.horaEntrada, d.programado ? d.programado.h : '', d.salida, d.trabajo, d.componente, d.falla, d.lectura, d.valor, d.partes.map(p => p.k), d.llantas, d.llanta, d.repMismo,
       d.notas.map(n => [n.id, n.f, n.h, n.t]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort(), d.adjuntos.map(a => a.id), d.valorTaller, d.valorRep, d.aMano || null]);
   },
   /* Guardar, apagado hasta que algo cambie */
@@ -8471,6 +8628,7 @@ const EditarArreglo = {
     const antes = new Set((r.notas || []).map(n => n.id)), nuevos = d.notas.filter(n => !antes.has(n.id)).length;
     const poner = (k, v) => { if (v === undefined || v === '' || (Array.isArray(v) && !v.length)) delete r[k]; else r[k] = v; };
     r.fecha = d.entrada;
+    poner('horaEntrada', d.horaEntrada);
     if (r.estado === 'programado') r.programado = d.programado;
     if (r.estado === 'cerrado') r.salida = d.salida || r.salida;
     if (conTrabajo) r.trabajo = d.trabajo;
@@ -8838,7 +8996,12 @@ const Menciona = {
     return w;
   },
   palabras(t) { return sinTildes(t).split(/[^a-z0-9]+/).filter(w => w.length > 1 && !this.NO.has(w)).map(w => this.raiz(w)); },
-  igual: (a, b) => a === b || (Math.min(a.length, b.length) >= 4 && Math.abs(a.length - b.length) <= 2 && (a.startsWith(b) || b.startsWith(a))),
+  /* Igual, o la misma palabra con una terminación corta («borne» y «born»); «dirección» no es «direccional» */
+  igual: (a, b) => {
+    if (a === b) return true;
+    const [c, l] = a.length < b.length ? [a, b] : [b, a];
+    return c.length >= 4 && l.startsWith(c) && ['s', 'es', 'e', 'a', 'o'].includes(l.slice(c.length));
+  },
   /* Los de la unidad u que nombra el texto, máximo 8: primero los de las
      partes del arreglo (suyas) y lo que se nombra entero antes que a medias */
   de(u, texto, suyas) {
@@ -8852,6 +9015,9 @@ const Menciona = {
         l.push({ c, p, cw, entero: pos.every(i => i >= 0), en: Math.min(...pos.filter(i => i >= 0)), suya: suyas.includes(p.k), toca: cw.filter((x, i) => pos[i] >= 0) });
       }
     }));
+    /* Lo que va a medias y solo dice el nombre de una parte («los frenos») no es un componente */
+    const nombres = new Set(Plano.visibles(k).flatMap(p => this.palabras(p.n)));
+    l = l.filter(x => x.entero || !x.toca.every(w => nombres.has(w)));
     /* De otra parte, solo si dice algo que no dice lo de sus partes; a medias y
        con una sola palabra («bomba», «motor») no, salvo que esa palabra sola
        sea otro componente («cámaras»: las de Eléctrico y las de freno) */
@@ -8867,6 +9033,126 @@ const Menciona = {
     const peso = x => (x.suya ? 0 : 2) + (x.entero ? 0 : 1), vistos = new Set();
     return l.sort((a, b) => peso(a) - peso(b) || a.en - b.en)
       .filter(x => { const q = Catalogo.clave(x.c); return !vistos.has(q) && vistos.add(q); }).slice(0, 8);
+  }
+};
+
+/* Lo que supone un texto por el síntoma (Juan, 06/11/2026: «que se entienda un
+   poco lo que uno escribe y él vaya suponiendo distintos componentes y uno
+   decida»): cada síntoma son unas frases («se recalienta», «bota agua») y los
+   componentes que suelen fallar, con su parte. La lista se cambia en Catálogo
+   («Síntomas del taller»); estos son los valores iniciales. Una frase se
+   reconoce sin tildes ni mayúsculas y basta con su comienzo: «no prende»
+   también reconoce «no prenden». */
+const Sintomas = {
+  INICIAL: [
+    { f: ['se recalienta', 'recalienta', 'se calienta', 'sobrecalentamiento', 'temperatura alta', 'sube la temperatura', 'bota agua', 'bota el agua', 'pierde agua'],
+      c: [['motor', 'Radiador'], ['motor', 'Termostato'], ['motor', 'Bomba de agua'], ['motor', 'Mangueras del radiador'], ['motor', 'Ventilador'], ['motor', 'Embrague del ventilador'],
+        ['motor', 'Refrigerante']] },
+    { f: ['no prende', 'no arranca', 'no enciende', 'no da arranque', 'no quiere prender'],
+      c: [['electrico', 'Baterías'], ['electrico', 'Motor de arranque'], ['electrico', 'Bornes y cables de batería'], ['electrico', 'Solenoide del arranque'],
+        ['combustible', 'Bomba de cebado'], ['combustible', 'Filtros de combustible']] },
+    { f: ['se descarga la batería', 'se le descarga la batería', 'no carga la batería', 'batería baja', 'batería descargada'],
+      c: [['electrico', 'Alternador'], ['electrico', 'Regulador de voltaje'], ['electrico', 'Baterías'], ['motor', 'Correas']] },
+    { f: ['bota humo', 'echa humo', 'saca humo', 'humo negro', 'humo blanco', 'humo azul'],
+      c: [['motor', 'Inyectores'], ['motor', 'Filtro de aire'], ['motor', 'Turbo'], ['motor', 'Anillos'], ['motor', 'Empaque de culata']] },
+    { f: ['pierde fuerza', 'perdió fuerza', 'sin fuerza', 'no tiene fuerza', 'poca fuerza', 'no jala', 'se ahoga'],
+      c: [['motor', 'Turbo'], ['motor', 'Filtro de aire'], ['motor', 'Inyectores'], ['motor', 'Intercooler'], ['combustible', 'Filtros de combustible'], ['combustible', 'Trampa de agua']] },
+    { f: ['se baja el aire', 'se le baja el aire', 'fuga de aire', 'pierde aire', 'bota aire', 'no carga aire', 'no sube el aire'],
+      c: [['frenos', 'Líneas de aire'], ['frenos', 'Válvulas'], ['frenos', 'Tanques de aire'], ['frenos', 'Purgas'], ['frenos', 'Compresor'], ['frenos', 'Gobernador'],
+        ['frenos', 'Secador de aire']] },
+    { f: ['no frena', 'frena mal', 'frena poco', 'frenos largos', 'frenos flojos', 'no agarra el freno', 'no agarran los frenos'],
+      c: [['frenos', 'Bandas'], ['frenos', 'Campanas'], ['frenos', 'Rachets'], ['frenos', 'Cámaras de freno'], ['frenos', 'Levas'], ['frenos', 'Válvula de pedal']] },
+    { f: ['chilla al frenar', 'suena al frenar', 'ruido al frenar', 'chillan los frenos'],
+      c: [['frenos', 'Bandas'], ['frenos', 'Campanas'], ['frenos', 'Resortes']] },
+    { f: ['vibra', 'tiembla'],
+      c: [['transmision', 'Cardán'], ['transmision', 'Crucetas'], ['transmision', 'Rodamiento central'], ['llantas', 'Llantas'], ['llantas', 'Rines']] },
+    { f: ['no entran los cambios', 'no entra el cambio', 'se salen los cambios', 'se sale el cambio', 'se botan los cambios', 'ruido en la caja', 'suena la caja', 'caja dura'],
+      c: [['transmision', 'Caja de cambios'], ['transmision', 'Sincronizadores'], ['transmision', 'Piñones de la caja'], ['transmision', 'Varillaje de cambios'],
+        ['transmision', 'Embrague']] },
+    { f: ['patina', 'clutch', 'embrague duro', 'embrague largo', 'embrague alto', 'pedal duro'],
+      c: [['transmision', 'Embrague'], ['transmision', 'Disco y prensa'], ['transmision', 'Collarín'], ['transmision', 'Bomba del embrague'], ['transmision', 'Cilindro esclavo']] },
+    { f: ['dirección dura', 'dirección pesada', 'dirección floja', 'juego en la dirección', 'se va de lado', 'jala a un lado', 'jala hacia un lado', 'se carga a un lado'],
+      c: [['direccion', 'Caja de dirección'], ['direccion', 'Bomba de dirección'], ['direccion', 'Terminales'], ['direccion', 'Barra de acople'], ['direccion', 'Alineación']] },
+    { f: ['fuga de aceite', 'pierde aceite', 'bota aceite', 'gotea aceite', 'mancha de aceite'],
+      c: [['motor', 'Retenedores del motor'], ['motor', 'Empaque del cárter'], ['motor', 'Tapa de válvulas'], ['transmision', 'Retenedores'], ['ejes', 'Retenedores']] },
+    { f: ['el volco no sube', 'no sube el volco', 'el volco no levanta', 'no levanta el volco', 'el volco baja solo'],
+      c: [['hidraulico', 'Toma de fuerza'], ['hidraulico', 'Bomba hidráulica'], ['hidraulico', 'Cilindro hidráulico'], ['hidraulico', 'Mando del volco'], ['hidraulico', 'Mangueras'],
+        ['volco', 'Pistón de levante']] },
+    { f: ['no prenden las luces', 'no encienden las luces', 'sin luces', 'luz quemada', 'luz fundida', 'bombillo quemado'],
+      c: [['electrico', 'Fusibles'], ['electrico', 'Relés'], ['electrico', 'Cableado'], ['electrico', 'Luces delanteras'], ['electrico', 'Luces traseras'], ['electrico', 'Stops']] },
+    { f: ['pinchada', 'pinchazo', 'se pinchó', 'estalló', 'reventó', 'llanta baja', 'llanta desinflada'],
+      c: [['llantas', 'Llantas'], ['llantas', 'Válvulas'], ['llantas', 'Rines']] },
+    { f: ['no enfría', 'calor en la cabina'],
+      c: [['cabina', 'Aire acondicionado'], ['cabina', 'Compresor del aire'], ['cabina', 'Condensador'], ['cabina', 'Filtro de la cabina']] },
+    { f: ['golpea en la suspensión', 'golpeteo en la suspensión', 'suena la suspensión', 'al pasar huecos', 'al pasar los huecos', 'al pasar reductores'],
+      c: [['ejes', 'Bujes'], ['ejes', 'Amortiguadores'], ['ejes', 'Muelles'], ['ejes', 'Balancines'], ['ejes', 'Barras tensoras']] },
+    { f: ['se ladea', 'está ladeado', 'quedó ladeado', 'bolsa de aire pinchada', 'bolsa de aire rota'],
+      c: [['ejes', 'Bolsas de aire'], ['ejes', 'Válvula niveladora'], ['ejes', 'Muelles']] },
+    { f: ['tablero apagado', 'tablero no marca', 'no marca el', 'caída de agujas', 'se caen las agujas'],
+      c: [['electrico', 'Tablero de instrumentos'], ['electrico', 'Sensores'], ['electrico', 'Fusibles'], ['electrico', 'Cableado'], ['transmision', 'Sensor de velocidad']] },
+    { f: ['testigo', 'luz de check', 'check engine', 'código de falla', 'escáner', 'scanner'],
+      c: [['motor', 'Sensores del motor'], ['motor', 'Computador del motor'], ['electrico', 'Sensores'], ['electrico', 'Computador']] },
+    { f: ['gasta mucho', 'consume mucho', 'chupa mucho'],
+      c: [['motor', 'Inyectores'], ['motor', 'Filtro de aire'], ['motor', 'Turbo'], ['combustible', 'Líneas y mangueras'], ['combustible', 'Retorno de combustible']] },
+    { f: ['ruido en el motor', 'golpeteo en el motor', 'suena el motor', 'cascabelea'],
+      c: [['motor', 'Balancines'], ['motor', 'Válvulas'], ['motor', 'Bielas'], ['motor', 'Cojinetes (metales)'], ['motor', 'Correas'], ['motor', 'Poleas'], ['motor', 'Tensor de correas']] }
+  ],
+  lista: () => Catalogo.lista('sintomas'),
+  /* Para comparar: sin tildes, en minúscula y sin signos, del mismo largo que lo escrito (así se recupera la frase tal como se escribió) */
+  plano: t => sinTildes(t).replace(/[^a-z0-9]/g, ' '),
+  /* Las frases de lo que se escribe en Catálogo: una por renglón (o separadas por comas), sin repetir */
+  frases(t) {
+    const out = [];
+    String(t || '').split(/[\n,]+/).map(x => x.trim().replace(/\s+/g, ' ')).forEach(x => { if (x && !out.some(y => Catalogo.clave(y) === Catalogo.clave(x))) out.push(x); });
+    return out;
+  },
+  /* Por cada síntoma que nombra el texto, en el orden en que aparecen: la
+     frase como se escribió y sus componentes que tiene esa unidad (suyas: las
+     partes del arreglo). Entre las palabras de una frase pueden ir hasta dos
+     más («se le pinchó», «la dirección está dura»); de las frases de un
+     síntoma cuenta la más larga, y si la de un síntoma queda dentro de la de
+     otro, gana el otro («no prenden las luces» no es «no prende») */
+  de(u, texto, suyas) {
+    const t = this.plano(texto), k = Plano.clave(u), vis = Plano.visibles(k), hallados = [];
+    this.lista().forEach(x => {
+      let mejor = null;
+      (x.f || []).forEach(fr => {
+        const w = this.plano(fr).trim().split(/\s+/).filter(Boolean);
+        const mm = w.length ? new RegExp('(^|\\s)' + w.join('(?:\\s+[a-z0-9]+){0,2}?\\s+')).exec(t) : null;
+        if (!mm) return;
+        const ini = mm.index + mm[1].length, fin = mm.index + mm[0].length;
+        if (!mejor || fin - ini > mejor.fin - mejor.ini) mejor = { ini, fin, x };
+      });
+      if (mejor) hallados.push(mejor);
+    });
+    return hallados.filter(h => !hallados.some(o => o !== h && o.ini <= h.ini && o.fin >= h.fin && o.fin - o.ini > h.fin - h.ini))
+      .sort((a, b) => a.ini - b.ini).map(({ ini, fin, x }) => {
+        const frase = texto.slice(ini, fin), l = [];
+        (x.c || []).forEach(([pk, c]) => {
+          const p = vis.find(y => y.k === pk);
+          if (p && PlanoForm.comps(k, p).includes(c) && !l.some(y => y.p.k === pk && y.c === c)) l.push({ c, p, suya: suyas.includes(pk) });
+        });
+        return { frase, palabras: Menciona.palabras(frase), l };
+      }).filter(h => h.l.length);
+  },
+  /* Todos los componentes de todos los dibujos, con su parte, para escogerlos en Catálogo */
+  todos() {
+    const vistos = new Set(), out = [];
+    Object.keys(PLANOS).forEach(k => Plano.visibles(k).forEach(p => PlanoForm.comps(k, p).forEach(c => {
+      if (!vistos.has(p.k + '|' + c)) { vistos.add(p.k + '|' + c); out.push({ k: p.k, c, n: p.n }); }
+    })));
+    return out;
+  },
+  parte(k) { const x = this.todos().find(y => y.k === k); return x ? x.n : k; },
+  /* Las filas en Catálogo: sus frases y sus componentes */
+  filas(items, puede, btn) {
+    const n = {};
+    this.todos().forEach(y => { if (!n[y.k]) n[y.k] = y.n; });
+    return items.map((x, i) => '<div class="cat-op" data-k="' + attr(Catalogo.clave((x.f || []).join(' ') + ' ' + (x.c || []).map(y => y[1]).join(' '))) + '">' +
+      '<div class="cat-v"><b>' + esc((x.f || []).join(' · ')) + '</b><span class="cat-sin">' +
+        (x.c || []).map(([pk, c]) => '<span class="chip" title="' + attr(n[pk] || pk) + '">' + esc(c) + '</span>').join('') + '</span></div>' +
+      (puede ? '<div class="cat-acc">' + btn('catSubir', 'arriba', 'Subir', i, i ? '' : ' disabled') + btn('catBajar', 'abajo', 'Bajar', i, i < items.length - 1 ? '' : ' disabled') +
+        btn('sinEditar', 'lapiz', 'Cambiar', i) + btn('sinQuitar', 'trash', 'Quitar', i, items.length > 1 ? '' : ' disabled') + '</div>' : '') + '</div>').join('');
   }
 };
 
@@ -8915,6 +9201,7 @@ const PlanoForm = {
   pintar(m) {
     const u = this.u(m), k = Plano.clave(u), vis = Plano.visibles(k), sel = vis.filter(p => m._partes.includes(p.k));
     const caja = $('#mcPlano', m), lista = $('#mcSel', m), ll = $('#mcLlantas', m), sug = $('#mcSug', m), nv = $('#mcNov', m);
+    if (m._pintarFSug) m._pintarFSug();
     if (caja) caja.innerHTML = Plano.svg(k, { sel: sel.map(p => p.zona).filter(Boolean), act: 'regParte', halo: true });
     if (lista) lista.innerHTML = vis.map(p => {
       const on = m._partes.includes(p.k);
@@ -9934,12 +10221,16 @@ const Ventanas = {
       const pdf = /pdf/i.test(v.tipo) || /\.pdf$/i.test(nombre);
       const peso = v.antes > v.tam ? Peso.txt(v.antes) + ' → ' + Peso.txt(v.tam) + ' (−' + Peso.ahorro(v.antes, v.tam) + ' %)'
         : (v.tam ? Peso.txt(v.tam) + ' · ' : '') + 'tal cual se adjuntó';
+      /* La factura de un mantenimiento se puede firmar (ver Sello) */
+      const dm = Adjuntos.mantDe(id), adj = dm && Adjuntos.de(dm).find(x => x.id === id), firmar = adj && (pdf || /^image\//i.test(v.tipo));
       Modal.abrir({
-        titulo: nombre, sub: esc(peso), ancho: 'xwide', sinFoco: true,
+        titulo: nombre, sub: esc(peso + (adj && adj.firmada ? ' · firmada el ' + Fecha.num(adj.firmada.f) : '')), ancho: 'xwide', sinFoco: true,
         cuerpo: '<div class="visor real">' + (pdf ? '<iframe class="visor-pdf" src="' + attr(v.url) + '" title="' + attr(nombre) + '"></iframe>'
           : Lupa.html(v.url, nombre, 'visor-img')) + '</div>',
         pie: '<a class="btn" href="' + attr(v.url) + '" download="' + attr(nombre) + '">' + Icon('download', '', 14) + 'Descargar</a>' +
           (pdf ? '<button class="btn" data-act="imprimirVisor">' + Icon('print', '', 14) + 'Imprimir</button>' : '') +
+          (firmar ? '<button class="btn" data-act="firmarFactura" data-m="' + attr(dm.id) + '" data-id="' + attr(id) + '" title="Una copia con el sello de aprobación">' +
+            Icon('edit', '', 14) + 'Firmar</button>' : '') +
           '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
       });
       return;
@@ -9950,6 +10241,77 @@ const Ventanas = {
         'Se anotó sin adjuntarlo. Para tenerlo aquí, súbalo otra vez.</div></div>',
       pie: '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
     });
+  },
+
+  /* Firmar una factura adjunta (ver Sello): a la izquierda, la primera hoja
+     con el sello; a la derecha, el sello de cerca, la orden y la fecha. Se
+     descarga o se comparte la copia (ver Acciones.descargarFirmada); el
+     adjunto no cambia y queda anotado que se firmó */
+  async firmarFactura(r, a) {
+    const u = Q.unidad(r.unidad);
+    if (!u || !a) return;
+    const ords = Compras.deArreglo(r).esta, antes = a.firmada || {}, resp = Firma.datos();
+    const comparte = (() => { try { return Boolean(navigator.canShare && navigator.canShare({ files: [new File(['x'], 'x.pdf', { type: 'application/pdf' })] })); } catch (e) { return false; } })();
+    const m = Modal.abrir({
+      titulo: 'Firmar factura · ' + UI.placaTxt(u), ancho: 'xwide', sinFoco: true,
+      sub: esc([a.nombre, r.numero, [u.clase, UI.nombre(u)].filter(Boolean).join(' · ')].filter(Boolean).join(' · ')),
+      cuerpo: '<div class="ff"><div class="ff-prev" id="ffPrev"><div class="ff-msg"><span class="spin"></span>Preparando la copia firmada…</div></div><div>' +
+        '<div class="ff-zoom" id="ffZoom"></div>' +
+        '<div class="ff-d"><span class="l">Placa</span><b>' + esc(UI.placaTxt(u)) + '</b></div>' +
+        '<div class="field"><label for="ffO">Orden de la factura</label><select class="inp" id="ffO">' +
+          ords.map(o => '<option value="' + attr(o.codigo) + '"' + (o.codigo === antes.o ? ' selected' : '') + '>' + esc(o.codigo + ' · ' + (o.tipo === 'SERVICIO' ? 'Taller' : 'Repuestos')) +
+            '</option>').join('') + '<option value=""' + (antes.o === '' || !ords.length ? ' selected' : '') + '>Sin orden</option></select></div>' +
+        '<div class="field"><label for="ffF">Fecha de la firma</label><input class="inp" type="date" id="ffF" value="' + hoyISO + '"></div>' +
+        '<div class="ff-d"><span class="l">Firma</span>' + esc(resp.nombre ? resp.nombre + ' · Responsable de flota' : 'Responsable de flota') + '</div>' +
+        '<div id="ffAv"></div>' +
+        '<p class="ff-nota">El sello va en la esquina superior derecha de la primera hoja. ' + (a.firmada ? 'Ya se firmó el ' + esc(Fecha.num(a.firmada.f)) + '. ' : '') +
+          'La factura que adjuntó no cambia: esta es una copia firmada.</p></div></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><span class="f1"></span>' +
+        (comparte ? '<button class="btn" data-act="compartirFirmada" disabled>' + Icon('send', '', 14) + 'Compartir</button>' : '') +
+        '<button class="btn btn-primary" data-act="descargarFirmada" disabled>' + Icon('download', '', 14) + 'Descargar firmada</button>'
+    });
+    m.dataset.m = r.id;
+    m.dataset.adj = a.id;
+    m._nombre = String(a.nombre || 'Factura').replace(/\.[a-z0-9]{2,5}$/i, '') + ' - firmada.pdf';
+    const caja = $('#ffPrev', m), botones = () => $$('[data-act="descargarFirmada"],[data-act="compartirFirmada"]', m);
+    const error = x => { caja.innerHTML = '<div class="ff-msg">' + x + '</div>'; $('#ffZoom', m).innerHTML = ''; botones().forEach(b => { b.disabled = true; }); };
+    /* El archivo, que se baja de la nube si todavía no está en este equipo, y la firma */
+    let v = Archivos.vistos.get(a.id);
+    if (!v && Nube.conocido(Nube.claveDe(a.id))) {
+      const b = await Nube.bajar(Nube.claveDe(a.id));
+      if (b) { Archivos.registrar(a.id, b, a.nombre, Nube.meta(Nube.claveDe(a.id)).antes); v = Archivos.vistos.get(a.id); }
+    }
+    if (!document.body.contains(m)) return;
+    if (!v) { error('No se pudo abrir la factura. Revise el internet e intente otra vez.'); return; }
+    const archivo = await (await fetch(v.url)).blob();
+    await Firma.traer().catch(() => false);
+    const fu = Firma.url(), firma = fu ? new Uint8Array(await (await fetch(fu)).arrayBuffer()) : null;
+    if (!document.body.contains(m)) return;
+    if (!firma) $('#ffAv', m).innerHTML = '<div class="alert a-warn mb12">' + Icon('warn') + '<div>No hay firma guardada en Configuración: el sello sale con el nombre, sin la firma.</div></div>';
+    let vez = 0;
+    const hacer = async () => {
+      const n = ++vez, o = $('#ffO', m).value, f = $('#ffF', m).value || hoyISO;
+      botones().forEach(b => { b.disabled = true; });
+      try {
+        const res = await Sello.sellar(archivo, a.nombre, { firma, nombre: resp.nombre, placa: UI.placaTxt(u), orden: o, fecha: Fecha.num(f) });
+        if (n !== vez || !document.body.contains(m)) return;
+        await Sello.vista(res.bytes, caja, $('#ffZoom', m));
+        if (n !== vez || !document.body.contains(m)) return;
+        m._bytes = res.bytes;
+        m._datos = { f, o };
+        if (res.digital && !$('#ffDig', m)) $('#ffAv', m).insertAdjacentHTML('beforeend', '<div class="alert a-warn mb12" id="ffDig">' + Icon('warn') +
+          '<div>Este PDF trae firma digital del proveedor: la copia sellada ya no la conserva. El adjunto sí la conserva.</div></div>');
+        botones().forEach(b => { b.disabled = false; });
+      } catch (e) {
+        if (n !== vez) return;
+        const x = String((e && e.message) || '');
+        error(/conexi|pdf-lib|pdf\.js/i.test(x) ? 'Sin conexión: no se pudo preparar el sello. Revise el internet e intente otra vez.'
+          : /encrypt/i.test(x) ? 'Este PDF está protegido con clave: no se puede sellar.' : 'No se pudo sellar este archivo (' + esc(x || 'error') + ').');
+      }
+    };
+    $('#ffO', m).addEventListener('change', hacer);
+    $('#ffF', m).addEventListener('change', hacer);
+    hacer();
   },
 
   /* Editar la hoja de vida en un solo formulario, por las mismas secciones en
@@ -10628,7 +10990,8 @@ const Formatos = {
           [d.llanta.pos[x].serial, d.llanta.pos[x].sello ? 'sello ' + d.llanta.pos[x].sello : ''].filter(Boolean).join(' · ')])) : []);
     return this.cabecera('Historial de mantenimiento correctivo', 'Visita al taller con el registro fotográfico de cada cambio', d.numero, null,
         [[UI.placaTxt(u), u.clase, d.estado === 'programado' ? 'programado para el ' + Programado.txt(d.programado || { f: d.entrada })
-          : d.entrada ? 'entró el ' + Fecha.larga(d.entrada) : ''].filter(Boolean).join(' · '), 'Correctivo N.º ' + d.numero]) +
+          : d.entrada ? 'entró el ' + Fecha.larga(d.entrada) + (d.horaEntrada ? ' a las ' + Programado.hora(d.horaEntrada) : '') : ''].filter(Boolean).join(' · '),
+          'Correctivo N.º ' + d.numero]) +
       this.sec('Unidad', this.campos([[conPlaca ? 'Placa' : 'Código', UI.placaTxt(u)], ['Tipo', TIPOS[u.tipo].nombre + ' · ' + u.clase],
         ['Marca y línea', UI.nombre(u) || '—'], ['Conductor', c ? c.nombre : 'Sin asignar']])) +
       this.sec('Taller', this.campos([['Taller', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'],
@@ -10683,7 +11046,7 @@ const Formatos = {
     /* Primero cómo llegó (o la cita, si está programado) con las fotos del registro, que se numeran primero porque salen primero */
     const sueltas = fotos.filter(f => !f.nota || !notas.some(n => n.id === f.nota));
     const lista = [{ c: 'ini', fs: sueltas, h: esc(d.estado === 'programado' ? 'Programado · ' + Programado.txt(d.programado || { f: d.entrada }, true)
-      : Fecha.corta(d.entrada) + ' · Entró al taller') }].concat(notas.map(n => ({ c: n.cierre ? 'fin' : '', t: n.t, fs: fotos.filter(f => f.nota === n.id),
+      : Fecha.corta(d.entrada) + (d.horaEntrada ? ' · ' + d.horaEntrada : '') + ' · Entró al taller') }].concat(notas.map(n => ({ c: n.cierre ? 'fin' : '', t: n.t, fs: fotos.filter(f => f.nota === n.id),
       h: esc(Avances.cuando(n) + (n.cierre ? ' · Salió del taller' : '')) + (n.espera ? '<span class="pn-tag">Esperando repuestos</span>' : '') })));
     const nodos = lista.map((x, k) => nodo(x, k === lista.length - 1));
     return (d.trabajo ? '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo) + '</div>' : '') +
@@ -11579,7 +11942,7 @@ Object.assign(Vistas, {
     const nuevo = s.agregando && puede ? '<div class="cat-nuevo"><input class="inp" id="catNuevo" placeholder="Nueva opción" aria-label="Nueva opción" autocomplete="off">' +
       '<button type="button" class="btn btn-primary btn-sm" data-act="catGuardarNueva" data-l="' + l.id + '">' + Icon('save', '', 13) + 'Guardar</button>' +
       '<button type="button" class="btn btn-sm" data-act="catCancelar">Cancelar</button></div>' : '';
-    const filas = items.map((v, i) => {
+    const filas = l.sintomas ? Sintomas.filas(items, puede, btn) : items.map((v, i) => {
       const n = Catalogo.usos(l, v);
       return '<div class="cat-op" data-k="' + attr(Catalogo.clave(v)) + '"><div class="cat-v"><b>' + esc(v) + '</b><span>' + (n ? Catalogo.usosTxt(l, n) : 'Sin uso') + '</span></div>' +
         (puede ? '<div class="cat-acc">' + btn('catSubir', 'arriba', 'Subir', i, i ? '' : ' disabled') + btn('catBajar', 'abajo', 'Bajar', i, i < items.length - 1 ? '' : ' disabled') +
@@ -11587,7 +11950,8 @@ Object.assign(Vistas, {
     }).join('');
     const der = UI.card(esc(l.titulo),
       '<div class="cat-bar"><input class="inp" id="catQ" placeholder="Buscar en la lista…" aria-label="Buscar en la lista" value="' + attr(s.q || '') + '">' +
-        (puede ? '<button type="button" class="btn btn-primary btn-sm" data-act="catAgregar">' + Icon('plus', '', 13) + 'Agregar</button>' : '') + '</div>' +
+        (puede ? '<button type="button" class="btn btn-primary btn-sm" data-act="' + (l.sintomas ? 'sinEditar" data-i="-1' : 'catAgregar') + '">' + Icon('plus', '', 13) +
+          'Agregar</button>' : '') + '</div>' +
       nuevo + '<div id="catOps">' + filas + '</div><div class="cat-vacio txt-3 fs12" id="catNada" hidden>Ninguna opción coincide con la búsqueda.</div>',
       { flush: true, sub: esc(Catalogo.usoTxt(l)),
         pie: puede && cambiada ? '<button type="button" class="btn btn-sm btn-ghost" data-act="catRestaurar" data-l="' + l.id + '">' + Icon('refresh', '', 12) + 'Restaurar los valores iniciales</button>'
@@ -11622,6 +11986,44 @@ Object.assign(Vistas, {
 });
 
 Object.assign(Ventanas, {
+  /* Un síntoma del taller (ver Sintomas): las frases que lo reconocen y los
+     componentes que sugiere. i < 0: uno nuevo. Guardar se prende si cambió algo
+     y tiene al menos una frase y un componente */
+  sintoma(i) {
+    const items = Catalogo.lista('sintomas'), x = i >= 0 && items[i] ? items[i] : { f: [], c: [] };
+    const m = Modal.abrir({
+      titulo: i >= 0 ? 'Cambiar síntoma' : 'Nuevo síntoma', sub: 'Síntomas del taller', ancho: 'wide', sinFoco: true,
+      cuerpo: '<div class="field"><label for="sinF">Cuando escriben… <span class="txt-3">(una frase por renglón)</span></label>' +
+          '<textarea class="inp" id="sinF" rows="4" placeholder="se recalienta&#10;bota agua">' + esc((x.f || []).join('\n')) + '</textarea>' +
+          '<div class="hint">No importan las tildes ni las mayúsculas, y basta con el comienzo: «no prende» también reconoce «no prenden».</div></div>' +
+        '<div class="field mb0"><label for="sinQ">Puede ser… <span class="txt-3">(busque y toque los componentes)</span></label>' +
+          '<div class="ctags" id="sinTagsC"><span id="sinTags"></span><input class="ctag-inp" id="sinQ" autocomplete="off" spellcheck="false" placeholder="Buscar: radiador, bandas…"></div>' +
+          '<div class="sug" id="sinSug"></div></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="sinGuardar" data-i="' + i + '" disabled>' +
+        Icon('save', '', 14) + 'Guardar</button>'
+    });
+    m._c = (x.c || []).map(y => y.slice());
+    m._frases = () => Sintomas.frases($('#sinF', m).value);
+    const todos = Sintomas.todos(), q = $('#sinQ', m), g = $('[data-act="sinGuardar"]', m);
+    const firma = () => JSON.stringify([m._frases(), m._c]), antes = firma();
+    const revisar = () => { g.disabled = !m._frases().length || !m._c.length || firma() === antes; };
+    const pintar = () => {
+      $('#sinTags', m).innerHTML = m._c.map(([k, c], j) => '<span class="ctag">' + esc(c) + '<span class="sug-p"> · ' + esc(Sintomas.parte(k)) + '</span>' +
+        '<button type="button" data-j="' + j + '" title="Quitar" aria-label="Quitar ' + attr(c) + '">' + Icon('x', '', 10) + '</button></span>').join('');
+      const k = Catalogo.clave(q.value), l = k.length >= 2 ? todos.filter(y => Catalogo.clave(y.c).includes(k) && !m._c.some(z => z[0] === y.k && z[1] === y.c)).slice(0, 30) : [];
+      $('#sinSug', m).innerHTML = k.length < 2 ? '<span class="sug-n">Escriba para buscar el componente.</span>'
+        : l.length ? l.map(y => '<button type="button" class="chip" data-k="' + attr(y.k) + '" data-v="' + attr(y.c) + '">' + esc(y.c) + '<span class="sug-p"> · ' + esc(y.n) + '</span></button>').join('')
+        : '<span class="sug-n">Ningún componente con ese nombre.</span>';
+      revisar();
+    };
+    q.addEventListener('input', pintar);
+    $('#sinF', m).addEventListener('input', revisar);
+    $('#sinSug', m).addEventListener('click', e => { const b = e.target.closest('button.chip'); if (!b) return; m._c.push([b.dataset.k, b.dataset.v]); q.value = ''; pintar(); q.focus(); });
+    $('#sinTags', m).addEventListener('click', e => { const b = e.target.closest('button[data-j]'); if (!b) return; m._c.splice(+b.dataset.j, 1); pintar(); });
+    pintar();
+    setTimeout(() => $('#sinF', m).focus(), 40);
+  },
+
   /* La ficha corta de un vehículo (Juan, 04/11/2026: «si yo le doy clic donde
      está la unidad… se abre la ficha en una subventana más pequeña»): la
      unidad, su conductor y su remolque (o el camión que lo arrastra), el
@@ -11969,7 +12371,8 @@ Object.assign(Ventanas, {
         '</div><div class="reg-der">' +
           '<div class="field" id="mcCC"><label>Componentes <span class="txt-3">(' + (rapido ? 'opcional · ' : '') + 'toque varios)</span></label>' +
             Comp.html('Buscar o escribir: turbo, radiador…') + '</div>' +
-          '<div class="field"><label>¿Qué pasó?</label><textarea class="inp" id="mcF" rows="2" placeholder="La falla, o lo que reportó el conductor"></textarea></div>' +
+          '<div class="field"><label>¿Qué pasó?</label><textarea class="inp" id="mcF" rows="2" placeholder="La falla, o lo que reportó el conductor"></textarea>' +
+            '<div class="sug f-sug" id="mcFSug"></div></div>' +
           /* Programado: el día y la hora en que entra, justo debajo de lo que presenta (Juan, 04/11/2026) */
           '<div class="row hidden" id="mcCita"><div class="field"><label>Entra al taller</label><input class="inp" type="date" id="mcEP" value="' + Fecha.rel(1) + '"></div>' +
             '<div class="field"><label>Hora</label><input class="inp" type="time" id="mcH" value="07:00"></div></div>' +
@@ -11981,6 +12384,8 @@ Object.assign(Ventanas, {
             '<div class="hint mb12">Los avances que ya tenga, cada uno con su fecha, su hora y sus fotos. Se puede guardar sin ninguno: después se agregan con «Anotar avance».</div>' +
             '<div id="mcAv"></div></div>' +
           '<div class="row"><div class="field" id="mcEC"><label>Entró al taller</label><input class="inp" type="date" id="mcE" value="' + hoyISO + '"></div>' +
+            /* La hora en que entró (Juan, 06/11/2026), como la de la cita del programado */
+            '<div class="field" id="mcEHC"><label>Hora</label><input class="inp" type="time" id="mcEH" value="' + ahora() + '"></div>' +
             '<div class="field" id="mcLC"><label>Kilometraje</label><input class="inp" id="mcL"></div></div>' +
           '<div class="row"><div class="field" id="mcSal"><label>Salió del taller</label><input class="inp" type="date" id="mcS" value="' + hoyISO + '"></div></div>' +
           '<div class="field mb0"><label id="mcFotosL">Fotos del arreglo</label>' +
@@ -12017,8 +12422,10 @@ Object.assign(Ventanas, {
       const tf = $('#mcP', m).closest('.field');
       $('label', tf).innerHTML = 'Taller <span class="txt-3">(opcional)</span>';
       $('#mcFotosL', m).closest('.field').insertAdjacentElement('beforebegin', tf);
-      /* Los componentes, debajo de lo que pasó */
-      $('#mcF', m).closest('.field').insertAdjacentElement('afterend', $('#mcCC', m));
+      /* Los componentes, a la izquierda debajo del plano (Juan, 06/11/2026: «se
+         ve muy enredado… del lado derecho… mejor… del lado izquierdo justo
+         debajo de la maqueta del vehículo») */
+      $('#mcNov', m).insertAdjacentElement('afterend', $('#mcCC', m));
     }
     /* Desde una novedad: su parte, su pregunta como componente y lo que reportó el conductor */
     const nov = o.nov ? Novedades.de(u0).find(n => n.i === o.nov) : null;
@@ -12035,6 +12442,37 @@ Object.assign(Ventanas, {
     PlanoForm.unidad(m);
     PlanoForm.pintar(m);
     Comp.montar(m);
+    /* Debajo de «¿Qué pasó?», los componentes que nombra, como en «¿Qué hay de
+       nuevo?» del caso (Juan, 06/11/2026: «a medida que voy escribiendo»):
+       tocar uno lo agrega a Componentes y, si es de otra parte, la marca */
+    m._pintarFSug = () => {
+      const caja = $('#mcFSug', m), u1 = PlanoForm.u(m);
+      if (!caja || !u1) return;
+      const ya = m._comps || [], texto = $('#mcF', m).value, ks = m._partes || [];
+      /* Lo que supone por el síntoma (ver Sintomas): sus palabras ya no sacan
+         sugerencias sueltas («se baja el aire» no es el aire acondicionado) */
+      const sup = Sintomas.de(u1, texto, ks), usadas = new Set(sup.flatMap(x => x.palabras));
+      const l = Menciona.de(u1, texto, ks).filter(x => x.entero || !x.toca.every(w => usadas.has(w)));
+      const grupos = sup.map(x => Object.assign(x, { l: x.l.filter(y => !l.some(z => Catalogo.clave(z.c) === Catalogo.clave(y.c))) })).filter(x => x.l.length);
+      const chip = (x, cls) => {
+        const on = ya.some(c => Catalogo.clave(c) === Catalogo.clave(x.c));
+        return '<button type="button" class="chip' + (cls ? ' ' + cls : '') + (on ? ' on' : '') + '" data-v="' + attr(x.c) + '" data-p="' + attr(x.p.k) + '" aria-pressed="' + on +
+          '" title="' + (on ? 'Quitarlo de los componentes' : 'Agregarlo a los componentes') + '">' + (on ? Icon('check', '', 10) : '') + esc(x.c) +
+          (x.suya ? '' : '<span class="sug-p"> · ' + esc(x.p.n) + '</span>') + '</button>';
+      };
+      caja.innerHTML = (l.length ? '<div class="sug-g"><span class="cs-sug-l">Componentes que menciona:</span>' + l.map(x => chip(x)).join('') + '</div>' : '') +
+        grupos.map(x => '<div class="sug-g"><span class="cs-sug-l">Por <b>«' + esc(x.frase) + '»</b>, puede ser:</span>' + x.l.map(y => chip(y, 'supone')).join('') + '</div>').join('');
+    };
+    $('#mcF', m).addEventListener('input', m._pintarFSug);
+    $('#mcFSug', m).addEventListener('click', e => {
+      const b = e.target.closest('button.chip');
+      if (!b) return;
+      const nuevo = !(m._comps || []).some(c => Catalogo.clave(c) === Catalogo.clave(b.dataset.v));
+      Comp.alternar(m, b.dataset.v);
+      if (nuevo && !m._partes.includes(b.dataset.p)) { m._partes.push(b.dataset.p); PlanoForm.pintar(m); }
+      m._pintarFSug();
+    });
+    m._pintarFSug();
     if ($('#mcU', m)) $('#mcU', m).addEventListener('change', e => {
       PlanoForm.poner(m, Q.unidad(e.target.value));
       LlantaForm.poner(m, Q.unidad(e.target.value), m._ll && m._ll.cambio);
@@ -12201,7 +12639,8 @@ Object.assign(Ventanas, {
     $('#csTl', m).innerHTML = (fin && !notas.some(n => n.cierre) ? it(Fecha.corta(r.salida || r.fecha), esc(r.trabajo || ''), [], salio) : '') +
       notas.map(n => it(Avances.cuando(n), esc(n.t || (Avances.fotos(r, n.id).length ? 'Fotos' : '—')), Avances.fotos(r, n.id),
         (n.espera ? ' ' + UI.pill('warn', 'Esperando repuestos') : '') + (n.cierre ? salio : ''))).join('') +
-      it(prog ? 'Programado · ' + Programado.txt(Programado.de(r), true) : Fecha.corta(r.fecha), '<b>' + (prog ? 'Programado.' : 'Entró al taller.') + '</b> ' + esc(r.falla || ''),
+      it(prog ? 'Programado · ' + Programado.txt(Programado.de(r), true) : Fecha.corta(r.fecha) + (r.horaEntrada ? ' · ' + r.horaEntrada : ''),
+        '<b>' + (prog ? 'Programado.' : 'Entró al taller.') + '</b> ' + esc(r.falla || ''),
         Avances.fotos(r, ''), '', 'ini');
     const dato = (l, v) => (v ? '<div class="cs-d"><span class="l">' + l + '</span>' + v + '</div>' : '');
     const dias = Math.max(0, -Fecha.hasta(r.fecha)), prov = UI.provTxt(r), comps = Comp.de(r);
@@ -12867,7 +13306,7 @@ const Leer = {
     const r0 = m._editar ? Datos.mantenimientos.find(x => x.id === m._editar) : null, tr = TallerRep.leer(m, 'mc', r0);
     return {
       numero: (r0 && r0.numero) || Num.mc(), unidad: u, prov: tr.prov, rep: tr.rep, repMismo: tr.repMismo, taller, notas,
-      entrada, salida: taller ? '' : $('#mcS', m).value || entrada,
+      entrada, horaEntrada: m._estado === 'programado' ? '' : ($('#mcEH', m) || {}).value || '', salida: taller ? '' : $('#mcS', m).value || entrada,
       programado: m._estado === 'programado' ? { f: entrada, h: $('#mcH', m).value } : null,
       trabajo: taller ? '' : $('#mcT', m).value.trim(),
       fotos: m._fotos.concat(...av.map(a => a.fotos.map(f => Object.assign({}, f, { nota: a.n.id })))),
@@ -13129,10 +13568,51 @@ Object.assign(Acciones, {
     const u = Q.unidad(r.unidad);
     Modal.abrir({
       titulo: 'Adjuntos' + (u ? ' · ' + UI.placaTxt(u) : ''), sub: esc([r.numero, Fecha.larga(r.fecha)].filter(Boolean).join(' · ')), ancho: 'm-hoja', sinFoco: true,
-      cuerpo: '<div class="dz-files">' + l.map(a => '<div class="dz-file">' + UI.file(a.nombre, a.id) + '<span class="f1"></span><span class="txt-3 fs11 nowrap">' +
-        esc(Peso.foto(a.tam, a.antes)) + '</span></div>').join('') + '</div>',
+      cuerpo: '<div class="dz-files">' + l.map(a => '<div class="dz-file">' + UI.file(a.nombre, a.id) + '<span class="f1"></span>' +
+        (a.firmada ? UI.pill('ok', 'Firmada el ' + Fecha.num(a.firmada.f)) : '') +
+        (Sello.puede(a.nombre) ? '<button class="btn btn-sm" data-act="firmarFactura" data-m="' + attr(r.id) + '" data-id="' + attr(a.id) + '" title="Una copia con el sello de aprobación">' +
+          Icon('edit', '', 13) + 'Firmar</button>' : '') +
+        '<span class="txt-3 fs11 nowrap">' + esc(Peso.foto(a.tam, a.antes)) + '</span></div>').join('') + '</div>',
       pie: '<button class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
     });
+  },
+  /* La factura adjunta, firmada con el sello (ver Ventanas.firmarFactura y Sello) */
+  firmarFactura(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), a = r && Adjuntos.de(r).find(x => x.id === el.dataset.id);
+    if (a) Ventanas.firmarFactura(r, a);
+  },
+  descargarFirmada(el) {
+    const m = el.closest('.modal-bd');
+    if (!m || !m._bytes || el.disabled) return;
+    const url = URL.createObjectURL(new Blob([m._bytes], { type: 'application/pdf' })), link = document.createElement('a');
+    link.href = url;
+    link.download = m._nombre;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    Acciones.anotarFirmada(m, 'Se descargó');
+  },
+  async compartirFirmada(el) {
+    const m = el.closest('.modal-bd');
+    if (!m || !m._bytes || el.disabled) return;
+    try {
+      await navigator.share({ files: [new File([m._bytes], m._nombre, { type: 'application/pdf' })], title: m._nombre });
+    } catch (e) {
+      if (!e || e.name !== 'AbortError') Toast.show('No se pudo compartir desde este equipo: use «Descargar firmada».', 'err');
+      return;
+    }
+    Acciones.anotarFirmada(m, 'Se compartió');
+  },
+  /* Queda anotado en el adjunto que se firmó, con la fecha y la orden del sello */
+  anotarFirmada(m, hecho) {
+    const r = Datos.mantenimientos.find(x => x.id === m.dataset.m);
+    if (r && m._datos) {
+      Adjuntos.marcarFirmada(r, m.dataset.adj, { f: m._datos.f, o: m._datos.o });
+      Router.pintar(true);
+    }
+    Modal.cerrar(m);
+    Toast.show(hecho + ' la factura firmada: <b>' + esc(m._nombre) + '</b>.');
   },
   /* Los proveedores, en la lista de Facturación (ver ProvFact y Vistas.proveedores) */
   provNuevo() { Ventanas.provNuevo({}); },
@@ -13196,6 +13676,7 @@ Object.assign(Acciones, {
     r.programado = Programado.de(r);
     r.estado = 'taller';
     r.fecha = f;
+    if (h) r.horaEntrada = h; else delete r.horaEntrada;
     Avances.agregar(r, Avances.nueva(f, h, 'Ingresó al taller (estaba programado para el ' + Programado.txt(r.programado, true) + ')'), []);
     Modal.cerrar(m);
     Toast.show('<b>' + esc(UI.placaTxt(u)) + '</b> ingresó al taller el ' + esc(Fecha.larga(f)) + '. Sigue en el taller.');
@@ -13550,7 +14031,8 @@ Object.assign(Acciones, {
       /* Sus adjuntos (ver Adjuntos); el PDF del arreglo no es uno: se arma con «Ver PDF» */
       adjuntos: d.adjuntos.length ? d.adjuntos : undefined,
       valor: d.valor || undefined, lectura: d.lectura || undefined, estado: d.programado ? 'programado' : d.salida ? 'cerrado' : 'taller', hora: ahora(), ts: marca(),
-      programado: d.programado || undefined,
+      /* La hora en que entró al taller (ver Leer.correctivo) */
+      horaEntrada: d.horaEntrada || undefined, programado: d.programado || undefined,
       /* Lo del plano: las partes, el componente, qué pasó, las llantas y las novedades del preoperacional que atiende */
       partes: d.partes.length ? d.partes : undefined, componente: d.componente || undefined, componentes: d.componentes.length ? d.componentes : undefined,
       falla: d.falla || undefined,
@@ -13595,7 +14077,7 @@ Object.assign(Acciones, {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     const fotos = () => r.fotosData ? r.fotosData.map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || null, txt: f.txt, nota: f.nota }))
       : Array.from({ length: r.fotos || 0 }, (_, i) => ({ src: null, txt: 'Foto ' + (i + 1) + ' de ' + r.fotos + ' (ejemplo)' }));
-    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.provDe(r), rep: Q.repDe(r), repMismo: r.repMismo, entrada: r.fecha, salida: r.salida, trabajo: r.trabajo, fotos: fotos(),
+    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.provDe(r), rep: Q.repDe(r), repMismo: r.repMismo, entrada: r.fecha, horaEntrada: r.horaEntrada, salida: r.salida, trabajo: r.trabajo, fotos: fotos(),
       partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [], llanta: r.llanta, notas: r.notas || [],
       valor: r.valor, valorTaller: r.valorTaller, valorRep: r.valorRep, aMano: r.aMano, ordenes: r.ordenes || [], estado: r.estado, programado: r.programado };
     const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d));
@@ -14066,6 +14548,37 @@ Object.assign(Acciones, {
   },
 
   /* --------------------------------------------------------- Catálogo */
+  /* Los síntomas del taller en Catálogo (ver Sintomas y Ventanas.sintoma) */
+  sinEditar(el) { Ventanas.sintoma(+el.dataset.i); },
+  sinGuardar(el) {
+    const m = el.closest('.modal-bd'), i = +el.dataset.i, items = Catalogo.lista('sintomas');
+    if (!m || el.disabled) return;
+    const x = { f: m._frases(), c: m._c.map(y => y.slice()) };
+    if (i >= 0 && i < items.length) items[i] = x; else items.push(x);
+    Catalogo.guardar(Catalogo.def('sintomas'), items);
+    Modal.cerrar(m);
+    Router.pintar(true);
+    Toast.show((i >= 0 ? 'Se guardó el síntoma <b>' : 'Se agregó el síntoma <b>') + esc(x.f[0]) + '</b>.');
+  },
+  sinQuitar(el) {
+    const i = +el.dataset.i, items = Catalogo.lista('sintomas'), x = items[i];
+    if (!x || items.length < 2) return;
+    Modal.abrir({
+      titulo: 'Quitar este síntoma', sub: esc((x.f || []).join(' · ')), sinFoco: true,
+      cuerpo: '<div class="alert a-warn">' + Icon('warn') + '<div><b>Ya no se sugerirán sus componentes</b> al escribir «¿Qué pasó?». Los arreglos no cambian.</div></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-danger" data-act="sinConfirmarQuitar" data-i="' + i + '">' +
+        Icon('trash', '', 14) + 'Quitar</button>'
+    });
+  },
+  sinConfirmarQuitar(el) {
+    const items = Catalogo.lista('sintomas'), i = +el.dataset.i;
+    Modal.cerrarTodo();
+    if (!items[i] || items.length < 2) return;
+    const x = items.splice(i, 1)[0];
+    Catalogo.guardar(Catalogo.def('sintomas'), items);
+    Router.pintar(true);
+    Toast.show('Se quitó el síntoma <b>' + esc((x.f || [])[0] || '') + '</b>.');
+  },
   catLista(el) {
     Object.assign(UIState.catalogo, { lista: el.dataset.l, q: '', agregando: false });
     Router.pintar(true);
@@ -14155,8 +14668,8 @@ Object.assign(Acciones, {
     Modal.abrir({
       titulo: 'Restaurar los valores iniciales', sub: esc(l.titulo), sinFoco: true,
       cuerpo: '<p class="txt-2 mb12">La lista vuelve a quedar así:</p><div class="flex g8" style="flex-wrap:wrap">' +
-        Catalogo.inicial(l).map(v => '<span class="chip">' + esc(v) + '</span>').join('') + '</div>' +
-        '<p class="txt-3 fs12 mt12">Las unidades y los conductores no cambian: conservan lo que tienen.</p>',
+        Catalogo.inicial(l).map(v => '<span class="chip">' + esc(typeof v === 'string' ? v : (v.f || [])[0] || '') + '</span>').join('') + '</div>' +
+        '<p class="txt-3 fs12 mt12">' + (l.sintomas ? 'Los arreglos no cambian: conservan sus componentes.' : 'Las unidades y los conductores no cambian: conservan lo que tienen.') + '</p>',
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="catConfirmarRestaurar" data-l="' + l.id + '">' +
         Icon('refresh', '', 14) + 'Restaurar</button>'
     });
