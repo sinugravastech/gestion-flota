@@ -1626,7 +1626,10 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .rt-u span{display:block;font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rt-u.libre b,.rt-u.libre span{opacity:.6}
 .rt-c{padding:6px;border-bottom:1px solid var(--border);border-left:1px solid var(--border);display:flex;flex-direction:column;gap:5px;min-height:62px}
-.rt-v{all:unset;box-sizing:border-box;display:block;cursor:grab;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);border-radius:6px;padding:5px 8px;line-height:1.3}
+/* Que la ficha se deje arrastrar siempre (Juan, 07/11/2026: «a veces sirve lo de arrastrar, a veces no»). «all:unset» le quitaba lo que
+   trae draggable: arrastrar el elemento y no seleccionar su texto. Así, el primer intento seleccionaba el texto, y el arrastre solo
+   arrancaba a veces, sobre el texto ya seleccionado */
+.rt-v{all:unset;-webkit-user-drag:element;-webkit-user-select:none;user-select:none;box-sizing:border-box;display:block;cursor:grab;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);border-radius:6px;padding:5px 8px;line-height:1.3}
 .rt-v:hover,.rt-v:focus-visible{background:color-mix(in srgb,var(--c) 22%,transparent)}
 .rt-v:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 /* El nombre de la ruta en dos renglones si no cabe (con la bandeja abierta los días quedan más angostos) */
@@ -1640,6 +1643,8 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .rt-v.e-no b{text-decoration:line-through}
 .rt-v.e-no .rt-ei{color:var(--dang-500)}
 .rt-v.rt-arr{opacity:.35}
+/* Mientras se arrastra, el aviso de abajo («Viaje movido… Deshacer») no tapa las casillas que quedan debajo */
+html.arrastrando .toasts{pointer-events:none}
 .rt-al{color:var(--warn-500)}
 .rt-mas{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;height:22px;border:1px dashed var(--border);border-radius:6px;color:var(--text-3);opacity:0;transition:opacity .15s}
 .rt-c:hover .rt-mas,.rt-mas:focus-visible{opacity:1}
@@ -10192,7 +10197,7 @@ const Vistas = {
   unidad(id) {
     const u = Q.unidad(id);
     if (!u) return { titulo: 'Unidad', html: '<div class="card">' + UI.empty('truck', 'No se encontró la unidad', '<span class="link" data-ir="flota">Volver a la flota</span>') + '</div>' };
-    if (UIState.unidadId !== id) { UIState.unidadId = id; UIState.tab = 'info'; UIState.act = 'todos'; }
+    if (UIState.unidadId !== id) { UIState.unidadId = id; UIState.tab = 'info'; UIState.act = 'todos'; UIState.ocMes = ''; }
     const e = Est.unidad(u), ins = Est.insp(u), c = Q.conductorDe(u), ret = ConductoresRH.aviso(c, u), cam = u.tipo === 'remolque' && Q.camionDe(u);
     const mants = Datos.mantenimientos.filter(m => m.unidad === u.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
     const ult = mants[0];
@@ -10418,18 +10423,37 @@ const Vistas = {
   /* Las órdenes de Facturación de esta unidad (ver Compras): se hacen allá */
   tab_oc(u) {
     Historico.pedir();
-    const li = Compras.de(u), y = String(HOY.getFullYear()), xs = Historico.de(u);
+    const li = Compras.de(u), xs = Historico.de(u);
     if (!li.length && !xs.length && Compras.estado !== 'listo') return Compras.aviso();
-    const delAnio = li.filter(o => o.es_gasto && o.fecha && o.fecha.startsWith(y)), espera = li.filter(o => o.estado === 'ESPERANDO'), ult = li[0];
-    /* Con el registro manual: suma en lo gastado del año, y la última compra puede ser suya */
-    const exA = xs.filter(x => (x.fecha || '').startsWith(y)).reduce((s, x) => s + x.valor, 0);
-    const ultX = xs[0] && xs[0].fecha && (!ult || xs[0].fecha > (ult.fecha || '')) ? xs[0] : null;
-    const kpis = li.length || xs.length ? '<div class="grid g3 mb16">' +
-        UI.kpi({ label: 'Gastado en ' + y, valor: esc(Money.format(Compras.suma(delAnio) + exA)), icono: 'cart', meta: 'En contabilidad o pagado' + Historico.meta(exA) }) +
+    /* Las tarjetas, del mes que se escoja, como en Taller SINUGRAVAS (Juan, 07/11/2026: «que por defecto siempre esté el mes actual…
+       pero que se puedan cambiar»). Lo gastado suma el registro manual de ese mes y dice cuánto va en el año. «Esperando cotización»
+       es lo de ahora en el mes en curso; en uno pasado, las órdenes de ese mes que siguen esperando. La última compra, de Facturación o
+       del registro manual, es la más nueva hasta el fin de ese mes */
+    const mesHoy = hoyISO.slice(0, 7), mesK = UIState.ocMes || mesHoy, esHoy = mesK === mesHoy, finK = mesK + '-31', y = mesK.slice(0, 4);
+    const mesTxt = Fecha.mes(Fecha.parse(mesK + '-01'), true).toLowerCase(), enMes = fe => (fe || '').slice(0, 7) === mesK;
+    const gasto = li.filter(o => o.es_gasto && o.fecha), delMes = gasto.filter(o => enMes(o.fecha)), delAnio = gasto.filter(o => o.fecha.startsWith(y));
+    const exM = xs.filter(x => enMes(x.fecha)).reduce((s, x) => s + x.valor, 0), exA = xs.filter(x => (x.fecha || '').startsWith(y)).reduce((s, x) => s + x.valor, 0);
+    const espera = li.filter(o => o.estado === 'ESPERANDO' && (esHoy || enMes(o.fecha)));
+    const ult = esHoy ? li[0] : li.find(o => o.fecha && o.fecha <= finK), ultX0 = esHoy ? xs[0] : xs.find(x => x.fecha && x.fecha <= finK);
+    const ultX = ultX0 && ultX0.fecha && (!ult || ultX0.fecha > (ult.fecha || '')) ? ultX0 : null, ultC = ultX || ult;
+    /* Los meses que se pueden escoger: del primero con una compra (de Facturación o del registro manual) al de hoy */
+    const primero = li.concat(xs).map(o => o.fecha || '').filter(Boolean).sort()[0] || hoyISO, meses = [];
+    for (const d = Fecha.parse(mesHoy + '-01'); Fecha.iso(d).slice(0, 7) >= primero.slice(0, 7) && meses.length < 120; d.setMonth(d.getMonth() - 1)) {
+      meses.push(Fecha.iso(d).slice(0, 7));
+    }
+    const ordenes = n => n + (n === 1 ? ' orden' : ' órdenes');
+    const kpis = li.length || xs.length ?
+      '<div class="tk-mes"><label for="ocMes">Las tarjetas muestran</label><select class="inp" id="ocMes">' +
+        meses.map(k => '<option value="' + k + '"' + (k === mesK ? ' selected' : '') + '>' + esc(Fecha.mes(Fecha.parse(k + '-01'))) + (k === mesHoy ? ' · este mes' : '') + '</option>').join('') +
+      '</select></div>' +
+      '<div class="grid g3 mb16">' +
+        UI.kpi({ label: 'Gastado en ' + mesTxt, valor: esc(Money.format(Compras.suma(delMes) + exM)), icono: 'cart',
+          meta: 'En contabilidad o pagado' + Historico.meta(exM) + ' · en ' + y + ': ' + esc(Money.compacto(Compras.suma(delAnio) + exA)) }) +
         UI.kpi({ label: 'Esperando cotización', valor: esc(Money.format(Compras.suma(espera))), icono: 'clock', color: 'var(--warn-500)',
-          meta: espera.length ? espera.length + (espera.length === 1 ? ' orden' : ' órdenes') + ', sin contar como gasto' : 'Ninguna orden esperando' }) +
-        UI.kpi({ label: 'Última compra', valor: esc(Fecha.corta((ultX || ult).fecha)), icono: 'calendar', color: 'var(--ink-400)',
-          meta: esc(ultX ? Historico.ETIQUETA + ' · ' + (ultX.trabajo || ultX.repuestos || '') : Compras.resumen(ult)) }) +
+          meta: espera.length ? ordenes(espera.length) + (esHoy ? '' : ' de ' + mesTxt) + ', sin contar como gasto'
+            : esHoy ? 'Ninguna orden esperando' : 'Ninguna orden de ' + mesTxt + ' esperando' }) +
+        UI.kpi({ label: esHoy ? 'Última compra' : 'Última compra hasta ' + mesTxt, valor: esc(ultC ? Fecha.corta(ultC.fecha) : '—'), icono: 'calendar', color: 'var(--ink-400)',
+          meta: ultC ? esc(ultX ? Historico.ETIQUETA + ' · ' + (ultX.trabajo || ultX.repuestos || '') : Compras.resumen(ult)) : 'Ninguna compra' + (esHoy ? '' : ' hasta ' + mesTxt) }) +
       '</div>' : '';
     return Compras.aviso() + kpis + UI.card('Compras de esta unidad', li.length || xs.length ? UI.tablaCompras(li, false, Historico.filasCompras(xs))
       : UI.empty('cart', 'Sin compras', 'Las órdenes que se hagan en Facturación para este vehículo aparecen aquí.'),
@@ -11123,6 +11147,7 @@ const Acciones = {
     UIState.unidadId = el.dataset.u;
     UIState.tab = el.dataset.tab || 'info';
     UIState.act = 'todos';
+    UIState.ocMes = '';
     Router.ir('unidad/' + el.dataset.u);
   },
   filtroAct(el) {
@@ -11423,6 +11448,8 @@ Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
   hpVer: false,
   /* Taller SINUGRAVAS: el mes de las tarjetas de arriba («aaaa-mm»); vacío, el de hoy */
   tallerMes: '',
+  /* Compras de la ficha del vehículo: el mes de las tarjetas («aaaa-mm»); vacío, el de hoy. Al abrir otro vehículo vuelve a hoy */
+  ocMes: '',
   /* La pestaña Novedades: sin atender, en el taller o cerradas, y el vehículo */
   novF: 'pend', novU: '',
   /* El plano de una unidad: la parte y la llanta escogidas, el color y el período */
@@ -11431,6 +11458,10 @@ Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
      Y el orden de la tabla por vehículo, que al recargar vuelve al valor */
   combMes: null, combOrden: { k: 'valor', asc: false } });
 Money.compacto = n => n >= 1e6 ? '$' + (n / 1e6).toFixed(1).replace('.', ',') + ' M' : n >= 1e3 ? '$' + Math.round(n / 1e3) + ' mil' : Money.format(n);
+/* Compras de la ficha: el mes de las tarjetas (ver Vistas.tab_oc) */
+document.addEventListener('change', e => {
+  if (e.target && e.target.id === 'ocMes') { UIState.ocMes = e.target.value === hoyISO.slice(0, 7) ? '' : e.target.value; Router.pintar(true); }
+});
 
 /* Consecutivos de los formatos */
 const Num = {
@@ -19494,17 +19525,33 @@ const Rutas = {
     const z = $('#rtZona');
     if (!z) return;
     const TIPO = 'application/x-viaje', es = e => Array.from(e.dataTransfer.types || []).includes(TIPO);
-    /* Copiar o mover (Juan, 07/11/2026: «a veces funciona con control y a veces no»): manda lo que mostró la casilla la última vez que
-       se pasó por ella. Si la Ctrl se soltó un instante antes que el mouse, igual copia, porque eso decía la casilla. Alt (Option en
-       Mac) también copia */
-    let copia = false;
+    /* Copiar o mover (Juan, 07/11/2026: «a veces funciona con control y a veces no»): manda lo que muestra la casilla, verde para
+       copiar y azul para mover. Windows avisa enseguida cuando se suelta la Ctrl, y si se soltaba un instante antes que el mouse, el
+       viaje se movía. Por eso la casilla sigue verde medio segundo (MARGEN) después de soltar la Ctrl, y en ese rato copia igual;
+       pasado ese rato se pone azul, aunque no lleguen más avisos del arrastre. Alt (Option en Mac) también copia */
+    const MARGEN = 500;
+    let copia = false, solto = 0, casilla = null, reloj = 0;
     const conTecla = e => e.ctrlKey || e.altKey || e.metaKey;
+    const marcar = () => { if (casilla) casilla.classList.toggle('rt-copia', copia); };
+    const decidir = e => {
+      clearTimeout(reloj);
+      if (conTecla(e)) { copia = true; solto = 0; }
+      else if (copia) {
+        solto = solto || Date.now();
+        if (Date.now() - solto >= MARGEN) copia = false;
+        else reloj = setTimeout(() => { if (solto) { copia = false; marcar(); } }, MARGEN - (Date.now() - solto) + 10);
+      }
+      return copia;
+    };
     const limpiar = () => $$('.rt-sobre', z).forEach(x => x.classList.remove('rt-sobre', 'rt-copia'));
-    const fin = () => { copia = false; document.documentElement.classList.remove('arrastrando'); limpiar(); $$('.rt-arr', z).forEach(x => x.classList.remove('rt-arr')); };
+    const fin = () => {
+      clearTimeout(reloj); copia = false; solto = 0; casilla = null;
+      document.documentElement.classList.remove('arrastrando'); limpiar(); $$('.rt-arr', z).forEach(x => x.classList.remove('rt-arr'));
+    };
     z.addEventListener('dragstart', e => {
       const v = e.target.closest('.rt-v');
       if (!v) return;
-      copia = conTecla(e);
+      copia = conTecla(e); solto = 0;
       e.dataTransfer.setData(TIPO, v.dataset.v);
       e.dataTransfer.effectAllowed = 'copyMove';
       document.documentElement.classList.add('arrastrando');
@@ -19520,18 +19567,21 @@ const Rutas = {
       const c = es(e) && e.target.closest('[data-cel]');
       if (!c) return;
       e.preventDefault();
-      copia = conTecla(e);
-      e.dataTransfer.dropEffect = copia ? 'copy' : 'move';
+      e.dataTransfer.dropEffect = decidir(e) ? 'copy' : 'move';
       if (!c.classList.contains('rt-sobre')) { limpiar(); c.classList.add('rt-sobre'); }
       /* Con Ctrl, la casilla dice «+ Copiar aquí» */
-      c.classList.toggle('rt-copia', copia);
+      casilla = c;
+      marcar();
     });
-    z.addEventListener('dragleave', e => { const c = e.target.closest('[data-cel]'); if (c && !c.contains(e.relatedTarget)) c.classList.remove('rt-sobre', 'rt-copia'); });
+    z.addEventListener('dragleave', e => {
+      const c = e.target.closest('[data-cel]');
+      if (c && !c.contains(e.relatedTarget)) { c.classList.remove('rt-sobre', 'rt-copia'); if (c === casilla) casilla = null; }
+    });
     z.addEventListener('drop', e => {
       const c = es(e) && e.target.closest('[data-cel]');
       if (!c) return;
       e.preventDefault();
-      const id = e.dataTransfer.getData(TIPO), copiar = copia || conTecla(e) || e.dataTransfer.dropEffect === 'copy';
+      const id = e.dataTransfer.getData(TIPO), copiar = decidir(e);
       fin();
       this.mover(id, c.dataset.u || null, c.dataset.f || null, copiar);
     });
