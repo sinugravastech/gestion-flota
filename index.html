@@ -11383,6 +11383,8 @@ const Acciones = {
 Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
   /* Mantenimientos: la pestaña (por vehículo o historial) y el tipo de unidad */
   mantTab: 'vehiculos', mantTipo: 'todos',
+  /* Taller SINUGRAVAS: si los números de los botones cuentan también el registro manual; al entrar, apagado (Juan, 07/11/2026) */
+  tallerX: false,
   /* La pestaña Novedades: sin atender, en el taller o cerradas, y el vehículo */
   novF: 'pend', novU: '',
   /* El plano de una unidad: la parte y la llanta escogidas, el color y el período */
@@ -11704,9 +11706,16 @@ Object.assign(Vistas, {
     Historico.pedir();
     const xs = (f === 'todos' ? Historico.lista.slice() : f === 'preventivo' || f === 'correctivo' ? Historico.lista.filter(x => String(x.tipo || '').toLowerCase() === f) : [])
       .sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')) || String(b.id).localeCompare(String(a.id)));
-    const segs = [['todos', 'Todos', todos.length], ['preventivo', 'Preventivos', todos.filter(m => m.tipo === 'preventivo').length],
-      ['correctivo', 'Correctivos', todos.filter(m => m.tipo === 'correctivo').length], ['taller', 'En taller', taller.length],
-      ['programado', 'Programados', prog.length], ['pendientes', 'Sin valor u orden', pend.length]];
+    /* Con la casilla (UIState.tallerX), los números cuentan también el registro manual: todas en Todos y las de su tipo en Preventivos
+       y Correctivos; En taller, Programados y Sin valor u orden no cambian, porque esas líneas ya se cerraron y tienen valor */
+    const conX = UIState.tallerX && Historico.lista.length > 0, xs0 = conX ? Historico.lista : [];
+    const deTipo = k => xs0.filter(x => String(x.tipo || '').toLowerCase() === k).length, nP = deTipo('preventivo'), nC = deTipo('correctivo');
+    const segs = [['todos', 'Todos', todos.length, xs0.length], ['preventivo', 'Preventivos', todos.filter(m => m.tipo === 'preventivo').length, nP],
+      ['correctivo', 'Correctivos', todos.filter(m => m.tipo === 'correctivo').length, nC], ['taller', 'En taller', taller.length, 0],
+      ['programado', 'Programados', prog.length, 0], ['pendientes', 'Sin valor u orden', pend.length, 0]];
+    /* Los otros tipos del registro manual (llantas, lavado…), que solo van en Todos */
+    const otros = Object.entries(xs0.reduce((o, x) => { const k = String(x.tipo || 'sin tipo').toLowerCase(); if (k !== 'preventivo' && k !== 'correctivo') o[k] = (o[k] || 0) + 1; return o; }, {}))
+      .sort((a, b) => b[1] - a[1]);
     const html = head + tabs +
       '<div class="grid g4 mb16 mant-kpis mant-kpis-h">' +
         UI.kpi({ label: 'Preventivos del mes', valor: todos.filter(m => m.tipo === 'preventivo' && delMes(m)).length, icono: 'tool', color: 'var(--info-500)', meta: 'Cambios de aceite y otros servicios', act: 'filtroMant', v: 'preventivo' }) +
@@ -11726,8 +11735,16 @@ Object.assign(Vistas, {
       (pend.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (pend.length === 1 ? 'A un arreglo le falta' : 'A ' + pend.length + ' arreglos les falta') +
         ' el valor o la orden de Facturación.</b> Quedan pendientes hasta que se pongan: un clic en su fila abre el arreglo para completarlo. ' +
         (f === 'pendientes' ? '' : '<span class="link" data-act="filtroMant" data-v="pendientes">Ver cuáles</span>') + '</div></div>' : '') +
-      '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroMant" data-v="' + s[0] + '">' + s[1] +
-        '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div></div>' +
+      '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroMant" data-v="' + s[0] + '"' +
+          (s[3] ? ' title="' + attr(s[2] + ' en Flota y ' + s[3] + ' del ' + Historico.ETIQUETA.toLowerCase()) + '"' : '') + '>' + s[1] +
+        '<span class="seg-n">' + (s[2] + s[3]) + '</span></button>').join('') + '</div>' +
+        (Historico.lista.length ? '<span class="tb-sp"></span><label class="flex aic g8 txt-2" style="cursor:pointer;font-size:12.5px">' +
+          '<input type="checkbox" data-act="tallerConManual"' + (UIState.tallerX ? ' checked' : '') + '>Contar también el ' + esc(Historico.ETIQUETA.toLowerCase()) + '</label>' : '') +
+        '</div>' +
+      (conX ? '<div class="txt-3 fs12 mb12">' + esc('Los números cuentan también el ' + Historico.ETIQUETA.toLowerCase() + ': ' + xs0.length +
+        (xs0.length === 1 ? ' línea' : ' líneas') + ', ' + nP + (nP === 1 ? ' preventivo, ' : ' preventivos, ') + nC + (nC === 1 ? ' correctivo' : ' correctivos') +
+        (otros.length ? ' y ' + otros.reduce((s, o) => s + o[1], 0) + ' de otro tipo (' + otros.map(o => o[0] + ' ' + o[1]).join(', ') + '), que solo van en Todos' : '') + '.') +
+        '</div>' : '') +
       '<div class="card">' + (lista.length || xs.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Trabajo</th><th>Taller y repuestos</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
         lista.map(m => {
           const u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', c = Compras.deArreglo(m);
@@ -14983,6 +15000,8 @@ Object.assign(Acciones, {
     ExcelMant.abrir();
   },
   excelMantBajar(el) { if (!el.disabled) ExcelMant.bajar(el.closest('.modal-bd')); },
+  /* Taller SINUGRAVAS: contar también el registro manual en los números de los botones */
+  tallerConManual(el) { UIState.tallerX = el.checked; Router.pintar(true); },
   /* Proveedores → «Del registro manual» (ver Historico.tarjetaProv) */
   histProvUsar(el) { const tr = el.closest('tr'); $('.hp-sel', tr).value = tr.dataset.pro; Historico.hpCambio(); },
   histProvTodas() {
