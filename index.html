@@ -997,6 +997,8 @@ html[data-theme="dark"] .rk-t i.ex,html[data-theme="dark"] .col i.ex,html[data-t
 .hx-d span{font-size:11.5px;color:var(--text-3);font-weight:650}
 .hx-d b{font-weight:500;overflow-wrap:anywhere}
 @media (max-width:600px){.hx-ds{grid-template-columns:1fr}.hx-tbl{min-width:980px}}
+/* En el celular, «Descargar en Excel» queda en «Excel»: así cabe con Preventivo y Correctivo */
+@media (max-width:600px){.ph-xl{display:none}}
 .cols-x span{flex:1;min-width:0;text-align:center;font-size:11px;color:var(--text-3)}
 .cols-x span.fut{opacity:.45}
 html[data-theme="dark"] .rk-t i,html[data-theme="dark"] .col i{background:var(--brand-400)}
@@ -6010,7 +6012,8 @@ const Tablero = {
    aparte: la pastilla gris «Excel», gris en las gráficas y un aviso al abrir
    una línea. Se traen una vez; sin el SQL 031 no hay nada y todo sigue igual. */
 const Historico = {
-  ETIQUETA: 'Excel del ingeniero anterior',
+  /* «Registro manual» (Juan, 07/11/2026): que se entienda que se llevaba a mano y que no es de Flota */
+  ETIQUETA: 'Registro manual',
   lista: [],
   estado: 'nada',
   _trayendo: null,
@@ -6044,8 +6047,8 @@ const Historico = {
   /* Para el Dashboard, como los demás gastos, con su marca */
   gastos() { this.pedir(); return this.lista.filter(x => x.fecha && x.valor > 0).map(x => ({ fecha: x.fecha, unidad: x.unidad, valor: x.valor, excel: true })); },
   suma: (l, desde) => l.filter(x => x.fecha && (!desde || x.fecha >= desde)).reduce((t, x) => t + x.valor, 0),
-  /* «… · $3,2 M del Excel», para lo que suma este gasto */
-  meta: v => (v ? ' · ' + esc(Money.compacto(v)) + ' del Excel' : ''),
+  /* «… · $3,2 M de registro manual», para lo que suma este gasto */
+  meta: v => (v ? ' · ' + esc(Money.compacto(v)) + ' de registro manual' : ''),
   /* La tarjeta «Antes de Flota» de un vehículo: sus líneas desde «desde», con la pastilla gris */
   tarjeta(u, desde, cls) {
     this.pedir();
@@ -6055,12 +6058,411 @@ const Historico = {
     return UI.card('Antes de Flota · ' + this.ETIQUETA,
       '<div class="tbl-wrap"><table class="tbl hx-tbl"><thead><tr><th>Fecha</th><th>Origen</th><th>Tipo</th><th>Parte</th><th>Qué se hizo</th><th>Proveedor</th>' +
         '<th class="num">Valor</th></tr></thead><tbody>' +
-      l.map(x => '<tr data-act="verHistorico" data-h="' + attr(x.id) + '" title="Ver la línea del Excel">' +
-        '<td class="nowrap">' + esc(x.fecha ? Fecha.num(x.fecha) : 'Sin fecha') + '</td><td>' + UI.pill('nr', 'Excel') + '</td><td>' + esc(x.tipo || '—') + '</td>' +
+      l.map(x => '<tr data-act="verHistorico" data-h="' + attr(x.id) + '" title="Ver la línea del registro manual">' +
+        '<td class="nowrap">' + esc(x.fecha ? Fecha.num(x.fecha) : 'Sin fecha') + '</td><td>' + UI.pill('nr', 'Manual') + '</td><td>' + esc(x.tipo || '—') + '</td>' +
         '<td>' + esc(x.parte || '—') + '</td><td class="hx-q">' + esc(x.trabajo || x.falla || x.repuestos || '—') + '</td><td>' + esc(x.proveedor || '—') + '</td>' +
         '<td class="num nowrap">' + esc(Money.format(x.valor)) + '</td></tr>').join('') + '</tbody></table></div>',
-      { flush: true, cls, sub: 'Copiado del Excel: solo para consultar · ' + l.length + (l.length === 1 ? ' línea · ' : ' líneas · ') + esc(Money.format(total)) +
+      { flush: true, cls, sub: 'Copiado del registro manual: solo para consultar · ' + l.length + (l.length === 1 ? ' línea · ' : ' líneas · ') + esc(Money.format(total)) +
         ', que suman en el gasto' });
+  }
+};
+
+/* Un archivo .zip sin comprimir, como el que lleva por dentro un .xlsx (Excel
+   lo abre igual). Sirve también para la copia de seguridad de más adelante */
+const Zip = {
+  _tabla: null,
+  crc(b) {
+    if (!this._tabla) {
+      this._tabla = new Uint32Array(256);
+      for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+        this._tabla[n] = c >>> 0;
+      }
+    }
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < b.length; i++) c = this._tabla[(c ^ b[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  },
+  /* Cada número en su sitio: [posición, valor, bytes (2 si no se dice)] */
+  _bytes(n, campos) {
+    const v = new DataView(new ArrayBuffer(n));
+    campos.forEach(([i, x, b]) => (b === 4 ? v.setUint32(i, x >>> 0, true) : v.setUint16(i, x, true)));
+    return new Uint8Array(v.buffer);
+  },
+  /* archivos: [{ nombre, datos }], con los datos en texto o en bytes */
+  armar(archivos, tipo) {
+    const enc = new TextEncoder(), d = new Date(), partes = [], central = [];
+    const hora = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+    const dia = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    let pos = 0;
+    archivos.forEach(a => {
+      const nom = enc.encode(a.nombre), datos = typeof a.datos === 'string' ? enc.encode(a.datos) : a.datos, crc = this.crc(datos), n = datos.length;
+      partes.push(this._bytes(30, [[0, 0x04034b50, 4], [4, 20], [6, 0], [8, 0], [10, hora], [12, dia], [14, crc, 4], [18, n, 4], [22, n, 4],
+        [26, nom.length], [28, 0]]), nom, datos);
+      central.push(this._bytes(46, [[0, 0x02014b50, 4], [4, 20], [6, 20], [8, 0], [10, 0], [12, hora], [14, dia], [16, crc, 4], [20, n, 4],
+        [24, n, 4], [28, nom.length], [30, 0], [32, 0], [34, 0], [36, 0], [38, 0, 4], [42, pos, 4]]), nom);
+      pos += 30 + nom.length + n;
+    });
+    const tam = central.reduce((t, b) => t + b.length, 0);
+    const fin = this._bytes(22, [[0, 0x06054b50, 4], [4, 0], [6, 0], [8, archivos.length], [10, archivos.length], [12, tam, 4], [16, pos, 4], [20, 0]]);
+    return new Blob(partes.concat(central, [fin]), { type: tipo || 'application/zip' });
+  }
+};
+
+/* Un Excel (.xlsx) armado aquí mismo, sin bajar ninguna librería (Juan,
+   06/11/2026: «que yo pudiera sacar los datos de cualquier mes y que me
+   generara un Excel»). Cada hoja: { nombre, anchos, filas, altos, congelar,
+   filtro, sinRejilla, activa }. Cada fila es una lista de celdas { v, e }: v
+   es texto, número, fecha «aaaa-mm-dd» (con e.f 'fecha' o 'mes'), hora «hh:mm»
+   (con e.f 'hora') o { fx: 'FÓRMULA' }, que Excel calcula al abrir; e es el
+   estilo: fuente (gris, cab, titulo), relleno, borde (abajo, arriba) y f, el
+   formato (ver FORMATOS) */
+const Xlsx = {
+  FORMATOS: { pesos: '"$" #,##0;-"$" #,##0;"—"', fecha: 'dd/mm/yyyy', hora: 'hh:mm', cuenta: '0;-0;"—"', entero: '0', miles: '#,##0', mes: 'mmmm yyyy' },
+  FUENTES: ['<sz val="10"/><name val="Arial"/><family val="2"/>', '<sz val="10"/><color rgb="FF6B7C8C"/><name val="Arial"/><family val="2"/>',
+    '<b/><sz val="10"/><color rgb="FF193680"/><name val="Arial"/><family val="2"/>', '<b/><sz val="14"/><color rgb="FF193680"/><name val="Arial"/><family val="2"/>'],
+  FUENTE: { gris: 1, cab: 2, titulo: 3 },
+  BORDE: { abajo: 1, arriba: 2 },
+  TIPO: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  _estilos: [],
+  /* La columna: 0 → A, 26 → AA */
+  col(n) { let s = ''; for (n++; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s; return s; },
+  /* Sin los caracteres que el XML no admite (pasa con textos pegados de un PDF) */
+  xml: s => String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
+  /* La fecha como la cuenta Excel: días desde el 30/12/1899 */
+  serie(iso) { const [a, m, d] = iso.split('-').map(Number); return Date.UTC(a, m - 1, d) / 864e5 + 25569; },
+  /* El número de estilo de una celda; se arman a medida que aparecen */
+  _xf(e) {
+    const k = [this.FUENTE[e.fuente] || 0, e.relleno ? 2 : 0, this.BORDE[e.borde] || 0, e.f ? 164 + Object.keys(this.FORMATOS).indexOf(e.f) : 0].join(',');
+    let i = this._estilos.indexOf(k);
+    if (i < 0) i = this._estilos.push(k) - 1;
+    return i;
+  },
+  celda(c, ref) {
+    const e = c.e || {}, v = c.v, s = this._xf(e), a = '<c r="' + ref + '"' + (s ? ' s="' + s + '"' : '');
+    if (v == null || v === '') return s ? a + '/>' : '';
+    if (typeof v === 'object') return v.fx ? a + '><f>' + this.xml(v.fx) + '</f></c>' : '';
+    if (typeof v === 'number') return isFinite(v) ? a + '><v>' + v + '</v></c>' : '';
+    if ((e.f === 'fecha' || e.f === 'mes') && /^\d{4}-\d{2}-\d{2}$/.test(v)) return a + '><v>' + this.serie(v) + '</v></c>';
+    if (e.f === 'hora' && /^\d{1,2}:\d{2}$/.test(v)) { const [h, m] = v.split(':').map(Number); return a + '><v>' + (h * 60 + m) / 1440 + '</v></c>'; }
+    return a + ' t="inlineStr"><is><t xml:space="preserve">' + this.xml(v) + '</t></is></c>';
+  },
+  hoja(h) {
+    const filas = h.filas.map((f, i) => {
+      const cs = f.map((c, j) => this.celda(c, this.col(j) + (i + 1))).join('');
+      return cs ? '<row r="' + (i + 1) + '"' + (h.altos && h.altos[i] ? ' ht="' + h.altos[i] + '" customHeight="1"' : '') + '>' + cs + '</row>' : '';
+    }).join('');
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetViews><sheetView workbookViewId="0"' +
+      (h.sinRejilla ? ' showGridLines="0"' : '') + (h.activa ? ' tabSelected="1"' : '') + '>' +
+      (h.congelar ? '<pane xSplit="1" ySplit="1" topLeftCell="B2" activePane="bottomRight" state="frozen"/><selection pane="bottomRight" activeCell="B2" sqref="B2"/>' : '') +
+      '</sheetView></sheetViews>' +
+      (h.anchos ? '<cols>' + h.anchos.map((w, j) => '<col min="' + (j + 1) + '" max="' + (j + 1) + '" width="' + w + '" customWidth="1"/>').join('') + '</cols>' : '') +
+      '<sheetData>' + filas + '</sheetData>' +
+      (h.filtro ? '<autoFilter ref="A1:' + this.col(h.filas[0].length - 1) + Math.max(1, h.filas.length) + '"/>' : '') +
+      '<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/></worksheet>';
+  },
+  estilos() {
+    const f = Object.values(this.FORMATOS);
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<numFmts count="' + f.length + '">' + f.map((c, i) => '<numFmt numFmtId="' + (164 + i) + '" formatCode="' + this.xml(c) + '"/>').join('') + '</numFmts>' +
+      '<fonts count="' + this.FUENTES.length + '">' + this.FUENTES.map(x => '<font>' + x + '</font>').join('') + '</fonts>' +
+      '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
+        '<fill><patternFill patternType="solid"><fgColor rgb="FFEDF1FB"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+      '<borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border>' +
+        '<border><left/><right/><top/><bottom style="thin"><color rgb="FF2A52AD"/></bottom><diagonal/></border>' +
+        '<border><left/><right/><top style="thin"><color rgb="FF2A52AD"/></top><bottom/><diagonal/></border></borders>' +
+      '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+      '<cellXfs count="' + this._estilos.length + '">' + this._estilos.map(k => {
+        const [fo, fi, b, n] = k.split(',');
+        return '<xf numFmtId="' + n + '" fontId="' + fo + '" fillId="' + fi + '" borderId="' + b + '" xfId="0"' + (n !== '0' ? ' applyNumberFormat="1"' : '') +
+          (fo !== '0' ? ' applyFont="1"' : '') + (fi !== '0' ? ' applyFill="1"' : '') + (b !== '0' ? ' applyBorder="1"' : '') + '/>';
+      }).join('') + '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+  },
+  /* El libro: las hojas, sus estilos y lo que lo describe, en un .zip */
+  armar(hojas, titulo) {
+    this._estilos = ['0,0,0,0'];
+    const xs = hojas.map(h => this.hoja(h)), activa = Math.max(0, hojas.findIndex(h => h.activa));
+    const cab = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n', rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const tipos = cab + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      xs.map((x, i) => '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('') +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>';
+    const raiz = cab + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="' + rel + '/officeDocument" Target="xl/workbook.xml"/>' +
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>';
+    const libro = cab + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="' + rel + '">' +
+      '<bookViews><workbookView activeTab="' + activa + '"/></bookViews><sheets>' +
+      hojas.map((h, i) => '<sheet name="' + this.xml(h.nombre) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>').join('') +
+      '</sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>';
+    const deLibro = cab + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      xs.map((x, i) => '<Relationship Id="rId' + (i + 1) + '" Type="' + rel + '/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>').join('') +
+      '<Relationship Id="rId' + (xs.length + 1) + '" Type="' + rel + '/styles" Target="styles.xml"/></Relationships>';
+    const datos = cab + '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" ' +
+      'xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
+      '<dc:title>' + this.xml(titulo) + '</dc:title><dc:creator>Sistema de Gestión de Flota · SINUGRAVAS</dc:creator>' +
+      '<dcterms:created xsi:type="dcterms:W3CDTF">' + new Date().toISOString().replace(/\.\d+Z$/, 'Z') + '</dcterms:created></cp:coreProperties>';
+    return Zip.armar([{ nombre: '[Content_Types].xml', datos: tipos }, { nombre: '_rels/.rels', datos: raiz }, { nombre: 'docProps/core.xml', datos },
+      { nombre: 'xl/workbook.xml', datos: libro }, { nombre: 'xl/_rels/workbook.xml.rels', datos: deLibro }, { nombre: 'xl/styles.xml', datos: this.estilos() }]
+      .concat(xs.map((x, i) => ({ nombre: 'xl/worksheets/sheet' + (i + 1) + '.xml', datos: x }))), this.TIPO);
+  },
+  bajar(blob, nombre) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+};
+
+/* Los mantenimientos en Excel (Juan, 06/11/2026), en el formato de la muestra
+   que vio Juan: una fila por arreglo, con su valor una sola vez; una por cada
+   nodo de su línea de tiempo (como en el caso y en su PDF); una por orden de
+   Facturación y una por componente; los vehículos, y un resumen con fórmulas.
+   Lo del Excel del ingeniero anterior (ver Historico) va en las mismas
+   columnas, en gris y con su origen. Es la salida de Flota: lo que se corrija
+   en el Excel no vuelve. Formato versión 1: las columnas no cambian de nombre
+   y lo nuevo va al final, para que otro programa lo pueda seguir leyendo */
+const ExcelMant = {
+  VERSION: 1,
+  FLOTA: 'Flota',
+  EXCEL: 'Registro manual',
+  ESTADOS: { programado: 'Programado', taller: 'En el taller', cerrado: 'Terminado' },
+  /* [nombre, ancho, formato] */
+  COLS: [['N.º', 14], ['Origen', 26], ['Tipo', 12], ['Estado', 13], ['Vehículo', 20], ['Clase', 20], ['Entró', 11, 'fecha'], ['Hora de entrada', 9, 'hora'],
+    ['Salió', 11, 'fecha'], ['Días en el taller', 9, 'entero'], ['Km u horas', 11, 'miles'], ['Partes', 18], ['Componentes', 34], ['¿Qué pasó?', 46],
+    ['¿Qué se hizo?', 46], ['Repuestos (qué se compró)', 40], ['Taller', 28], ['Valor del taller', 14, 'pesos'], ['OS', 13], ['Proveedor de repuestos', 28],
+    ['Valor de repuestos', 14, 'pesos'], ['OC u OP', 13], ['Factura', 14], ['Valor total', 15, 'pesos'], ['Avances', 9, 'cuenta'], ['Fotos', 7, 'cuenta'], ['Nota', 46]],
+  COLS_AV: [['N.º del arreglo', 14], ['Vehículo', 20], ['Paso', 6, 'entero'], ['Fecha', 11, 'fecha'], ['Hora', 7, 'hora'], ['Qué pasó o qué hay de nuevo', 62],
+    ['Marca', 20], ['Fotos', 7, 'cuenta']],
+  COLS_OR: [['N.º del arreglo', 14], ['Vehículo', 20], ['Orden', 13], ['Tipo', 18], ['Proveedor', 30], ['Fecha de la orden', 12, 'fecha'], ['Valor', 15, 'pesos'],
+    ['Estado en Facturación', 20], ['¿Cuenta como gasto?', 12], ['Factura', 14]],
+  COLS_CO: [['N.º del arreglo', 14], ['Vehículo', 20], ['Clase', 20], ['Fecha', 11, 'fecha'], ['Componente', 30], ['Partes del arreglo', 24], ['Tipo', 12]],
+  COLS_VE: [['Vehículo', 22], ['Placa o código', 14], ['Alias', 16], ['Tipo', 18], ['Clase', 20], ['Marca', 16], ['Línea', 22], ['Modelo', 8, 'entero'],
+    ['VIN o N.º de serie', 24], ['Conductor u operador', 28], ['Arreglos', 9, 'cuenta'], ['Gasto', 15, 'pesos']],
+  /* El vehículo como lo muestra Flota; es lo que une las hojas con «Vehículos» */
+  vehiculo: u => UI.placaTxt(u) + (u.alias ? ' · ' + u.alias : ''),
+  mesTxt: m => Fecha.mes(Fecha.parse(m + '-01')).toLowerCase(),
+  /* Las opciones del período: todo, cada año y cada mes con algo (y el de hoy), y entre dos fechas */
+  opciones(conX) {
+    const fechas = Datos.mantenimientos.map(m => m.fecha).concat(conX ? Historico.lista.map(x => x.fecha) : []).filter(Boolean);
+    const meses = [...new Set(fechas.map(f => f.slice(0, 7)).concat([hoyISO.slice(0, 7)]))].sort().reverse();
+    const anios = [...new Set(meses.map(m => m.slice(0, 4)))];
+    return [['todo', 'Todo']].concat(anios.map(a => ['a' + a, 'El año ' + a]), meses.map(m => ['m' + m, Fecha.mes(Fecha.parse(m + '-01'))]),
+      [['fechas', 'Entre dos fechas…']]);
+  },
+  periodo(v, desde, hasta) {
+    const corto = f => Fecha.num(f).replace(/\//g, '-');
+    if (v === 'todo') return { desde: '', hasta: '', nombre: 'todo', archivo: 'todo al ' + corto(hoyISO) };
+    if (v[0] === 'a') return { desde: v.slice(1) + '-01-01', hasta: v.slice(1) + '-12-31', nombre: 'el año ' + v.slice(1), archivo: v.slice(1) };
+    if (v[0] === 'm') return { desde: v.slice(1) + '-01', hasta: v.slice(1) + '-31', nombre: this.mesTxt(v.slice(1)), archivo: this.mesTxt(v.slice(1)) };
+    return { desde, hasta, nombre: 'del ' + Fecha.num(desde) + ' al ' + Fecha.num(hasta), archivo: corto(desde) + ' a ' + corto(hasta) };
+  },
+  dentro: (f, p) => (!p.desde && !p.hasta) || Boolean(f && f >= p.desde && f <= p.hasta),
+  /* Los arreglos de Flota y las líneas del Excel del período, de la más vieja a la más nueva */
+  lista(p, conX) {
+    return Datos.mantenimientos.filter(m => this.dentro(m.fecha, p)).map(m => ({ m, f: m.fecha, n: m.numero || m.id }))
+      .concat(conX ? Historico.lista.filter(x => this.dentro(x.fecha, p)).map(x => ({ x, f: x.fecha || '', n: x.id })) : [])
+      .sort((a, b) => a.f.localeCompare(b.f) || String(a.n).localeCompare(String(b.n)));
+  },
+  km(t) {
+    const s = String(t || '').trim(), n = s.replace(/[.\s]/g, '');
+    return !s ? null : /^\d+$/.test(n) ? +n : s;
+  },
+  nombre: p => (p && p.nombre && p.nombre !== '—' ? p.nombre : ''),
+  ordenesDe: m => (m.ordenes || []).map(id => Compras.porId(id)).filter(o => o && o.flota_id === m.unidad),
+  /* Una fila de «Mantenimientos» (i: su fila en Excel; fa: la última de «Avances») */
+  deFlota(m, i, fa) {
+    const u = Q.unidad(m.unidad), l = TallerRep.lados(m), v = TallerRep.valores(m), prog = m.estado === 'programado', os = this.ordenesDe(m);
+    const items = os.filter(o => o.tipo !== 'SERVICIO').reduce((t, o) => t.concat(o.items), [])
+      .map(x => x.descripcion + (x.cantidad > 1 ? ' × ' + x.cantidad : '')).filter(x => x.trim());
+    const nota = [l.partido || !v.total ? '' : 'Taller y repuestos en un solo valor', prog ? 'Cita: ' + Programado.txt(Programado.de(m), true) : '',
+      Pendiente.de(m).map(k => Pendiente.NOMBRE[k]).join(', '), Compras.malas(m) ? 'Tiene una orden que ya no está en Facturación o es de otro vehículo' : ''];
+    return [m.numero || m.id, this.FLOTA, m.tipo === 'preventivo' ? 'Preventivo' : 'Correctivo', this.ESTADOS[m.estado] || m.estado,
+      u ? this.vehiculo(u) : '(sin vehículo)', u ? u.clase || '' : '', m.fecha, m.horaEntrada || (prog && m.programado ? m.programado.h : '') || '',
+      m.estado === 'cerrado' ? m.salida || '' : '', { fx: 'IF(OR(G' + i + '="",I' + i + '=""),"",I' + i + '-G' + i + ')' }, this.km(m.lectura),
+      (m.partes || []).map(p => (u ? Plano.nombre(u, p) : p.n || p.k)).join(', '), Comp.de(m).join(', '), m.falla || '', m.trabajo || '', items.join('; '),
+      this.nombre(Q.provDe(m)), l.partido ? v.t.valor : null, TallerRep.codigos(m, ['SERVICIO']), l.partido ? this.nombre(Q.repDe(m)) : '',
+      l.partido && v.r ? v.r.valor : null, TallerRep.codigos(m, ['COMPRA', 'PEDIDO']), [...new Set(os.map(o => o.factura_numero).filter(Boolean))].join(', '),
+      v.total, { fx: 'COUNTIF(Avances!$A$2:$A$' + fa + ',A' + i + ')' }, (m.fotosData || []).length, nota.filter(Boolean).join(' · ')];
+  },
+  /* Una línea del Excel del ingeniero: la mano de obra va con el taller y los repuestos con su proveedor */
+  delExcel(x, i, fa) {
+    const u = x.unidad ? Q.unidad(x.unidad) : null, prov = x.proveedor || x.proveedor_excel || '';
+    const vm = x.valor_mano == null ? null : +x.valor_mano, vr = x.valor_repuestos == null ? null : +x.valor_repuestos;
+    return [x.id, this.EXCEL, x.tipo || 'Sin tipo', 'Terminado', u ? this.vehiculo(u) : x.nota || x.placa_excel || '(sin vehículo)', u ? u.clase || '' : '',
+      x.fecha || '', '', '', { fx: 'IF(OR(G' + i + '="",I' + i + '=""),"",I' + i + '-G' + i + ')' }, null, x.parte || '', '', x.falla || '', x.trabajo || '',
+      x.repuestos || '', vm > 0 || !(vr > 0) ? prov : '', vm, '', vr > 0 ? prov : '', vr, '', x.factura || '', x.valor,
+      { fx: 'COUNTIF(Avances!$A$2:$A$' + fa + ',A' + i + ')' }, null, u ? x.nota || '' : (x.nota ? x.nota + ': no' : 'No') + ' es de un solo vehículo'];
+  },
+  /* Los nodos de un arreglo, como en el caso: cómo llegó (o la cita), cada avance y, si se cerró sin anotarlo, la salida */
+  nodos(m) {
+    const u = Q.unidad(m.unidad), veh = u ? this.vehiculo(u) : '(sin vehículo)', n = m.numero || m.id, prog = m.estado === 'programado';
+    const notas = Avances.de(m), fotos = m.fotosData || [];
+    const l = [[n, veh, 1, m.fecha, m.horaEntrada || (prog && m.programado ? m.programado.h : '') || '', m.falla || '', prog ? 'Programado' : 'Entró al taller',
+      fotos.filter(f => !f.nota || !notas.some(x => x.id === f.nota)).length]];
+    notas.forEach(x => l.push([n, veh, l.length + 1, x.f, x.h || '', x.t || '', x.cierre ? 'Salió del taller' : x.espera ? 'Esperando repuestos' : 'Avance',
+      fotos.filter(f => f.nota === x.id).length]));
+    if (m.estado === 'cerrado' && !notas.some(x => x.cierre)) l.push([n, veh, l.length + 1, m.salida || m.fecha, '', m.trabajo || '', 'Salió del taller', 0]);
+    return l;
+  },
+  ordenes(m) {
+    const u = Q.unidad(m.unidad), veh = u ? this.vehiculo(u) : '(sin vehículo)';
+    return this.ordenesDe(m).map(o => [m.numero || m.id, veh, o.codigo, Compras.TIPOS[o.tipo] || o.tipo, o.proveedor, o.fecha || '', o.valor,
+      (Compras.ESTADOS[o.estado] || [])[1] || o.estado, o.es_gasto ? 'Sí' : 'No', o.factura_numero || '']);
+  },
+  componentes(m) {
+    const u = Q.unidad(m.unidad), partes = (m.partes || []).map(p => (u ? Plano.nombre(u, p) : p.n || p.k)).join(', ');
+    return Comp.de(m).map(c => [m.numero || m.id, u ? this.vehiculo(u) : '(sin vehículo)', u ? u.clase || '' : '', m.fecha, c, partes,
+      m.tipo === 'preventivo' ? 'Preventivo' : 'Correctivo']);
+  },
+  /* Cuánto sale, para la ventana y el aviso */
+  cuenta(p, conX) {
+    const l = this.lista(p, conX), ms = l.filter(r => r.m).map(r => r.m), nx = l.length - ms.length;
+    const c = { flota: ms.length, excel: nx, avances: ms.reduce((t, m) => t + this.nodos(m).length, 0), ordenes: ms.reduce((t, m) => t + this.ordenesDe(m).length, 0),
+      comps: ms.reduce((t, m) => t + Comp.de(m).length, 0) };
+    const de = (n, uno, varios) => n + ' ' + (n === 1 ? uno : varios);
+    c.txt = [c.flota ? de(c.flota, 'arreglo de Flota', 'arreglos de Flota') : '', nx ? de(nx, 'línea del registro manual', 'líneas del registro manual') : '']
+      .filter(Boolean).join(' y ') +
+      (c.flota ? ', con ' + de(c.avances, 'nodo', 'nodos') + ', ' + de(c.ordenes, 'orden', 'órdenes') + ' y ' + de(c.comps, 'componente', 'componentes') : '');
+    return c;
+  },
+  /* Una tabla: la cabecera en la fila 1, con filtro e inmovilizada con la primera columna */
+  tabla(nombre, cols, filas, o) {
+    return Object.assign({ nombre, anchos: cols.map(c => c[1]), congelar: true, filtro: true, altos: [20],
+      filas: [cols.map(c => ({ v: c[0], e: { fuente: 'cab', relleno: true, borde: 'abajo' } }))]
+        .concat(filas.map(f => f.v.map((v, j) => ({ v, e: { fuente: f.gris ? 'gris' : '', f: cols[j][2] } })))) }, o || {});
+  },
+  libro(p, conX) {
+    const l = this.lista(p, conX), ms = l.filter(r => r.m).map(r => r.m);
+    const av = ms.reduce((t, m) => t.concat(this.nodos(m)), []), fa = Math.max(2, av.length + 1), fin = Math.max(2, l.length + 1);
+    const filasM = l.map((r, k) => (r.m ? { v: this.deFlota(r.m, k + 2, fa) } : { v: this.delExcel(r.x, k + 2, fa), gris: true }));
+    const C = n => Xlsx.col(this.COLS.findIndex(c => c[0] === n)), rango = n => 'Mantenimientos!$' + C(n) + '$2:$' + C(n) + '$' + fin;
+    const tot = rango('Valor total'), ori = rango('Origen'), veh = rango('Vehículo'), ent = rango('Entró');
+    /* Los vehículos de la flota, con lo que llevan en el período */
+    const us = Datos.unidades.slice().sort((a, b) => ORDEN.indexOf(a.tipo) - ORDEN.indexOf(b.tipo) || UI.placaTxt(a).localeCompare(UI.placaTxt(b)));
+    const filasV = us.map((u, k) => {
+      const f = u.ficha || {}, c = Q.conductorDe(u);
+      return { v: [this.vehiculo(u), u.placa, u.alias || '', (TIPOS[u.tipo] || {}).nombre || u.tipo, u.clase || '', u.marca || '', u.linea || '',
+        /^\d+$/.test(u.modelo || '') ? +u.modelo : u.modelo || '', f['VIN'] || f['N.º de serie'] || f['N.º de identificación'] || f['N.º de chasis'] || '', c ? c.nombre : '',
+        { fx: 'COUNTIFS(' + veh + ',$A' + (k + 2) + ')' }, { fx: 'SUMIFS(' + tot + ',' + veh + ',$A' + (k + 2) + ')' }] };
+    });
+    /* El resumen: por mes (seguidos, para que se vea si falta alguno) y por vehículo, del que más gasto lleva al que menos */
+    const meses = [], f0 = (l.find(r => r.f) || {}).f;
+    if (p.desde || f0) {
+      const d = Fecha.parse(((p.desde && p.desde.slice(0, 7)) || f0.slice(0, 7)) + '-01');
+      const ult = (p.hasta && p.hasta.slice(0, 7)) || l.reduce((t, r) => (r.f > t ? r.f : t), '').slice(0, 7) || hoyISO.slice(0, 7);
+      for (let k = 0; k < 240 && Fecha.iso(d).slice(0, 7) <= ult; k++, d.setMonth(d.getMonth() + 1)) meses.push(Fecha.iso(d));
+    }
+    const cab = t => t.map(v => ({ v, e: { fuente: 'cab', relleno: true, borde: 'abajo' } }));
+    const titulo = t => [{ v: t, e: { fuente: 'titulo' } }];
+    const fil = (v, j, total, gris) => ({ v, e: { fuente: total ? 'cab' : gris ? 'gris' : '', borde: total ? 'arriba' : '', f: j } });
+    const entre = i => ent + ',">="&$A' + i + ',' + ent + ',"<"&EDATE($A' + i + ',1)';
+    const res = [titulo('Gasto de mantenimiento por mes'), [], cab(['Mes', 'Flota'].concat(conX ? [this.EXCEL] : [], ['Total', 'Arreglos de Flota'], conX ? ['Líneas manuales'] : []))];
+    meses.forEach(mes => {
+      const i = res.length + 1;
+      res.push([fil(mes, 'mes'), fil({ fx: 'SUMIFS(' + tot + ',' + ori + ',"' + this.FLOTA + '",' + entre(i) + ')' }, 'pesos')]
+        .concat(conX ? [fil({ fx: 'SUMIFS(' + tot + ',' + ori + ',"' + this.EXCEL + '",' + entre(i) + ')' }, 'pesos', false, true)] : [],
+          [fil({ fx: conX ? 'B' + i + '+C' + i : 'B' + i }, 'pesos'), fil({ fx: 'COUNTIFS(' + ori + ',"' + this.FLOTA + '",' + entre(i) + ')' }, 'cuenta')],
+          conX ? [fil({ fx: 'COUNTIFS(' + ori + ',"' + this.EXCEL + '",' + entre(i) + ')' }, 'cuenta', false, true)] : []));
+    });
+    const n0 = 4, n1 = res.length, ncol = conX ? 6 : 4;
+    res.push([fil('Total', '', true)].concat(Array.from({ length: ncol - 1 }, (_, j) => fil({ fx: 'SUM(' + Xlsx.col(j + 1) + n0 + ':' + Xlsx.col(j + 1) + n1 + ')' },
+      j >= (conX ? 3 : 2) ? 'cuenta' : 'pesos', true))));
+    res.push([], [], titulo('Gasto de mantenimiento por vehículo'), [], cab(['Vehículo', 'Clase', 'Flota'].concat(conX ? [this.EXCEL] : [], ['Total'])));
+    const suma = new Map();
+    filasM.forEach(r => suma.set(r.v[4], [r.v[5], ((suma.get(r.v[4]) || [])[1] || 0) + (+r.v[23] || 0)]));
+    const v0 = res.length + 1;
+    [...suma.entries()].sort((a, b) => b[1][1] - a[1][1]).forEach(([nom, [clase]]) => {
+      const i = res.length + 1;
+      res.push([fil(nom), fil(clase), fil({ fx: 'SUMIFS(' + tot + ',' + veh + ',$A' + i + ',' + ori + ',"' + this.FLOTA + '")' }, 'pesos')]
+        .concat(conX ? [fil({ fx: 'SUMIFS(' + tot + ',' + veh + ',$A' + i + ',' + ori + ',"' + this.EXCEL + '")' }, 'pesos', false, true)] : [],
+          [fil({ fx: conX ? 'C' + i + '+D' + i : 'C' + i }, 'pesos')]));
+    });
+    const v1 = res.length;
+    res.push([fil('Total', '', true), fil('', '', true)].concat(Array.from({ length: conX ? 3 : 2 }, (_, j) =>
+      fil({ fx: 'SUM(' + Xlsx.col(j + 2) + v0 + ':' + Xlsx.col(j + 2) + v1 + ')' }, 'pesos', true))));
+    /* Cómo leerlo */
+    const c = this.cuenta(p, conX), ahora = new Date();
+    const leer = [['Mantenimientos · SINUGRAVAS', 'titulo'], [''],
+      ['Descargado de Flota el ' + Fecha.num(hoyISO) + ' a las ' + String(ahora.getHours()).padStart(2, '0') + ':' + String(ahora.getMinutes()).padStart(2, '0') +
+        '. Período: ' + p.nombre + '.'],
+      ['Trae ' + c.txt + '.'], [''], ['Las hojas', 'cab'],
+      ['Mantenimientos: una fila por arreglo, con su valor. El valor va una sola vez, aquí, para que al sumar no se cuente dos veces.'],
+      ['Avances: una fila por cada nodo de la línea de tiempo (entró, cada avance, esperando repuestos, salió). Se juntan con su arreglo por el N.º.'],
+      ['Órdenes: una fila por cada orden de Facturación (OS, OC u OP) de un arreglo.'],
+      ['Componentes: una fila por componente, para contar cuántas veces se cambia cada cosa y en qué vehículos.'],
+      ['Vehículos: la flota, con cuántos arreglos y cuánto gasto lleva cada uno en el período.'],
+      ['Resumen: el gasto por mes y por vehículo, con fórmulas que suman la hoja Mantenimientos.'], [''], ['La columna Origen', 'cab'],
+      ['Flota: lo registrado en la plataforma.']]
+      .concat(conX ? [['Registro manual: lo que se llevaba a mano en Excel antes de Flota (hoja 04_OT_INTERVENCIONES), copiado solo para consultar. No trae hora, salida, km, componentes ni avances.', 'gris']] : [],
+        [[''], ['Lo que hay que saber', 'cab'],
+          ['El valor de cada arreglo es el de sus órdenes de Facturación o, si no tiene, el escrito en Flota: el mismo que se ve en Taller SINUGRAVAS.'],
+          ['Es solo mantenimiento: no trae el combustible ni las compras que no están en un arreglo, que sí suman en el Dashboard.'],
+          ['Las fotos y los adjuntos no van en el Excel: cada arreglo dice cuántas fotos tiene, y se ven en Flota y en su PDF.'],
+          ['Es una foto del momento: lo que se corrija aquí no vuelve a Flota. Las correcciones se hacen en Flota.'],
+          ['Formato de Flota, versión ' + this.VERSION + ': las columnas no cambian de nombre; si se agrega una, va al final.']]);
+    const hojas = [
+      { nombre: 'Cómo leer', anchos: [150], sinRejilla: true, filas: leer.map(x => [{ v: x[0], e: { fuente: x[1] || '' } }]) },
+      this.tabla('Mantenimientos', this.COLS, filasM, { activa: true }),
+      this.tabla('Avances', this.COLS_AV, av.map(v => ({ v }))),
+      this.tabla('Órdenes', this.COLS_OR, ms.reduce((t, m) => t.concat(this.ordenes(m)), []).map(v => ({ v }))),
+      this.tabla('Componentes', this.COLS_CO, ms.reduce((t, m) => t.concat(this.componentes(m)), []).map(v => ({ v }))),
+      this.tabla('Vehículos', this.COLS_VE, filasV),
+      { nombre: 'Resumen', anchos: [24, 22, 26, 16, 16, 16], sinRejilla: true, filas: res }];
+    return { hojas, titulo: 'Mantenimientos SINUGRAVAS · ' + p.nombre };
+  },
+  /* La ventana: el período (todo, un año, un mes o entre dos fechas) y si va lo del ingeniero */
+  abrir() {
+    const xs = Historico.lista.filter(x => x.fecha).map(x => x.fecha).sort(), conX = xs.length > 0;
+    const rango = conX ? (Fecha.mes(Fecha.parse(xs[0]), true) + ' a ' + Fecha.mes(Fecha.parse(xs[xs.length - 1]))).toLowerCase() : '';
+    const m = Modal.abrir({
+      titulo: 'Descargar en Excel', sub: 'Los mantenimientos, con sus avances, órdenes y componentes', sinFoco: true,
+      cuerpo: '<div class="field"><label>Período</label><select class="inp" id="xmP">' +
+          this.opciones(conX).map(o => '<option value="' + o[0] + '">' + esc(o[1]) + '</option>').join('') + '</select></div>' +
+        '<div class="row hidden" id="xmF"><div class="field f1"><label>Desde</label><input class="inp" type="date" id="xmD" value="' + hoyISO.slice(0, 8) + '01"></div>' +
+          '<div class="field f1"><label>Hasta</label><input class="inp" type="date" id="xmH" value="' + hoyISO + '"></div></div>' +
+        (conX ? '<label class="flex aic g8 mb12" style="cursor:pointer;font-size:13px"><input type="checkbox" id="xmX" checked>Con el registro manual (' +
+          esc(rango) + '), en gris</label>' : '') +
+        (Compras.estado !== 'listo' ? '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>No llegaron las órdenes de Facturación.</b> El Excel sale con el valor ' +
+          'escrito en cada arreglo y sin la hoja de órdenes.</div></div>' : '') +
+        '<div class="txt-2 fs12" id="xmR"></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="excelMantBajar" id="xmB">' +
+        Icon('download', '', 14) + 'Descargar</button>'
+    });
+    const pintar = () => {
+      const s = this.leer(m);
+      $('#xmF', m).classList.toggle('hidden', $('#xmP', m).value !== 'fechas');
+      $('#xmB', m).disabled = !s.ok;
+      $('#xmR', m).textContent = s.error || (s.c.flota + s.c.excel ? 'Van ' + s.c.txt + '.' : 'No hay mantenimientos en ese período.');
+    };
+    ['#xmP', '#xmD', '#xmH', '#xmX'].forEach(k => { const e = $(k, m); if (e) e.addEventListener('change', pintar); });
+    pintar();
+  },
+  leer(m) {
+    const v = $('#xmP', m).value, d = $('#xmD', m).value, h = $('#xmH', m).value, conX = Boolean(($('#xmX', m) || {}).checked);
+    if (v === 'fechas' && (!d || !h)) return { ok: false, error: 'Escoja las dos fechas.' };
+    if (v === 'fechas' && d > h) return { ok: false, error: 'La fecha «Desde» va después de «Hasta».' };
+    const p = this.periodo(v, d, h), c = this.cuenta(p, conX);
+    return { ok: c.flota + c.excel > 0, p, conX, c };
+  },
+  bajar(m) {
+    const s = this.leer(m);
+    if (!s.ok) return;
+    try {
+      const l = this.libro(s.p, s.conX);
+      Xlsx.bajar(Xlsx.armar(l.hojas, l.titulo), 'Mantenimientos SINUGRAVAS - ' + s.p.archivo + '.xlsx');
+      Modal.cerrar(m);
+      Toast.show('Excel descargado: ' + esc(s.c.txt) + '.');
+    } catch (e) {
+      Toast.show('No se pudo armar el Excel: ' + esc(e.message), 'err');
+    }
   }
 };
 
@@ -7330,8 +7732,8 @@ const Plano = {
           '<div class="uc-zs">' + (top.length ? top.map(p => '<span class="chip">' + esc(p.n) + ' <b>' + pp[p.k].n + '</b></span>').join('')
             : '<span class="chip">' + (ar.length ? 'Sin partes marcadas' : 'Sin arreglos en 12 meses') + '</span>') + '</div></div>' +
         '<div class="uc-f"><span>' + Icon('tool', '', 12) + (ar.length ? ar.length + (ar.length === 1 ? ' arreglo' : ' arreglos') + ' en 12 meses'
-            : exU ? 'Costos del Excel anterior' : 'Ningún arreglo en 12 meses') +
-          '</span><b' + (exU ? ' title="' + attr('Incluye ' + Money.format(exU) + ' del ' + Historico.ETIQUETA) + '"' : '') + '>' + esc(Money.format(g)) + '</b></div></article>';
+            : exU ? 'Costos del registro manual' : 'Ningún arreglo en 12 meses') +
+          '</span><b' + (exU ? ' title="' + attr('Incluye ' + Money.format(exU) + ' del ' + Historico.ETIQUETA.toLowerCase()) + '"' : '') + '>' + esc(Money.format(g)) + '</b></div></article>';
     };
     return kpis + chips + (lista.length ? '<div class="ugrid mant-grid" id="mantGrid">' + lista.map(tarjeta).join('') + '</div>' +
         '<div class="card hidden" id="mantNada">' + UI.empty('search', 'Ninguna placa coincide', 'Pruebe con otra o borre la búsqueda.') + '</div>'
@@ -9237,7 +9639,7 @@ const Vistas = {
     const general = Tablero.suma(gastos.filter(g => sinU(g) && !g.excel)), generalEx = Tablero.suma(gastos.filter(g => sinU(g) && g.excel));
     const ranking = top.length ? '<div class="rk-lista">' + top.map(x =>
         '<div class="rk" data-act="irUnidad" data-u="' + x.u.id + '" data-tab="actividad" title="' + attr(UI.placaTxt(x.u) + ': ' + Money.format(x.v) +
-          (x.ex ? ' (' + Money.format(x.ex) + ' del ' + Historico.ETIQUETA + ')' : '')) + '">' +
+          (x.ex ? ' (' + Money.format(x.ex) + ' del ' + Historico.ETIQUETA.toLowerCase() + ')' : '')) + '">' +
           '<span class="rk-l">' + esc(UI.placaTxt(x.u)) + '</span><span class="rk-t">' + (x.v - x.ex > 0 ? '<i style="width:' + Math.round((x.v - x.ex) / top[0].v * 100) + '%"></i>' : '') +
             (x.ex ? '<i class="ex" style="width:' + Math.round(x.ex / top[0].v * 100) + '%"></i>' : '') + '</span>' +
           '<span class="rk-v">' + esc(Money.compacto(x.v)) + '</span></div>').join('') + '</div>'
@@ -9252,7 +9654,7 @@ const Vistas = {
     const nombreMes = d => d.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
     const columnas = '<div class="cols">' + meses.map((d, i) => {
         const v = porMes[i], x = porMesX[i], actual = d.getMonth() === mo && d.getFullYear() === y, alto = n => Math.max(2, Math.round(n / tope * 100));
-        return '<div class="col" title="' + attr(Fecha.mes(d) + ': ' + Money.format(v) + (x ? ' (' + Money.format(x) + ' del ' + Historico.ETIQUETA + ')' : '')) + '">' +
+        return '<div class="col" title="' + attr(Fecha.mes(d) + ': ' + Money.format(v) + (x ? ' (' + Money.format(x) + ' del ' + Historico.ETIQUETA.toLowerCase() + ')' : '')) + '">' +
           (v && (actual || i === iMax) ? '<span>' + esc(Money.compacto(v)) + '</span>' : '') +
           (x ? '<i class="ex" style="height:' + alto(x) + '%"></i>' : '') + (v - x > 0 ? '<i style="height:' + alto(v - x) + '%"></i>' : '') + '</div>';
       }).join('') + '</div>' +
@@ -9444,7 +9846,7 @@ const Vistas = {
         UI.card('Vehículos que más gasto llevan', ranking,
           { flush: true, sub: 'Compras, mantenimientos y combustible · ' + esc(Tablero.PERIODOS[p].toLowerCase()),
             pie: general || generalEx ? Icon('cart', '', 13) + '<span>Además, ' + [general ? esc(Money.compacto(general)) + ' en compras generales' : '',
-              generalEx ? esc(Money.compacto(generalEx)) + ' del Excel' : ''].filter(Boolean).join(' y ') + ', sin un vehículo.</span>' : '' }) +
+              generalEx ? esc(Money.compacto(generalEx)) + ' de registro manual' : ''].filter(Boolean).join(' y ') + ', sin un vehículo.</span>' : '' }) +
         UI.card('Gasto por mes', columnas, { sub: p === 'anio' ? 'Los meses de ' + y : 'Últimos seis meses', act: '<span class="link fs12" data-ir="compras">Ver compras</span>' }) +
       '</div>' +
       '<div class="grid g3 mb16">' +
@@ -10215,7 +10617,7 @@ const Ventanas = {
     Modal.abrir({
       titulo: [x.id, u ? UI.placaTxt(u) : x.placa_excel].filter(Boolean).join(' · '), sinFoco: true,
       sub: esc([Historico.ETIQUETA, x.fecha ? Fecha.larga(x.fecha) : 'sin fecha'].join(' · ')),
-      cuerpo: '<div class="alert a-info mb16">' + Icon('file') + '<div><b>Copiado del Excel del ingeniero anterior</b>, hoja «' + esc(x.hoja || '04_OT_INTERVENCIONES') + '». ' +
+      cuerpo: '<div class="alert a-info mb16">' + Icon('file') + '<div><b>Copiado del registro manual</b>: el Excel que se llevaba antes de Flota, hoja «' + esc(x.hoja || '04_OT_INTERVENCIONES') + '». ' +
           'Es solo para consultar: no tiene seguimiento, fotos ni órdenes. Suma en el gasto del vehículo.</div></div>' +
         '<div class="hx-ds">' + dato('Tipo', x.tipo) + dato('Parte', x.parte) + dato('Falla o novedad', x.falla) + dato('Trabajo ejecutado', x.trabajo) +
           dato('Repuestos', x.repuestos) + dato('Proveedor', x.proveedor || x.proveedor_excel) + dato('Factura', x.factura) +
@@ -11083,6 +11485,8 @@ Object.assign(Vistas, {
       return { titulo: UI.placaTxt(u), sub: 'Plano de mantenimiento', html: Plano.vista(u) };
     }
     const head = UI.head('Mantenimientos', 'Preventivos con Navitrans y correctivos en el taller',
+      '<button class="btn" data-act="excelMant" title="Los mantenimientos en un Excel, con sus avances, órdenes y componentes">' +
+        Icon('download', '', 14) + '<span><span class="ph-xl">Descargar en </span>Excel</span></button>' +
       '<button class="btn" data-act="nuevoPreventivo">' + Icon('tool', '', 14) + 'Preventivo</button>' +
       '<button class="btn btn-primary" data-act="nuevoCorrectivo">' + Icon('camera', '', 14) + 'Correctivo</button>');
     /* «Novedades», con cuántas faltan por atender (Juan, 04/11/2026) */
@@ -11209,7 +11613,7 @@ Object.assign(Vistas, {
           '<div class="ac-ley"><span><i></i>Al día</span><span><i class="k-warn"></i>Próximo</span><span><i class="k-bad"></i>Vencido</span></div>'
         : UI.empty('gota', 'Sin unidades', 'No hay ' + esc(TIPOS[tipo].plural.toLowerCase()) + ' con control de aceite.')), { flush: true, sub });
     };
-    const FUENTE = { preoperacional: 'preoperacional', manual: 'escrita a mano', excel: 'Excel del ingeniero', cambio: 'del cambio' };
+    const FUENTE = { preoperacional: 'preoperacional', manual: 'escrita a mano', excel: 'del registro manual', cambio: 'del cambio' };
     const fila = e => {
       const a = e.actual, u = e.u, dias = e.estimada ? Fecha.hasta(e.estimada) : null;
       return '<tr><td>' + UI.unidadCelda(u) + '</td>' +
@@ -14367,6 +14771,20 @@ Object.assign(Acciones, {
     if (ficha) Ventanas.conductor(c);
   },
 
+  /* Los mantenimientos en Excel (ver ExcelMant): antes se espera lo del Excel
+     del ingeniero y las órdenes de Facturación, si vienen en camino */
+  async excelMant(el) {
+    if (el.disabled) return;
+    const antes = el.innerHTML;
+    el.disabled = true;
+    el.innerHTML = '<span class="spin"></span>Preparando…';
+    Historico.pedir();
+    await Promise.all([Historico._trayendo, Compras.traer()].filter(Boolean));
+    el.disabled = false;
+    el.innerHTML = antes;
+    ExcelMant.abrir();
+  },
+  excelMantBajar(el) { if (!el.disabled) ExcelMant.bajar(el.closest('.modal-bd')); },
   async descargarCopia(el) {
     if (el.disabled) return;
     const antes = el.innerHTML;
