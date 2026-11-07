@@ -740,6 +740,9 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 .tl-sep b{color:var(--text);font-weight:650}
 .tl-sep svg{vertical-align:-2px;margin-right:6px}
 .hx-i{cursor:pointer}
+/* Taller SINUGRAVAS: el mes de las tarjetas */
+.tk-mes{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:-2px 0 10px;font-size:12.5px;color:var(--text-2)}
+.tk-mes .inp{width:auto;min-width:200px}
 /* Los componentes deducidos del texto del registro manual (ver Historico.comps): con borde punteado, para que no parezcan escritos */
 .ctag.ded{background:transparent;border:1px dashed var(--border-strong);color:var(--text-2);font-weight:500;padding:1px 9px}
 .hx-ded{font-size:11px;color:var(--text-3);font-style:italic}
@@ -1533,6 +1536,11 @@ html[data-theme="dark"] .plano .alerta circle{stroke:var(--surface)}
 .tbl-mant .who-t .who-c{margin-top:1px;font-size:10.5px}
 .tbl-mant .who-c svg{vertical-align:-2px;margin-right:3px}
 .tbl-mant .who-c.sin{font-style:italic}
+/* La misma línea en las otras tablas, como Compras de la ficha (ver Historico.filasCompras) */
+table.tbl:not(.tbl-mant) tr.hx-sep,table.tbl:not(.tbl-mant) tr.hx-sep:hover{background:var(--surface-2)}
+table.tbl:not(.tbl-mant) tr.hx-sep td{color:var(--text-2);font-size:12px;padding:10px 12px;border-top:2px solid var(--border-strong)}
+table.tbl:not(.tbl-mant) tr.hx-sep td b{color:var(--text);font-weight:650}
+table.tbl:not(.tbl-mant) tr.hx-sep svg{vertical-align:-2px;margin-right:6px}
 /* La línea que separa lo de Flota del registro manual (ver Historico.filasTaller) */
 .tbl-mant tr.hx-sep,.tbl-mant tr.hx-sep:hover{background:var(--surface-2)}
 .tbl-mant tr.hx-sep td{grid-column:1 / -1;color:var(--text-2);font-size:12px;padding:10px 12px;border-top:2px solid var(--border-strong)}
@@ -1675,6 +1683,9 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .rt-zona{display:flex;gap:12px;align-items:flex-start}
 .rt-zona > .rt-wrap{flex:1 1 auto;min-width:0}
 .rt-c.rt-sobre,.rt-band.rt-sobre{outline:2px dashed var(--accent);outline-offset:-3px;background:color-mix(in srgb,var(--accent) 10%,transparent)}
+/* Con Ctrl: verde y «+ Copiar aquí», para saber antes de soltar que va a copiar */
+.rt-c.rt-sobre.rt-copia,.rt-band.rt-sobre.rt-copia{outline-color:var(--ok-500);background:color-mix(in srgb,var(--ok-500) 10%,transparent)}
+.rt-c.rt-sobre.rt-copia::after,.rt-band.rt-sobre.rt-copia::after{content:'+ Copiar aquí';align-self:center;font-size:11px;font-weight:650;color:var(--ok-700)}
 /* La bandeja «Por programar», a la derecha: abierta o en una barrita */
 .rt-band{flex:0 0 236px;width:236px;position:sticky;top:72px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);
   padding:10px;display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 96px);overflow:auto}
@@ -4035,7 +4046,8 @@ const UI = {
       }).join('') + '</tbody></table></div>';
   },
   /* Las órdenes de Facturación (ver Compras): al clic, su resumen */
-  tablaCompras(li, conUnidad) {
+  /* extra: filas que van al final, como las del registro manual en la ficha (ver Historico.filasCompras) */
+  tablaCompras(li, conUnidad, extra) {
     return '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Orden</th><th>Fecha</th>' + (conUnidad ? '<th>Vehículo</th>' : '') +
       '<th>Concepto</th><th>Proveedor</th><th>Estado</th><th class="num">Valor</th><th></th></tr></thead><tbody>' +
       li.map(o => {
@@ -4048,7 +4060,7 @@ const UI = {
           '<td class="trunc" style="max-width:280px" title="' + attr(r) + '">' + esc(r) + '</td>' +
           '<td class="trunc" style="max-width:220px" title="' + attr(o.proveedor) + '">' + esc(o.proveedor || '—') + '</td>' +
           '<td>' + Compras.pill(o) + '</td><td class="num">' + Money.format(o.valor) + '</td><td class="tr txt-3">' + Icon('chevR', '', 14) + '</td></tr>';
-      }).join('') + '</tbody></table></div>';
+      }).join('') + (extra || '') + '</tbody></table></div>';
   }
 };
 
@@ -6125,7 +6137,8 @@ const Historico = {
     const filas = gs.map(g => {
       const v = guardado[g.k] || '', pro = v ? null : this.parecido(g.nombre);
       if (pro) nPro++;
-      return '<tr data-k="' + attr(g.k) + '" data-v="' + attr(v) + '"' + (pro ? ' data-pro="' + attr(pro.id) + '"' : '') + '>' +
+      return '<tr data-k="' + attr(g.k) + '" data-v="' + attr(v) + '"' + (v ? ' data-rev="1"' + (UIState.hpVer ? '' : ' class="hidden"') : '') +
+        (pro ? ' data-pro="' + attr(pro.id) + '"' : '') + '>' +
         '<td><b>' + esc(g.nombre) + '</b></td><td class="num">' + g.n + '</td><td class="num nowrap">' + esc(Money.format(g.valor)) + '</td>' +
         '<td class="nowrap">' + esc(g.ult ? Fecha.corta(g.ult) : '—') + '</td>' +
         '<td><select class="inp hp-sel" aria-label="El proveedor de Facturación"><option value="">Sin emparejar</option>' +
@@ -6133,12 +6146,15 @@ const Historico = {
           provs.map(f => '<option value="' + attr(f.id) + '"' + (v === f.id ? ' selected' : '') + '>' + esc(f.nombre) + '</option>').join('') + '</select>' +
           (pro ? '<div class="dias hp-pro">Propuesto: <b>' + esc(pro.nombre) + '</b> · <span class="link" data-act="histProvUsar">Usar</span></div>' : '') + '</td></tr>';
     }).join('');
-    const hechos = gs.filter(g => guardado[g.k]).length;
+    /* Los revisados se van quitando de la vista (Juan, 07/11/2026); si ya están todos, se dice */
+    const hechos = gs.filter(g => guardado[g.k]).length, ver = '<span class="link" data-act="histProvVer">' + (UIState.hpVer ? 'Esconder los revisados' : 'Ver los revisados') + '</span>';
     return UI.card('Del ' + this.ETIQUETA.toLowerCase(),
       '<div class="tbl-wrap"><table class="tbl" id="hpTabla"><thead><tr><th>Como venía escrito</th><th class="num">Líneas</th><th class="num">Valor</th>' +
-        '<th>La última</th><th>Es este de Facturación</th></tr></thead><tbody>' + filas + '</tbody></table></div>',
+        '<th>La última</th><th>Es este de Facturación</th></tr></thead><tbody>' + filas +
+        (hechos === gs.length ? '<tr class="hp-todos' + (UIState.hpVer ? ' hidden' : '') + '"><td colspan="5" class="txt-3">Ya los revisaste todos.</td></tr>' : '') +
+        '</tbody></table></div>',
       { flush: true, cls: 'mt16', sub: gs.length + ' proveedores escritos a mano, sin NIT · ' + hechos + (hechos === 1 ? ' revisado' : ' revisados') +
-          ' · no cambia nada en Facturación',
+          (hechos ? ' (' + ver + ')' : '') + ' · no cambia nada en Facturación',
         act: (nPro ? '<button class="btn btn-sm" data-act="histProvTodas">Usar las ' + nPro + (nPro === 1 ? ' propuesta' : ' propuestas') + '</button>' : '') +
           '<button class="btn btn-sm btn-primary" data-act="histProvGuardar" id="hpGuardar" disabled>Guardar</button>' });
   },
@@ -6147,6 +6163,19 @@ const Historico = {
   /* En Taller SINUGRAVAS, debajo de los arreglos de Flota (Juan, 07/11/2026: «debajo de todas las que yo he hecho, salieran las del
      Excel»): una línea de separación y cada línea con las mismas columnas, la pastilla «Manual» y, al abrirla, la ventana de solo
      lectura. Sin conductor: el de hoy no es el de entonces */
+  /* En Compras de la ficha (Juan, 07/11/2026: «que sí salga y sí contabilice»): las líneas de la unidad debajo de sus órdenes, con las
+     mismas columnas (ver UI.tablaCompras) y la pastilla «Manual»; cada una es una factura de repuestos o de mano de obra */
+  filasCompras(xs) {
+    if (!xs.length) return '';
+    return '<tr class="hx-sep"><td colspan="7">' + this.separador(xs) + '</td></tr>' + xs.map(x => {
+      const que = x.trabajo || x.repuestos || x.falla || '—', prov = this.prov(x);
+      return '<tr class="row-click" data-act="verHistorico" data-h="' + attr(x.id) + '" title="Ver la línea del registro manual">' +
+        '<td class="mono nowrap">' + esc(x.id) + '</td><td class="nowrap">' + esc(x.fecha ? Fecha.corta(x.fecha) : 'Sin fecha') + '</td>' +
+        '<td class="trunc" style="max-width:280px" title="' + attr(que) + '">' + esc(que) + '</td>' +
+        '<td class="trunc" style="max-width:220px" title="' + attr(prov) + '">' + esc(prov || '—') + '</td>' +
+        '<td>' + UI.pill('nr', 'Manual') + '</td><td class="num">' + Money.format(x.valor) + '</td><td class="tr txt-3">' + Icon('chevR', '', 14) + '</td></tr>';
+    }).join('');
+  },
   /* Lo que dice la línea que separa lo de Flota del registro manual: de cuándo a cuándo, cuántas líneas y cuánto suman */
   separador(xs) {
     const fs = xs.map(x => x.fecha).filter(Boolean).sort(), total = xs.reduce((s, x) => s + x.valor, 0);
@@ -10388,18 +10417,23 @@ const Vistas = {
   },
   /* Las órdenes de Facturación de esta unidad (ver Compras): se hacen allá */
   tab_oc(u) {
-    const li = Compras.de(u), y = String(HOY.getFullYear());
-    if (!li.length && Compras.estado !== 'listo') return Compras.aviso();
+    Historico.pedir();
+    const li = Compras.de(u), y = String(HOY.getFullYear()), xs = Historico.de(u);
+    if (!li.length && !xs.length && Compras.estado !== 'listo') return Compras.aviso();
     const delAnio = li.filter(o => o.es_gasto && o.fecha && o.fecha.startsWith(y)), espera = li.filter(o => o.estado === 'ESPERANDO'), ult = li[0];
-    const kpis = li.length ? '<div class="grid g3 mb16">' +
-        UI.kpi({ label: 'Gastado en ' + y, valor: esc(Money.format(Compras.suma(delAnio))), icono: 'cart', meta: 'En contabilidad o pagado' }) +
+    /* Con el registro manual: suma en lo gastado del año, y la última compra puede ser suya */
+    const exA = xs.filter(x => (x.fecha || '').startsWith(y)).reduce((s, x) => s + x.valor, 0);
+    const ultX = xs[0] && xs[0].fecha && (!ult || xs[0].fecha > (ult.fecha || '')) ? xs[0] : null;
+    const kpis = li.length || xs.length ? '<div class="grid g3 mb16">' +
+        UI.kpi({ label: 'Gastado en ' + y, valor: esc(Money.format(Compras.suma(delAnio) + exA)), icono: 'cart', meta: 'En contabilidad o pagado' + Historico.meta(exA) }) +
         UI.kpi({ label: 'Esperando cotización', valor: esc(Money.format(Compras.suma(espera))), icono: 'clock', color: 'var(--warn-500)',
           meta: espera.length ? espera.length + (espera.length === 1 ? ' orden' : ' órdenes') + ', sin contar como gasto' : 'Ninguna orden esperando' }) +
-        UI.kpi({ label: 'Última compra', valor: esc(Fecha.corta(ult.fecha)), icono: 'calendar', color: 'var(--ink-400)', meta: esc(Compras.resumen(ult)) }) +
+        UI.kpi({ label: 'Última compra', valor: esc(Fecha.corta((ultX || ult).fecha)), icono: 'calendar', color: 'var(--ink-400)',
+          meta: esc(ultX ? Historico.ETIQUETA + ' · ' + (ultX.trabajo || ultX.repuestos || '') : Compras.resumen(ult)) }) +
       '</div>' : '';
-    return Compras.aviso() + kpis + UI.card('Compras de esta unidad', li.length ? UI.tablaCompras(li, false)
+    return Compras.aviso() + kpis + UI.card('Compras de esta unidad', li.length || xs.length ? UI.tablaCompras(li, false, Historico.filasCompras(xs))
       : UI.empty('cart', 'Sin compras', 'Las órdenes que se hagan en Facturación para este vehículo aparecen aquí.'),
-      { flush: true, sub: 'Vienen de Facturación' });
+      { flush: true, sub: 'Vienen de Facturación' + (xs.length ? ' · debajo, el ' + Historico.ETIQUETA.toLowerCase() : '') });
   },
   /* El combustible de esta unidad: sus tanqueos de Distracom (ver Tanqueos) */
   tab_comb(u) {
@@ -11385,6 +11419,10 @@ Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
   mantTab: 'vehiculos', mantTipo: 'todos',
   /* Taller SINUGRAVAS: si los números de los botones cuentan también el registro manual; al entrar, apagado (Juan, 07/11/2026) */
   tallerX: false,
+  /* Proveedores → «Del registro manual»: si se ven también los ya revisados (al entrar, escondidos) */
+  hpVer: false,
+  /* Taller SINUGRAVAS: el mes de las tarjetas de arriba («aaaa-mm»); vacío, el de hoy */
+  tallerMes: '',
   /* La pestaña Novedades: sin atender, en el taller o cerradas, y el vehículo */
   novF: 'pend', novU: '',
   /* El plano de una unidad: la parte y la llanta escogidas, el color y el período */
@@ -11697,10 +11735,8 @@ Object.assign(Vistas, {
       despues: () => Plano.buscador() };
     const f = UIState.mant;
     const todos = Datos.mantenimientos.slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
-    const delMes = m => { const d = Fecha.parse(m.fecha); return d.getMonth() === HOY.getMonth() && d.getFullYear() === HOY.getFullYear(); };
     const taller = todos.filter(m => m.estado === 'taller'), prog = todos.filter(m => m.estado === 'programado'), vencidos = prog.filter(Programado.vencido);
     const sinOrden = todos.filter(m => Compras.malas(m)), pend = todos.filter(m => Pendiente.de(m).length);
-    const ultPrev = todos.find(m => m.tipo === 'preventivo' && /aceite/i.test(m.trabajo || ''));
     const lista = todos.filter(m => f === 'todos' || (f === 'taller' || f === 'programado' ? m.estado === f : f === 'pendientes' ? Pendiente.de(m).length : m.tipo === f));
     /* Debajo, el registro manual (ver Historico.filasTaller): en Todos, y en Preventivos o Correctivos las de ese tipo */
     Historico.pedir();
@@ -11716,15 +11752,45 @@ Object.assign(Vistas, {
     /* Los otros tipos del registro manual (llantas, lavado…), que solo van en Todos */
     const otros = Object.entries(xs0.reduce((o, x) => { const k = String(x.tipo || 'sin tipo').toLowerCase(); if (k !== 'preventivo' && k !== 'correctivo') o[k] = (o[k] || 0) + 1; return o; }, {}))
       .sort((a, b) => b[1] - a[1]);
+    /* Las tarjetas de arriba, del mes que se escoja (Juan, 07/11/2026: «por defecto siempre va a estar el mes actual, pero que permita a
+       uno escoger qué mes muestra»), y con la casilla también el registro manual. «En el taller» es el de ahora en el mes en curso; en
+       uno pasado, los vehículos que pasaron por el taller ese mes. El cambio de aceite: el último hasta el fin de ese mes */
+    const mesHoy = hoyISO.slice(0, 7), mesK = UIState.tallerMes || mesHoy, esHoy = mesK === mesHoy, iniK = mesK + '-01', finK = mesK + '-31';
+    const mesTxtK = Fecha.mes(Fecha.parse(iniK), true).toLowerCase(), enMesK = fe => (fe || '').slice(0, 7) === mesK;
+    const deTipoX = k => xs0.filter(x => enMesK(x.fecha) && String(x.tipo || '').toLowerCase() === k), prevX = deTipoX('preventivo'), corrX = deTipoX('correctivo');
+    const prevK = todos.filter(m => m.tipo === 'preventivo' && enMesK(m.fecha)), corrK = todos.filter(m => m.tipo === 'correctivo' && m.estado !== 'programado' && enMesK(m.fecha));
+    const pasaron = esHoy ? [] : [...new Set(todos.filter(m => m.tipo === 'correctivo' && m.estado !== 'programado' && m.fecha <= finK &&
+      (m.estado === 'taller' || (m.salida || m.fecha) >= iniK)).map(m => m.unidad).concat(corrX.map(x => x.unidad).filter(Boolean)))];
+    const aceiteK = todos.find(m => m.tipo === 'preventivo' && /aceite/i.test(m.trabajo || '') && m.fecha <= finK);
+    /* Del registro manual, los preventivos que hablan de aceite y no son de aceite hidráulico */
+    const aceiteX = xs0.filter(x => x.fecha && x.fecha <= finK && String(x.tipo || '').toLowerCase() === 'preventivo' && /aceite/i.test(x.trabajo || '') &&
+      !/hidr[aá]ulic/i.test(x.trabajo || '')).sort((a, b) => b.fecha.localeCompare(a.fecha))[0];
+    const ultAc = aceiteX && (!aceiteK || aceiteX.fecha > aceiteK.fecha) ? { fecha: aceiteX.fecha, u: Q.unidad(aceiteX.unidad), quien: Historico.ETIQUETA }
+      : aceiteK ? { fecha: aceiteK.fecha, u: Q.unidad(aceiteK.unidad), quien: (Q.provDe(aceiteK) || {}).nombre } : null;
+    const conManual = n => (n ? ' · ' + n + ' del ' + Historico.ETIQUETA.toLowerCase() : '');
+    /* Los meses que se pueden escoger: del primero con algo (en Flota o en el registro manual) al de hoy */
+    const primero = [todos.length ? todos[todos.length - 1].fecha : ''].concat(Historico.lista.map(x => x.fecha || '')).filter(Boolean).sort()[0] || hoyISO;
+    const mesesK = [];
+    for (const d = Fecha.parse(mesHoy + '-01'); Fecha.iso(d).slice(0, 7) >= primero.slice(0, 7) && mesesK.length < 120; d.setMonth(d.getMonth() - 1)) {
+      mesesK.push(Fecha.iso(d).slice(0, 7));
+    }
     const html = head + tabs +
+      /* El mes de las tarjetas */
+      '<div class="tk-mes"><label for="tkMes">Las tarjetas muestran</label><select class="inp" id="tkMes">' +
+        mesesK.map(k => '<option value="' + k + '"' + (k === mesK ? ' selected' : '') + '>' + esc(Fecha.mes(Fecha.parse(k + '-01'))) + (k === mesHoy ? ' · este mes' : '') + '</option>').join('') +
+      '</select></div>' +
       '<div class="grid g4 mb16 mant-kpis mant-kpis-h">' +
-        UI.kpi({ label: 'Preventivos del mes', valor: todos.filter(m => m.tipo === 'preventivo' && delMes(m)).length, icono: 'tool', color: 'var(--info-500)', meta: 'Cambios de aceite y otros servicios', act: 'filtroMant', v: 'preventivo' }) +
-        UI.kpi({ label: 'Correctivos del mes', valor: todos.filter(m => m.tipo === 'correctivo' && m.estado !== 'programado' && delMes(m)).length, icono: 'camera', color: 'var(--warn-500)', meta: 'Visitas al taller', act: 'filtroMant', v: 'correctivo' }) +
-        UI.kpi({ label: 'En el taller ahora', valor: taller.length, icono: 'warn', color: 'var(--dang-500)', vcolor: taller.length ? 'var(--dang-500)' : '',
+        UI.kpi({ label: esHoy ? 'Preventivos del mes' : 'Preventivos de ' + mesTxtK, valor: prevK.length + prevX.length, icono: 'tool', color: 'var(--info-500)',
+          meta: 'Cambios de aceite y otros servicios' + conManual(prevX.length), act: 'filtroMant', v: 'preventivo' }) +
+        UI.kpi({ label: esHoy ? 'Correctivos del mes' : 'Correctivos de ' + mesTxtK, valor: corrK.length + corrX.length, icono: 'camera', color: 'var(--warn-500)',
+          meta: 'Visitas al taller' + conManual(corrX.length), act: 'filtroMant', v: 'correctivo' }) +
+        (esHoy ? UI.kpi({ label: 'En el taller ahora', valor: taller.length, icono: 'warn', color: 'var(--dang-500)', vcolor: taller.length ? 'var(--dang-500)' : '',
           meta: esc((taller.map(m => UI.placaTxt(Q.unidad(m.unidad))).join(' · ') || 'Ninguna') +
-            (prog.length ? ' · ' + prog.length + (prog.length === 1 ? ' programado' : ' programados') : '')), act: 'filtroMant', v: 'taller' }) +
-        UI.kpi({ label: 'Último cambio de aceite', valor: ultPrev ? esc(Fecha.hace(ultPrev.fecha)) : '—', icono: 'clock',
-          meta: ultPrev ? esc([UI.placaTxt(Q.unidad(ultPrev.unidad)), (Q.provDe(ultPrev) || {}).nombre].filter(Boolean).join(' · ')) : '' }) +
+            (prog.length ? ' · ' + prog.length + (prog.length === 1 ? ' programado' : ' programados') : '')), act: 'filtroMant', v: 'taller' })
+          : UI.kpi({ label: 'Pasaron por el taller en ' + mesTxtK, valor: pasaron.length, icono: 'warn', color: 'var(--dang-500)',
+            meta: esc(pasaron.map(id => Q.unidad(id)).filter(Boolean).map(u => UI.placaTxt(u)).join(' · ') || 'Ninguno') })) +
+        UI.kpi({ label: esHoy ? 'Último cambio de aceite' : 'Último cambio de aceite hasta ' + mesTxtK, valor: ultAc ? esc(esHoy ? Fecha.hace(ultAc.fecha) : Fecha.corta(ultAc.fecha)) : '—',
+          icono: 'clock', meta: ultAc ? esc([ultAc.u ? UI.placaTxt(ultAc.u) : '', ultAc.quien].filter(Boolean).join(' · ')) : '' }) +
       '</div>' +
       (vencidos.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (vencidos.length === 1 ? 'Un arreglo programado no ha ingresado' : vencidos.length + ' arreglos programados no han ingresado') +
         ':</b> ' + esc(vencidos.map(m => UI.placaTxt(Q.unidad(m.unidad)) + ' (' + Fecha.num(m.fecha) + ')').join(', ')) + '. Si ya llegó, use «Ingresó»; si se movió la cita, cámbiela con un clic en su fila.' +
@@ -11796,6 +11862,8 @@ Object.assign(Vistas, {
     return { titulo: 'Mantenimientos', sub: 'Preventivos y correctivos', html,
       /* Desde «Abiertas» de Novedades: el caso, resaltado un momento (ver Acciones.irCaso) */
       despues: () => {
+        const sm = $('#tkMes');
+        if (sm) sm.addEventListener('change', () => { UIState.tallerMes = sm.value === hoyISO.slice(0, 7) ? '' : sm.value; Router.pintar(true); });
         const id = UIState.resaltar, tr = id && $('.tbl-mant tr[data-mid="' + id + '"]');
         UIState.resaltar = null;
         if (!tr) return;
@@ -15002,6 +15070,12 @@ Object.assign(Acciones, {
   excelMantBajar(el) { if (!el.disabled) ExcelMant.bajar(el.closest('.modal-bd')); },
   /* Taller SINUGRAVAS: contar también el registro manual en los números de los botones */
   tallerConManual(el) { UIState.tallerX = el.checked; Router.pintar(true); },
+  /* Proveedores → «Del registro manual»: mostrar o esconder los revisados, sin perder lo que no se ha guardado */
+  histProvVer(el) {
+    UIState.hpVer = !UIState.hpVer;
+    $$('#hpTabla tr[data-rev], #hpTabla tr.hp-todos').forEach(tr => tr.classList.toggle('hidden'));
+    el.textContent = UIState.hpVer ? 'Esconder los revisados' : 'Ver los revisados';
+  },
   /* Proveedores → «Del registro manual» (ver Historico.tarjetaProv) */
   histProvUsar(el) { const tr = el.closest('tr'); $('.hp-sel', tr).value = tr.dataset.pro; Historico.hpCambio(); },
   histProvTodas() {
@@ -19372,7 +19446,7 @@ const Rutas = {
     return '<div class="rt-ley">' + this.tipos().map(t => '<span>' + this.punto(t) + esc(t) + '</span>').join('') +
       '<span class="rt-ley-sep"></span><span>' + Icon('truck', '', 11) + 'En ruta</span><span>' + Icon('check', '', 11) + 'Hecho</span><span>' + Icon('x', '', 11) + 'No se hizo</span>' +
       '<span>' + Icon('warn', '', 11) + 'Revisar antes de salir</span><span class="rt-ley-sep"></span><span>' + Icon('mover', '', 11) +
-      'Arrastre una ficha para moverla · con Ctrl se copia</span></div>';
+      'Arrastre una ficha para moverla · con Ctrl presionada se copia (la casilla se pone verde)</span></div>';
   },
 
   /* ---- Por camión: una fila por camión y una columna por día. Primero los
@@ -19420,11 +19494,17 @@ const Rutas = {
     const z = $('#rtZona');
     if (!z) return;
     const TIPO = 'application/x-viaje', es = e => Array.from(e.dataTransfer.types || []).includes(TIPO);
-    const limpiar = () => $$('.rt-sobre', z).forEach(x => x.classList.remove('rt-sobre'));
-    const fin = () => { document.documentElement.classList.remove('arrastrando'); limpiar(); $$('.rt-arr', z).forEach(x => x.classList.remove('rt-arr')); };
+    /* Copiar o mover (Juan, 07/11/2026: «a veces funciona con control y a veces no»): manda lo que mostró la casilla la última vez que
+       se pasó por ella. Si la Ctrl se soltó un instante antes que el mouse, igual copia, porque eso decía la casilla. Alt (Option en
+       Mac) también copia */
+    let copia = false;
+    const conTecla = e => e.ctrlKey || e.altKey || e.metaKey;
+    const limpiar = () => $$('.rt-sobre', z).forEach(x => x.classList.remove('rt-sobre', 'rt-copia'));
+    const fin = () => { copia = false; document.documentElement.classList.remove('arrastrando'); limpiar(); $$('.rt-arr', z).forEach(x => x.classList.remove('rt-arr')); };
     z.addEventListener('dragstart', e => {
       const v = e.target.closest('.rt-v');
       if (!v) return;
+      copia = conTecla(e);
       e.dataTransfer.setData(TIPO, v.dataset.v);
       e.dataTransfer.effectAllowed = 'copyMove';
       document.documentElement.classList.add('arrastrando');
@@ -19440,15 +19520,18 @@ const Rutas = {
       const c = es(e) && e.target.closest('[data-cel]');
       if (!c) return;
       e.preventDefault();
-      e.dataTransfer.dropEffect = e.ctrlKey || e.altKey ? 'copy' : 'move';
+      copia = conTecla(e);
+      e.dataTransfer.dropEffect = copia ? 'copy' : 'move';
       if (!c.classList.contains('rt-sobre')) { limpiar(); c.classList.add('rt-sobre'); }
+      /* Con Ctrl, la casilla dice «+ Copiar aquí» */
+      c.classList.toggle('rt-copia', copia);
     });
-    z.addEventListener('dragleave', e => { const c = e.target.closest('[data-cel]'); if (c && !c.contains(e.relatedTarget)) c.classList.remove('rt-sobre'); });
+    z.addEventListener('dragleave', e => { const c = e.target.closest('[data-cel]'); if (c && !c.contains(e.relatedTarget)) c.classList.remove('rt-sobre', 'rt-copia'); });
     z.addEventListener('drop', e => {
       const c = es(e) && e.target.closest('[data-cel]');
       if (!c) return;
       e.preventDefault();
-      const id = e.dataTransfer.getData(TIPO), copiar = e.ctrlKey || e.altKey;
+      const id = e.dataTransfer.getData(TIPO), copiar = copia || conTecla(e) || e.dataTransfer.dropEffect === 'copy';
       fin();
       this.mover(id, c.dataset.u || null, c.dataset.f || null, copiar);
     });
