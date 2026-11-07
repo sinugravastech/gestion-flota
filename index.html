@@ -19627,8 +19627,10 @@ const Rutas = {
   enOrden: (a, b) => (a.hora || '').localeCompare(b.hora || '') || (a.id < b.id ? -1 : 1),
   camiones() { return Datos.unidades.filter(u => u.tipo === 'carga').sort((a, b) => String(a.placa).localeCompare(String(b.placa))); },
   placa(id) { const u = Q.unidad(id); return u ? UI.placaTxt(u) : 'sin camión'; },
-  /* El conductor del viaje: el que se escogió o, si no, el del camión */
+  /* El conductor del viaje: el escrito a mano (no está en la lista), el que se escogió o, si no, el del camión. El escrito se reconoce
+     por su nombre */
   conductor(v) {
+    if (v.conductorTxt) return { id: 'txt:' + Catalogo.clave(v.conductorTxt), nombre: v.conductorTxt, docs: {}, escrito: true };
     if (v.conductor) return Q.conductor(v.conductor);
     const u = v.unidad ? Q.unidad(v.unidad) : null;
     return u ? Q.conductorDe(u) : null;
@@ -19642,7 +19644,7 @@ const Rutas = {
   /* Al salir o al cerrarse, el viaje se queda con el conductor de ese momento:
      si después le cambian el conductor al camión, el viaje no cambia */
   fijarConductor(v) {
-    if (v.estado === 'prog' || v.conductor || !v.unidad) return;
+    if (v.estado === 'prog' || v.conductor || v.conductorTxt || !v.unidad) return;
     const c = this.conductor(v);
     if (c) v.conductor = c.id;
   },
@@ -19690,7 +19692,7 @@ const Rutas = {
     /* El conductor de cada viaje (Juan, 07/11/2026: «que cada ficha de la semana tenga el nombre por defecto que está asociado a ese
        vehículo»): el del camión o, en azul, el que se escogió para ese viaje. Se cambia abriendo el viaje */
     const u = v.unidad ? Q.unidad(v.unidad) : null, cd = u || v.conductor ? this.conductor(v) : null, def = u ? Q.conductorDe(u) : null;
-    const otro = Boolean(v.conductor && cd && (!def || def.id !== cd.id));
+    const otro = Boolean((v.conductor || v.conductorTxt) && cd && (!def || def.id !== cd.id));
     const tit = this.nombreTMS(r) + ' · ' + (prog ? this.ESTADOS[v.estado][0] : 'por programar') +
       (u || v.conductor ? ' · Conductor: ' + (cd ? cd.nombre + (otro ? ' (el del camión es ' + (def ? def.nombre : 'ninguno') + ')' : '') : 'sin asignar') : '') +
       (al.length ? ' · Revisar: ' + al.join('; ') : '') + ' · arrástrela para moverla';
@@ -19831,13 +19833,14 @@ const Rutas = {
       /* En el mismo camión, la copia se queda con el conductor que se ve en la ficha; en otro, toma el de ese camión */
       const n = { id: this.nuevoId('v'), ruta: v.ruta, unidad: dest.unidad, conductor: dest.unidad && dest.unidad === v.unidad ? v.conductor || null : null,
         fecha: dest.fecha, hora: v.hora, ton: v.ton, estado: 'prog', nota: '', cambios: [] };
+      if (dest.unidad && dest.unidad === v.unidad && v.conductorTxt) n.conductorTxt = v.conductorTxt;
       this.anotar(n, 'Se copió del viaje de ' + antes);
       Datos.viajes.push(n);
       this.ultimo = { copia: [n.id] };
       txt = 'Viaje copiado a ' + this.lugar(n);
     } else {
       this.ultimo = { antes: [JSON.parse(JSON.stringify(v))] };
-      if (v.unidad !== dest.unidad) v.conductor = null;
+      if (v.unidad !== dest.unidad) { v.conductor = null; delete v.conductorTxt; }
       Object.assign(v, dest);
       this.fijarConductor(v);
       this.anotar(v, !dest.unidad ? 'Se pasó a «Por programar»' : antes === '«Por programar»' ? 'Se programó: ' + this.lugar(v) : 'Se movió de ' + antes + ' a ' + this.lugar(v));
@@ -19961,8 +19964,9 @@ const Rutas = {
      historial de cambios. Guardar se prende solo si algo cambió ---- */
   leer(m) {
     const e = $('#rtE button.on', m);
-    return { ruta: $('#rtR', m).value, unidad: $('#rtU', m).value || null, conductor: $('#rtC', m).value || null, fecha: $('#rtF', m).value || null,
-      hora: $('#rtH', m).value, ton: this.tonLeer($('#rtT', m).value), estado: e ? e.dataset.v : 'prog', nota: $('#rtN', m).value.trim() };
+    const cs = $('#rtC', m).value, otro = cs === '__otro';
+    return { ruta: $('#rtR', m).value, unidad: $('#rtU', m).value || null, conductor: otro ? null : cs || null, conductorTxt: otro ? $('#rtCx', m).value.trim().replace(/\s+/g, ' ') : '',
+      fecha: $('#rtF', m).value || null, hora: $('#rtH', m).value, ton: this.tonLeer($('#rtT', m).value), estado: e ? e.dataset.v : 'prog', nota: $('#rtN', m).value.trim() };
   },
   abrir(id, o) {
     o = o || {};
@@ -19992,8 +19996,14 @@ const Rutas = {
         '<div class="field"><label for="rtR">Ruta</label>' + rutaSel + '</div>' +
         '<div class="row"><div class="field"><label for="rtU">Camión</label><select class="inp" id="rtU"><option value="">Sin camión todavía</option>' +
             opc(cams.map(x => [x.id, UI.placaTxt(x) + (x.clase ? ' · ' + x.clase : '') + (Q.tercero(x) ? ' · Tercero' : '')]), v.unidad || '') + '</select></div>' +
+          /* Si no está en la lista, se escribe (Juan, 07/11/2026); sugiere los que ya se escribieron en otros viajes */
           '<div class="field"><label for="rtC">Conductor</label><select class="inp" id="rtC"><option value="">' + esc(this.delCamion(v.unidad)) + '</option>' +
-            opc(conds.map(c => [c.id, c.nombre]), v.conductor || '') + '</select></div></div>' +
+            opc(conds.map(c => [c.id, c.nombre]), v.conductorTxt ? '' : v.conductor || '') +
+            '<option value="__otro"' + (v.conductorTxt ? ' selected' : '') + '>Otro: escribir el nombre…</option></select>' +
+            '<input class="inp mt8" id="rtCx" list="rtCxLista" maxlength="80" autocomplete="off" placeholder="Nombre del conductor" value="' + attr(v.conductorTxt || '') + '"' +
+              (v.conductorTxt ? '' : ' hidden') + '><datalist id="rtCxLista">' +
+            [...new Set(Datos.viajes.map(x => x.conductorTxt).filter(Boolean))].sort((a, b) => a.localeCompare(b)).map(n => '<option value="' + attr(n) + '">').join('') +
+            '</datalist></div></div>' +
         '<div class="row"><div class="field"><label for="rtF">Día</label><input class="inp" type="date" id="rtF" value="' + attr(v.fecha || '') + '"></div>' +
           '<div class="field"><label for="rtH">Hora de salida</label><input class="inp" type="time" id="rtH" value="' + attr(v.hora || '') + '"></div>' +
           '<div class="field"><label for="rtT">Toneladas</label><input class="inp" id="rtT" inputmode="decimal" autocomplete="off" value="' + attr(this.tonEsc(v.ton)) +
@@ -20028,6 +20038,7 @@ const Rutas = {
     });
     t.addEventListener('input', () => { const s = t.value.replace(/[^\d,.]/g, ''); if (s !== t.value) t.value = s; });
     $$('#rtE button', m).forEach(b => b.addEventListener('click', () => { $$('#rtE button', m).forEach(x => x.classList.toggle('on', x === b)); revisar(); }));
+    $('#rtC', m).addEventListener('change', () => { const cx = $('#rtCx', m); cx.hidden = $('#rtC', m).value !== '__otro'; if (!cx.hidden) cx.focus(); });
     ['input', 'change'].forEach(ev => m.addEventListener(ev, () => setTimeout(revisar)));
     revisar();
   },
@@ -20037,7 +20048,10 @@ const Rutas = {
     if (a.ruta !== d.ruta) out.push('Cambió la ruta de «' + this.nombre(this.ruta(a.ruta)) + '» a «' + this.nombre(this.ruta(d.ruta)) + '»');
     const la = this.lugar(a), ld = this.lugar(d);
     if (la !== ld) out.push(!this.programado(d) ? 'Se pasó a «Por programar»' : !this.programado(a) ? 'Se programó: ' + ld : 'Se movió de ' + la + ' a ' + ld);
-    if ((a.conductor || null) !== (d.conductor || null)) { const c = d.conductor ? Q.conductor(d.conductor) : null; out.push('Conductor: ' + (c ? c.nombre : 'el del camión')); }
+    if ((a.conductor || null) !== (d.conductor || null) || (a.conductorTxt || '') !== (d.conductorTxt || '')) {
+      const c = d.conductorTxt ? { nombre: d.conductorTxt + ' (escrito a mano)' } : d.conductor ? Q.conductor(d.conductor) : null;
+      out.push('Conductor: ' + (c ? c.nombre : 'el del camión'));
+    }
     if ((a.hora || '') !== (d.hora || '')) out.push('Hora de salida: ' + (a.hora || '—') + ' → ' + (d.hora || '—'));
     if ((a.ton == null ? null : +a.ton) !== d.ton) out.push('Toneladas: ' + this.tonTxt(a.ton) + ' → ' + this.tonTxt(d.ton));
     if (a.estado !== d.estado) out.push('Se marcó «' + this.ESTADOS[d.estado][0] + '»');
@@ -20054,6 +20068,7 @@ const Rutas = {
     const antes = v ? JSON.parse(JSON.stringify(v)) : null, notas = antes ? this.diferencias(antes, d) : [];
     if (!v) v = { id: this.nuevoId('v'), cambios: [] };
     Object.assign(v, d);
+    if (!v.conductorTxt) delete v.conductorTxt;
     this.fijarConductor(v);
     if (!antes) {
       this.anotar(v, this.programado(v) ? 'Se programó: ' + this.lugar(v) : 'Se creó en «Por programar»');
