@@ -228,6 +228,10 @@ table.tbl tfoot td{padding:9px 12px;border-top:2px solid var(--border-strong);fo
 .card > .tbl-wrap table.tbl tr:first-child th:first-child{border-top-left-radius:var(--radius-lg)}
 .tbl-wrap{overflow-x:auto}
 
+/* La marca de los vehículos de un tercero */
+.pill.p-ter{background:var(--info-50);color:var(--info-700)}
+.who-t .ter,.rt-u .rt-ter{color:var(--info-700);font-weight:650}
+.uc-l1 .p-ter{margin-left:auto}
 .pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10.5px;
   font-weight:700;letter-spacing:.03em;white-space:nowrap;line-height:1.6}
 .pill::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;flex:0 0 5px}
@@ -1569,6 +1573,7 @@ table.tbl:not(.tbl-mant) tr.hx-sep svg{vertical-align:-2px;margin-right:6px}
 .pl-bar{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;margin-bottom:12px}
 .pl-bar .lbl{font-size:11.5px;color:var(--text-3);font-weight:600}
 .pl-bar .seg + .lbl{margin-left:8px}
+.pl-bar .pl-per{width:auto;min-width:210px}
 /* La leyenda dice qué es cada color: cuántos arreglos o cuántos pesos */
 .pl-ley{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--text-2);margin-top:10px}
 .pl-ley > span{display:inline-flex;align-items:center;gap:6px}
@@ -1633,7 +1638,7 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .rt-v:hover,.rt-v:focus-visible{background:color-mix(in srgb,var(--c) 22%,transparent)}
 .rt-v:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 /* El nombre de la ruta en dos renglones si no cabe (con la bandeja abierta los días quedan más angostos) */
-.rt-v b{font-size:12px;font-weight:650;color:var(--text);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.rt-v b{font-size:11.5px;font-weight:650;color:var(--text);overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
 .rt-v span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2)}
 .rt-v em{display:inline-flex;font-style:normal}
 .rt-v .rt-ei{margin-left:auto}
@@ -1643,6 +1648,23 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .rt-v.e-no b{text-decoration:line-through}
 .rt-v.e-no .rt-ei{color:var(--dang-500)}
 .rt-v.rt-arr{opacity:.35}
+/* La imagen del tipo de operación: en la ficha, al lado de la hora (así el nombre tiene todo el ancho), y en lugar del punto de color.
+   No se arrastra sola: el clic es de la ficha */
+.rt-v .rt-ti{width:16px;height:16px;object-fit:contain;flex:0 0 auto;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
+.rt-img{width:16px;height:16px;object-fit:contain;flex:0 0 auto;vertical-align:-3px;pointer-events:none}
+/* Catálogo: la imagen y el color de cada tipo de operación */
+.cat-op.cat-tipo{align-items:center}
+.cat-img{flex:0 0 auto;width:46px;height:46px;border-radius:10px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;margin-right:12px;cursor:pointer}
+.cat-img img{width:38px;height:38px;object-fit:contain;pointer-events:none}
+.cat-img.vacia{border-style:dashed;color:var(--text-3);font-size:10.5px;line-height:1.15;flex-direction:column;gap:2px}
+.cat-img.solo{cursor:default}
+.cat-img:not(.solo):hover,.cat-img.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
+.cat-color{flex:0 0 auto;margin:0 10px;display:flex;cursor:pointer}
+.cat-color input{width:28px;height:28px;padding:0;border:2px solid var(--surface);border-radius:50%;box-shadow:0 0 0 1px var(--border);cursor:pointer;background:none}
+.cat-color input::-webkit-color-swatch-wrapper{padding:0}
+.cat-color input::-webkit-color-swatch{border:none;border-radius:50%}
+.cat-color input::-moz-color-swatch{border:none;border-radius:50%}
+.cat-color input:disabled{cursor:default}
 /* El conductor del viaje, en la ficha: en azul si ese día maneja otro; en naranja si no hay */
 .rt-v .rt-cd{margin-top:1px;gap:4px}
 .rt-v .rt-cd i{font-style:normal;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2070,7 +2092,7 @@ html[data-theme="dark"] .reg-sel .zchip.on{background:var(--accent-soft);color:v
   .pl-grid{gap:12px}
   .pl-bar{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 10px}
   .pl-bar .seg + .lbl{margin-left:0}
-  .pl-bar .seg{width:100%}
+  .pl-bar .seg,.pl-bar .pl-per{width:100%}
   .pl-bar .seg button{flex:1;justify-content:center;padding:0 6px;height:34px}
   .pl-pagina .plano-caja{padding:12px 6px 4px}
   .zchip{height:36px;font-size:12.5px}
@@ -3373,6 +3395,9 @@ const Config = {
   /* Los proveedores del registro manual que Juan emparejó con los de Facturación (ver Historico.tarjetaProv): nombre escrito, sin
      tildes → id de Facturación, «-» si no está allá o vacío si se dejó sin emparejar */
   histProv: {},
+  /* La imagen y el color de cada tipo de operación de Rutas (Juan, 07/11/2026; ver Rutas.estilo): clave del tipo → { img, color }.
+     Lo que no tenga, como siempre: sin imagen y el color por el orden de la lista */
+  tiposRuta: {},
   req: { carga: ['soat', 'tecno', 'tarjeta', 'vin', 'poliza'], maquinaria: ['tarjeta'], remolque: ['registro'], canoa: ['patente'] },
   comparendos: ['carga'],
   /* Los planos de mantenimiento: solo lo que se cambió en Configuración (el
@@ -3475,7 +3500,7 @@ const Catalogo = {
   usoTxt(l) {
     return l.sintomas ? 'Al abrir un caso, lo que se escribe en «¿Qué pasó?» sugiere estos componentes, y usted decide cuáles son'
       : l.tipo ? 'La clase al crear una unidad y en su hoja de vida (' + TIPOS[l.tipo].plural.toLowerCase() + ')'
-      : l.ruta === 'tipo' ? 'El tipo de operación de cada ruta; el color de sus viajes en el tablero sigue el orden de esta lista'
+      : l.ruta === 'tipo' ? 'El tipo de operación de cada ruta, con la imagen y el color de sus fichas en Rutas'
       : l.ruta ? 'El tipo interno de cada ruta, como en el Excel de la programación'
       : 'La categoría al registrar un conductor y en el formulario del preoperacional';
   },
@@ -3499,6 +3524,9 @@ const Catalogo = {
   renombrar(l, i, nuevo, enRegistros) {
     const items = this.lista(l.id), viejo = items[i];
     let n = 0;
+    /* La imagen y el color de un tipo de operación siguen con su nombre nuevo */
+    const kv = this.clave(viejo), kn = this.clave(nuevo), est = l.id === 'rutas.tipos' && (Config.tiposRuta || {})[kv];
+    if (est && kv !== kn) { const todos = Object.assign({}, Config.tiposRuta); todos[kn] = est; delete todos[kv]; Config.tiposRuta = todos; }
     if (enRegistros) {
       if (l.tipo) Datos.unidades.forEach(u => { if (u.tipo === l.tipo && u.clase === viejo) { u.clase = nuevo; n++; } });
       else if (l.ruta) Datos.rutas.forEach(r => { if (r[l.ruta] === viejo) { r[l.ruta] = nuevo; n++; } });
@@ -3525,6 +3553,85 @@ const Catalogo = {
     Config.catalogos = Config.catalogos || {};
     Config.catalogos[l.id] = items;
     Sincro.tocar();
+  },
+  /* La imagen o el color de un tipo de operación (ver Rutas.estilo); vacío, como siempre */
+  estiloTipo(i, cambio) {
+    const v = this.lista('rutas.tipos')[i];
+    if (v == null) return null;
+    const k = this.clave(v), todos = Object.assign({}, Config.tiposRuta), e = Object.assign({}, todos[k], cambio);
+    Object.keys(e).forEach(x => { if (!e[x]) delete e[x]; });
+    if (Object.keys(e).length) todos[k] = e; else delete todos[k];
+    Config.tiposRuta = todos;
+    Sincro.tocar();
+    Router.pintar(true);
+    return v;
+  },
+  async imagenTipo(i, archivo) {
+    try {
+      const v = this.estiloTipo(i, { img: await this.icono(archivo, 96) });
+      if (v) Toast.show('Listo: <b>' + esc(v) + '</b> ya tiene su imagen. Sale en sus fichas de Rutas.');
+    } catch (e) {
+      console.error(e);
+      Toast.show('No se pudo leer esa imagen. Pruebe con una JPG o PNG.', 'err');
+    }
+  },
+  /* La imagen recortada y achicada sola: si el borde es casi todo blanco, ese blanco se vuelve transparente, se recorta a lo que queda
+     y se centra en un cuadro de «lado» px; si no (una foto), se recorta al centro. Queda en webp, de unos 5 KB */
+  async icono(archivo, lado) {
+    const bm = await createImageBitmap(archivo);
+    const k = Math.min(1, 480 / Math.max(bm.width, bm.height)), w = Math.max(1, Math.round(bm.width * k)), h = Math.max(1, Math.round(bm.height * k));
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.drawImage(bm, 0, 0, w, h);
+    const im = x.getImageData(0, 0, w, h), d = im.data, blanco = p => d[p * 4] > 232 && d[p * 4 + 1] > 232 && d[p * 4 + 2] > 232;
+    const borde = [];
+    for (let i = 0; i < w; i++) borde.push(i, (h - 1) * w + i);
+    for (let i = 0; i < h; i++) borde.push(i * w, i * w + w - 1);
+    const fondo = borde.filter(blanco).length / borde.length > 0.6;
+    let sx = 0, sy = 0, sw = w, sh = h;
+    if (fondo) {
+      const vis = new Uint8Array(w * h), pila = borde.slice();
+      while (pila.length) {
+        const p = pila.pop();
+        if (vis[p]) continue;
+        if (!blanco(p)) { vis[p] = 2; continue; }
+        vis[p] = 1;
+        d[p * 4 + 3] = 0;
+        const X = p % w, Y = (p - X) / w;
+        if (X > 0) pila.push(p - 1);
+        if (X < w - 1) pila.push(p + 1);
+        if (Y > 0) pila.push(p - w);
+        if (Y < h - 1) pila.push(p + w);
+      }
+      /* El borde del dibujo, casi blanco, se suaviza */
+      for (let p = 0; p < w * h; p++) {
+        if (vis[p] !== 2) continue;
+        const m = Math.min(d[p * 4], d[p * 4 + 1], d[p * 4 + 2]);
+        if (m > 200) d[p * 4 + 3] = Math.round(255 * (255 - m) / 55);
+      }
+      x.putImageData(im, 0, 0);
+      let x0 = w, y0 = h, x1 = -1, y1 = -1;
+      for (let Y = 0; Y < h; Y++) for (let X = 0; X < w; X++) {
+        if (d[(Y * w + X) * 4 + 3] <= 24) continue;
+        if (X < x0) x0 = X;
+        if (X > x1) x1 = X;
+        if (Y < y0) y0 = Y;
+        if (Y > y1) y1 = Y;
+      }
+      if (x1 >= x0) { sx = x0; sy = y0; sw = x1 - x0 + 1; sh = y1 - y0 + 1; }
+    } else {
+      const m = Math.min(w, h);
+      sx = (w - m) / 2; sy = (h - m) / 2; sw = sh = m;
+    }
+    const o = document.createElement('canvas');
+    o.width = o.height = lado;
+    const ox = o.getContext('2d'), s = (fondo ? lado * 0.92 : lado) / Math.max(sw, sh);
+    ox.imageSmoothingQuality = 'high';
+    ox.drawImage(c, sx, sy, sw, sh, (lado - sw * s) / 2, (lado - sh * s) / 2, sw * s, sh * s);
+    let url = o.toDataURL('image/webp', 0.86);
+    if (url.length > 60000) url = o.toDataURL('image/webp', 0.7);
+    return url;
   },
   /* Lo edita quien puede configurar; los demás lo ven */
   puede: () => Cuenta.admin || Cuenta.acciones.includes('configurar') || !Cuenta.rol
@@ -3655,6 +3762,10 @@ const Est = {
 };
 const Q = {
   unidad: id => Datos.unidades.find(u => u.id === id),
+  /* Los vehículos de un tercero que les presta el servicio (Juan, 07/11/2026): salen en Flota, Documentos y Rutas con la marca
+     «Tercero», pero no cuentan en mantenimiento, combustible, gasto ni cambios de aceite */
+  tercero: u => Boolean(u && u.tercero),
+  terceroTxt: u => (u && u.tercero ? 'De un tercero' + (u.tercero.quien ? ': ' + u.tercero.quien : '') + (u.tercero.contacto ? ' · ' + u.tercero.contacto : '') : ''),
   /* Si se eliminó, se busca en el archivo para que el historial conserve su nombre */
   conductor: id => Datos.conductores.find(c => c.id === id) || ((Datos.archivo || {}).conductores || []).find(c => c.id === id),
   /* Una sola regla para el conductor de un remolque (Juan, 02/11/2026): es el
@@ -3692,6 +3803,7 @@ const Q = {
     const f = UIState.flota, q = f.q.trim().toLowerCase();
     return Datos.unidades.filter(u =>
       (f.tipo === 'todas' || u.tipo === f.tipo) &&
+      (!f.prop || f.prop === 'todas' || (f.prop === 'terceros') === Q.tercero(u)) &&
       (f.estado === 'todos' || Est.unidad(u).k === f.estado) &&
       (!q || [u.placa, UI.placaTxt(u), u.marca, u.linea, u.clase, u.alias].join(' ').toLowerCase().includes(q)));
   },
@@ -3897,8 +4009,10 @@ const UI = {
   /* «extra»: una línea más debajo, como el conductor en Taller SINUGRAVAS */
   unidadCelda(u, extra) {
     return '<div class="who">' + this.thumb(u) + '<div class="who-t"><b class="mono">' + esc(this.placaTxt(u)) + '</b><span>' +
-      esc(u.clase + ' · ' + this.nombre(u)) + '</span>' + (extra || '') + '</div></div>';
+      esc(u.clase + ' · ' + this.nombre(u)) + (Q.tercero(u) ? ' · <b class="ter" title="' + attr(Q.terceroTxt(u)) + '">Tercero</b>' : '') + '</span>' + (extra || '') + '</div></div>';
   },
+  /* La marca de los vehículos de un tercero */
+  pillTercero(u) { return Q.tercero(u) ? '<span class="pill p-ter" title="' + attr(Q.terceroTxt(u)) + '">' + Icon('briefcase', '', 11) + 'Tercero</span>' : ''; },
   iniciales(n) { const p = String(n || '').split(/\s+/).filter(Boolean); return ((p[0] || '').charAt(0) + (p[1] || '').charAt(0)).toUpperCase(); },
   corto(c) { return c ? (c.corto || c.nombre.split(/\s+/).slice(0, 2).join(' ')) : 'Sin asignar'; },
   persona(c) {
@@ -5392,7 +5506,7 @@ const Shell = {
    ========================================================================== */
 const UIState = {
   /* sel: las unidades marcadas mientras se está seleccionando; null si no */
-  flota: { tipo: 'todas', estado: 'todos', q: '', modo: 'fotos', sel: null },
+  flota: { tipo: 'todas', estado: 'todos', q: '', modo: 'fotos', sel: null, prop: 'todas' },
   /* El período del dashboard: mes, trimestre o año */
   dash: 'mes',
   /* El filtro de Cambios de aceite: todos, bad, warn, ok o nr */
@@ -6044,6 +6158,10 @@ const Tablero = {
      (con el taller y los repuestos aparte, cada lado con la suya) y el
      combustible de Distracom (ver Tanqueos) */
   gastos() {
+    /* Sin los vehículos de un tercero (ver Q.tercero) */
+    return this.todosGastos().filter(g => !g.unidad || !Q.tercero(Q.unidad(g.unidad)));
+  },
+  todosGastos() {
     return Compras.gastos()
       .concat(Datos.mantenimientos.filter(m => !m.oc).map(m => ({ fecha: m.fecha, unidad: m.unidad, valor: Compras.deArreglo(m).propio })).filter(g => g.valor > 0))
       .concat(Tanqueos.gastos())
@@ -6096,9 +6214,9 @@ const Historico = {
   de(u) { return this.lista.filter(x => x.unidad === u.id).sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')) || String(b.id).localeCompare(String(a.id))); },
   /* Para el Dashboard, como los demás gastos, con su marca */
   gastos() { this.pedir(); return this.lista.filter(x => x.fecha && x.valor > 0).map(x => ({ fecha: x.fecha, unidad: x.unidad, valor: x.valor, excel: true })); },
-  suma: (l, desde) => l.filter(x => x.fecha && (!desde || x.fecha >= desde)).reduce((t, x) => t + x.valor, 0),
+  suma: (l, desde, hasta) => l.filter(x => x.fecha && (!desde || x.fecha >= desde) && (!hasta || x.fecha <= hasta)).reduce((t, x) => t + x.valor, 0),
   /* Las líneas de un vehículo desde «desde»: cuentan como arreglos (Juan, 07/11/2026: «sería bueno que el número de arreglos sea combinado») */
-  cuantas(u, desde) { return this.de(u).filter(x => x.fecha && (!desde || x.fecha >= desde)).length; },
+  cuantas(u, desde, hasta) { return this.de(u).filter(x => x.fecha && (!desde || x.fecha >= desde) && (!hasta || x.fecha <= hasta)).length; },
   /* Los componentes que nombra el texto de una línea (Juan, 07/11/2026): los que reconocen las sugerencias de «¿Qué hay de nuevo?»
      (ver Menciona), solo los que se nombran completos y primero los de su parte. No se guardan: se deducen cada vez y van marcados
      «deducidos», porque pueden fallar. El « ·» del final: que la última palabra no cuente como si se estuviera escribiendo */
@@ -6235,9 +6353,9 @@ const Historico = {
   /* «… · $3,2 M de registro manual», para lo que suma este gasto */
   meta: v => (v ? ' · ' + esc(Money.compacto(v)) + ' de registro manual' : ''),
   /* La tarjeta «Antes de Flota» de un vehículo: sus líneas desde «desde», con la pastilla gris */
-  tarjeta(u, desde, cls) {
+  tarjeta(u, desde, cls, hasta) {
     this.pedir();
-    const l = this.de(u).filter(x => !desde || (x.fecha && x.fecha >= desde));
+    const l = this.de(u).filter(x => (!desde || (x.fecha && x.fecha >= desde)) && (!hasta || (x.fecha && x.fecha <= hasta)));
     if (!l.length) return '';
     const total = l.reduce((t, x) => t + x.valor, 0);
     return UI.card('Antes de Flota · ' + this.ETIQUETA,
@@ -6675,6 +6793,8 @@ const Tanqueos = {
   ETIQUETAS: { placa: ['Placa'], fecha: ['Fecha'], km: ['Kilometraje'], rec: ['Kilometraje Recorrido'], producto: ['Producto'],
     galones: ['Galonaje Factura'], valor: ['Valor Factura'], estacion: ['Estacion', 'Estación'], total: ['Total:'] },
   lista() { return Datos.tanqueos || []; },
+  /* Para las cuentas: sin los vehículos de un tercero (ver Q.tercero) */
+  propios() { return this.lista().filter(t => !t.unidad || !Q.tercero(Q.unidad(t.unidad))); },
   norm: p => String(p || '').toUpperCase().replace(/[^A-Z0-9]/g, ''),
   esUrea: t => /UREA/i.test(t.producto),
   /* La unidad de una placa de Distracom: la que tiene esa placa en Flota, o la
@@ -7614,7 +7734,8 @@ const MapaGPS = {
    del promedio diario de las lecturas del último mes. */
 const Aceite = {
   UMBRAL: { km: 4000, h: 40 },
-  aplica: u => u.tipo === 'carga' || u.tipo === 'maquinaria',
+  /* Los de un tercero no llevan control de aceite: su mantenimiento es de su dueño */
+  aplica: u => (u.tipo === 'carga' || u.tipo === 'maquinaria') && !Q.tercero(u),
   medida: u => (u.tipo === 'maquinaria' ? 'h' : 'km'),
   fmt(u, n) { return Math.round(n).toLocaleString('es-CO') + ' ' + this.medida(u); },
   /* Todas las lecturas de la unidad, en orden */
@@ -7740,8 +7861,15 @@ const Plano = {
 
   /* ---------------- Los arreglos ---------------- */
   desde(per) { return per === 'todo' ? '' : per === 'anio' ? HOY.getFullYear() + '-01-01' : R(-365); },
-  arreglos(u, desde) {
-    return Datos.mantenimientos.filter(m => m.unidad === u.id && (!desde || m.fecha >= desde))
+  /* El período del plano (Juan, 07/11/2026: «agrega la lista desplegable para yo escoger los meses… por defecto que sea la estadística
+     del mes actual… Siempre»): vacío es el mes de hoy; «aaaa-mm», ese mes; y como antes, este año, los últimos 12 meses o todo */
+  rango(per) {
+    if (per === 'anio' || per === '12' || per === 'todo') return { desde: this.desde(per), hasta: '', txt: { anio: 'este año', '12': 'en 12 meses', todo: 'en total' }[per] };
+    const k = /^\d{4}-\d{2}$/.test(per || '') ? per : hoyISO.slice(0, 7);
+    return { desde: k + '-01', hasta: k + '-31', txt: 'en ' + Fecha.mes(Fecha.parse(k + '-01'), true).toLowerCase() + (k.slice(0, 4) === hoyISO.slice(0, 4) ? '' : ' de ' + k.slice(0, 4)) };
+  },
+  arreglos(u, desde, hasta) {
+    return Datos.mantenimientos.filter(m => m.unidad === u.id && (!desde || m.fecha >= desde) && (!hasta || m.fecha <= hasta))
       .sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.ts || 0) - (a.ts || 0));
   },
   /* Lo que costó, como en el Dashboard: sus órdenes de Facturación cuando ya
@@ -7879,8 +8007,9 @@ const Plano = {
   vistaFlota() {
     Novedades.pedir();
     const f = UIState.mantTipo, desde = this.desde('12');
-    const us = ORDEN.flatMap(t => Datos.unidades.filter(u => u.tipo === t));
-    const lista = us.filter(u => f === 'todos' || u.tipo === f);
+    /* Sin los de un tercero: su mantenimiento es de su dueño */
+    const us = ORDEN.flatMap(t => Datos.unidades.filter(u => u.tipo === t && !Q.tercero(u)));
+    const lista = us.filter(u => f === 'todos' || u.tipo === f), nTer = Datos.unidades.filter(Q.tercero).length;
     const del12 = Datos.mantenimientos.filter(m => m.fecha >= desde);
     const taller = Datos.mantenimientos.filter(m => m.estado === 'taller');
     /* Con lo del Excel del ingeniero anterior, que suma (ver Historico) */
@@ -7932,7 +8061,8 @@ const Plano = {
           Icon('tool', '', 12) + (n ? n + (n === 1 ? ' arreglo' : ' arreglos') + ' en 12 meses' : 'Ningún arreglo en 12 meses') +
           '</span><b' + (exU ? ' title="' + attr('Incluye ' + Money.format(exU) + ' del ' + Historico.ETIQUETA.toLowerCase()) + '"' : '') + '>' + esc(Money.format(g)) + '</b></div></article>';
     };
-    return kpis + chips + (lista.length ? '<div class="ugrid mant-grid" id="mantGrid">' + lista.map(tarjeta).join('') + '</div>' +
+    return kpis + chips + (nTer ? '<div class="hint mb12">' + Icon('info', '', 12) + ' ' + (nTer === 1 ? 'El vehículo de un tercero no sale aquí' : 'Los ' + nTer +
+        ' vehículos de terceros no salen aquí') + ': su mantenimiento lo lleva su dueño.</div>' : '') + (lista.length ? '<div class="ugrid mant-grid" id="mantGrid">' + lista.map(tarjeta).join('') + '</div>' +
         '<div class="card hidden" id="mantNada">' + UI.empty('search', 'Ninguna placa coincide', 'Pruebe con otra o borre la búsqueda.') + '</div>'
       : '<div class="card">' + UI.empty('truck', 'No hay unidades', Datos.unidades.length ? 'Ninguna de este tipo.' : 'Se registran en Flota.') + '</div>');
   },
@@ -7941,8 +8071,10 @@ const Plano = {
   vista(u) {
     Novedades.pedir();
     const st = UIState.plano, k = this.clave(u), vis = this.visibles(k);
+    /* Al entrar al plano, el mes de hoy; al volver a pintarlo (una parte, el color, la nube), el que se escogió */
+    if (st.u !== u.id || !document.querySelector('#vista .pl-pagina[data-u="' + CSS.escape(u.id) + '"]')) st.periodo = '';
     if (st.u !== u.id) Object.assign(st, { u: u.id, sel: null, llanta: null });
-    const lista = this.arreglos(u, this.desde(st.periodo)), pp = this.porParte(lista), nivP = this.niveles(pp, st.modo);
+    const per = this.rango(st.periodo), lista = this.arreglos(u, per.desde, per.hasta), pp = this.porParte(lista), nivP = this.niveles(pp, st.modo);
     const novs = Novedades.de(u), alP = this.alertas(u);
     /* Solo la parte que se tocó: al abrir, ninguna (se ve todo el vehículo) */
     const sel = vis.find(p => p.k === st.sel) || null;
@@ -7950,11 +8082,19 @@ const Plano = {
     const xs = sel && pp[sel.k], maxG = Math.max.apply(null, Object.values(pp).map(x => x.gasto).concat([0]));
     const etq = !sel || !sel.zona ? '' : this.etiqueta(k, sel.zona, sel.n, st.modo === 'gasto' ? (xs && xs.gasto ? this.pesos(xs.gasto) : 'sin gasto')
       : xs ? xs.n + (xs.n === 1 ? ' arreglo' : ' arreglos') : 'sin arreglos');
-    const exP = Historico.suma(Historico.de(u), this.desde(st.periodo)), nxP = Historico.cuantas(u, this.desde(st.periodo));
+    const exP = Historico.suma(Historico.de(u), per.desde, per.hasta), nxP = Historico.cuantas(u, per.desde, per.hasta);
     const gasto = lista.reduce((s, m) => s + this.costo(m), 0) + exP, prev = lista.filter(m => m.tipo === 'preventivo').length;
     const top = campo => vis.filter(p => pp[p.k] && pp[p.k][campo] > 0).sort((a, b) => pp[b.k][campo] - pp[a.k][campo])[0];
     const masN = top('n'), masG = top('gasto');
-    const enPer = { anio: 'este año', '12': 'en 12 meses', todo: 'en total' }[st.periodo];
+    const enPer = per.txt;
+    /* Los meses que se pueden escoger: del de hoy hacia atrás, hasta el primero con arreglos o con registro manual */
+    const mesHoy = hoyISO.slice(0, 7), primero = [(this.arreglos(u, '').slice(-1)[0] || {}).fecha || ''].concat(Historico.de(u).map(x => x.fecha || ''))
+      .filter(Boolean).sort()[0] || hoyISO, meses = [];
+    for (const d = Fecha.parse(mesHoy + '-01'); Fecha.iso(d).slice(0, 7) >= primero.slice(0, 7) && meses.length < 120; d.setMonth(d.getMonth() - 1)) meses.push(Fecha.iso(d).slice(0, 7));
+    const perSel = '<select class="inp pl-per" id="plPer" aria-label="Período"><optgroup label="Un mes">' +
+      meses.map(m => '<option value="' + m + '"' + ((st.periodo || mesHoy) === m ? ' selected' : '') + '>' + esc(Fecha.mes(Fecha.parse(m + '-01'))) + (m === mesHoy ? ' · este mes' : '') + '</option>').join('') +
+      '</optgroup><optgroup label="Más tiempo">' + this.PERIODOS.map(o => '<option value="' + o[0] + '"' + (st.periodo === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') +
+      '</optgroup></select>';
     const resumen = p => pp[p.k].n + (pp[p.k].n === 1 ? ' arreglo · ' : ' arreglos · ') + esc(Money.format(pp[p.k].gasto));
     const lect = Aceite.aplica(u) ? Aceite.actual(u) : null, ult = this.arreglos(u, '')[0];
     const seg = (act, actual, ops) => '<div class="seg">' + ops.map(o => '<button type="button" class="' + (o[0] === actual ? 'on' : '') +
@@ -7963,7 +8103,7 @@ const Plano = {
     const sinParte = lista.filter(m => m.tipo !== 'preventivo' && !(m.partes || []).length), otras = novs.filter(n => !n.parte);
     const dibujo = UI.card('Plano del vehículo',
       '<div class="pl-bar"><span class="lbl">Color según</span>' + seg('planoModo', st.modo, [['arreglos', 'Arreglos'], ['gasto', 'Gasto']]) +
-        '<span class="lbl">Período</span>' + seg('planoPeriodo', st.periodo, this.PERIODOS) + '</div>' +
+        '<span class="lbl">Período</span>' + perSel + '</div>' +
       '<div class="plano-caja claro"><div class="pl-dib">' + this.svg(k, { nivel: this.aZonas(k, nivP), alertas: this.aZonas(k, alP),
         sel: sel && sel.zona ? [sel.zona] : [], act: 'planoParte', halo: true, foco: true }) + etq + '</div></div>' +
       this.leyenda(st.modo, maxG) + this.chips(k, { pp, nivel: nivP, alertas: alP, sel: sel ? sel.k : null, act: 'planoParte' }) +
@@ -7971,7 +8111,7 @@ const Plano = {
       (sinParte.length ? '<div class="pl-nota">' + Icon('info', '', 13) + '<span>' + (sinParte.length === 1 ? '1 arreglo del período no tiene' : sinParte.length + ' arreglos del período no tienen') +
         ' la parte marcada. Salen abajo, en «Sin parte marcada».</span></div>' : ''),
       { sub: sel ? 'Toque la misma parte para ver todo el vehículo' : 'Toque una parte para ver sus arreglos' });
-    return '<div class="pl-pagina"><div class="crumbs"><a data-ir="mantenimientos">Mantenimientos</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
+    return '<div class="pl-pagina" data-u="' + attr(u.id) + '"><div class="crumbs"><a data-ir="mantenimientos">Mantenimientos</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
       '<div class="page-head"><div class="pl-tit">' + this.fotito(u) + UI.placa(u, 'xl') + '<div><h1>' + esc([u.clase || TIPOS[u.tipo].nombre, UI.nombre(u), u.modelo].filter(Boolean).join(' · ')) + '</h1>' +
           '<div class="ph-sub">' + esc([lect ? Aceite.fmt(u, lect.valor) : '', ult ? 'último arreglo ' + Fecha.hace(ult.fecha) : 'sin arreglos registrados'].filter(Boolean).join(' · ')) + '</div></div></div>' +
         '<div class="ph-actions"><button class="btn" data-act="irUnidad" data-u="' + attr(u.id) + '" data-tab="mant">' + Icon('truck', '', 14) + 'Ver la ficha</button>' +
@@ -7993,7 +8133,7 @@ const Plano = {
       '</div>' +
       '<div class="grid pl-grid">' + dibujo + '<div>' + this.panel(u, k, sel, lista, pp, novs) + '</div></div>' +
       /* Lo de antes de Flota, del Excel del ingeniero anterior (ver Historico) */
-      Historico.tarjeta(u, this.desde(st.periodo), 'mt16') +
+      Historico.tarjeta(u, per.desde, 'mt16', per.hasta) +
       (otras.length ? UI.card('Otras novedades', otras.map(n => this.cajaNovedad(u, n)).join(''),
         { cls: 'mt16', sub: 'No corresponden a una parte del dibujo. Se cambia en Configuración.' }) : '') +
       (sinParte.length ? UI.card('Sin parte marcada', '<div class="pm-tl">' + sinParte.map(m => this.itemTl(u, m, '', true)).join('') + '</div>',
@@ -8033,7 +8173,7 @@ const Plano = {
   },
   /* Sin parte escogida: todo el vehículo, con sus novedades y todos sus arreglos del período */
   panelTodo(u, lista, novs) {
-    const gasto = lista.reduce((s, m) => s + this.costo(m), 0), ult = lista[0], nx = Historico.cuantas(u, this.desde(UIState.plano.periodo));
+    const per = this.rango(UIState.plano.periodo), gasto = lista.reduce((s, m) => s + this.costo(m), 0), ult = lista[0], nx = Historico.cuantas(u, per.desde, per.hasta);
     return UI.card('Todo el vehículo',
       '<div class="zp-h"><p>Toque una parte en el dibujo para ver solo la suya.</p><div class="zp-n"><b>' + lista.length + '</b><span>' +
         (lista.length === 1 ? 'arreglo' : 'arreglos') + '</span></div></div>' +
@@ -8432,7 +8572,7 @@ const LlantasArea = {
   /* ---------------- Por vehículo ---------------- */
   flota() {
     const f = UIState.llantas.tipo, desde = Plano.desde('12');
-    const us = ORDEN.flatMap(t => Datos.unidades.filter(u => u.tipo === t)).filter(u => Llantas.aplica(u));
+    const us = ORDEN.flatMap(t => Datos.unidades.filter(u => u.tipo === t)).filter(u => Llantas.aplica(u) && !Q.tercero(u));
     const lista = us.filter(u => f === 'todos' || u.tipo === f);
     const del12 = Datos.mantenimientos.filter(m => m.fecha >= desde && Llantas.esDe(m));
     const camb = del12.filter(m => m.llanta), puestas = camb.reduce((s, m) => s + Object.keys(m.llanta.pos || {}).length, 0);
@@ -9908,7 +10048,7 @@ const Vistas = {
 
     /* Los que más combustible gastaron en el período (ver Tanqueos) */
     const porC = {};
-    Tanqueos.lista().forEach(t => { if (t.unidad && t.fecha >= per.desde && t.fecha <= per.hasta) (porC[t.unidad] = porC[t.unidad] || []).push(t); });
+    Tanqueos.propios().forEach(t => { if (t.unidad && t.fecha >= per.desde && t.fecha <= per.hasta) (porC[t.unidad] = porC[t.unidad] || []).push(t); });
     const topC = Object.keys(porC).map(id => ({ u: Q.unidad(id), r: Tanqueos.resumen(porC[id]) })).filter(x => x.u && x.r.galones)
       .sort((a, b) => b.r.galones - a.r.galones).slice(0, 5);
     const consumo = UI.card('Mayor consumo de combustible', topC.length ? '<div class="rk-lista">' + topC.map(x =>
@@ -9924,7 +10064,7 @@ const Vistas = {
        curso (Juan, 02/11/2026; ver Tanqueos.proyeccion). La barra punteada es
        la proyección, y por dentro va lo que lleva el mes. */
     const mesHoy = hoyISO.slice(0, 7), anio = mesHoy.slice(0, 4), porMesC = {};
-    Tanqueos.lista().forEach(t => {
+    Tanqueos.propios().forEach(t => {
       const m = t.fecha.slice(0, 7), x = porMesC[m] = porMesC[m] || { valor: 0, gal: 0 };
       x.valor += t.valor;
       if (!Tanqueos.esUrea(t)) x.gal += t.galones;
@@ -9983,9 +10123,9 @@ const Vistas = {
        flota sea pequeña). En amarillo, los que rinden menos que el promedio;
        los que no tienen cómo medirse en el período, al final. */
     const perTxt = p === 'mes' ? Fecha.mes(HOY).toLowerCase() : p === 'anio' ? String(HOY.getFullYear()) : 'este trimestre';
-    const delPer = Tanqueos.lista().filter(t => t.fecha >= per.desde && t.fecha <= per.hasta), flota = Tanqueos.resumen(delPer);
-    const vehs = Array.from(new Set(Tanqueos.lista().map(t => t.unidad || 'p:' + t.placa))).map(k => {
-      const l = delPer.filter(t => (t.unidad || 'p:' + t.placa) === k), t0 = Tanqueos.lista().find(t => (t.unidad || 'p:' + t.placa) === k);
+    const delPer = Tanqueos.propios().filter(t => t.fecha >= per.desde && t.fecha <= per.hasta), flota = Tanqueos.resumen(delPer);
+    const vehs = Array.from(new Set(Tanqueos.propios().map(t => t.unidad || 'p:' + t.placa))).map(k => {
+      const l = delPer.filter(t => (t.unidad || 'p:' + t.placa) === k), t0 = Tanqueos.propios().find(t => (t.unidad || 'p:' + t.placa) === k);
       return { u: t0.unidad && Q.unidad(t0.unidad), placa: t0.placa, r: Tanqueos.resumen(l).rinde };
     }).sort((a, b) => (b.r == null ? -1 : b.r) - (a.r == null ? -1 : a.r));
     const topeR = Math.max.apply(null, vehs.map(v => v.r || 0).concat([1]));
@@ -10093,7 +10233,9 @@ const Vistas = {
          los tipos, en pestañas debajo */
       UI.head('Flota', Datos.unidades.length + ' unidades · ' + (f.sel ? 'haga clic en las que quiera seleccionar' : 'haga clic en una para ver toda su información'),
         '<div class="fbusca">' + Icon('search', '', 14) + '<input id="fQ" placeholder="Placa, marca o clase…" value="' + attr(f.q) + '" autocomplete="off">' +
-          '<select id="fEstado" title="Filtrar por el estado de los documentos">' + estados.map(e => '<option value="' + e[0] + '"' + (f.estado === e[0] ? ' selected' : '') + '>' + e[1] + '</option>').join('') + '</select></div>' +
+          '<select id="fEstado" title="Filtrar por el estado de los documentos">' + estados.map(e => '<option value="' + e[0] + '"' + (f.estado === e[0] ? ' selected' : '') + '>' + e[1] + '</option>').join('') + '</select>' +
+          (Datos.unidades.some(Q.tercero) ? '<select id="fProp" title="De SINUGRAVAS o de terceros">' + [['todas', 'Propias y de terceros'], ['propias', 'De SINUGRAVAS'], ['terceros', 'De terceros']]
+            .map(o => '<option value="' + o[0] + '"' + ((f.prop || 'todas') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>' : '') + '</div>' +
         '<div class="seg seg-ic">' +
           '<button class="' + (f.modo === 'fotos' ? 'on' : '') + '" data-act="modoFlota" data-v="fotos" title="Ver en fotos" aria-label="Ver en fotos">' + Icon('grid', '', 15) + '</button>' +
           '<button class="' + (f.modo === 'lista' ? 'on' : '') + '" data-act="modoFlota" data-v="lista" title="Ver en lista" aria-label="Ver en lista">' + Icon('list', '', 15) + '</button>' +
@@ -10109,6 +10251,8 @@ const Vistas = {
       despues: () => {
         Vistas.flotaRes();
         $('#fEstado').addEventListener('change', e => { f.estado = e.target.value; Vistas.flotaRes(); });
+        const fp = $('#fProp');
+        if (fp) fp.addEventListener('change', e => { f.prop = e.target.value; Vistas.flotaRes(); });
         $('#fQ').addEventListener('input', e => { f.q = e.target.value; Vistas.flotaRes(); });
       }
     };
@@ -10140,7 +10284,7 @@ const Vistas = {
       '<div class="uc-ph">' + UI.foto(u, true) + (sel ? '<span class="uc-ck">' + UI.ck(on, 13) + '</span>' : '') +
         '<span class="uc-tag">' + Icon(TIPOS[u.tipo].icono, '', 12) + esc(u.clase) + '</span>' +
         (e.k !== 'nr' ? '<span class="uc-est">' + UI.pill(e.k, e.txt) + '</span>' : '') + '</div>' +
-      '<div class="uc-b"><div class="uc-l1">' + UI.placa(u) + '<span class="uc-anio">' + esc(u.modelo || '') + '</span></div>' +
+      '<div class="uc-b"><div class="uc-l1">' + UI.placa(u) + '<span class="uc-anio">' + esc(u.modelo || '') + '</span>' + UI.pillTercero(u) + '</div>' +
         '<div class="uc-mm">' + esc(UI.nombre(u)) + '</div>' +
         '<div class="uc-docs">' + this.chipsDocs(u) + '</div></div>' +
       '<div class="uc-f">' + this.pieQuien(u, c, sel) +
@@ -10246,9 +10390,9 @@ const Vistas = {
             '<b>' + esc(DocFoto.nombre(u)) + '</b><span>' + (tieneDoc ? 'Suéltela para cambiarla' : 'Suéltela aquí') + '</span></div></div></div>' +
         '<div class="uh-b">' +
           '<div class="uh-top">' + UI.placa(u, 'xl') + '<span class="pill p-gray np">' + Icon(TIPOS[u.tipo].icono, '', 12) + esc(TIPOS[u.tipo].nombre) + '</span>' +
-            (e.k !== 'nr' ? UI.pill(e.k, e.txt) : '') + '</div>' +
+            UI.pillTercero(u) + (e.k !== 'nr' ? UI.pill(e.k, e.txt) : '') + '</div>' +
           '<div><div class="uh-h">' + esc(UI.nombre(u)) + (u.modelo ? ' · ' + esc(u.modelo) : '') + '</div>' +
-            '<div class="uh-sub">' + esc([u.clase, u.color].filter(Boolean).join(' · ')) + '</div></div>' +
+            '<div class="uh-sub">' + esc([u.clase, u.color, Q.terceroTxt(u)].filter(Boolean).join(' · ')) + '</div></div>' +
           '<div class="facts">' +
             /* El del remolque es el del camión que lo arrastra: aquí solo se ve,
                y se cambia en el camión (ver Q.conductorDe) */
@@ -10791,7 +10935,7 @@ const Ventanas = {
 
   /* Nueva unidad: primero el tipo, y los campos se ajustan a él */
   unidad() {
-    let tipo = 'carga';
+    let tipo = 'carga', prop = 'propio';
     const m = Modal.abrir({
       titulo: 'Nueva unidad', sub: 'Vehículo de carga, máquina, remolque o canoa', ancho: 'wide', sinFoco: true,
       cuerpo: '<div id="nuCuerpo"></div>',
@@ -10811,9 +10955,20 @@ const Ventanas = {
           /* El remolque no lleva conductor propio: es el del camión que lo arrastra (ver Q.conductorDe) */
           (tipo === 'remolque' ? '' : '<div class="field"><label>Conductor u operador</label><select class="inp" id="nuCond">' + Opc.conductores('', 'Sin asignar', false, tipo) + '</select></div>') +
         '</div>' +
+        /* De SINUGRAVAS o de un tercero que les presta el servicio (Juan, 07/11/2026) */
+        '<div class="field"><label>Propiedad</label><div class="seg" id="nuProp">' + [['propio', 'De SINUGRAVAS'], ['tercero', 'De un tercero']]
+          .map(o => '<button type="button" data-v="' + o[0] + '"' + (o[0] === prop ? ' class="on"' : '') + '>' + o[1] + '</button>').join('') + '</div></div>' +
+        '<div class="grid g2" id="nuTer" style="gap:0 14px"' + (prop === 'tercero' ? '' : ' hidden') + '>' +
+          campo('nuTerQuien', '¿Quién presta el servicio?', '', 'Empresa o persona') + campo('nuTerTel', 'Contacto (opcional)', ' inputmode="tel"', 'Teléfono') + '</div>' +
         Dz.html('nuDz', 'Foto de la unidad', 'Arrastre la foto aquí o haga clic para buscarla', 'image/*', false) +
         '<div id="nuPrev"></div>';
       $$('.tsel', m).forEach(b => b.addEventListener('click', () => { tipo = b.dataset.tipo; m._foto = null; pintar(); }));
+      $$('#nuProp button', m).forEach(b => b.addEventListener('click', () => {
+        prop = b.dataset.v;
+        $$('#nuProp button', m).forEach(x => x.classList.toggle('on', x === b));
+        $('#nuTer', m).hidden = prop !== 'tercero';
+        if (prop === 'tercero') $('#nuTerQuien', m).focus();
+      }));
       /* La foto se comprime al crear la unidad (ver Guardadas.poner) */
       Dz.bind('nuDz', files => Archivos.original(files[0]).then(f => {
         if (!f) return;
@@ -10822,6 +10977,7 @@ const Ventanas = {
       }));
     };
     m._tipo = () => tipo;
+    m._prop = () => prop;
     pintar();
     setTimeout(() => { const p = $('#nuPlaca', m); if (p) p.focus(); }, 40);
   },
@@ -10906,13 +11062,25 @@ const Ventanas = {
     };
     const m = Modal.abrir({
       titulo: 'Editar información · ' + UI.placaTxt(u), sub: esc(TIPOS[u.tipo].nombre), ancho: 'wide',
-      cuerpo: HojaVida.secciones(u).map(s => '<div class="ed-sec"><div class="ed-h">' + esc(s.t) + '</div><div class="ed-grid">' +
+      /* De SINUGRAVAS o de un tercero (Juan, 07/11/2026) */
+      cuerpo: '<div class="ed-sec"><div class="ed-h">Propiedad</div><div class="ed-grid">' +
+          '<div class="field"><label>De quién es</label><div class="seg" id="edProp">' + [['propio', 'De SINUGRAVAS'], ['tercero', 'De un tercero']]
+            .map(o => '<button type="button" data-v="' + o[0] + '"' + ((u.tercero ? 'tercero' : 'propio') === o[0] ? ' class="on"' : '') + '>' + o[1] + '</button>').join('') + '</div></div>' +
+          '<div class="field ed-ter"' + (u.tercero ? '' : ' hidden') + '><label>¿Quién presta el servicio?</label><input class="inp" id="edTerQuien" value="' +
+            attr((u.tercero || {}).quien || '') + '" placeholder="Empresa o persona"></div>' +
+          '<div class="field ed-ter"' + (u.tercero ? '' : ' hidden') + '><label>Contacto (opcional)</label><input class="inp" id="edTerTel" inputmode="tel" value="' +
+            attr((u.tercero || {}).contacto || '') + '" placeholder="Teléfono"></div></div></div>' +
+        HojaVida.secciones(u).map(s => '<div class="ed-sec"><div class="ed-h">' + esc(s.t) + '</div><div class="ed-grid">' +
         s.campos.map(control).join('') + '</div></div>').join(''),
       pie: '<button class="btn btn-ghost t-dang mf-left" data-act="eliminarUnidad" data-u="' + u.id + '">' + Icon('trash', '', 14) + 'Eliminar unidad</button>' +
         '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarEdicion" data-u="' + u.id + '">' +
         Icon('save', '', 14) + 'Guardar cambios</button>'
     });
     m._campos = lista;
+    $$('#edProp button', m).forEach(b => b.addEventListener('click', () => {
+      $$('#edProp button', m).forEach(x => x.classList.toggle('on', x === b));
+      $$('.ed-ter', m).forEach(x => { x.hidden = b.dataset.v !== 'tercero'; });
+    }));
   },
 
   /* Revisar la dotación: queda marcado lo que tiene la unidad; lo que se deje
@@ -11191,6 +11359,12 @@ const Acciones = {
         if (nuevo) u.ficha[k] = nuevo; else delete u.ficha[k];
       }
     });
+    /* De SINUGRAVAS o de un tercero */
+    const pb = $('#edProp button.on', m);
+    if (pb) {
+      const ter = pb.dataset.v === 'tercero' ? { quien: $('#edTerQuien', m).value.trim(), contacto: $('#edTerTel', m).value.trim() } : null;
+      if (JSON.stringify(ter) !== JSON.stringify(u.tercero || null)) { if (ter) u.tercero = ter; else delete u.tercero; cambios++; }
+    }
     if (!cambios && !detCond) { Toast.show('No cambió ningún dato.', 'warn'); return; }
     if (u.placa !== placaAntes) Guardadas.renombrarTarjeta(u);
     if (detCond) Actividad.registrar(u, 'conductor', u.tipo === 'maquinaria' ? 'Cambio de operador' : 'Cambio de conductor', detCond);
@@ -11431,6 +11605,7 @@ const Acciones = {
       modelo: v('nuModelo'), color: v('nuColor'), conductor: v('nuCond') || null, foto: null,
       ficha: {}, docs: {}, otros: [], insp: null, comp: Comparendos.nueva({ tipo }), compHist: []
     };
+    if (m._prop() === 'tercero') u.tercero = { quien: v('nuTerQuien'), contacto: v('nuTerTel') };
     Datos.unidades.push(u);
     if (m._foto) Guardadas.poner(u, 'foto', m._foto).then(() => { const r = Router.actual(); if (r.vista === 'unidad' && r.id === u.id) Router.pintar(true); });
     if (u.conductor) Actividad.registrar(u, 'conductor', tipo === 'maquinaria' ? 'Cambio de operador' : 'Cambio de conductor', 'Se asignó a ' + Q.conductor(u.conductor).nombre);
@@ -11458,11 +11633,15 @@ Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
   /* La pestaña Novedades: sin atender, en el taller o cerradas, y el vehículo */
   novF: 'pend', novU: '',
   /* El plano de una unidad: la parte y la llanta escogidas, el color y el período */
-  plano: { u: null, sel: null, llanta: null, modo: 'arreglos', periodo: '12' },
+  plano: { u: null, sel: null, llanta: null, modo: 'arreglos', periodo: '' },
   /* Combustible: el mes escogido («aaaa-mm»); si no, el último con tanqueos.
      Y el orden de la tabla por vehículo, que al recargar vuelve al valor */
   combMes: null, combOrden: { k: 'valor', asc: false } });
 Money.compacto = n => n >= 1e6 ? '$' + (n / 1e6).toFixed(1).replace('.', ',') + ' M' : n >= 1e3 ? '$' + Math.round(n / 1e3) + ' mil' : Money.format(n);
+/* El plano de mantenimiento: el período (ver Plano.vista) */
+document.addEventListener('change', e => {
+  if (e.target && e.target.id === 'plPer') { UIState.plano.periodo = e.target.value === hoyISO.slice(0, 7) ? '' : e.target.value; Router.pintar(true); }
+});
 /* Compras de la ficha: el mes de las tarjetas (ver Vistas.tab_oc) */
 document.addEventListener('change', e => {
   if (e.target && e.target.id === 'ocMes') { UIState.ocMes = e.target.value === hoyISO.slice(0, 7) ? '' : e.target.value; Router.pintar(true); }
@@ -12102,7 +12281,7 @@ Object.assign(Vistas, {
   /* ------------------------------------------------------------ Combustible
      Solo con los tanqueos de Distracom (Juan, 31/10/2026, ver Tanqueos) */
   combustible() {
-    const todos = Tanqueos.lista(), meses = Tanqueos.meses(), titulo = 'Combustible', sub = 'Tanqueos de Distracom';
+    const todos = Tanqueos.propios(), meses = Tanqueos.meses(), titulo = 'Combustible', sub = 'Tanqueos de Distracom';
     const head = UI.head('Combustible', 'Tanqueos de Distracom · el informe «Detalle Tanqueo A Tanqueo» de Fleet Control',
       '<button class="btn btn-primary" data-act="cargarDistracom">' + Icon('upload', '', 14) + 'Cargar archivo de Distracom</button>');
     if (Sincro.sinTanqueos) return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') +
@@ -12576,10 +12755,22 @@ Object.assign(Vistas, {
     const nuevo = s.agregando && puede ? '<div class="cat-nuevo"><input class="inp" id="catNuevo" placeholder="Nueva opción" aria-label="Nueva opción" autocomplete="off">' +
       '<button type="button" class="btn btn-primary btn-sm" data-act="catGuardarNueva" data-l="' + l.id + '">' + Icon('save', '', 13) + 'Guardar</button>' +
       '<button type="button" class="btn btn-sm" data-act="catCancelar">Cancelar</button></div>' : '';
+    const conEstilo = l.ruta === 'tipo';
     const filas = l.sintomas ? Sintomas.filas(items, puede, btn) : items.map((v, i) => {
       const n = Catalogo.usos(l, v);
-      return '<div class="cat-op" data-k="' + attr(Catalogo.clave(v)) + '"><div class="cat-v"><b>' + esc(v) + '</b><span>' + (n ? Catalogo.usosTxt(l, n) : 'Sin uso') + '</span></div>' +
-        (puede ? '<div class="cat-acc">' + btn('catSubir', 'arriba', 'Subir', i, i ? '' : ' disabled') + btn('catBajar', 'abajo', 'Bajar', i, i < items.length - 1 ? '' : ' disabled') +
+      /* Los tipos de operación: su imagen y su color, para las fichas de Rutas (Juan, 07/11/2026). La imagen se escoge con un clic en
+         su cuadro o arrastrándola encima; el color, en el círculo */
+      const img = conEstilo ? Rutas.imagen(v) : '', propio = conEstilo && Rutas.estilo(v).color;
+      const estilo = !conEstilo ? '' : '<label class="cat-img' + (img ? '' : ' vacia') + (puede ? '' : ' solo') + '" data-cat-img="' + i + '" title="' +
+          (puede ? (img ? 'Cambiar la imagen (o arrastre otra encima)' : 'Escoger una imagen (o arrastrarla aquí)') : 'Imagen') + '">' +
+          (img ? '<img src="' + attr(img) + '" alt="">' : Icon('image', '', 14) + '<span>Imagen</span>') +
+          (puede ? '<input type="file" accept="image/*" hidden data-tipo-img="' + i + '">' : '') + '</label>';
+      const color = !conEstilo ? '' : '<label class="cat-color" title="' + (puede ? 'Cambiar el color de sus fichas' : 'Color de sus fichas') + '">' +
+        '<input type="color" value="' + Rutas.color(v) + '" data-tipo-color="' + i + '"' + (puede ? '' : ' disabled') + '></label>';
+      return '<div class="cat-op' + (conEstilo ? ' cat-tipo' : '') + '" data-k="' + attr(Catalogo.clave(v)) + '">' + estilo + '<div class="cat-v"><b>' + esc(v) + '</b><span>' +
+        (n ? Catalogo.usosTxt(l, n) : 'Sin uso') + '</span></div>' + color +
+        (puede ? '<div class="cat-acc">' + (img ? btn('catTipoSinImg', 'x', 'Quitar la imagen', i) : '') +
+          (propio ? btn('catTipoColorBase', 'refresh', 'Volver al color de siempre', i) : '') + btn('catSubir', 'arriba', 'Subir', i, i ? '' : ' disabled') + btn('catBajar', 'abajo', 'Bajar', i, i < items.length - 1 ? '' : ' disabled') +
           btn('catRenombrar', 'lapiz', 'Cambiar el nombre', i) + btn('catQuitar', 'trash', 'Quitar', i, items.length > 1 ? '' : ' disabled') + '</div>' : '') + '</div>';
     }).join('');
     const der = UI.card(esc(l.titulo),
@@ -12589,7 +12780,8 @@ Object.assign(Vistas, {
       nuevo + '<div id="catOps">' + filas + '</div><div class="cat-vacio txt-3 fs12" id="catNada" hidden>Ninguna opción coincide con la búsqueda.</div>',
       { flush: true, sub: esc(Catalogo.usoTxt(l)),
         pie: puede && cambiada ? '<button type="button" class="btn btn-sm btn-ghost" data-act="catRestaurar" data-l="' + l.id + '">' + Icon('refresh', '', 12) + 'Restaurar los valores iniciales</button>'
-          : Icon('info', '', 13) + '<span>' + (puede ? 'Lo que agregue aquí sale enseguida en las listas desplegables, en todos los equipos.'
+          : Icon('info', '', 13) + '<span>' + (puede && conEstilo ? 'La imagen y el color de cada tipo salen en sus fichas de Rutas. Haga clic en el cuadro o arrastre una imagen encima: se recorta y se achica sola.'
+            : puede ? 'Lo que agregue aquí sale enseguida en las listas desplegables, en todos los equipos.'
             : 'Solo quien puede configurar cambia el catálogo. Usted puede verlo.') + '</span>' });
     const html = UI.head('Catálogo', 'Las opciones de las listas desplegables; se cambian aquí, sin tocar el programa') +
       '<div class="cat-grid">' + UI.card('Listas', izq, { flush: true }) + der + '</div>';
@@ -12606,6 +12798,12 @@ Object.assign(Vistas, {
         };
         q.addEventListener('input', filtrar);
         filtrar();
+        /* La imagen y el color de los tipos de operación */
+        $$('[data-tipo-img]').forEach(f => f.addEventListener('change', () => { const a = f.files[0]; f.value = ''; if (a) Catalogo.imagenTipo(+f.dataset.tipoImg, a); }));
+        $$('[data-tipo-color]').forEach(c => c.addEventListener('change', () => {
+          const v = Catalogo.estiloTipo(+c.dataset.tipoColor, { color: c.value });
+          if (v) Toast.show('Listo: las fichas de <b>' + esc(v) + '</b> ya salen con su color nuevo.');
+        }));
         const nueva = $('#catNuevo');
         if (nueva) {
           nueva.focus();
@@ -13981,7 +14179,6 @@ Object.assign(Acciones, {
     Router.pintar(true);
   },
   planoModo(el) { UIState.plano.modo = el.dataset.v; Router.pintar(true); },
-  planoPeriodo(el) { UIState.plano.periodo = el.dataset.v; Router.pintar(true); },
   planoLlanta(el) { const p = el.dataset.pos || null; UIState.plano.llanta = UIState.plano.llanta === p ? null : p; Router.pintar(true); },
   /* Desde un preoperacional, a la pestaña «Novedades» de Mantenimientos, con
      las de su vehículo, para atenderlas (Juan, 04/11/2026). Las novedades se
@@ -15297,6 +15494,8 @@ Object.assign(Acciones, {
     Router.pintar(true);
     Toast.show('Se quitó <b>' + esc(v) + '</b> de ' + esc(l.titulo.toLowerCase()) + '.');
   },
+  catTipoSinImg(el) { const v = Catalogo.estiloTipo(+el.dataset.i, { img: '' }); if (v) Toast.show('Se quitó la imagen de <b>' + esc(v) + '</b>.'); },
+  catTipoColorBase(el) { const v = Catalogo.estiloTipo(+el.dataset.i, { color: '' }); if (v) Toast.show('<b>' + esc(v) + '</b> volvió a su color de siempre.'); },
   catRestaurar(el) {
     const l = Catalogo.def(el.dataset.l);
     Modal.abrir({
@@ -18689,6 +18888,7 @@ const Mapa = {
     poner('configuracion', { clave: 'gps', valor: config.gps });
     if (Object.keys(config.placasDistracom || {}).length) poner('configuracion', { clave: 'distracom_placas', valor: config.placasDistracom });
     if (Object.keys(config.histProv || {}).length) poner('configuracion', { clave: 'historico_proveedores', valor: config.histProv });
+    if (Object.keys(config.tiposRuta || {}).length) poner('configuracion', { clave: 'rutas_tipos', valor: config.tiposRuta });
     poner('configuracion', { clave: 'documentos_obligatorios', valor: config.req });
     poner('configuracion', { clave: 'comparendos', valor: config.comparendos });
     poner('configuracion', { clave: 'planos', valor: config.planos || {} });
@@ -18767,6 +18967,7 @@ const Mapa = {
       rendimiento: cfg.rendimiento && typeof cfg.rendimiento === 'object' && cfg.rendimiento.min < cfg.rendimiento.max ? cfg.rendimiento : Config.rendimiento,
       placasDistracom: cfg.distracom_placas && typeof cfg.distracom_placas === 'object' ? cfg.distracom_placas : {},
       histProv: cfg.historico_proveedores && typeof cfg.historico_proveedores === 'object' ? cfg.historico_proveedores : {},
+      tiposRuta: cfg.rutas_tipos && typeof cfg.rutas_tipos === 'object' ? cfg.rutas_tipos : {},
       /* Lo guardado en la nube manda sobre los valores de siempre */
       gps: Object.assign({}, Config.gps, cfg.gps && typeof cfg.gps === 'object' ? cfg.gps : {}),
       req: cfg.documentos_obligatorios || Config.req,
@@ -19356,11 +19557,20 @@ const Rutas = {
 
   tipos: () => Catalogo.lista('rutas.tipos'),
   internos: () => Catalogo.lista('rutas.internos'),
-  color(tipo) {
+  /* Lo que Juan escogió para cada tipo en Catálogo (07/11/2026): su imagen y su color */
+  estilo(tipo) { return (Config.tiposRuta || {})[Catalogo.clave(tipo)] || {}; },
+  /* El color de siempre: por el orden de la lista */
+  colorBase(tipo) {
     const k = Catalogo.clave(tipo), i = this.tipos().findIndex(t => Catalogo.clave(t) === k);
     return i < 0 ? '#8a94a3' : this.COLORES[i % this.COLORES.length];
   },
-  punto(tipo) { return '<i class="rt-dot" style="--c:' + this.color(tipo) + '"></i>'; },
+  color(tipo) { const c = this.estilo(tipo).color; return /^#[0-9a-f]{6}$/i.test(c || '') ? c : this.colorBase(tipo); },
+  imagen(tipo) { const s = this.estilo(tipo).img; return /^data:image\/(webp|png|jpeg);base64,/.test(s || '') ? s : ''; },
+  /* Con imagen, la imagen; si no, el punto de color */
+  punto(tipo) {
+    const s = this.imagen(tipo);
+    return s ? '<img class="rt-img" src="' + attr(s) + '" alt="">' : '<i class="rt-dot" style="--c:' + this.color(tipo) + '"></i>';
+  },
   estIc: e => (e === 'ruta' ? Icon('truck', '', 11) : e === 'hecho' ? Icon('check', '', 11) : e === 'no' ? Icon('x', '', 11) : ''),
 
   /* ---- Las fechas: la semana va de lunes a domingo ---- */
@@ -19423,8 +19633,8 @@ const Rutas = {
     const u = v.unidad ? Q.unidad(v.unidad) : null;
     return u ? Q.conductorDe(u) : null;
   },
-  /* En la ficha, el nombre corto: el primer nombre y el primer apellido */
-  corto(n) { const p = String(n || '').trim().split(/\s+/); return p.length >= 4 ? p[0] + ' ' + p[2] : p.slice(0, 2).join(' '); },
+  /* En la ficha, el nombre corto del conductor: el primer nombre y el primer apellido. No se llama «corto»: ese es el de las rutas */
+  cortoNombre(n) { const p = String(n || '').trim().split(/\s+/); return p.length >= 4 ? p[0] + ' ' + p[2] : p.slice(0, 2).join(' '); },
   delCamion(uid) {
     const u = uid ? Q.unidad(uid) : null, c = u ? Q.conductorDe(u) : null;
     return 'El del camión' + (u ? ' (' + (c ? c.nombre : 'sin asignar') + ')' : '');
@@ -19484,11 +19694,13 @@ const Rutas = {
     const tit = this.nombreTMS(r) + ' · ' + (prog ? this.ESTADOS[v.estado][0] : 'por programar') +
       (u || v.conductor ? ' · Conductor: ' + (cd ? cd.nombre + (otro ? ' (el del camión es ' + (def ? def.nombre : 'ninguno') + ')' : '') : 'sin asignar') : '') +
       (al.length ? ' · Revisar: ' + al.join('; ') : '') + ' · arrástrela para moverla';
+    /* La imagen del tipo, pequeña arriba a la derecha (Juan, 07/11/2026: «que salga en la tarjetita pequeñito») */
+    const img = this.imagen(r.tipo);
     return '<div class="rt-v e-' + v.estado + '" role="button" tabindex="0" style="--c:' + this.color(r.tipo) + '" data-act="rtViaje" data-v="' + attr(v.id) +
-      '" draggable="true" title="' + attr(tit) + '"><b>' + esc(this.nombre(r)) + '</b><span>' + esc(det) +
+      '" draggable="true" title="' + attr(tit) + '"><b>' + esc(this.nombre(r)) + '</b><span>' + (img ? '<img class="rt-ti" src="' + attr(img) + '" alt="">' : '') + esc(det) +
       (al.length ? '<em class="rt-al">' + Icon('warn', '', 11) + '</em>' : '') + (prog && v.estado !== 'prog' ? '<em class="rt-ei">' + this.estIc(v.estado) + '</em>' : '') +
       '</span>' + (u || v.conductor ? '<span class="rt-cd' + (otro ? ' otro' : cd ? '' : ' sin') + '">' + Icon('user', '', 10) +
-        '<i>' + esc(cd ? this.corto(cd.nombre) : 'Sin conductor') + '</i></span>' : '') + '</div>';
+        '<i>' + esc(cd ? this.cortoNombre(cd.nombre) : 'Sin conductor') + '</i></span>' : '') + '</div>';
   },
   leyenda() {
     return '<div class="rt-ley">' + this.tipos().map(t => '<span>' + this.punto(t) + esc(t) + '</span>').join('') +
@@ -19514,6 +19726,7 @@ const Rutas = {
         /* El conductor ya sale en cada ficha (Juan, 07/11/2026): aquí no se repite */
         const libre = !con.has(u.id);
         return '<div class="rt-u' + (libre ? ' libre' : '') + '">' + UI.thumb(u) + '<div><b class="mono">' + esc(UI.placaTxt(u)) + '</b>' +
+            (Q.tercero(u) ? '<span class="rt-ter" title="' + attr(Q.terceroTxt(u)) + '">Tercero' + (u.tercero.quien ? ' · ' + esc(u.tercero.quien) : '') + '</span>' : '') +
             (ocupados.has(u.id) ? '' : '<span>Libre esta semana</span>') + '</div></div>' +
           fs.map(f => '<div class="rt-c' + (f === hoyISO ? ' hoy' : '') + '" data-cel data-u="' + attr(u.id) + '" data-f="' + f + '">' +
             vs.filter(v => v.unidad === u.id && v.fecha === f).sort(this.enOrden).map(v => this.ficha(v)).join('') +
@@ -19778,7 +19991,7 @@ const Rutas = {
       cuerpo: '<div id="rtAl"></div>' +
         '<div class="field"><label for="rtR">Ruta</label>' + rutaSel + '</div>' +
         '<div class="row"><div class="field"><label for="rtU">Camión</label><select class="inp" id="rtU"><option value="">Sin camión todavía</option>' +
-            opc(cams.map(x => [x.id, UI.placaTxt(x) + (x.clase ? ' · ' + x.clase : '')]), v.unidad || '') + '</select></div>' +
+            opc(cams.map(x => [x.id, UI.placaTxt(x) + (x.clase ? ' · ' + x.clase : '') + (Q.tercero(x) ? ' · Tercero' : '')]), v.unidad || '') + '</select></div>' +
           '<div class="field"><label for="rtC">Conductor</label><select class="inp" id="rtC"><option value="">' + esc(this.delCamion(v.unidad)) + '</option>' +
             opc(conds.map(c => [c.id, c.nombre]), v.conductor || '') + '</select></div></div>' +
         '<div class="row"><div class="field"><label for="rtF">Día</label><input class="inp" type="date" id="rtF" value="' + attr(v.fecha || '') + '"></div>' +
@@ -20312,7 +20525,7 @@ const Soltar = {
   zona(e) {
     const t = e.target && e.target.closest ? e.target : null;
     if (!t) return null;
-    const z = t.closest('.uh-sz, .rf-dz, [data-act="nuevoDocumento"]');
+    const z = t.closest('.uh-sz, .rf-dz, [data-act="nuevoDocumento"], .cat-img[data-cat-img]:not(.solo)');
     if (z) return z;
     const fila = t.closest('.req, table.tbl tbody tr');
     return fila && fila.querySelector('[data-act="nuevoDocumento"]') ? fila : null;
@@ -20333,6 +20546,8 @@ const Soltar = {
     if (si) this._t = setTimeout(() => { this.mostrar(false); this.marcar(null); }, 1000);
   },
   soltar(z, files) {
+    /* La imagen de un tipo de operación, en Catálogo */
+    if (z.matches('.cat-img')) { Catalogo.imagenTipo(+z.dataset.catImg, files.find(x => /^image\//i.test(x.type)) || files[0]); return; }
     const u = Q.unidad(z.dataset.u);
     if (z.classList.contains('uh-sz')) {
       const f = z.dataset.sz === 'foto' ? files.find(x => /^image\//i.test(x.type)) || files[0] : files[0];
