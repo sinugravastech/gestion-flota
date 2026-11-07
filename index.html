@@ -1643,6 +1643,11 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .rt-v.e-no b{text-decoration:line-through}
 .rt-v.e-no .rt-ei{color:var(--dang-500)}
 .rt-v.rt-arr{opacity:.35}
+/* El conductor del viaje, en la ficha: en azul si ese día maneja otro; en naranja si no hay */
+.rt-v .rt-cd{margin-top:1px;gap:4px}
+.rt-v .rt-cd i{font-style:normal;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rt-v .rt-cd.otro{color:var(--accent);font-weight:650}
+.rt-v .rt-cd.sin{color:var(--warn-500);font-weight:600}
 /* Mientras se arrastra, el aviso de abajo («Viaje movido… Deshacer») no tapa las casillas que quedan debajo */
 html.arrastrando .toasts{pointer-events:none}
 .rt-al{color:var(--warn-500)}
@@ -19418,6 +19423,8 @@ const Rutas = {
     const u = v.unidad ? Q.unidad(v.unidad) : null;
     return u ? Q.conductorDe(u) : null;
   },
+  /* En la ficha, el nombre corto: el primer nombre y el primer apellido */
+  corto(n) { const p = String(n || '').trim().split(/\s+/); return p.length >= 4 ? p[0] + ' ' + p[2] : p.slice(0, 2).join(' '); },
   delCamion(uid) {
     const u = uid ? Q.unidad(uid) : null, c = u ? Q.conductorDe(u) : null;
     return 'El del camión' + (u ? ' (' + (c ? c.nombre : 'sin asignar') + ')' : '');
@@ -19451,6 +19458,10 @@ const Rutas = {
     const c = this.conductor(v), lic = c && (c.docs || {}).licencia;
     if (!c) out.push(UI.placaTxt(u) + ' no tiene conductor asignado');
     else if (lic && lic.vence && lic.vence < v.fecha) out.push(vence('La licencia de ' + c.nombre, lic.vence));
+    /* El mismo conductor con otro viaje ese día y a la misma hora en otro camión (Juan, 07/11/2026: Wilmer maneja SNW 865 y SNW 936) */
+    const otro = c && v.hora && Datos.viajes.find(x => x.id !== v.id && x.unidad && x.unidad !== v.unidad && x.fecha === v.fecha && x.hora === v.hora &&
+      x.estado !== 'no' && (this.conductor(x) || {}).id === c.id);
+    if (otro) out.push(c.nombre + ' también tiene un viaje ese día a la misma hora en ' + this.placa(otro.unidad));
     return out;
   },
   /* En la ventana: otro viaje del mismo camión el mismo día y a la misma hora */
@@ -19466,18 +19477,25 @@ const Rutas = {
     const det = prog ? [v.hora, v.ton != null ? this.tonTxt(v.ton) : ''].filter(Boolean).join(' · ')
       : [v.ton != null ? this.tonTxt(v.ton) : '', v.fecha ? this.diaSem(v.fecha).slice(0, 3).toLowerCase() + ' ' + this.dia(v.fecha) + ' · sin camión'
         : v.unidad ? this.placa(v.unidad) + ' · sin día' : 'sin día ni camión'].filter(Boolean).join(' · ');
-    const tit = this.nombreTMS(r) + ' · ' + (prog ? this.ESTADOS[v.estado][0] : 'por programar') + (al.length ? ' · Revisar: ' + al.join('; ') : '') +
-      ' · arrástrela para moverla';
+    /* El conductor de cada viaje (Juan, 07/11/2026: «que cada ficha de la semana tenga el nombre por defecto que está asociado a ese
+       vehículo»): el del camión o, en azul, el que se escogió para ese viaje. Se cambia abriendo el viaje */
+    const u = v.unidad ? Q.unidad(v.unidad) : null, cd = u || v.conductor ? this.conductor(v) : null, def = u ? Q.conductorDe(u) : null;
+    const otro = Boolean(v.conductor && cd && (!def || def.id !== cd.id));
+    const tit = this.nombreTMS(r) + ' · ' + (prog ? this.ESTADOS[v.estado][0] : 'por programar') +
+      (u || v.conductor ? ' · Conductor: ' + (cd ? cd.nombre + (otro ? ' (el del camión es ' + (def ? def.nombre : 'ninguno') + ')' : '') : 'sin asignar') : '') +
+      (al.length ? ' · Revisar: ' + al.join('; ') : '') + ' · arrástrela para moverla';
     return '<div class="rt-v e-' + v.estado + '" role="button" tabindex="0" style="--c:' + this.color(r.tipo) + '" data-act="rtViaje" data-v="' + attr(v.id) +
       '" draggable="true" title="' + attr(tit) + '"><b>' + esc(this.nombre(r)) + '</b><span>' + esc(det) +
       (al.length ? '<em class="rt-al">' + Icon('warn', '', 11) + '</em>' : '') + (prog && v.estado !== 'prog' ? '<em class="rt-ei">' + this.estIc(v.estado) + '</em>' : '') +
-      '</span></div>';
+      '</span>' + (u || v.conductor ? '<span class="rt-cd' + (otro ? ' otro' : cd ? '' : ' sin') + '">' + Icon('user', '', 10) +
+        '<i>' + esc(cd ? this.corto(cd.nombre) : 'Sin conductor') + '</i></span>' : '') + '</div>';
   },
   leyenda() {
     return '<div class="rt-ley">' + this.tipos().map(t => '<span>' + this.punto(t) + esc(t) + '</span>').join('') +
       '<span class="rt-ley-sep"></span><span>' + Icon('truck', '', 11) + 'En ruta</span><span>' + Icon('check', '', 11) + 'Hecho</span><span>' + Icon('x', '', 11) + 'No se hizo</span>' +
       '<span>' + Icon('warn', '', 11) + 'Revisar antes de salir</span><span class="rt-ley-sep"></span><span>' + Icon('mover', '', 11) +
-      'Arrastre una ficha para moverla · con Ctrl presionada se copia (la casilla se pone verde)</span></div>';
+      'Arrastre una ficha para moverla · con Ctrl presionada se copia (la casilla se pone verde)</span>' +
+      '<span>' + Icon('user', '', 11) + 'El conductor de cada viaje; en azul, si ese día maneja otro. Se cambia abriendo el viaje</span></div>';
   },
 
   /* ---- Por camión: una fila por camión y una columna por día. Primero los
@@ -19493,9 +19511,10 @@ const Rutas = {
     return '<div class="rt-zona" id="rtZona"><div class="rt-wrap"><div class="rt-tab"><div class="rt-h rt-hu">Camión</div>' +
       fs.map(f => '<div class="rt-h' + (f === hoyISO ? ' hoy' : '') + '"><b>' + this.diaSem(f) + '</b><span>' + this.dia(f) + (f === hoyISO ? ' · hoy' : '') + '</span></div>').join('') +
       us.map(u => {
-        const libre = !con.has(u.id), c = Q.conductorDe(u);
-        return '<div class="rt-u' + (libre ? ' libre' : '') + '">' + UI.thumb(u) + '<div><b class="mono">' + esc(UI.placaTxt(u)) + '</b><span>' +
-            esc(!ocupados.has(u.id) ? 'Libre esta semana' : c ? c.nombre : 'Sin conductor asignado') + '</span></div></div>' +
+        /* El conductor ya sale en cada ficha (Juan, 07/11/2026): aquí no se repite */
+        const libre = !con.has(u.id);
+        return '<div class="rt-u' + (libre ? ' libre' : '') + '">' + UI.thumb(u) + '<div><b class="mono">' + esc(UI.placaTxt(u)) + '</b>' +
+            (ocupados.has(u.id) ? '' : '<span>Libre esta semana</span>') + '</div></div>' +
           fs.map(f => '<div class="rt-c' + (f === hoyISO ? ' hoy' : '') + '" data-cel data-u="' + attr(u.id) + '" data-f="' + f + '">' +
             vs.filter(v => v.unidad === u.id && v.fecha === f).sort(this.enOrden).map(v => this.ficha(v)).join('') +
             '<button type="button" class="rt-mas" data-act="rtNuevo" data-u="' + attr(u.id) + '" data-f="' + f + '" title="' +
@@ -19596,7 +19615,9 @@ const Rutas = {
     const antes = this.lugar(v);
     let txt;
     if (copiar) {
-      const n = { id: this.nuevoId('v'), ruta: v.ruta, unidad: dest.unidad, conductor: null, fecha: dest.fecha, hora: v.hora, ton: v.ton, estado: 'prog', nota: '', cambios: [] };
+      /* En el mismo camión, la copia se queda con el conductor que se ve en la ficha; en otro, toma el de ese camión */
+      const n = { id: this.nuevoId('v'), ruta: v.ruta, unidad: dest.unidad, conductor: dest.unidad && dest.unidad === v.unidad ? v.conductor || null : null,
+        fecha: dest.fecha, hora: v.hora, ton: v.ton, estado: 'prog', nota: '', cambios: [] };
       this.anotar(n, 'Se copió del viaje de ' + antes);
       Datos.viajes.push(n);
       this.ultimo = { copia: [n.id] };
