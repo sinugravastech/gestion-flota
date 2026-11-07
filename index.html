@@ -493,6 +493,10 @@ html[data-theme="dark"] .uc-tag{background:rgba(13,19,25,.8);color:#dfe8ee}
    volvía flex y las corría a la izquierda (Juan, 02/11/2026) */
 .uc-f .av{display:grid;place-items:center}
 .uc-f:has(+ .uc-f2){padding-bottom:3px}
+/* Si el número de arreglos y el gasto no caben en un renglón, el gasto baja al siguiente en vez de cortar el texto */
+.uc-plano .uc-f{flex-wrap:wrap;row-gap:2px}
+.uc-plano .uc-f span{overflow:visible}
+.uc-plano .uc-f b{margin-left:auto}
 .uc-f2{border-top:0;padding-top:0;justify-content:flex-start}
 /* Selección de unidades para eliminarlas: casilla en cada foto o fila y una
    franja con «Seleccionar todas» y «Eliminar» */
@@ -1513,6 +1517,11 @@ html[data-theme="dark"] .plano .alerta circle{stroke:var(--surface)}
 .tbl-mant .who-t .who-c{margin-top:1px;font-size:10.5px}
 .tbl-mant .who-c svg{vertical-align:-2px;margin-right:3px}
 .tbl-mant .who-c.sin{font-style:italic}
+/* La línea que separa lo de Flota del registro manual (ver Historico.filasTaller) */
+.tbl-mant tr.hx-sep,.tbl-mant tr.hx-sep:hover{background:var(--surface-2)}
+.tbl-mant tr.hx-sep td{grid-column:1 / -1;color:var(--text-2);font-size:12px;padding:10px 12px;border-top:2px solid var(--border-strong)}
+.tbl-mant tr.hx-sep td b{color:var(--text);font-weight:650}
+.tbl-mant tr.hx-sep svg{vertical-align:-2px;margin-right:6px}
 /* La ficha corta del vehículo (ver Ventanas.vehiculo) */
 .vh-top{display:flex;gap:14px;align-items:center}
 .vh-foto{flex:0 0 150px;height:96px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--surface-3);display:flex;align-items:center;justify-content:center}
@@ -6047,6 +6056,33 @@ const Historico = {
   /* Para el Dashboard, como los demás gastos, con su marca */
   gastos() { this.pedir(); return this.lista.filter(x => x.fecha && x.valor > 0).map(x => ({ fecha: x.fecha, unidad: x.unidad, valor: x.valor, excel: true })); },
   suma: (l, desde) => l.filter(x => x.fecha && (!desde || x.fecha >= desde)).reduce((t, x) => t + x.valor, 0),
+  /* Las líneas de un vehículo desde «desde»: cuentan como arreglos (Juan, 07/11/2026: «sería bueno que el número de arreglos sea combinado») */
+  cuantas(u, desde) { return this.de(u).filter(x => x.fecha && (!desde || x.fecha >= desde)).length; },
+  /* En Taller SINUGRAVAS, debajo de los arreglos de Flota (Juan, 07/11/2026: «debajo de todas las que yo he hecho, salieran las del
+     Excel»): una línea de separación y cada línea con las mismas columnas, la pastilla «Manual» y, al abrirla, la ventana de solo
+     lectura. Sin conductor: el de hoy no es el de entonces */
+  filasTaller(xs) {
+    if (!xs.length) return '';
+    const fs = xs.map(x => x.fecha).filter(Boolean).sort(), total = xs.reduce((s, x) => s + x.valor, 0);
+    const rango = !fs.length ? '' : fs[0].slice(0, 7) === fs[fs.length - 1].slice(0, 7) ? Fecha.mes(Fecha.parse(fs[0])).toLowerCase()
+      : (Fecha.mes(Fecha.parse(fs[0]), true) + ' a ' + Fecha.mes(Fecha.parse(fs[fs.length - 1]))).toLowerCase();
+    return '<tr class="hx-sep"><td colspan="8">' + Icon('file', '', 13) + '<b>' + esc(this.ETIQUETA) + '</b> · ' +
+        esc([rango, xs.length + (xs.length === 1 ? ' línea' : ' líneas'), Money.format(total), 'solo para consultar'].filter(Boolean).join(' · ')) + '</td></tr>' +
+      xs.map(x => {
+        const u = x.unidad && Q.unidad(x.unidad), tipo = x.tipo || 'Sin tipo', k = tipo.toLowerCase(), prov = x.proveedor || x.proveedor_excel || '';
+        return '<tr class="row-click" data-act="verHistorico" data-h="' + attr(x.id) + '" title="Ver la línea del registro manual">' +
+          '<td class="nowrap">' + esc(x.fecha ? Fecha.num(x.fecha) : 'Sin fecha') + (x.fecha ? '<div class="dias">' + esc(Fecha.hace(x.fecha)) + '</div>' : '') + '</td>' +
+          (u ? '<td class="m-uni" data-act="verVehiculo" data-u="' + attr(u.id) + '" title="Ver el vehículo, su conductor y su remolque">' + UI.unidadCelda(u) + '</td>'
+            : '<td><div class="m-2l">' + esc(x.nota || x.placa_excel || 'Sin vehículo') + '</div></td>') +
+          '<td>' + UI.pill(k === 'preventivo' ? 'info' : k === 'correctivo' ? 'warn' : 'nr', tipo) + '</td>' +
+          '<td title="' + attr([x.trabajo, x.falla, x.parte].filter(Boolean).join('\n')) + '"><div class="m-1l m-trab">' + esc(x.trabajo || x.falla || '—') + '</div>' +
+            (x.parte ? '<div class="dias m-1l m-trab">' + esc(x.parte) + '</div>' : '') + '</td>' +
+          '<td><div class="m-2l" title="' + attr(prov) + '">' + esc(prov || '—') + '</div></td>' +
+          '<td class="num">' + esc(Money.format(x.valor)) + '</td>' +
+          '<td>' + (x.factura ? '<span class="txt-2 fs12">' + esc('Factura ' + x.factura) + '</span>' : '') + '</td>' +
+          '<td>' + UI.pill('nr', 'Manual') + '</td></tr>';
+      }).join('');
+  },
   /* «… · $3,2 M de registro manual», para lo que suma este gasto */
   meta: v => (v ? ' · ' + esc(Money.compacto(v)) + ' de registro manual' : ''),
   /* La tarjeta «Antes de Flota» de un vehículo: sus líneas desde «desde», con la pastilla gris */
@@ -7719,6 +7755,7 @@ const Plano = {
       const k = this.clave(u), ar = this.arreglos(u, desde), pp = this.porParte(ar), nov = listo ? Novedades.de(u) : [];
       const top = this.visibles(k).filter(p => pp[p.k]).sort((a, b) => pp[b.k].n - pp[a.k].n).slice(0, 3);
       const exU = Historico.suma(Historico.de(u), desde), g = ar.reduce((s, m) => s + this.costo(m), 0) + exU;
+      const nx = Historico.cuantas(u, desde), n = ar.length + nx;
       const enTaller = taller.some(m => m.unidad === u.id);
       const est = enTaller ? UI.pill('bad', 'En el taller')
         : nov.length ? '<span title="Del preoperacional, sin arreglar">' + UI.pill('warn', nov.length === 1 ? '1 novedad' : nov.length + ' novedades') + '</span>' : '';
@@ -7730,9 +7767,10 @@ const Plano = {
         '<div class="uc-b"><div class="uc-l1">' + UI.placa(u) + '<span class="uc-anio">' + esc(u.modelo || '') + '</span></div>' +
           '<div class="uc-mm">' + esc(UI.nombre(u) || PLANOS[k].nombre) + '</div>' +
           '<div class="uc-zs">' + (top.length ? top.map(p => '<span class="chip">' + esc(p.n) + ' <b>' + pp[p.k].n + '</b></span>').join('')
-            : '<span class="chip">' + (ar.length ? 'Sin partes marcadas' : 'Sin arreglos en 12 meses') + '</span>') + '</div></div>' +
-        '<div class="uc-f"><span>' + Icon('tool', '', 12) + (ar.length ? ar.length + (ar.length === 1 ? ' arreglo' : ' arreglos') + ' en 12 meses'
-            : exU ? 'Costos del registro manual' : 'Ningún arreglo en 12 meses') +
+            : '<span class="chip">' + (n ? 'Sin partes marcadas' : 'Sin arreglos en 12 meses') + '</span>') + '</div></div>' +
+        /* Con las líneas del registro manual; al pasar el mouse, cuántas son de cada lado */
+        '<div class="uc-f"><span' + (nx ? ' title="' + attr(ar.length + ' en Flota y ' + nx + ' del ' + Historico.ETIQUETA.toLowerCase()) + '"' : '') + '>' +
+          Icon('tool', '', 12) + (n ? n + (n === 1 ? ' arreglo' : ' arreglos') + ' en 12 meses' : 'Ningún arreglo en 12 meses') +
           '</span><b' + (exU ? ' title="' + attr('Incluye ' + Money.format(exU) + ' del ' + Historico.ETIQUETA.toLowerCase()) + '"' : '') + '>' + esc(Money.format(g)) + '</b></div></article>';
     };
     return kpis + chips + (lista.length ? '<div class="ugrid mant-grid" id="mantGrid">' + lista.map(tarjeta).join('') + '</div>' +
@@ -7753,7 +7791,7 @@ const Plano = {
     const xs = sel && pp[sel.k], maxG = Math.max.apply(null, Object.values(pp).map(x => x.gasto).concat([0]));
     const etq = !sel || !sel.zona ? '' : this.etiqueta(k, sel.zona, sel.n, st.modo === 'gasto' ? (xs && xs.gasto ? this.pesos(xs.gasto) : 'sin gasto')
       : xs ? xs.n + (xs.n === 1 ? ' arreglo' : ' arreglos') : 'sin arreglos');
-    const exP = Historico.suma(Historico.de(u), this.desde(st.periodo));
+    const exP = Historico.suma(Historico.de(u), this.desde(st.periodo)), nxP = Historico.cuantas(u, this.desde(st.periodo));
     const gasto = lista.reduce((s, m) => s + this.costo(m), 0) + exP, prev = lista.filter(m => m.tipo === 'preventivo').length;
     const top = campo => vis.filter(p => pp[p.k] && pp[p.k][campo] > 0).sort((a, b) => pp[b.k][campo] - pp[a.k][campo])[0];
     const masN = top('n'), masG = top('gasto');
@@ -7786,7 +7824,8 @@ const Plano = {
         '<button class="btn btn-sm" data-act="anotarAvance" data-m="' + attr(m.id) + '">' + Icon('edit', '', 12) + 'Anotar avance</button>' +
         '<button class="btn btn-sm btn-primary" data-act="terminarArreglo" data-m="' + attr(m.id) + '">' + Icon('check', '', 12) + 'Terminar arreglo</button></div>').join('') +
       '<div class="kpis4 mant-kpis">' +
-        UI.kpi({ label: 'Arreglos ' + enPer, valor: lista.length, icono: 'tool', meta: (lista.length - prev) + (lista.length - prev === 1 ? ' correctivo · ' : ' correctivos · ') + prev + (prev === 1 ? ' preventivo' : ' preventivos') }) +
+        UI.kpi({ label: 'Arreglos ' + enPer, valor: lista.length + nxP, icono: 'tool', meta: (lista.length - prev) + (lista.length - prev === 1 ? ' correctivo · ' : ' correctivos · ') + prev +
+          (prev === 1 ? ' preventivo' : ' preventivos') + (nxP ? ' · ' + nxP + ' del ' + Historico.ETIQUETA.toLowerCase() : '') }) +
         UI.kpi({ label: 'Gasto ' + enPer, valor: esc(Money.format(gasto)), icono: 'pesos', meta: 'Talleres y órdenes de compra' + Historico.meta(exP) }) +
         UI.kpi({ label: 'Más arreglos', valor: masN ? esc(masN.n) : '—', icono: 'refresh', color: 'var(--warn-500)', meta: masN ? resumen(masN) : 'Ninguna parte con arreglos',
           act: masN ? 'planoParte' : '', v: masN ? masN.k : '' }) +
@@ -7835,12 +7874,15 @@ const Plano = {
   },
   /* Sin parte escogida: todo el vehículo, con sus novedades y todos sus arreglos del período */
   panelTodo(u, lista, novs) {
-    const gasto = lista.reduce((s, m) => s + this.costo(m), 0), ult = lista[0];
+    const gasto = lista.reduce((s, m) => s + this.costo(m), 0), ult = lista[0], nx = Historico.cuantas(u, this.desde(UIState.plano.periodo));
     return UI.card('Todo el vehículo',
       '<div class="zp-h"><p>Toque una parte en el dibujo para ver solo la suya.</p><div class="zp-n"><b>' + lista.length + '</b><span>' +
         (lista.length === 1 ? 'arreglo' : 'arreglos') + '</span></div></div>' +
       novs.filter(n => n.parte).map(n => this.cajaNovedad(u, n)).join('') +
       '<div class="zp-res"><span>Gasto: <b>' + esc(Money.format(gasto)) + '</b></span>' + (ult ? '<span>Último: <b>' + esc(Fecha.hace(ult.fecha)) + '</b></span>' : '') + '</div>' +
+      /* Lo del registro manual no tiene partes: va en su tarjeta, debajo del plano */
+      (nx ? '<div class="pl-nota">' + Icon('info', '', 13) + '<span>Además, ' + nx + (nx === 1 ? ' línea' : ' líneas') + ' del ' + esc(Historico.ETIQUETA.toLowerCase()) +
+        ', en «Antes de Flota», más abajo.</span></div>' : '') +
       (lista.length ? '<div class="pm-tl">' + lista.map(m => this.itemTl(u, m, null, m.tipo !== 'preventivo' && !(m.partes || []).length)).join('') + '</div>'
         : '<div class="pl-vacio">Este vehículo no ha tenido arreglos en el período.</div>') +
       '<button class="btn pl-btn" data-act="registrarArreglo" data-u="' + attr(u.id) + '">' + Icon('plus', '', 14) + 'Registrar arreglo</button>',
@@ -7902,10 +7944,12 @@ const Plano = {
   /* En la ficha, arriba de la historia: el plano y el botón para abrirlo */
   tarjetaFicha(u) {
     const k = this.clave(u), ar = this.arreglos(u, this.desde('12')), pp = this.porParte(ar), al = Novedades.listo() ? this.alertas(u) : {};
+    const nx = Historico.cuantas(u, this.desde('12')), n = ar.length + nx;
     const top = this.visibles(k).filter(p => pp[p.k]).sort((a, b) => pp[b.k].n - pp[a.k].n).slice(0, 4), nAl = Object.values(al).reduce((s, n) => s + n, 0);
     return UI.card('Plano de mantenimiento',
       '<div class="pl-ficha"><div class="plano-caja claro" data-act="irPlano" data-u="' + attr(u.id) + '" title="Abrir el plano">' + this.mini(u) + '</div>' +
-        '<div class="pl-ficha-t"><p>' + (ar.length ? ar.length + (ar.length === 1 ? ' arreglo' : ' arreglos') + ' en los últimos 12 meses.' : 'Ningún arreglo en los últimos 12 meses.') +
+        '<div class="pl-ficha-t"><p>' + (n ? n + (n === 1 ? ' arreglo' : ' arreglos') + ' en los últimos 12 meses' +
+          (nx ? ' (' + nx + ' del ' + Historico.ETIQUETA.toLowerCase() + ')' : '') + '.' : 'Ningún arreglo en los últimos 12 meses.') +
           (nAl ? ' <b class="tx-bad">' + (nAl === 1 ? '1 novedad' : nAl + ' novedades') + ' del preoperacional sin arreglar.</b>' : '') + '</p>' +
           (top.length ? '<div class="uc-zs">' + top.map(p => '<span class="chip">' + esc(p.n) + ' <b>' + pp[p.k].n + '</b></span>').join('') + '</div>' : '') +
           '<button class="btn btn-sm mt12" data-act="irPlano" data-u="' + attr(u.id) + '">' + Icon('eye', '', 12) + 'Abrir el plano</button></div></div>',
@@ -11506,6 +11550,10 @@ Object.assign(Vistas, {
     const sinOrden = todos.filter(m => Compras.malas(m)), pend = todos.filter(m => Pendiente.de(m).length);
     const ultPrev = todos.find(m => m.tipo === 'preventivo' && /aceite/i.test(m.trabajo || ''));
     const lista = todos.filter(m => f === 'todos' || (f === 'taller' || f === 'programado' ? m.estado === f : f === 'pendientes' ? Pendiente.de(m).length : m.tipo === f));
+    /* Debajo, el registro manual (ver Historico.filasTaller): en Todos, y en Preventivos o Correctivos las de ese tipo */
+    Historico.pedir();
+    const xs = (f === 'todos' ? Historico.lista.slice() : f === 'preventivo' || f === 'correctivo' ? Historico.lista.filter(x => String(x.tipo || '').toLowerCase() === f) : [])
+      .sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')) || String(b.id).localeCompare(String(a.id)));
     const segs = [['todos', 'Todos', todos.length], ['preventivo', 'Preventivos', todos.filter(m => m.tipo === 'preventivo').length],
       ['correctivo', 'Correctivos', todos.filter(m => m.tipo === 'correctivo').length], ['taller', 'En taller', taller.length],
       ['programado', 'Programados', prog.length], ['pendientes', 'Sin valor u orden', pend.length]];
@@ -11530,7 +11578,7 @@ Object.assign(Vistas, {
         (f === 'pendientes' ? '' : '<span class="link" data-act="filtroMant" data-v="pendientes">Ver cuáles</span>') + '</div></div>' : '') +
       '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroMant" data-v="' + s[0] + '">' + s[1] +
         '<span class="seg-n">' + s[2] + '</span></button>').join('') + '</div></div>' +
-      '<div class="card">' + (lista.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Trabajo</th><th>Taller y repuestos</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
+      '<div class="card">' + (lista.length || xs.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Trabajo</th><th>Taller y repuestos</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
         lista.map(m => {
           const u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', c = Compras.deArreglo(m);
           /* Todas las filas del mismo alto (Juan, 04/11/2026): cada dato en uno o
@@ -11577,7 +11625,7 @@ Object.assign(Vistas, {
               '<button class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '" title="La unidad salió del taller">' + Icon('check', '', 12) + 'Terminar</button>'
               /* Cerrado, sin «Editar»: la fila lo abre (Juan, 05/11/2026: «está de más») */
               : UI.pill('nr', 'Cerrado')) + '</div></td></tr>';
-        }).join('') + '</tbody></table></div>' : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.')) + '</div>';
+        }).join('') + Historico.filasTaller(xs) + '</tbody></table></div>' : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.')) + '</div>';
     return { titulo: 'Mantenimientos', sub: 'Preventivos y correctivos', html,
       /* Desde «Abiertas» de Novedades: el caso, resaltado un momento (ver Acciones.irCaso) */
       despues: () => {
