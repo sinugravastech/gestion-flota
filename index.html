@@ -20188,6 +20188,64 @@ const Rutas = {
     return this._logoP;
   },
   rgba(hex, a) { const n = parseInt(String(hex).slice(1), 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; },
+  /* La calidad de la imagen (Juan, 07/11/2026: «en la máxima calidad posible»): tres veces el tamaño, sin pasar de unos 36 millones
+     de puntos */
+  escala: (W, H) => Math.max(1, Math.min(3, Math.sqrt(36e6 / (W * H)))),
+  /* Lo que se dibuja con imágenes: las fotos de los camiones (las que falten se bajan primero) y las de los tipos */
+  async imagenesListas(vs) {
+    const carga = src => new Promise(ok => {
+      if (!src) { ok(null); return; }
+      const im = new Image();
+      im.onload = () => ok(im);
+      im.onerror = () => ok(null);
+      im.src = src;
+    });
+    try { await Promise.race([Guardadas.aplicar(), new Promise(r => setTimeout(r, 4000))]); } catch (e) { /* van las que haya */ }
+    const us = [...new Set(vs.map(v => v.unidad))].map(id => Q.unidad(id)).filter(Boolean);
+    const tipos = [...new Set(vs.map(v => (this.ruta(v.ruta) || {}).tipo).filter(Boolean).concat(this.tiposDe(vs)))];
+    this._fotos = new Map(await Promise.all(us.map(async u => {
+      const f = await carga(u.mini || u.foto);
+      return [u.id, f ? { img: f } : { img: await carga(this.ilusUrl(u)), ph: true }];
+    })));
+    this._iconos = new Map((await Promise.all(tipos.map(async x => [x, await carga(this.imagen(x))]))).filter(x => x[1]));
+  },
+  /* El dibujo de la unidad sin foto, como imagen */
+  ilusUrl(u) {
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(ILUS[ilusDe(u)].replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ').replace(/currentColor/g, '#50689c'));
+  },
+  /* La foto de la unidad en su cuadro, recortada como en la plataforma y con su encuadre; sin foto, su dibujo */
+  dibFoto(g, u, x, y, w, h) {
+    const f = (this._fotos || new Map()).get(u.id);
+    g.save();
+    this.caja(g, x, y, w, h, 6);
+    g.clip();
+    if (f && f.img && !f.ph) {
+      const im = f.img, s = Math.max(w / im.naturalWidth, h / im.naturalHeight), dw = im.naturalWidth * s, dh = im.naturalHeight * s, p = Encuadre.pos(u);
+      g.drawImage(im, x + (w - dw) * p.x / 100, y + (h - dh) * p.y / 100, dw, dh);
+    } else {
+      const gr = g.createLinearGradient(x, y, x + w, y + h);
+      gr.addColorStop(0, '#eef2fa');
+      gr.addColorStop(1, '#e2e8f1');
+      g.fillStyle = gr;
+      g.fillRect(x, y, w, h);
+      if (f && f.img) { const iw = w * 0.84, ih = iw * 72 / 120; g.drawImage(f.img, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih); }
+    }
+    g.restore();
+    g.strokeStyle = this.IMG.borde;
+    g.lineWidth = 1;
+    this.caja(g, x + 0.5, y + 0.5, w - 1, h - 1, 6);
+    g.stroke();
+  },
+  /* La figurita del conductor, como el ícono de la plataforma */
+  dibPersona(g, x, y, color) {
+    g.save();
+    g.strokeStyle = color;
+    g.lineWidth = 1.2;
+    g.lineCap = 'round';
+    g.beginPath(); g.arc(x + 4.5, y - 7.5, 2.3, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.arc(x + 4.5, y + 0.5, 4.2, Math.PI * 1.08, Math.PI * 1.92); g.stroke();
+    g.restore();
+  },
   caja(g, x, y, w, h, r) { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); },
   raya(g, x1, y1, x2, y2) { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); },
   /* El texto en renglones de un ancho; el último lleva «…» si no cabe */
@@ -20232,7 +20290,7 @@ const Rutas = {
   pieAncho(g, tipos) {
     const I = this.IMG;
     g.font = '400 12.5px ' + I.letra;
-    const x = tipos.reduce((s, t) => s + 15 + g.measureText(t).width + 18, 0);
+    const x = tipos.reduce((s, t) => s + ((this._iconos || new Map()).get(t) ? 19 : 15) + g.measureText(t).width + 18, 0);
     g.font = '400 12px ' + I.letra;
     return x + g.measureText(this.pieTxt()).width + 10;
   },
@@ -20242,30 +20300,34 @@ const Rutas = {
     let x = M;
     g.font = '400 12.5px ' + I.letra;
     tipos.forEach(t => {
-      g.fillStyle = this.color(t); g.beginPath(); g.arc(x + 5, y - 4, 5, 0, Math.PI * 2); g.fill();
-      g.fillStyle = I.texto2; g.fillText(t, x + 15, y);
-      x += 15 + g.measureText(t).width + 18;
+      const ic = (this._iconos || new Map()).get(t);
+      if (ic) g.drawImage(ic, x, y - 12, 15, 15);
+      else { g.fillStyle = this.color(t); g.beginPath(); g.arc(x + 5, y - 4, 5, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = I.texto2; g.fillText(t, x + (ic ? 19 : 15), y);
+      x += (ic ? 19 : 15) + g.measureText(t).width + 18;
     });
     g.fillStyle = I.texto3; g.font = '400 12px ' + I.letra;
     g.fillText(txt, abajo ? M : W - M - g.measureText(txt).width, abajo ? y + 20 : y);
   },
-  /* El tablero: una fila por camión con viajes y una columna por día */
+  /* El tablero: una fila por camión con viajes y una columna por día. Igual que en la plataforma (Juan, 07/11/2026): la foto del
+     camión junto a su placa y, en cada ficha, la imagen del tipo junto a la hora y el conductor de ese viaje */
   imgTablero(l) {
-    const I = this.IMG, fs = this.fechas(l), vs = this.vistos(l), M = 28, CU = 200, CD = 172, W = M * 2 + CU + CD * 7, AF = CD - 12;
+    const I = this.IMG, fs = this.fechas(l), vs = this.vistos(l), M = 28, CU = 214, CD = 172, W = M * 2 + CU + CD * 7, AF = CD - 12;
     const us = [...new Set(vs.map(v => v.unidad))].map(id => Q.unidad(id)).filter(Boolean).sort((a, b) => String(a.placa).localeCompare(String(b.placa)));
-    /* Primero se mide: la ruta de cada ficha en uno o dos renglones */
+    /* Primero se mide: la ruta de cada ficha en hasta tres renglones */
     const g0 = document.createElement('canvas').getContext('2d'), lin = new Map();
     g0.font = '600 12.5px ' + I.letra;
-    vs.forEach(v => lin.set(v.id, this.renglones(g0, this.nombre(this.ruta(v.ruta)), AF - 20, 2)));
-    const alto = v => 12 + lin.get(v.id).length * 16 + 18;
+    vs.forEach(v => lin.set(v.id, this.renglones(g0, this.nombre(this.ruta(v.ruta)), AF - 20, 3)));
+    const alto = v => 12 + lin.get(v.id).length * 16 + 37;
     const celdas = us.map(u => fs.map(f => vs.filter(v => v.unidad === u.id && v.fecha === f).sort(this.enOrden)));
     const filas = celdas.map(fila => Math.max(72, ...fila.map(c => c.reduce((s, v) => s + alto(v) + 6, 6))));
     const HD = 44, top = M + 66, tabla = HD + filas.reduce((s, h) => s + h, 0), H = top + tabla + 30 + this.pieAlto(W, M, this.tiposDe(vs)) + 22, x0 = M, TW = W - 2 * M;
-    const c = document.createElement('canvas');
-    c.width = W * I.k;
-    c.height = H * I.k;
+    const k = this.escala(W, H), c = document.createElement('canvas');
+    c.width = Math.round(W * k);
+    c.height = Math.round(H * k);
     const g = c.getContext('2d');
-    g.scale(I.k, I.k);
+    g.scale(k, k);
+    g.imageSmoothingQuality = 'high';
     g.fillStyle = '#fff';
     g.fillRect(0, 0, W, H);
     this.imgCabeza(g, M, this.titulo(), 'Semana ' + this.semanaAño(l) + ' · ' + this.cuantos(vs));
@@ -20283,11 +20345,16 @@ const Rutas = {
     g.lineWidth = 1;
     let y = top + HD;
     us.forEach((u, r) => {
-      const cd = Q.conductorDe(u);
+      g.strokeStyle = I.borde;
       this.raya(g, x0, y + 0.5, x0 + TW, y + 0.5);
-      g.fillStyle = I.texto; g.font = '700 15px ' + I.mono; g.fillText(UI.placaTxt(u), x0 + 14, y + 27);
-      g.fillStyle = I.texto3; g.font = '400 12px ' + I.letra;
-      this.renglones(g, cd ? cd.nombre : 'Sin conductor asignado', CU - 28, 2).forEach((t, k) => g.fillText(t, x0 + 14, y + 46 + k * 15));
+      /* La foto del camión y su placa, en el centro de la fila; si es de un tercero, debajo de la placa */
+      const mid = y + filas[r] / 2, tx = x0 + 14 + 56 + 12;
+      this.dibFoto(g, u, x0 + 14, mid - 19, 56, 38);
+      g.font = '650 11.5px ' + I.letra;
+      const ter = Q.tercero(u) ? this.renglones(g, 'Tercero' + (u.tercero.quien ? ' · ' + u.tercero.quien : ''), CU - (tx - x0) - 10, 2) : [], yp = mid + 5 - ter.length * 8;
+      g.fillStyle = I.texto; g.font = '700 15px ' + I.mono; g.fillText(UI.placaTxt(u), tx, yp);
+      g.fillStyle = '#1a4894'; g.font = '650 11.5px ' + I.letra;
+      ter.forEach((s, kk) => g.fillText(s, tx, yp + 17 + kk * 14));
       celdas[r].forEach((cel, i) => {
         const x = x0 + CU + i * CD + 6;
         let yy = y + 6;
@@ -20301,19 +20368,31 @@ const Rutas = {
           g.fillStyle = col; g.fillRect(x, yy, 4, hh);
           g.restore();
           g.fillStyle = I.texto; g.font = '600 12.5px ' + I.letra;
-          ls.forEach((t, k) => {
-            const ty = yy + 20 + k * 16;
-            g.fillText(t, x + 12, ty);
-            if (no) g.fillRect(x + 12, ty - 4.5, g.measureText(t).width, 1.2);
+          ls.forEach((s, kk) => {
+            const ty = yy + 20 + kk * 16;
+            g.fillText(s, x + 12, ty);
+            if (no) g.fillRect(x + 12, ty - 4.5, g.measureText(s).width, 1.2);
           });
+          /* La imagen del tipo junto a la hora */
+          const yh = yy + 20 + ls.length * 16 + 2, ic = (this._iconos || new Map()).get(rt.tipo);
+          let xh = x + 12;
+          if (ic) { g.drawImage(ic, xh, yh - 12, 15, 15); xh += 19; }
           g.fillStyle = I.texto2; g.font = '400 12px ' + I.letra;
-          g.fillText([v.hora, v.ton != null ? this.tonTxt(v.ton) : '', no ? 'no se hizo' : ''].filter(Boolean).join(' · '), x + 12, yy + 20 + ls.length * 16 + 2);
+          g.fillText([v.hora, v.ton != null ? this.tonTxt(v.ton) : '', no ? 'no se hizo' : ''].filter(Boolean).join(' · '), xh, yh);
+          /* El conductor de ese viaje: en azul si ese día maneja otro; en naranja si no hay */
+          const cd = this.conductor(v), def = Q.conductorDe(u), otro = Boolean((v.conductor || v.conductorTxt) && cd && (!def || def.id !== cd.id));
+          const yc = yh + 17, cc = otro ? '#2a52ad' : cd ? I.texto2 : '#c8860d';
+          this.dibPersona(g, x + 12, yc, cc);
+          g.fillStyle = cc; g.font = (otro || !cd ? '650 ' : '400 ') + '11.5px ' + I.letra;
+          g.fillText(this.renglones(g, cd ? this.cortoNombre(cd.nombre) : 'Sin conductor', AF - 34, 1)[0] || '', x + 25, yc);
           g.globalAlpha = 1;
           yy += hh + 6;
         });
       });
       y += filas[r];
     });
+    g.strokeStyle = I.borde;
+    g.lineWidth = 1;
     fs.forEach((f, i) => this.raya(g, x0 + CU + i * CD + 0.5, top, x0 + CU + i * CD + 0.5, top + tabla));
     g.restore();
     g.strokeStyle = I.borde;
@@ -20328,11 +20407,12 @@ const Rutas = {
     const I = this.IMG, vs = this.vistos(l).filter(v => dias.includes(v.fecha)), M = 28, W = 940, TW = W - 2 * M;
     const C = { hora: 16, ruta: 86, ton: 470, cam: 494, nota: 716 }, HF = 54, HD = 42, ds = dias.filter(x => vs.some(v => v.fecha === x));
     const top = M + 66, H = top + ds.reduce((s, x) => s + HD + vs.filter(v => v.fecha === x).length * HF + 14, 0) + 16 + this.pieAlto(W, M, this.tiposDe(vs)) + 22;
-    const c = document.createElement('canvas');
-    c.width = W * I.k;
-    c.height = H * I.k;
+    const k = this.escala(W, H), c = document.createElement('canvas');
+    c.width = Math.round(W * k);
+    c.height = Math.round(H * k);
     const g = c.getContext('2d');
-    g.scale(I.k, I.k);
+    g.scale(k, k);
+    g.imageSmoothingQuality = 'high';
     g.fillStyle = '#fff';
     g.fillRect(0, 0, W, H);
     this.imgCabeza(g, M, f && !this.queTxt() ? 'Programación del ' + this.largo(f).toLowerCase() : this.titulo(),
@@ -20353,7 +20433,9 @@ const Rutas = {
         this.raya(g, M, yy + 0.5, M + TW, yy + 0.5);
         g.globalAlpha = no ? 0.55 : 1;
         g.fillStyle = I.texto; g.font = '700 14px ' + I.mono; g.fillText(v.hora || '—', M + C.hora, yy + 24);
-        g.fillStyle = this.color(rt.tipo); g.beginPath(); g.arc(M + C.ruta + 5, yy + 19, 5, 0, Math.PI * 2); g.fill();
+        const icL = (this._iconos || new Map()).get(rt.tipo);
+        if (icL) g.drawImage(icL, M + C.ruta - 2, yy + 11, 15, 15);
+        else { g.fillStyle = this.color(rt.tipo); g.beginPath(); g.arc(M + C.ruta + 5, yy + 19, 5, 0, Math.PI * 2); g.fill(); }
         g.fillStyle = I.texto; g.font = '600 14px ' + I.letra;
         const nom = this.renglones(g, this.nombre(rt), C.ton - C.ruta - 90, 1)[0] || '';
         g.fillText(nom, M + C.ruta + 16, yy + 24);
@@ -20387,7 +20469,7 @@ const Rutas = {
     const lista = Boolean(f) || UIState.rutas.vista === 'dia';
     const titulo = f && !que ? 'Programación del ' + this.largo(f).toLowerCase() : this.titulo();
     const nombre = 'programacion-' + (que ? sinTildes(que).replace(/[^a-z0-9]+/g, '-') + '-' : '') + (f || 'semana-' + l);
-    const lienzo = this.logoListo().then(() => (lista ? this.imgLista(l, dias, f) : this.imgTablero(l)));
+    const lienzo = this.logoListo().then(() => this.imagenesListas(vs)).then(() => (lista ? this.imgLista(l, dias, f) : this.imgTablero(l)));
     const png = lienzo.then(c => new Promise((ok, mal) => c.toBlob(b => (b ? ok(b) : mal(new Error('no se pudo armar la imagen'))), 'image/png')));
     const listo = () => Toast.show('Imagen copiada: <b>' + esc(titulo) + '</b>. Péguela en el grupo con <b>Ctrl + V</b>.');
     const bajar = () => lienzo.then(c => {
