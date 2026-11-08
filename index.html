@@ -1567,6 +1567,16 @@ html[data-theme="dark"] .plano .alerta circle{stroke:var(--surface)}
 .cs-enl-mas{margin-top:10px}
 .cs-enl-mas .link{display:inline-flex;align-items:center;gap:5px}
 .el-tambien{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;cursor:pointer}
+/* En Taller SINUGRAVAS, el camión y su remolque juntos, unidos por una línea entre sus fechas (ver MantRemolque.pares) */
+.tbl-mant tr.par-a td,.tbl-mant tr.par-b td{background:color-mix(in srgb,var(--accent) 3.5%,var(--surface))}
+.tbl-mant tr.par-a:hover td,.tbl-mant tr.par-b:hover td{background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.tbl-mant tr.par-a.resaltada td,.tbl-mant tr.par-b.resaltada td{background:var(--accent-soft)}
+.tbl-mant tr.par-a td{border-bottom-color:transparent}
+.tbl-mant tr.par-a td:first-child,.tbl-mant tr.par-b td:first-child{position:relative;padding-left:34px}
+.tbl-mant tr.par-a td:first-child::before{content:'';position:absolute;left:16px;top:50%;bottom:-1px;width:2px;background:var(--accent)}
+.tbl-mant tr.par-b td:first-child::before{content:'';position:absolute;left:16px;top:0;height:50%;width:2px;background:var(--accent)}
+.tbl-mant tr.par-a td:first-child::after,.tbl-mant tr.par-b td:first-child::after{content:'';position:absolute;left:11px;top:calc(50% - 6px);width:12px;height:12px;
+  border-radius:50%;background:var(--surface);border:2px solid var(--accent);box-sizing:border-box}
 /* La misma línea en las otras tablas, como Compras de la ficha (ver Historico.filasCompras) */
 table.tbl:not(.tbl-mant) tr.hx-sep,table.tbl:not(.tbl-mant) tr.hx-sep:hover{background:var(--surface-2)}
 table.tbl:not(.tbl-mant) tr.hx-sep td{color:var(--text-2);font-size:12px;padding:10px 12px;border-top:2px solid var(--border-strong)}
@@ -9409,6 +9419,22 @@ const MantRemolque = {
     return s && s.o.estado === 'programado' ? '<br>' + (s.rem ? 'El remolque <b>' : 'El camión <b>') + esc(UI.placaTxt(s.u)) + '</b> también estaba programado. ' +
       '<span class="link" data-act="ingresoArreglo" data-m="' + attr(s.o.id) + '">Marcar que ingresó</span>' : '';
   },
+  /* En Taller SINUGRAVAS, el camión y su remolque juntos, el camión arriba (Juan, 08/11/2026: «una línea que sale desde la fecha del
+     camión a la fecha del tráiler… que visualmente uno vea la relación»). Si los dos están en la lista, el segundo sube al lado del
+     primero; cls: la clase de cada fila de la pareja (par-a arriba, par-b abajo), para la línea */
+  pares(lista) {
+    const ids = new Set(lista.map(m => m.id)), van = new Set(), l = [], cls = new Map();
+    lista.forEach(m => {
+      if (van.has(m.id)) return;
+      const o = m.enlace && ids.has(m.enlace) ? lista.find(x => x.id === m.enlace) : null;
+      if (!o) { l.push(m); van.add(m.id); return; }
+      const rem = (Q.unidad(m.unidad) || {}).tipo === 'remolque', a = rem ? o : m, b = rem ? m : o;
+      l.push(a, b);
+      van.add(a.id); van.add(b.id);
+      cls.set(a.id, ' par-a'); cls.set(b.id, ' par-b');
+    });
+    return { l, cls };
+  },
   eliminarTambien(r) {
     const s = this.suyo(r);
     return s ? '<label class="el-tambien"><input type="checkbox" id="elTambien">Eliminar también el ingreso ' + (s.rem ? 'del remolque ' : 'del camión ') +
@@ -12209,7 +12235,8 @@ Object.assign(Vistas, {
         (otros.length ? ' y ' + otros.reduce((s, o) => s + o[1], 0) + ' de otro tipo (' + otros.map(o => o[0] + ' ' + o[1]).join(', ') + '), que solo van en Todos' : '') + '.') +
         '</div>' : '') +
       '<div class="card">' + (lista.length || xs.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Trabajo</th><th>Taller y repuestos</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
-        lista.map(m => {
+        /* El camión y su remolque, juntos y unidos por una línea (ver MantRemolque.pares) */
+        (par => par.l.map(m => {
           const u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', c = Compras.deArreglo(m);
           /* Todas las filas del mismo alto (Juan, 04/11/2026): cada dato en uno o
              dos renglones, y completo al pasar el mouse. El clic en la fila abre
@@ -12233,7 +12260,7 @@ Object.assign(Vistas, {
             .concat(falta.map(k => Pendiente.NOMBRE[k])).filter(Boolean);
           const avisos = [c.ajenas.length ? 'Orden de otro vehículo' : '', c.faltan ? 'Orden borrada' : ''].concat([...new Set(falta.map(k => Pendiente.LADO[k]))]).filter(Boolean);
           /* El correctivo cerrado también abre el caso, resumido (Juan, 05/11/2026); su «Editar todo» lleva a la vista completa */
-          return '<tr class="row-click" data-act="' + (enTaller || !prev ? 'anotarAvance' : 'editarMant') + '" data-m="' + attr(m.id) + '" title="' +
+          return '<tr class="row-click' + (par.cls.get(m.id) || '') + '" data-act="' + (enTaller || !prev ? 'anotarAvance' : 'editarMant') + '" data-m="' + attr(m.id) + '" title="' +
               (enTaller ? 'Clic para ver el caso y anotar lo que se va haciendo' : prev ? 'Clic para ver o corregir el arreglo'
                 : 'Clic para ver el arreglo; «Editar todo» abre la vista completa') + '" data-mid="' + attr(m.id) + '">' +
             /* Un programado: el día de la cita, cuánto falta y la hora */
@@ -12261,7 +12288,7 @@ Object.assign(Vistas, {
               '<button class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '" title="La unidad salió del taller">' + Icon('check', '', 12) + 'Terminar</button>'
               /* Cerrado, sin «Editar»: la fila lo abre (Juan, 05/11/2026: «está de más») */
               : UI.pill('nr', 'Cerrado')) + '</div></td></tr>';
-        }).join('') + Historico.filasTaller(xs) + '</tbody></table></div>' : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.')) + '</div>';
+        }).join(''))(MantRemolque.pares(lista)) + Historico.filasTaller(xs) + '</tbody></table></div>' : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.')) + '</div>';
     return { titulo: 'Mantenimientos', sub: 'Preventivos y correctivos', html,
       /* Desde «Abiertas» de Novedades: el caso, resaltado un momento (ver Acciones.irCaso) */
       despues: () => {
