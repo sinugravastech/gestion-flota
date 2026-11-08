@@ -1567,6 +1567,17 @@ html[data-theme="dark"] .plano .alerta circle{stroke:var(--surface)}
 .cs-enl-mas{margin-top:10px}
 .cs-enl-mas .link{display:inline-flex;align-items:center;gap:5px}
 .el-tambien{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;cursor:pointer}
+/* En el caso: «Anotar avance» a la izquierda y «Terminar arreglo» (verde) a la derecha; y las órdenes ahí mismo (ver Acciones.terminarCaso) */
+.cs-nuevo-b{display:flex;align-items:center;gap:8px;margin-top:10px}
+.btn-fin{background:var(--ok-500);border-color:var(--ok-500);color:#fff}
+.btn-fin:hover{background:color-mix(in srgb,var(--ok-500) 86%,#000);border-color:color-mix(in srgb,var(--ok-500) 86%,#000);color:#fff}
+.cs-or{margin-top:8px;padding:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2)}
+.cs-or-a{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+.cs-or .oc-op{flex-wrap:wrap;row-gap:4px}
+.cs-or .oc-op .t{flex:1 1 calc(100% - 30px)}
+.cs-or .oc-op .t>span:first-child{white-space:normal}
+.cs-or .oc-op .v{margin-left:21px}
+.cs-or .oc-op .oc-ver{margin-left:auto}
 /* En Taller SINUGRAVAS, el camión y su remolque juntos, unidos por una línea entre sus fechas (ver MantRemolque.pares) */
 .tbl-mant tr.par-a td,.tbl-mant tr.par-b td{background:color-mix(in srgb,var(--accent) 3.5%,var(--surface))}
 .tbl-mant tr.par-a:hover td,.tbl-mant tr.par-b:hover td{background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
@@ -8825,6 +8836,17 @@ const Avances = {
   fotos(m, id) { return (m.fotosData || []).filter(f => (f.nota || '') === (id || '')); },
   cuando(n) { return Fecha.corta(n.f) + (n.h ? ' · ' + n.h : ''); },
   ultima(m) { const l = this.de(m); return l[l.length - 1] || null; },
+  /* Lo último que pasó en el arreglo: el avance de fecha y hora más tardía o, sin avances, la entrada. La salida no puede quedar antes
+     (ver Acciones.terminarCaso). Lo que no tiene hora cuenta desde el comienzo del día */
+  ultimoMomento(m) {
+    const ini = { k: m.fecha + ' ' + (m.horaEntrada || '00:00'), txt: Fecha.corta(m.fecha) + (m.horaEntrada ? ' · ' + m.horaEntrada : ''), avance: false };
+    return this.de(m).reduce((x, n) => { const k = n.f + ' ' + (n.h || '00:00'); return k >= x.k ? { k, txt: this.cuando(n), avance: true } : x; }, ini);
+  },
+  /* La salida (día y hora; sin hora, el final del día) antes de lo último que pasó: el texto para decirlo, o nada si está bien */
+  salidaAntes(m, f, h) {
+    const u = this.ultimoMomento(m);
+    return f + ' ' + (h || '23:59') < u.k ? 'La salida no puede quedar antes ' + (u.avance ? 'del último avance' : 'de la entrada') + ' (' + u.txt + '). Revise la fecha y la hora.' : '';
+  },
   /* El título del arreglo en las listas: lo que se hizo o, si va por anotaciones, cuántas lleva */
   titulo(m) {
     const n = (m.notas || []).length;
@@ -13595,6 +13617,10 @@ Object.assign(Ventanas, {
      avances, el más nuevo arriba; a la derecha, el resumen. Lo demás se
      corrige con «Editar todo» y se cierra con «Terminar arreglo». Se abre con
      un clic en su fila del Taller SINUGRAVAS (ver Acciones.anotarAvance) */
+  /* El arreglo de llantas se termina en su ventana: ahí van las posiciones y el serial (ver Acciones.terminarCaso) */
+  terminaConVentana: r => (r.partes || []).some(p => p.k === 'llantas'),
+  /* El último «Terminar arreglo» desde el caso, para «Deshacer» */
+  cierre: null,
   caso(r) {
     const u = r && Q.unidad(r.unidad);
     if (!u) return;
@@ -13614,8 +13640,13 @@ Object.assign(Ventanas, {
                 Icon('clock', '', 11) + 'Esperando repuestos</button>' +
               /* Cuándo pasó: ahora, o lo que se escriba si fue antes */
               '<span class="cs-cuando" title="Cuándo pasó: si no fue ahora, cámbielo"><input class="inp inp-sm" type="date" id="csF" value="' + hoyISO + '" aria-label="Fecha del avance">' +
-                '<input class="inp inp-sm" type="time" id="csH" value="' + ahora() + '" aria-label="Hora del avance"></span><span class="f1"></span>' +
-              '<button class="btn btn-primary btn-sm" data-act="anotarCaso" data-m="' + attr(r.id) + '" disabled>' + Icon('send', '', 13) + 'Anotar avance</button></div>' + MantRemolque.tambien(r) + '</div>' +
+                '<input class="inp inp-sm" type="time" id="csH" value="' + ahora() + '" aria-label="Hora del avance"></span></div>' + MantRemolque.tambien(r) +
+              /* Abajo, «Anotar avance» a la izquierda y «Terminar arreglo» a la derecha (Juan, 08/11/2026): con este, lo escrito queda como el
+                 último comentario y la fecha y la hora son las de la salida (ver Acciones.terminarCaso) */
+              '<div class="cs-nuevo-b"><button class="btn btn-primary btn-sm" data-act="anotarCaso" data-m="' + attr(r.id) + '" disabled>' + Icon('send', '', 13) + 'Anotar avance</button>' +
+                (r.estado === 'taller' ? '<span class="f1"></span><button class="btn btn-sm btn-fin" data-act="terminarCaso" data-m="' + attr(r.id) + '" title="' +
+                  attr('Lo escrito queda como el último comentario y el arreglo se cierra con esa fecha y hora de salida') + '">' + Icon('check', '', 13) + 'Terminar arreglo</button>' : '') +
+              '</div></div>' +
           '<div class="cs-tl" id="csTl"></div></div>' +
         '<div class="cs-lado" id="csLado"></div></div>',
       pie: '<span class="mf-left flex g8">' + Ventanas.botonEliminar(r) +
@@ -13718,12 +13749,14 @@ Object.assign(Ventanas, {
           '<span class="txt-3">' + (o.tipo === 'SERVICIO' ? 'Taller' : 'Repuestos') + '</span><span class="v">' + esc(Money.format(o.valor)) + '</span>' +
           '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-act="verOrden" data-o="' + attr(o.orden_id) + '" title="Ver la orden" aria-label="Ver la orden">' +
           Icon('eye', '', 14) + '</button></div>').join('') : '<div class="txt-3 fs12">Todavía sin órdenes</div>') +
-        '<span class="link fs12" data-act="casoEditar" data-m="' + attr(r.id) + '" data-ir-a="ordenes">+ Relacionar una orden</span></div>' +
+        '<span class="link fs12" data-act="casoOrdenes" data-m="' + attr(r.id) + '">' + (c.esta.length ? 'Relacionar o quitar órdenes' : '+ Relacionar una orden') +
+          '</span></div>' +
       dato(fin ? 'Valor' : 'Valor hasta hoy', c.valor ? '<b>' + esc(Money.format(c.valor)) + '</b>' : '') +
       (Adjuntos.de(r).length ? '<div class="cs-d"><span class="l">Adjuntos</span>' + UI.clip(r, 13) + '</div>' : '') +
       '<div class="cs-acc"><button class="btn btn-sm" data-act="casoEditar" data-m="' + attr(r.id) + '">' + Icon('edit', '', 13) + 'Editar todo</button>' +
-        (prog ? '<button class="btn btn-primary btn-sm" data-act="casoIngreso" data-m="' + attr(r.id) + '">' + Icon('check', '', 13) + 'Ingresó</button>'
-          : fin ? '' : '<button class="btn btn-primary btn-sm" data-act="casoTerminar" data-m="' + attr(r.id) + '">' + Icon('check', '', 13) + 'Terminar arreglo</button>') + '</div>' + MantRemolque.abrirDespues(r, u);
+        /* «Terminar arreglo» va abajo del recuadro de los avances (Juan, 08/11/2026) */
+        (prog ? '<button class="btn btn-primary btn-sm" data-act="casoIngreso" data-m="' + attr(r.id) + '">' + Icon('check', '', 13) + 'Ingresó</button>' : '') + '</div>' +
+      MantRemolque.abrirDespues(r, u);
   },
 
   /* Los componentes del caso (Juan, 05/11/2026: «como si fueran hashtags… y
@@ -14587,6 +14620,109 @@ Object.assign(Acciones, {
     }
   },
   casoTerminar(el) { const m = el.closest('.modal-bd'); if (m) Modal.cerrar(m); Acciones.terminarArreglo(el); },
+  /* «Terminar arreglo» desde el recuadro del caso (Juan, 08/11/2026: «lo que yo escriba… sea el último comentario… así me ahorro esa
+     ventana»): lo escrito es el último comentario, con la fecha y la hora del recuadro como salida, sus fotos y los componentes tocados.
+     Un arreglo de llantas se termina en la ventana de siempre, con lo escrito y la fecha ya puestos */
+  terminarCaso(el) {
+    const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
+    if (!m || !u || r.estado !== 'taller') return;
+    const t = $('#csT', m).value.trim(), f = $('#csF', m).value || hoyISO, h = $('#csH', m).value || '', hay = (r.notas || []).length > 0;
+    if (Ventanas.terminaConVentana(r)) {
+      Modal.cerrar(m);
+      Acciones.terminarVentana(el);
+      const v = $$('#modals .modal-bd').pop();
+      if (v && t && $('#mcT', v)) $('#mcT', v).value = t;
+      if (v && $('#taS', v)) $('#taS', v).value = f;
+      return;
+    }
+    if (!t && !hay) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#csT', m).focus(); return; }
+    /* La salida no puede quedar antes de lo último que pasó (Juan, 08/11/2026: «no debería dejarla guardar porque en principio debe ser
+       un error de escritura»): el último avance o, sin avances, la entrada */
+    const mal = Avances.salidaAntes(r, f, h);
+    if (mal) { Toast.show(esc(mal), 'err'); $('#csF', m).focus(); return; }
+    /* «Anotar también en …» (ver MantRemolque.tambien): la nota va al otro ingreso como un avance; el otro sigue abierto */
+    const tb = $('#csTambien', m), o0 = tb && tb.checked && t ? MantRemolque.otro(r) : null, o = MantRemolque.abierto(o0) ? o0 : null;
+    Ventanas.cierre = { r: JSON.parse(JSON.stringify(r)), o: o ? JSON.parse(JSON.stringify(o)) : null };
+    /* Los componentes que se tocaron debajo del texto (ver Menciona), como al anotar */
+    const nuevos = (m._sel || []).filter(x => !Comp.de(r).some(c => Catalogo.clave(c) === Catalogo.clave(x.c)));
+    if (nuevos.length) {
+      const comps = Comp.de(r).concat(nuevos.map(x => x.c));
+      r.componentes = comps;
+      r.componente = Comp.texto(comps);
+      r.partes = r.partes || [];
+      nuevos.forEach(x => { if (!r.partes.some(z => z.k === x.p.k)) r.partes.push({ k: x.p.k, n: x.p.n }); });
+    }
+    /* Con historial, lo escrito y sus fotos son la última anotación, la de la salida; sin historial, «¿Qué se hizo?», como en la ventana */
+    if (hay) {
+      if (t || m._fotos.length) Avances.agregar(r, Avances.nueva(f, h, t, true), m._fotos);
+    } else {
+      r.trabajo = t;
+      r.fotosData = (r.fotosData || []).concat(m._fotos.map(x => Avances.dato(x)));
+      r.fotos = r.fotosData.length;
+    }
+    if (o) Avances.agregar(o, Avances.nueva(f, h, t), []);
+    r.estado = 'cerrado';
+    r.salida = f;
+    delete r.espera;
+    Modal.cerrar(m);
+    Ventanas.caso(r);
+    Toast.show('Arreglo terminado: <b>' + esc(UI.placaTxt(u)) + '</b> salió del taller el ' + esc(Fecha.larga(f)) + '.' +
+      (o ? ' La nota quedó también en <b>' + esc(UI.placaTxt(Q.unidad(o.unidad))) + '</b>.' : '') + MantRemolque.sigue(r) +
+      ' <span class="link" data-act="deshacerCierre">Deshacer</span>');
+    Router.pintar(true);
+  },
+  /* «Deshacer» del último «Terminar arreglo» desde el caso: queda como estaba, y el otro ingreso sin la nota copiada */
+  deshacerCierre() {
+    const c = Ventanas.cierre;
+    if (!c) return;
+    Ventanas.cierre = null;
+    [c.r, c.o].filter(Boolean).forEach(a => {
+      const x = Datos.mantenimientos.find(y => y.id === a.id);
+      if (!x) return;
+      Object.keys(x).forEach(k => { delete x[k]; });
+      Object.assign(x, a);
+    });
+    Modal.cerrarTodo();
+    const r = Datos.mantenimientos.find(y => y.id === c.r.id);
+    if (r) Ventanas.caso(r);
+    Toast.show('Listo: el arreglo sigue en el taller.');
+    Router.pintar(true);
+  },
+  /* Las órdenes, ahí mismo en el caso (Juan, 08/11/2026: «que las órdenes se pueden hacer en esa misma ventana»): la lista de las del
+     vehículo, como en el formulario, con Guardar apagado hasta que algo cambie */
+  casoOrdenes(el) {
+    const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
+    if (!m || !u) return;
+    const ya = $('#csOr', m);
+    if (ya) { ya.remove(); return; }
+    el.closest('.cs-d').insertAdjacentHTML('beforeend', '<div class="cs-or" id="csOr"><div class="oc-lista" id="csOrL"></div><div class="cs-or-a">' +
+      '<button type="button" class="btn btn-sm" data-act="casoOrdenesNo">Cancelar</button><button type="button" class="btn btn-sm btn-primary" data-act="casoOrdenesSi" data-m="' +
+      attr(r.id) + '" disabled>' + Icon('save', '', 13) + 'Guardar</button></div></div>');
+    const caja = $('#csOrL', m), g = $('[data-act="casoOrdenesSi"]', m), antes = (r.ordenes || []).slice().sort().join();
+    caja.addEventListener('change', () => { g.disabled = Compras.leer(caja, r).slice().sort().join() === antes; });
+    Compras.escoger(caja, u, r.fecha, r);
+  },
+  casoOrdenesNo(el) { const c = el.closest('#csOr'); if (c) c.remove(); },
+  /* Al guardar, el valor sale de las órdenes, como siempre; y si el arreglo no tiene el taller o el proveedor de repuestos, se pone el de
+     la orden (ver ProvOrden): el de una OS al taller, el de una OC u OP a los repuestos (el mismo taller, si es el mismo) */
+  casoOrdenesSi(el) {
+    const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), caja = m && $('#csOrL', m), u = r && Q.unidad(r.unidad);
+    if (!u || !caja || el.disabled) return;
+    const antes = r.ordenes || [], ids = Compras.leer(caja, r), nuevas = ids.filter(id => !antes.includes(id)).map(id => Compras.porId(id)).filter(Boolean);
+    Compras.ponerOrdenes(r, ids);
+    const de = o => { const x = ProvFact.deOrden(o); return x && x.activo ? ProvFact.leer('f:' + x.id) : null; };
+    const os = nuevas.find(o => o.tipo === 'SERVICIO'), oc = nuevas.find(o => o.tipo !== 'SERVICIO');
+    if (os && !r.provFact && !r.prov) { const x = de(os); if (x) ProvFact.poner(r, x); }
+    if (oc && !r.repMismo && !r.repFact && !r.repProv) {
+      const x = de(oc);
+      if (x) { if (x.id === r.provFact) ProvFact.ponerRep(r, null, true); else ProvFact.ponerRep(r, x, false); }
+    }
+    m._pintarCaso();
+    const c = Compras.deArreglo(r);
+    Toast.show('Órdenes de <b>' + esc(UI.placaTxt(u)) + '</b>: ' + (c.esta.length ? esc(c.esta.map(o => o.codigo).join(', ')) : 'ninguna') +
+      (c.valor ? ' · valor ' + esc(Money.format(c.valor)) : '') + '.');
+    Router.pintar(true);
+  },
   /* Del ingreso de un vehículo al del otro (ver MantRemolque.banda): desde el caso se cambia; desde «Editar», se abre encima */
   verEnlace(el) {
     const o = Datos.mantenimientos.find(x => x.id === el.dataset.m), m = el.closest('.modal-bd');
@@ -14748,7 +14884,17 @@ Object.assign(Acciones, {
      parte es llantas), el taller y los repuestos con sus órdenes (que ponen
      solos el proveedor y el valor) y las fotos de cómo quedó. Con avances, lo
      que se escriba queda como la última anotación del historial */
+  /* «Terminar» de la tabla, la ficha y el plano (Juan, 08/11/2026): abre el caso con el cursor en el recuadro, donde se termina; un
+     arreglo de llantas, en su ventana */
   terminarArreglo(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
+    if (!r) return;
+    if (Ventanas.terminaConVentana(r)) { Acciones.terminarVentana(el); return; }
+    Ventanas.caso(r);
+    const m = $$('#modals .modal-bd').pop(), q = m && $('#csT', m);
+    if (q) setTimeout(() => q.focus(), 80);
+  },
+  terminarVentana(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
     if (!u) return;
     const hay = (r.notas || []).length > 0, dias = Math.max(0, -Fecha.hasta(r.fecha));
@@ -14809,13 +14955,9 @@ Object.assign(Acciones, {
     if (!u) { Modal.cerrar(m); return; }
     const trabajo = $('#mcT', m).value.trim(), salida = $('#taS', m).value || hoyISO, hay = (r.notas || []).length > 0;
     if (!trabajo && !hay) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#mcT', m).focus(); return; }
-    /* Una salida antes de la entrada suele ser un error al escoger la fecha: se avisa, pero se deja guardar */
-    if (salida < r.fecha && !m._aviso) {
-      m._aviso = true;
-      $('#taAviso', m).innerHTML = '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>La salida queda antes de la entrada</b> (entró el ' + esc(Fecha.larga(r.fecha)) +
-        '). Revise la fecha; si está bien, pulse «Terminar arreglo» otra vez.</div></div>';
-      return;
-    }
+    /* La salida no puede quedar antes de lo último que pasó (ver Avances.salidaAntes); si sale hoy, con la hora de ahora */
+    const mal = Avances.salidaAntes(r, salida, salida === hoyISO ? ahora() : '');
+    if (mal) { $('#taAviso', m).innerHTML = '<div class="alert a-err mb12">' + Icon('warn') + '<div>' + esc(mal) + '</div></div>'; return; }
     const tr = TallerRep.leer(m, 'ta', r);
     Compras.ponerOrdenes(r, tr.ordenes);
     /* Solo si se cambiaron: así un arreglo con un proveedor de antes de Flota no lo pierde */
