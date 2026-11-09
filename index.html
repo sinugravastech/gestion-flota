@@ -1013,6 +1013,15 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 /* «sin datos»: un mes ya pasado sin nada de mantenimiento (ver el Dashboard) */
 .col em.sd{font-size:9.5px;font-style:italic;color:var(--text-3);line-height:1.15;text-align:center;margin-bottom:4px}
 .cols-nota{font-size:11px;color:var(--text-3);padding-top:6px}
+/* Peajes: los peajes de un regreso (los que devolvieron en verde, a los que les puede faltar en ámbar), los de un tercero en gris y
+   lo devuelto encima de cada mes */
+.pj-chs{display:flex;flex-wrap:wrap;gap:4px}
+.pj-ch{display:inline-flex;align-items:center;gap:3px;padding:1px 8px 1px 6px;border-radius:12px;font-size:11px;font-weight:600;background:var(--ok-50);color:var(--ok-700);white-space:nowrap}
+.pj-ch.falta{background:var(--warn-50);color:var(--warn-700)}
+.pj-ch svg{width:11px;height:11px}
+tr.pj-sep td{background:var(--surface-2);font-size:11px;font-weight:650;color:var(--text-3);padding-top:7px;padding-bottom:7px}
+tr.pj-ter td{opacity:.62}
+.col i.pj-dev,.cols-ley i.pj-dev,html[data-theme="dark"] .col i.pj-dev,html[data-theme="dark"] .cols-ley i.pj-dev{background:var(--ok-500);opacity:.38}
 html[data-theme="dark"] .cols-ley i{background:var(--brand-400)}
 html[data-theme="dark"] .rk-t i.ex,html[data-theme="dark"] .col i.ex,html[data-theme="dark"] .cols-ley i.ex{background:var(--ink-500)}
 .hx-tbl tbody tr{cursor:pointer}
@@ -3104,6 +3113,8 @@ const Icon = (() => {
     gota: '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>',
     ruta: '<circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/>',
     medidor: '<path d="M12 14l4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
+    /* Una caseta de peaje con su talanquera */
+    peaje: '<path d="M3 21V9.5l3-3 3 3V21"/><path d="M2 21h8"/><path d="M5 12.5h2"/><path d="M9 11.5h12v3H9"/><path d="M13.5 11.5l-1.5 3M17.5 11.5l-1.5 3"/>',
     sube: '<path d="M7 17L17 7M8 7h9v9"/>',
     baja: '<path d="M7 7l10 10M17 8v9H8"/>',
     x: '<path d="M18 6L6 18M6 6l12 12"/>',
@@ -3465,6 +3476,8 @@ const Config = {
   rendimiento: { min: 3, max: 18 },
   /* Las placas de Distracom que no casan con una unidad, como Juan las asignó */
   placasDistracom: {},
+  /* Lo mismo con las placas de Gopass (ver Peajes) */
+  placasGopass: {},
   /* Los proveedores del registro manual que Juan emparejó con los de Facturación (ver Historico.tarjetaProv): nombre escrito, sin
      tildes → id de Facturación, «-» si no está allá o vacío si se dejó sin emparejar */
   histProv: {},
@@ -5523,6 +5536,7 @@ const NAV = [
   { id: 'llantas', icono: 'disc', txt: 'Llantas' },
   { id: 'aceite', icono: 'gota', txt: 'Cambios de aceite', badge: 'aceite', alerta: true },
   { id: 'combustible', icono: 'fuel', txt: 'Combustible' },
+  { id: 'peajes', icono: 'peaje', txt: 'Peajes' },
   { id: 'gps', icono: 'pin', txt: 'GPS' },
   { id: 'preoperacionales', icono: 'checkSquare', txt: 'Preoperacionales' },
   { id: 'inspecciones', icono: 'clipboard', txt: 'Inspecciones', badge: 'insp', alerta: true },
@@ -6237,8 +6251,8 @@ const Tablero = {
   },
   /* Lo gastado: las órdenes de Facturación que ya cuentan como gasto (ver
      Compras), el valor de los mantenimientos mientras sus órdenes no cuenten
-     (con el taller y los repuestos aparte, cada lado con la suya) y el
-     combustible de Distracom (ver Tanqueos) */
+     (con el taller y los repuestos aparte, cada lado con la suya), el
+     combustible de Distracom (ver Tanqueos) y los peajes de Gopass (ver Peajes) */
   gastos() {
     /* Sin los vehículos de un tercero (ver Q.tercero) */
     return this.todosGastos().filter(g => !g.unidad || !Q.tercero(Q.unidad(g.unidad)));
@@ -6247,6 +6261,7 @@ const Tablero = {
     return Compras.gastos()
       .concat(Datos.mantenimientos.filter(m => !m.oc).map(m => ({ fecha: m.fecha, unidad: m.unidad, valor: Compras.deArreglo(m).propio })).filter(g => g.valor > 0))
       .concat(Tanqueos.gastos())
+      .concat(Peajes.gastos())
       /* Lo de antes de Flota, del Excel del ingeniero anterior: suma, marcado (ver Historico) */
       .concat(Historico.gastos());
   },
@@ -6453,7 +6468,8 @@ const Historico = {
 };
 
 /* Un archivo .zip sin comprimir, como el que lleva por dentro un .xlsx (Excel
-   lo abre igual). Sirve también para la copia de seguridad de más adelante */
+   lo abre igual). Sirve también para la copia de seguridad de más adelante.
+   Y lee los .zip de otros (el Excel de Gopass), comprimidos o no */
 const Zip = {
   _tabla: null,
   crc(b) {
@@ -6492,6 +6508,29 @@ const Zip = {
     const tam = central.reduce((t, b) => t + b.length, 0);
     const fin = this._bytes(22, [[0, 0x06054b50, 4], [4, 0], [6, 0], [8, archivos.length], [10, archivos.length], [12, tam, 4], [16, pos, 4], [20, 0]]);
     return new Blob(partes.concat(central, [fin]), { type: tipo || 'application/zip' });
+  },
+  /* Lee un .zip ajeno: los nombres y, de cada uno, una función que entrega sus
+     bytes. Lo comprimido se abre con lo que trae el navegador
+     (DecompressionStream), sin bajar nada */
+  leer(buf) {
+    const v = new DataView(buf), u8 = new Uint8Array(buf), dec = new TextDecoder();
+    let fin = -1;
+    for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (v.getUint32(i, true) === 0x06054b50) { fin = i; break; }
+    if (fin < 0) throw new Error('no es un Excel (.xlsx)');
+    const archivos = new Map();
+    for (let k = 0, n = v.getUint16(fin + 10, true), p = v.getUint32(fin + 16, true); k < n; k++) {
+      if (v.getUint32(p, true) !== 0x02014b50) throw new Error('el archivo está dañado');
+      const metodo = v.getUint16(p + 10, true), tam = v.getUint32(p + 20, true), ln = v.getUint16(p + 28, true), local = v.getUint32(p + 42, true);
+      archivos.set(dec.decode(u8.subarray(p + 46, p + 46 + ln)), async () => {
+        const ini = local + 30 + v.getUint16(local + 26, true) + v.getUint16(local + 28, true), datos = u8.subarray(ini, ini + tam);
+        if (metodo === 0) return datos;
+        if (metodo !== 8) throw new Error('el archivo usa una compresión que no se puede abrir');
+        if (typeof DecompressionStream === 'undefined') throw new Error('este navegador no puede abrirlo: use Chrome o Edge al día');
+        return new Uint8Array(await new Response(new Blob([datos]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+      });
+      p += 46 + ln + v.getUint16(p + 30, true) + v.getUint16(p + 32, true);
+    }
+    return archivos;
   }
 };
 
@@ -6603,6 +6642,47 @@ const Xlsx = {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  },
+  /* Lee un .xlsx ajeno (el de Gopass): la primera hoja, como filas de textos y
+     números (lo vacío queda en ''). El .zip con Zip.leer y el XML con
+     expresiones regulares: diez megas de XML van más rápido así que con un
+     DOMParser */
+  async leer(buf) {
+    const z = Zip.leer(buf), dec = new TextDecoder();
+    const texto = async n => (z.has(n) ? dec.decode(await z.get(n)()) : '');
+    const ent = s => s.replace(/&(?:#x([0-9a-f]+)|#(\d+)|(amp|lt|gt|quot|apos));/gi, (m, h, d, e) =>
+      h ? String.fromCodePoint(parseInt(h, 16)) : d ? String.fromCodePoint(+d) : { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }[e.toLowerCase()]);
+    const atr = tag => { const o = {}; tag.replace(/([\w:]+)="([^"]*)"/g, (m, k, x) => { o[k] = x; }); return o; };
+    const textoDe = x => { let s = ''; x.replace(/<rPh\b[\s\S]*?<\/rPh>/g, '').replace(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g, (m, y) => { s += y; }); return ent(s); };
+    /* La primera hoja del libro, por su relación (casi siempre xl/worksheets/sheet1.xml) */
+    const hoja = atr((/<sheet\b[^>]*>/.exec(await texto('xl/workbook.xml')) || [''])[0]);
+    const rel = ((await texto('xl/_rels/workbook.xml.rels')).match(/<Relationship\b[^>]*>/g) || []).map(atr).find(r => r.Id === hoja['r:id']);
+    let ruta = rel ? rel.Target.replace(/^\//, '') : '';
+    if (ruta && !ruta.startsWith('xl/')) ruta = 'xl/' + ruta;
+    if (!z.has(ruta)) ruta = Array.from(z.keys()).find(n => /^xl\/worksheets\/[^/]+\.xml$/.test(n)) || '';
+    if (!ruta) throw new Error('el Excel no tiene hojas');
+    const comp = [];
+    (await texto('xl/sharedStrings.xml')).replace(/<si\b[^>]*>([\s\S]*?)<\/si>/g, (m, si) => { comp.push(textoDe(si)); });
+    const colDe = ref => { let n = 0; for (let i = 0; i < ref.length; i++) n = n * 26 + ref.charCodeAt(i) - 64; return n - 1; };
+    const filas = [], xml = await texto(ruta), reFila = /<row\b([^>]*)>([\s\S]*?)<\/row>/g, reCelda = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
+    let mf;
+    while ((mf = reFila.exec(xml))) {
+      const fila = [], r = +(/\br="(\d+)"/.exec(mf[1]) || [])[1] || filas.length + 1;
+      let mc, sig = 0;
+      reCelda.lastIndex = 0;
+      while ((mc = reCelda.exec(mf[2]))) {
+        const a = mc[1], ref = (/\br="([A-Z]+)\d*"/.exec(a) || [])[1], tipo = (/\bt="(\w+)"/.exec(a) || [])[1] || 'n', cuerpo = mc[2] || '';
+        const i = ref ? colDe(ref) : sig, v = (/<v>([\s\S]*?)<\/v>/.exec(cuerpo) || [])[1];
+        sig = i + 1;
+        const val = tipo === 'inlineStr' ? textoDe(cuerpo) : v == null ? '' : tipo === 's' ? (comp[+v] != null ? comp[+v] : '') :
+          tipo === 'str' || tipo === 'e' ? ent(v) : tipo === 'b' ? v === '1' : Number(v);
+        while (fila.length < i) fila.push('');
+        fila[i] = val;
+      }
+      while (filas.length < r - 1) filas.push([]);
+      filas[r - 1] = fila;
+    }
+    return [{ nombre: hoja.name ? ent(hoja.name) : 'Hoja1', filas }];
   }
 };
 
@@ -7052,6 +7132,257 @@ const Tanqueos = {
     const pend = dobles.filter(x => !x.revisado);
     return { dobles, km, rinde, enJuego: pend.reduce((s, x) => s + x.b.valor, 0),
       pendientes: pend.length + km.filter(x => !x.t.revisado).length + rinde.length };
+  }
+};
+
+/* ==========================================================================
+   Los peajes de Gopass (Juan, 08/11/2026: «Sí, constrúyela», sobre la
+   maqueta; SQL 032). Cada camión paga los peajes con su chip de Gopass. Juan
+   baja de Gopass el Excel de «Transacciones» y lo carga tal como sale. De
+   cada fila se guarda lo que mueve la plata de los peajes: el paso (el
+   cobro), la devolución que Gopass hace de un paso («Abonos Peaje») y el
+   recobro («Cobro pendiente peaje»); las recargas y los parqueaderos no. El
+   id es el «ID Transacción» de Gopass, así que nada se repite: ni la fila que
+   Gopass repite con la nota crédito de la devolución, ni lo ya cargado.
+   Lo que costó un paso: lo cobrado, menos lo devuelto, más lo recobrado.
+   Gopass devuelve casi todo en los regresos, y en cada peaje casi siempre en
+   el mismo sentido: el «regreso» de un peaje es el sentido con más
+   devoluciones. Un viaje son los pasos seguidos de una placa, con menos de
+   cinco horas entre uno y otro. Si en un regreso unos peajes devolvieron y
+   otros no, a los otros les puede faltar la devolución; lo que podría faltar
+   es lo cobrado menos lo que suele quedar en ese peaje. Juan los marca
+   «Reclamar» o «Está bien» (en extra); si después llega la devolución, dejan
+   de salir solos.
+   La placa va a la unidad que la tiene en Flota o a la que Juan le asignó
+   (Config.placasGopass). Los de un tercero salen aparte y no suman al gasto.
+   El resumen de cada mes por placa (para el área, la ficha y el Dashboard)
+   se pide una vez, y los pasos, por mes. No van en flota_cambios.
+   ========================================================================== */
+const Peajes = {
+  /* Los títulos de las columnas del Excel de Gopass que se usan */
+  COLS: { id: 'ID Transacción', codigo: 'Código Paso', fechaServ: 'Fecha Servicio', fechaTr: 'Fecha Transacción', placa: 'Placa', servicio: 'Servicio',
+    comercio: 'Comercio', sentido: 'Sentido', estado: 'Estado Transacción', valor: 'Valor', ajuste: 'ID Transacción Ajuste' },
+  SERVICIOS: { 'Peajes': 'paso', 'Abonos Peaje': 'devolucion', 'Cobro pendiente peaje': 'recobro' },
+  /* Más de cinco horas entre un paso y el siguiente de la misma placa: es otro viaje */
+  VIAJE_H: 5,
+  /* El resumen: nada, trayendo, listo, falta (sin el SQL 032) o error */
+  estado: 'nada',
+  errorTxt: '',
+  meses: [],
+  archivos: [],
+  sentidos: [],
+  _trayendo: null,
+  _regreso: null,
+  _pasos: new Map(),
+  _ultimo: null,
+  norm: p => String(p || '').toUpperCase().replace(/[^A-Z0-9]/g, ''),
+  /* La unidad de una placa de Gopass: la que tiene esa placa en Flota, o la que Juan le asignó */
+  unidadDe(placa) {
+    const p = this.norm(placa), u = Datos.unidades.find(x => this.norm(x.placa) === p);
+    if (u) return u.id;
+    const a = (Config.placasGopass || {})[p];
+    return a && Q.unidad(a) ? a : null;
+  },
+  deTercero(placa) { const u = this.unidadDe(placa); return Boolean(u && Q.tercero(Q.unidad(u))); },
+  /* «PEAJE MATA DE CAÑA» → «Mata de Caña» */
+  nombre(c) {
+    return String(c || '').trim().replace(/^PEAJE\s+/i, '').split(/\s+/).map((w, i) => (i && /^(de|del|la|las|el|los|y)$/i.test(w) ? w.toLowerCase()
+      : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())).join(' ');
+  },
+  mesTxt: m => Fecha.mes(Fecha.parse(m + '-01')),
+  /* «2026-11-08T00:23:41.001-05:00» (como lo trae Gopass), «08/11/2026 00:23» o el número de fecha de Excel → { fecha, hora } */
+  fechaHora(v) {
+    const s = String(v == null ? '' : v).trim();
+    let m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/.exec(s);
+    if (m) return { fecha: m[1] + '-' + m[2] + '-' + m[3], hora: m[4] ? m[4] + ':' + m[5] : '' };
+    m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/.exec(s);
+    if (m) return { fecha: m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0'), hora: m[4] ? m[4].padStart(2, '0') + ':' + m[5] : '' };
+    if (/^\d{5}(\.\d+)?$/.test(s)) {
+      const iso = new Date(Math.round((+s - 25569) * 864e5)).toISOString();
+      return { fecha: iso.slice(0, 10), hora: +s % 1 ? iso.slice(11, 16) : '' };
+    }
+    return null;
+  },
+  /* Las filas del Excel (la primera, los títulos) → las transacciones que se guardan, una por id; null si no es el Excel de Gopass.
+     También cuántas filas salieron repetidas, lo que no es de peajes (recargas, parqueaderos) y las filas que no se entendieron */
+  leer(filas, archivo) {
+    const cab = (filas[0] || []).map(x => String(x == null ? '' : x).trim()), col = {};
+    Object.keys(this.COLS).forEach(k => { col[k] = cab.indexOf(this.COLS[k]); });
+    if (col.id < 0 || col.servicio < 0 || col.valor < 0 || col.placa < 0 || (col.fechaServ < 0 && col.fechaTr < 0)) return null;
+    const porId = new Map(), otros = {}, malas = [];
+    let repetidas = 0;
+    for (let i = 1; i < filas.length; i++) {
+      const f = filas[i] || [], g = k => (col[k] < 0 || f[col[k]] == null ? '' : String(f[col[k]]).trim());
+      if (!f.some(x => x !== '' && x != null)) continue;
+      const servicio = g('servicio'), tipo = this.SERVICIOS[servicio];
+      if (!tipo) { if (servicio) otros[servicio] = (otros[servicio] || 0) + 1; continue; }
+      const id = g('id');
+      if (porId.has(id)) { repetidas++; continue; }
+      const fh = this.fechaHora(g('fechaServ')) || this.fechaHora(g('fechaTr')), valor = Number(g('valor').replace(',', '.'));
+      if (!id || !fh || !g('valor') || !isFinite(valor) || (tipo !== 'paso' && !g('ajuste'))) { malas.push(i + 1); continue; }
+      porId.set(id, { id, tipo, fecha: fh.fecha, hora: fh.hora, placa: this.norm(g('placa')), peaje: g('comercio'), sentido: g('sentido'), valor: Math.abs(valor),
+        paso_id: tipo === 'paso' ? null : g('ajuste'), codigo: g('codigo'), estado: g('estado'), archivo: String(archivo || '').slice(0, 200) });
+    }
+    return { lista: Array.from(porId.values()), repetidas, otros, malas };
+  },
+  falta: e => Boolean(e && (e.status === 404 || /PGRST205|42P01/.test(e.codigo || ''))),
+  async leerTodo(ruta) {
+    const todas = [];
+    for (let desde = 0; ; desde += 1000) {
+      const lote = await Nube.pedir(ruta + '&limit=1000&offset=' + desde);
+      todas.push.apply(todas, lote || []);
+      if (!lote || lote.length < 1000) return todas;
+    }
+  },
+  /* El resumen (cada mes por placa, los archivos y lo que suele devolver cada peaje), una vez. Al llegar se pinta otra vez; si fue la
+     conexión, se vuelve a intentar en un minuto. Lo devuelto es neto: menos lo recobrado */
+  pedir() {
+    if (this._trayendo || this.estado !== 'nada' || !Datos.unidades.length) return;
+    this.estado = 'trayendo';
+    const num = x => Number(x) || 0;
+    this._trayendo = Promise.all([this.leerTodo('peajes_meses?select=*&order=mes,placa'), this.leerTodo('peajes_archivos?select=*&order=hasta.desc,archivo'),
+      this.leerTodo('peajes_sentidos?select=*&order=peaje,sentido,valor')])
+      .then(([m, a, s]) => {
+        this.meses = m.map(x => ({ mes: x.mes, placa: x.placa, pasos: num(x.pasos), cobrado: num(x.cobrado), devuelto: num(x.devuelto) - num(x.recobrado), conDev: num(x.con_devolucion) }));
+        this.archivos = a.map(x => ({ archivo: x.archivo || '', desde: String(x.desde).slice(0, 10), hasta: String(x.hasta).slice(0, 10), pasos: num(x.pasos) }));
+        this.sentidos = s.map(x => ({ peaje: x.peaje, sentido: x.sentido, valor: num(x.valor), conDev: num(x.con_devolucion), neto: x.neto_usual == null ? null : num(x.neto_usual) }));
+        this._regreso = null;
+        this.estado = 'listo';
+      })
+      .catch(e => {
+        this.estado = this.falta(e) ? 'falta' : 'error';
+        this.errorTxt = (e && e.message) || '';
+        if (this.estado === 'error') setTimeout(() => { if (this.estado === 'error') { this.estado = 'nada'; this.pedir(); } }, 60000);
+      })
+      .finally(() => { this._trayendo = null; this.alLlegar(); });
+  },
+  /* Los pasos de un mes con un día de más a cada lado (para que los viajes del borde estén completos): la lista, null mientras llega
+     (al llegar se pinta otra vez) o { error } */
+  pasos(mes) {
+    const c = this._pasos.get(mes);
+    if (c) return c.lista || (c.error ? { error: c.error } : null);
+    const nuevo = {}, y = +mes.slice(0, 4), m = +mes.slice(5, 7), num = x => Number(x) || 0;
+    this._pasos.set(mes, nuevo);
+    this.leerTodo('peajes_pasos?select=*&fecha=gte.' + Fecha.iso(new Date(y, m - 1, 0)) + '&fecha=lte.' + Fecha.iso(new Date(y, m, 1)) + '&order=placa,fecha,hora,id')
+      .then(l => {
+        nuevo.lista = l.map(x => ({ id: x.id, fecha: String(x.fecha).slice(0, 10), hora: x.hora || '', placa: x.placa, peaje: x.peaje, sentido: x.sentido, valor: num(x.valor),
+          devuelto: num(x.devuelto) - num(x.recobrado), codigo: x.codigo || '', extra: x.extra && typeof x.extra === 'object' ? x.extra : {} }));
+      })
+      .catch(e => { nuevo.error = this.falta(e) ? 'falta' : (e && e.message) || 'error'; })
+      .finally(() => this.alLlegar());
+    return null;
+  },
+  olvidar() { this._pasos.clear(); this.estado = 'nada'; this.meses = []; this.archivos = []; this.sentidos = []; this._regreso = null; this._ultimo = null; },
+  /* Al llegar algo, se pinta otra vez la vista que lo espera */
+  alLlegar() {
+    const v = Router.actual().vista;
+    if (v === 'peajes' || ((v === 'unidad' || v === 'inicio') && Sincro.seguro())) Router.pintar(true);
+  },
+  /* Si la unidad tiene peajes (la pestaña de la ficha); mientras llega el resumen, no */
+  tiene(u) { this.pedir(); return this.estado === 'listo' && this.meses.some(m => this.unidadDe(m.placa) === u.id); },
+  /* Los meses con peajes (de esas placas, o de todas) y el de hoy, el más reciente primero */
+  listaMeses(placas) {
+    return Array.from(new Set(this.meses.filter(m => !placas || placas.includes(m.placa)).map(m => m.mes).concat([hoyISO.slice(0, 7)]))).sort().reverse();
+  },
+  /* El sentido del regreso de un peaje: el que más devoluciones tiene; el que nunca devuelve no tiene */
+  regreso(peaje) {
+    if (!this._regreso) {
+      const n = {};
+      this.sentidos.forEach(x => { const k = x.peaje + '|' + x.sentido; n[k] = (n[k] || 0) + x.conDev; });
+      this._regreso = {};
+      Object.keys(n).forEach(k => {
+        const [p, s] = k.split('|'), ya = this._regreso[p];
+        if (n[k] > 0 && (!ya || n[k] > n[p + '|' + ya])) this._regreso[p] = s;
+      });
+    }
+    return this._regreso[peaje] || null;
+  },
+  /* Lo que suele quedar de un paso después de su devolución: lo de ese peaje, sentido y valor o, si no hay, lo más común de ese
+     peaje y sentido */
+  netoUsual(p) {
+    const l = this.sentidos.filter(x => x.peaje === p.peaje && x.sentido === p.sentido && x.neto != null), igual = l.find(x => x.valor === p.valor);
+    if (igual) return igual.neto;
+    const mas = l.sort((a, b) => b.conDev - a.conDev)[0];
+    return mas ? mas.neto : null;
+  },
+  /* Los viajes: los pasos seguidos de cada placa, con menos de VIAJE_H horas entre uno y otro */
+  viajes(lista) {
+    const t = p => Date.parse(p.fecha + 'T' + (p.hora || '00:00') + ':00'), porPlaca = {}, out = [];
+    lista.forEach(p => (porPlaca[p.placa] = porPlaca[p.placa] || []).push(p));
+    Object.keys(porPlaca).forEach(pl => {
+      let v = [];
+      porPlaca[pl].sort((a, b) => t(a) - t(b) || a.id.localeCompare(b.id)).forEach(p => {
+        if (v.length && t(p) - t(v[v.length - 1]) > this.VIAJE_H * 36e5) { out.push(v); v = []; }
+        v.push(p);
+      });
+      if (v.length) out.push(v);
+    });
+    return out;
+  },
+  /* Los regresos de un mes en los que unos peajes devolvieron y otros no. Cada uno con sus pasos de regreso, los que pueden faltar
+     (con lo que podría faltar) y lo que Juan anotó: pendiente, reclamar o bien. Y cuántos regresos no tuvieron ninguna devolución,
+     de las placas a las que Gopass sí les devuelve (puede que volvieran cargados) */
+  faltan(lista, mes) {
+    const conDev = new Set(this.meses.filter(m => m.conDev > 0).map(m => m.placa)), out = { viajes: [], ninguno: 0 };
+    this.viajes(lista).forEach(v => {
+      const rg = v.filter(p => this.regreso(p.peaje) === p.sentido);
+      if (!rg.length || rg[0].fecha.slice(0, 7) !== mes || !conDev.has(rg[0].placa)) return;
+      const sin = rg.filter(p => !(p.devuelto > 0));
+      if (sin.length === rg.length) { out.ninguno++; return; }
+      if (!sin.length) return;
+      const faltan = sin.map(p => { const n = this.netoUsual(p), r = p.extra.revision || {}; return { p, v: n == null ? 0 : Math.max(0, p.valor - n), rev: r.k || '', f: r.f || '' }; });
+      out.viajes.push({ placa: rg[0].placa, u: this.unidadDe(rg[0].placa), rg, faltan, v: faltan.reduce((s, f) => s + f.v, 0),
+        estado: faltan.every(f => f.rev === 'bien') ? 'bien' : faltan.some(f => f.rev === 'reclamar') ? 'reclamar' : 'pendiente',
+        cuando: faltan.map(f => f.f).filter(Boolean).sort().pop() || '' });
+    });
+    return out;
+  },
+  /* Para el Dashboard: lo que costaron los peajes de cada mes por placa (los de un tercero los quita Tablero.gastos) */
+  gastos() {
+    this.pedir();
+    return this.meses.map(m => ({ fecha: m.mes + '-01', unidad: this.unidadDe(m.placa), valor: m.cobrado - m.devuelto, cat: 'peajes' })).filter(g => g.valor > 0);
+  },
+  /* Los ids que ya están entre dos fechas (para la vista previa) */
+  async yaEstan(desde, hasta) {
+    const l = await this.leerTodo('peajes?select=id&fecha=gte.' + desde + '&fecha=lte.' + hasta + '&order=id');
+    return new Set(l.map(r => r.id));
+  },
+  /* Guarda de a 500. Lo que ya estaba se pisa con lo mismo (el id no cambia) y lo que Juan anotó (extra) no se toca */
+  async guardar(filas, avance) {
+    for (let i = 0; i < filas.length; i += 500) {
+      await Nube.pedir('peajes?on_conflict=id', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(filas.slice(i, i + 500)) });
+      if (avance) avance(Math.min(filas.length, i + 500), filas.length);
+    }
+    this.olvidar();
+  },
+  /* «Reclamar» o «Está bien» (k) en los pasos a los que les puede faltar la devolución. Se ve enseguida y se guarda en extra; si no se
+     pudo guardar, vuelve como estaba. Lo de antes queda para «Deshacer» */
+  async revisar(ids, k) {
+    const todos = [];
+    this._pasos.forEach(c => (c.lista || []).forEach(p => { if (ids.includes(p.id)) todos.push(p); }));
+    if (!todos.length) return false;
+    const antes = todos.map(p => ({ p, extra: p.extra }));
+    todos.forEach(p => { const e = Object.assign({}, p.extra); if (k) e.revision = { k, f: hoyISO }; else delete e.revision; p.extra = e; });
+    Router.pintar(true);
+    try { await this._guardarExtra(todos); } catch (e) { antes.forEach(a => { a.p.extra = a.extra; }); Router.pintar(true); throw e; }
+    this._ultimo = antes;
+    return true;
+  },
+  async deshacer() {
+    const a = this._ultimo;
+    if (!a) return;
+    this._ultimo = null;
+    a.forEach(x => { x.p.extra = x.extra; });
+    Router.pintar(true);
+    await this._guardarExtra(a.map(x => x.p));
+  },
+  /* Solo lo anotado. Un paso puede estar en dos meses (el día de más de cada lado): va una vez */
+  _guardarExtra(pasos) {
+    const porId = new Map();
+    pasos.forEach(p => porId.set(p.id, p));
+    return Nube.pedir('peajes?on_conflict=id', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(Array.from(porId.values()).map(p => ({ id: p.id, tipo: 'paso', fecha: p.fecha, extra: p.extra }))) });
   }
 };
 
@@ -10242,7 +10573,8 @@ const Vistas = {
       '<div class="cols-x">' + meses.map(d => '<span' + (d > HOY ? ' class="fut"' : '') + '>' + esc(nombreMes(d)) + '</span>').join('') + '</div>' +
       (porMesX.some(Boolean) ? '<div class="cols-ley"><span><i></i>Flota</span><span><i class="ex"></i>' + Historico.ETIQUETA + '</span></div>' : '') +
       (mesesSD.length ? '<div class="cols-nota">' + esc((mesesSD.length === 1 ? mesesSD[0] + ' no tiene' : mesesSD.slice(0, -1).join(', ') + ' y ' + mesesSD[mesesSD.length - 1] + ' no tienen') +
-        ' datos de mantenimiento (ni de Flota, ni de Facturación, ni del ' + Historico.ETIQUETA.toLowerCase() + '): lo que se ve ahí es solo combustible.') + '</div>' : '');
+        ' datos de mantenimiento (ni de Flota, ni de Facturación, ni del ' + Historico.ETIQUETA.toLowerCase() + '): lo que se ve ahí es solo combustible' +
+        (Peajes.meses.length ? ' y peajes' : '') + '.') + '</div>' : '');
 
     /* Lo que vence: primero lo vencido, luego lo que vence pronto */
     const proximos = venc.concat(porv).sort((a, b) => Fecha.hasta(a.d.vence) - Fecha.hasta(b.d.vence));
@@ -10427,8 +10759,8 @@ const Vistas = {
       '</div>' +
       '<div class="grid g2 mb16">' +
         UI.card('Vehículos que más gasto llevan', ranking,
-          { flush: true, sub: 'Compras, mantenimientos y combustible · ' + esc(Tablero.PERIODOS[p].toLowerCase()),
-            pie: general || generalEx ? Icon('cart', '', 13) + '<span>Además, ' + [general ? esc(Money.compacto(general)) + ' en compras generales' : '',
+          { flush: true, sub: 'Compras, mantenimientos, combustible y peajes · ' + esc(Tablero.PERIODOS[p].toLowerCase()),
+            pie: general || generalEx ? Icon('cart', '', 13) + '<span>Además, ' + [general ? esc(Money.compacto(general)) + ' en gastos generales' : '',
               generalEx ? esc(Money.compacto(generalEx)) + ' de registro manual' : ''].filter(Boolean).join(' y ') + ', sin un vehículo.</span>' : '' }) +
         UI.card('Gasto por mes', columnas, { sub: p === 'anio' ? 'Los meses de ' + y : 'Últimos seis meses', act: '<span class="link fs12" data-ir="compras">Ver compras</span>' }) +
       '</div>' +
@@ -10576,7 +10908,7 @@ const Vistas = {
   unidad(id) {
     const u = Q.unidad(id);
     if (!u) return { titulo: 'Unidad', html: '<div class="card">' + UI.empty('truck', 'No se encontró la unidad', '<span class="link" data-ir="flota">Volver a la flota</span>') + '</div>' };
-    if (UIState.unidadId !== id) { UIState.unidadId = id; UIState.tab = 'info'; UIState.act = 'todos'; UIState.ocMes = ''; }
+    if (UIState.unidadId !== id) { UIState.unidadId = id; UIState.tab = 'info'; UIState.act = 'todos'; UIState.ocMes = ''; UIState.peajesMesU = ''; }
     const e = Est.unidad(u), ins = Est.insp(u), c = Q.conductorDe(u), ret = ConductoresRH.aviso(c, u), cam = u.tipo === 'remolque' && Q.camionDe(u);
     const mants = Datos.mantenimientos.filter(m => m.unidad === u.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
     const ult = mants[0];
@@ -10600,6 +10932,7 @@ const Vistas = {
       .concat(Preop.aplica(u) ? [['preop', 'Preoperacionales']] : [])
       .concat([['insp', 'Inspecciones'], ['comp', 'Comparendos y accidentes'], ['oc', 'Compras', compras.length]])
       .concat(Tanqueos.de(u).length ? [['comb', 'Combustible', Tanqueos.de(u).length]] : [])
+      .concat(Peajes.tiene(u) ? [['peajes', 'Peajes']] : [])
       .concat(GPS.aplica(u) ? [['gps', 'GPS']] : []);
     const html =
       '<div class="crumbs"><a data-ir="flota">Flota</a>' + Icon('chevR', '', 12) + '<span>' + esc(UI.placaTxt(u)) + '</span></div>' +
@@ -10875,6 +11208,54 @@ const Vistas = {
       }).join('') + '</tbody></table></div>';
     return kpis + UI.card('Por mes', porMes, { flush: true, cls: 'mb16', sub: 'Rendimiento: km desde el tanqueo anterior ÷ galones, sin los raros' }) +
       UI.card('Tanqueos', lista, { flush: true, sub: l.length > 120 ? 'Los últimos 120 de ' + l.length : l.length + (l.length === 1 ? ' tanqueo de Distracom' : ' tanqueos de Distracom') });
+  },
+  /* Los peajes de esta unidad (ver Peajes): el mes escogido (por defecto el de hoy), cada mes del año y los pasos del mes */
+  tab_peajes(u) {
+    Peajes.pedir();
+    if (Peajes.estado === 'falta') return '<div class="alert a-warn">' + Icon('warn') + '<div><b>Todavía no hay peajes.</b> Falta correr en Supabase el SQL 032.</div></div>';
+    if (Peajes.estado !== 'listo') return UI.card('Peajes', UI.empty('peaje', Peajes.estado === 'error' ? 'No llegaron los peajes' : 'Trayendo los peajes…', ''));
+    const mm = Peajes.meses.filter(m => Peajes.unidadDe(m.placa) === u.id);
+    if (!mm.length) return UI.card('Peajes', UI.empty('peaje', 'Sin peajes', 'Los peajes de Gopass de este vehículo salen aquí cuando se carga el Excel en Peajes.'));
+    const placas = Array.from(new Set(mm.map(m => m.placa))), meses = Peajes.listaMeses(placas);
+    const mes = meses.includes(UIState.peajesMesU) ? UIState.peajesMesU : hoyISO.slice(0, 7), y = mes.slice(0, 4);
+    const mesCorto = Peajes.mesTxt(mes).toLowerCase().replace(/ de \d{4}$/, ''), n = v => esc(Money.format(v)), hora = Programado.hora;
+    const sum = (l, k) => l.reduce((a, m) => a + m[k], 0), delMes = mm.filter(m => m.mes === mes);
+    const cob = sum(delMes, 'cobrado'), dev = sum(delMes, 'devuelto'), pasos = sum(delMes, 'pasos'), nDev = sum(delMes, 'conDev');
+    const det = Peajes.pasos(mes), suyos = Array.isArray(det) ? det.filter(p => placas.includes(p.placa)) : null;
+    const lista = suyos && suyos.filter(p => p.fecha.slice(0, 7) === mes), fl = suyos && Peajes.faltan(suyos, mes), falta = new Set();
+    let fv = 0;
+    if (fl) fl.viajes.filter(x => x.estado !== 'bien').forEach(x => { fv += x.v; x.faltan.forEach(f => falta.add(f.p.id)); });
+    const kpis = '<div class="grid g4 mb16">' +
+      UI.kpi({ label: 'Gasto de ' + mesCorto, valor: n(cob - dev), icono: 'pesos', meta: pasos + (pasos === 1 ? ' paso' : ' pasos') + ' · lo cobrado menos lo devuelto' }) +
+      UI.kpi({ label: 'Cobrado', valor: n(cob), icono: 'ticket', color: 'var(--info-500)', meta: 'Lo que Gopass descontó del saldo' }) +
+      UI.kpi({ label: 'Devuelto', valor: n(dev), icono: 'refresh', color: 'var(--ok-500)', meta: nDev + (nDev === 1 ? ' devolución' : ' devoluciones') }) +
+      UI.kpi({ label: 'Pueden faltar', valor: fl ? String(falta.size) : '…', icono: 'warn', color: falta.size ? 'var(--warn-500)' : 'var(--ink-400)',
+        meta: !fl ? 'Revisando los regresos…' : falta.size ? 'Unos ' + n(fv) + ' · se revisan en <span class="link" data-ir="peajes">Peajes</span>' : 'Nada pendiente en ' + esc(mesCorto) }) +
+      '</div>';
+    const sel = '<div class="toolbar"><label class="flex aic g8"><span class="txt-2 fs12">Mes</span><select class="inp" id="pjMesU" style="width:auto">' +
+      meses.map(x => '<option value="' + x + '"' + (x === mes ? ' selected' : '') + '>' + esc(Peajes.mesTxt(x)) + '</option>').join('') + '</select></label></div>';
+    /* Cada mes del año escogido */
+    const delAnio = Array.from(new Set(mm.filter(m => m.mes.startsWith(y)).map(m => m.mes))).sort().reverse();
+    const porMes = !delAnio.length ? UI.empty('peaje', 'Sin peajes en ' + y, '') : '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Mes</th><th class="num">Pasos</th>' +
+        '<th class="num">Cobrado</th><th class="num">Devuelto</th><th class="num">Neto</th></tr></thead><tbody>' +
+      delAnio.map(ms => {
+        const l = mm.filter(m => m.mes === ms), c = sum(l, 'cobrado'), d = sum(l, 'devuelto');
+        return '<tr><td class="nowrap">' + (ms === mes ? '<b>' + esc(Peajes.mesTxt(ms)) + '</b>' : esc(Peajes.mesTxt(ms))) + '</td><td class="num">' + sum(l, 'pasos') + '</td>' +
+          '<td class="num nowrap">' + n(c) + '</td><td class="num nowrap">' + (d ? n(d) : '—') + '</td><td class="num nowrap"><b>' + n(c - d) + '</b></td></tr>';
+      }).join('') + '</tbody></table></div>';
+    /* Los pasos del mes, el más reciente arriba */
+    const pasosL = !lista ? UI.empty('peaje', det && det.error ? 'No llegaron los pasos del mes' : 'Trayendo los pasos del mes…', '')
+      : !lista.length ? UI.empty('peaje', 'Sin pasos en ' + esc(mesCorto), '')
+      : '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Peaje</th><th>Sentido</th><th class="num">Cobrado</th><th class="num">Devuelto</th>' +
+          '<th class="num">Neto</th></tr></thead><tbody>' +
+        lista.slice().sort((a, b) => (b.fecha + b.hora).localeCompare(a.fecha + a.hora)).map(p => '<tr><td class="nowrap">' + esc(Fecha.corta(p.fecha)) +
+          '<div class="txt-3 fs12">' + esc(hora(p.hora)) + '</div></td><td>' + esc(Peajes.nombre(p.peaje)) + '</td>' +
+          '<td class="nowrap"><span class="mono fs12">' + esc(p.sentido) + '</span>' + (Peajes.regreso(p.peaje) === p.sentido ? ' ' + UI.pill('ok', 'regreso', true) : '') + '</td>' +
+          '<td class="num nowrap">' + n(p.valor) + '</td><td class="num nowrap">' + (p.devuelto > 0 ? n(p.devuelto) : falta.has(p.id)
+            ? '<span class="tx-warn" title="En ese regreso otros peajes devolvieron">Puede faltar</span>' : '—') + '</td>' +
+          '<td class="num nowrap">' + n(p.valor - p.devuelto) + '</td></tr>').join('') + '</tbody></table></div>';
+    return sel + kpis + UI.card('Por mes · ' + y, porMes, { flush: true, cls: 'mb16' }) +
+      UI.card('Pasos de ' + esc(mesCorto), pasosL, { flush: true, sub: lista ? lista.length + (lista.length === 1 ? ' paso de Gopass' : ' pasos de Gopass') : '' });
   },
 
   /* ------------------------------------------- Documentos y vencimientos */
@@ -11551,6 +11932,7 @@ const Acciones = {
     UIState.tab = el.dataset.tab || 'info';
     UIState.act = 'todos';
     UIState.ocMes = '';
+    UIState.peajesMesU = '';
     Router.ir('unidad/' + el.dataset.u);
   },
   filtroAct(el) {
@@ -11866,7 +12248,10 @@ Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
   plano: { u: null, sel: null, llanta: null, modo: 'arreglos', periodo: '' },
   /* Combustible: el mes escogido («aaaa-mm»); si no, el último con tanqueos.
      Y el orden de la tabla por vehículo, que al recargar vuelve al valor */
-  combMes: null, combOrden: { k: 'valor', asc: false } });
+  combMes: null, combOrden: { k: 'valor', asc: false },
+  /* Peajes: el mes escogido («aaaa-mm»; si no, el de hoy), el orden de la tabla por vehículo, si se ven todos los peajes y el mes de
+     la pestaña de la ficha (vacío, el de hoy; al abrir otro vehículo vuelve a hoy) */
+  peajesMes: null, peajesOrden: { k: 'neto', asc: false }, peajesTodos: false, peajesMesU: '' });
 Money.compacto = n => n >= 1e6 ? '$' + (n / 1e6).toFixed(1).replace('.', ',') + ' M' : n >= 1e3 ? '$' + Math.round(n / 1e3) + ' mil' : Money.format(n);
 /* El plano de mantenimiento: el período (ver Plano.vista) */
 document.addEventListener('change', e => {
@@ -11875,6 +12260,10 @@ document.addEventListener('change', e => {
 /* Compras de la ficha: el mes de las tarjetas (ver Vistas.tab_oc) */
 document.addEventListener('change', e => {
   if (e.target && e.target.id === 'ocMes') { UIState.ocMes = e.target.value === hoyISO.slice(0, 7) ? '' : e.target.value; Router.pintar(true); }
+});
+/* Peajes de la ficha: el mes (ver Vistas.tab_peajes) */
+document.addEventListener('change', e => {
+  if (e.target && e.target.id === 'pjMesU') { UIState.peajesMesU = e.target.value === hoyISO.slice(0, 7) ? '' : e.target.value; Router.pintar(true); }
 });
 
 /* Consecutivos de los formatos */
@@ -12600,6 +12989,169 @@ Object.assign(Vistas, {
     return { titulo, sub, html, despues: () => {
       const s = $('#combMes');
       if (s) s.addEventListener('change', () => { UIState.combMes = s.value; Router.pintar(true); });
+    } };
+  },
+
+  /* ---------------------------------------------------------------- Peajes
+     Los pasos y las devoluciones de Gopass (ver Peajes), como la maqueta que
+     aprobó Juan el 08/11/2026: el mes (por defecto el de hoy), lo que costó,
+     cada vehículo (los de un tercero aparte, sin sumar), las devoluciones que
+     pueden faltar, cada peaje por sentido, el gasto de cada mes y los
+     archivos cargados */
+  peajes() {
+    const titulo = 'Peajes', sub = 'Pasos y devoluciones de Gopass';
+    const head = UI.head('Peajes', 'Pasos y devoluciones de Gopass · el Excel de «Transacciones»',
+      '<button class="btn btn-primary" data-act="cargarPeajes">' + Icon('upload', '', 14) + 'Cargar Excel de Gopass</button>');
+    const caja = (t, p) => head + '<div class="card">' + UI.empty('peaje', t, p) + '</div>';
+    Peajes.pedir();
+    if (Peajes.estado === 'falta') return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') +
+      '<div><b>Todavía no se puede cargar.</b> Falta correr en Supabase el SQL 032, que crea dónde guardar los peajes.</div></div>' };
+    if (Peajes.estado === 'error') return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') + '<div><b>No llegaron los peajes.</b> ' +
+      esc(Peajes.errorTxt) + ' <span class="link" data-act="peajesReintentar">Intentar otra vez</span></div></div>' };
+    if (Peajes.estado !== 'listo') return { titulo, sub, html: caja('Trayendo los peajes…', '') };
+    if (!Peajes.meses.length) return { titulo, sub, html: caja('Todavía no hay peajes', 'En Gopass, en Transacciones, descargue el Excel (sin filtros, del período ' +
+      'que quiera) y cárguelo aquí tal como sale. Se pueden cargar uno o varios a la vez: lo que ya estaba cargado no se repite.') };
+    const meses = Peajes.listaMeses(), mes = meses.includes(UIState.peajesMes) ? UIState.peajesMes : hoyISO.slice(0, 7);
+    const mesTxt = Peajes.mesTxt(mes), mesCorto = mesTxt.toLowerCase().replace(/ de \d{4}$/, '');
+    const n = v => esc(Money.format(v)), pct = (a, b) => (b ? Math.round(a / b * 100) : 0), hora = Programado.hora;
+    const terU = id => Boolean(id && Q.tercero(Q.unidad(id)));
+    /* Cada placa en el mes, del resumen; lo que puede faltar, de los pasos del mes (mientras llegan, null) */
+    const filas = Peajes.meses.filter(m => m.mes === mes).map(m => {
+      const id = Peajes.unidadDe(m.placa);
+      return { p: m.placa, u: id && Q.unidad(id), ter: terU(id), pasos: m.pasos, cob: m.cobrado, dev: m.devuelto, nDev: m.conDev, neto: m.cobrado - m.devuelto, fn: null, fv: null };
+    });
+    const det = Peajes.pasos(mes), lista = Array.isArray(det) ? det : null, fl = lista && Peajes.faltan(lista, mes);
+    const abiertos = fl ? fl.viajes.filter(x => x.estado !== 'bien') : [];
+    if (fl) filas.forEach(f => { const xs = abiertos.filter(x => x.placa === f.p); f.fn = xs.reduce((s, x) => s + x.faltan.length, 0); f.fv = xs.reduce((s, x) => s + x.v, 0); });
+    const propias = filas.filter(f => !f.ter), terceros = filas.filter(f => f.ter), s = k => propias.reduce((a, f) => a + (f[k] || 0), 0);
+    const r = { pasos: s('pasos'), cob: s('cob'), dev: s('dev'), nDev: s('nDev'), neto: s('neto'), fn: s('fn'), fv: s('fv') };
+    const propiosF = abiertos.filter(x => !terU(x.u)), terF = abiertos.filter(x => terU(x.u)), reclamados = propiosF.filter(x => x.estado === 'reclamar').length;
+    const reintentar = '<span class="link" data-act="peajesReintentar">Intentar otra vez</span>';
+    const kpis = UI.kpi({ label: 'Gasto en peajes', valor: n(r.neto), icono: 'pesos',
+        meta: r.pasos + (r.pasos === 1 ? ' paso' : ' pasos') + ' en ' + esc(mesCorto) + ' · lo cobrado menos lo devuelto' }) +
+      UI.kpi({ label: 'Cobrado por Gopass', valor: n(r.cob), icono: 'ticket', color: 'var(--info-500)', meta: 'Lo que se descontó del saldo' }) +
+      UI.kpi({ label: 'Devuelto', valor: n(r.dev), icono: 'refresh', color: 'var(--ok-500)',
+        meta: r.nDev + (r.nDev === 1 ? ' devolución' : ' devoluciones') + ' · el ' + pct(r.dev, r.cob) + ' % de lo cobrado' }) +
+      UI.kpi(fl ? { label: 'Devoluciones que pueden faltar', icono: 'warn', color: r.fn ? 'var(--warn-500)' : 'var(--ink-400)', act: r.fn ? 'verFaltanPeajes' : '',
+          valor: r.fn + (r.fn ? '<span class="kpi-aviso" title="Hay regresos por revisar">!</span>' : ''),
+          meta: r.fn ? 'Unos ' + n(r.fv) + (reclamados ? ' · ' + reclamados + (reclamados === 1 ? ' regreso reclamado' : ' regresos reclamados') : '') + ' · <span class="link">Ver</span>'
+            : 'Nada pendiente en ' + esc(mesCorto) }
+        : { label: 'Devoluciones que pueden faltar', icono: 'warn', color: 'var(--ink-400)', valor: det && det.error ? '—' : '…',
+          meta: det && det.error ? 'No llegaron los pasos del mes · ' + reintentar : 'Revisando los regresos del mes…' });
+
+    /* Por vehículo; los de un tercero aparte, al final. Las flechitas ordenan; por defecto, el que más costó, y lo que sale con raya
+       va al final */
+    const cols = [['pasos', 'Pasos'], ['cob', 'Cobrado'], ['dev', 'Devuelto'], ['neto', 'Neto'], ['fv', 'Pueden faltar']];
+    const ord = UIState.peajesOrden, col = cols.find(c => c[0] === ord.k) || cols[3];
+    const orden = (a, b) => { const x = a[col[0]] || null, z = b[col[0]] || null; return (x == null) - (z == null) || (x == null ? 0 : ord.asc ? x - z : z - x) || b.neto - a.neto; };
+    const celdaU = f => (f.u ? UI.unidadCelda(f.u) : '<span class="mono">' + esc(f.p) + '</span> <span class="txt-3 fs12">sin vehículo</span>');
+    const fila = f => '<tr class="' + [f.u ? 'row-click' : '', f.ter ? 'pj-ter' : ''].join(' ').trim() + '"' + (f.u ? ' data-act="irUnidad" data-u="' + f.u.id + '" data-tab="peajes"' : '') +
+      '><td>' + celdaU(f) + '</td><td class="num">' + f.pasos + '</td><td class="num nowrap">' + n(f.cob) + '</td><td class="num nowrap">' + (f.dev ? n(f.dev) : '—') + '</td>' +
+      '<td class="num nowrap"><b>' + n(f.neto) + '</b></td><td class="num nowrap">' + (f.fn == null ? '…' : f.fn ? '<span class="tx-warn" style="font-weight:650">' + n(f.fv) +
+        '</span><div class="dias d-warn">' + f.fn + (f.fn === 1 ? ' peaje' : ' peajes') + '</div>' : '—') + '</td></tr>';
+    const tablaU = !filas.length ? UI.empty('peaje', 'Sin pasos en ' + esc(mesCorto), 'Cargue el Excel de Gopass con los días de este mes.')
+      : '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th>' + cols.map(c => '<th class="num ord' + (c === col ? ' on' : '') + '" data-act="ordenPeajes" data-k="' +
+          c[0] + '" aria-sort="' + (c === col ? (ord.asc ? 'ascending' : 'descending') : 'none') + '" title="Ordenar por ' + c[1].toLowerCase() + '">' +
+          Icon(c === col ? (ord.asc ? 'chevU' : 'chevD') : 'ordenar', 'ord-f', 11) + c[1] + '</th>').join('') + '</tr></thead><tbody>' +
+        propias.sort(orden).map(fila).join('') +
+        (terceros.length ? '<tr class="pj-sep"><td colspan="6">De terceros · salen del saldo de SINUGRAVAS en Gopass, pero no suman al gasto de la flota</td></tr>' +
+          terceros.sort(orden).map(fila).join('') : '') +
+        '</tbody><tfoot><tr><td>Total de la flota</td><td class="num">' + r.pasos + '</td><td class="num nowrap">' + n(r.cob) + '</td><td class="num nowrap">' + n(r.dev) + '</td>' +
+        '<td class="num nowrap">' + n(r.neto) + '</td><td class="num nowrap">' + (!fl ? '…' : r.fn ? n(r.fv) + '<div class="dias">' + r.fn + (r.fn === 1 ? ' peaje' : ' peajes') +
+          '</div>' : '—') + '</td></tr></tfoot></table></div>';
+
+    /* Los regresos a los que les puede faltar una devolución, el más reciente arriba; los de un tercero, en una nota */
+    const filaF = x => {
+      const a = x.rg[0], z = x.rg[x.rg.length - 1], ids = attr(x.faltan.map(f => f.p.id).join(',')), u = x.u && Q.unidad(x.u);
+      const marcar = (k, t) => '<span class="link" data-act="peajeRevision" data-k="' + k + '" data-ids="' + ids + '">' + t + '</span>';
+      return '<tr><td>' + (u ? UI.unidadCelda(u) : '<span class="mono">' + esc(x.placa) + '</span>') + '</td>' +
+        '<td class="nowrap">' + esc(Fecha.corta(a.fecha)) + '<div class="txt-3 fs12">' + esc(hora(a.hora) + (z !== a ? ' a ' + hora(z.hora) : '')) + '</div></td>' +
+        '<td><div class="pj-chs">' + x.rg.map(p => {
+          const f = x.faltan.find(q => q.p === p);
+          return '<span class="pj-ch' + (f ? ' falta' : '') + '" title="' + attr(Peajes.nombre(p.peaje) + ' · ' + p.sentido + ' · ' + hora(p.hora) + ' · cobró ' + Money.format(p.valor) +
+            (f ? ', sin devolución' + (f.v ? ' (lo normal es que devuelva ' + Money.format(f.v) + ')' : '') + (p.codigo ? ' · paso ' + p.codigo : '')
+              : ' y devolvió ' + Money.format(p.devuelto))) + '">' + Icon(f ? 'x' : 'check', '', 11) + esc(Peajes.nombre(p.peaje)) + '</span>';
+        }).join('') + '</div></td>' +
+        '<td class="num nowrap tx-warn" style="font-weight:650">' + (x.v ? n(x.v) : '—') + '</td>' +
+        '<td class="nowrap fs12 tr">' + (x.estado === 'reclamar' ? UI.pill('info', 'Reclamado el ' + Fecha.num(x.cuando).slice(0, 5)) + ' ' + marcar('bien', 'Está bien')
+          : marcar('reclamar', 'Reclamar') + ' <span class="txt-3">·</span> ' + marcar('bien', 'Está bien')) + '</td></tr>';
+    };
+    const tablaF = !fl ? UI.empty('peaje', det && det.error ? 'No llegaron los pasos del mes' : 'Revisando los regresos del mes…', det && det.error ? reintentar : '')
+      : !propiosF.length ? UI.empty('check', 'Nada por revisar', 'En ' + esc(mesCorto) + ', ningún regreso quedó a medias: o devolvieron todos sus peajes, o ninguno.')
+      : '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th><th>Regreso</th><th>Peajes del regreso</th><th class="num">Podría faltar</th><th></th></tr></thead><tbody>' +
+        propiosF.sort((a, b) => (b.rg[0].fecha + b.rg[0].hora).localeCompare(a.rg[0].fecha + a.rg[0].hora)).map(filaF).join('') + '</tbody></table></div>';
+    const bien = fl ? fl.viajes.filter(x => x.estado === 'bien' && !terU(x.u)).length : 0;
+    const porTer = {};
+    terF.forEach(x => { const q = porTer[x.placa] || (porTer[x.placa] = { n: 0, v: 0 }); q.n += x.faltan.length; q.v += x.v; });
+    const pieF = !fl ? '' : [Object.keys(porTer).map(p => p + ' (de un tercero) tiene ' + porTer[p].n + ' más, por ' + Money.format(porTer[p].v) + '.').join(' '),
+      bien ? (bien === 1 ? 'Un regreso revisado («Está bien») ya no sale.' : bien + ' regresos revisados («Está bien») ya no salen.') : '',
+      fl.ninguno ? (fl.ninguno === 1 ? 'Además, un regreso no tuvo ninguna devolución' : 'Además, ' + fl.ninguno + ' regresos no tuvieron ninguna devolución') +
+        ': puede que el camión volviera cargado.' : ''].filter(Boolean).join(' ');
+
+    /* Cada peaje por sentido, sin los de un tercero; el que más cobró arriba */
+    const pj = {};
+    (lista || []).forEach(p => {
+      if (p.fecha.slice(0, 7) !== mes || Peajes.deTercero(p.placa)) return;
+      const k = p.peaje + '|' + p.sentido, g = pj[k] || (pj[k] = { c: Peajes.nombre(p.peaje), s: p.sentido, reg: Peajes.regreso(p.peaje) === p.sentido, pasos: 0, nDev: 0, cob: 0, dev: 0 });
+      g.pasos++; g.cob += p.valor; g.dev += p.devuelto;
+      if (p.devuelto > 0) g.nDev++;
+    });
+    const porC = {};
+    Object.values(pj).forEach(g => (porC[g.c] = porC[g.c] || []).push(g));
+    const total = c => porC[c].reduce((a, g) => a + g.cob, 0), ordenC = Object.keys(porC).sort((a, b) => total(b) - total(a)), TOPE = 8;
+    const tablaP = !lista ? UI.empty('peaje', det && det.error ? 'No llegaron los pasos del mes' : 'Trayendo los pasos del mes…', '')
+      : !ordenC.length ? UI.empty('peaje', 'Sin pasos en ' + esc(mesCorto), '')
+      : '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Peaje</th><th>Sentido</th><th class="num">Pasos</th><th class="num">Devueltos</th><th class="num">Cobrado</th>' +
+          '<th class="num">Neto</th></tr></thead><tbody>' +
+        (UIState.peajesTodos ? ordenC : ordenC.slice(0, TOPE)).map(c => porC[c].sort((a, b) => b.reg - a.reg).map((g, i) => '<tr><td>' + (i ? '' : '<b>' + esc(c) + '</b>') + '</td>' +
+          '<td class="nowrap"><span class="mono fs12">' + esc(g.s) + '</span>' + (g.reg ? ' ' + UI.pill('ok', 'regreso', true) : '') + '</td><td class="num">' + g.pasos + '</td>' +
+          '<td class="num nowrap">' + (g.nDev ? g.nDev + ' <span class="txt-3">(' + pct(g.nDev, g.pasos) + ' %)</span>' : '—') + '</td>' +
+          '<td class="num nowrap">' + n(g.cob) + '</td><td class="num nowrap">' + n(g.cob - g.dev) + '</td></tr>').join('')).join('') + '</tbody></table></div>';
+
+    /* Los doce meses del año escogido: lo neto abajo y lo devuelto encima (las dos juntas son lo cobrado) */
+    const y = +mes.slice(0, 4), mm = Array.from({ length: 12 }, (_, i) => y + '-' + String(i + 1).padStart(2, '0'));
+    const vals = mm.map(x => {
+      const l = Peajes.meses.filter(m => m.mes === x && !Peajes.deTercero(m.placa));
+      return { neto: l.reduce((a, m) => a + m.cobrado - m.devuelto, 0), dev: l.reduce((a, m) => a + m.devuelto, 0) };
+    });
+    const tope = Math.max.apply(null, vals.map(v => v.neto + v.dev).concat([1])), alto = v => Math.max(2, Math.round(v / tope * 100));
+    const columnas = '<div class="cols">' + mm.map((x, i) => {
+        const v = vals[i];
+        return '<div class="col" title="' + attr(Peajes.mesTxt(x) + ': ' + Money.format(v.neto) + ' netos y ' + Money.format(v.dev) + ' devueltos') + '">' +
+          (v.neto && x === mes ? '<span>' + esc(Money.compacto(v.neto)) + '</span>' : '') +
+          (v.dev > 0 ? '<i class="pj-dev" style="height:' + alto(v.dev) + '%' + (x === mes ? '' : ';opacity:.22') + '"></i>' : '') +
+          (v.neto > 0 ? '<i style="height:' + alto(v.neto) + '%' + (v.dev > 0 ? ';border-radius:0' : '') + (x === mes ? '' : ';opacity:.55') + '"></i>' : '') + '</div>';
+      }).join('') + '</div>' +
+      '<div class="cols-x">' + mm.map(x => '<span' + (x > hoyISO.slice(0, 7) ? ' class="fut"' : '') + '>' +
+        esc(Fecha.parse(x + '-01').toLocaleDateString('es-CO', { month: 'short' }).replace('.', '')) + '</span>').join('') + '</div>' +
+      '<div class="cols-ley"><span><i></i>Neto (lo que costó)</span><span><i class="pj-dev"></i>Devuelto</span></div>';
+    const archivos = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Archivo</th><th>Fechas</th><th class="num">Pasos</th></tr></thead><tbody>' +
+      Peajes.archivos.map(a => '<tr><td class="trunc" style="max-width:240px" title="' + attr(a.archivo) + '">' + esc(a.archivo || '—') + '</td>' +
+        '<td class="nowrap">' + esc(Fecha.corta(a.desde) + ' a ' + Fecha.corta(a.hasta)) + '</td><td class="num">' + a.pasos.toLocaleString('es-CO') + '</td></tr>').join('') +
+      '</tbody></table></div>';
+
+    /* Las placas de Gopass que no están en Flota, de todos los meses */
+    const sinU = Array.from(new Set(Peajes.meses.filter(m => !Peajes.unidadDe(m.placa)).map(m => m.placa))).sort();
+    const html = head +
+      (sinU.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (sinU.length === 1 ? 'Una placa de Gopass no tiene vehículo'
+        : sinU.length + ' placas de Gopass no tienen vehículo') + ':</b> ' + sinU.map(p => '<span class="mono">' + esc(p) + '</span> <span class="link" data-act="asignarPlacaGopass" data-p="' +
+        attr(p) + '">Asignar</span>').join(' · ') + '. Mientras tanto, su gasto cuenta como general.</div></div>' : '') +
+      '<div class="toolbar"><label class="flex aic g8"><span class="txt-2 fs12">Mes</span><select class="inp" id="pjMes" style="width:auto">' +
+        meses.map(x => '<option value="' + x + '"' + (x === mes ? ' selected' : '') + '>' + esc(Peajes.mesTxt(x)) + '</option>').join('') + '</select></label></div>' +
+      '<div class="grid g4 mb16">' + kpis + '</div>' +
+      UI.card('Por vehículo · ' + esc(mesTxt), tablaU, { flush: true, cls: 'mb16', sub: 'Clic en un vehículo para ver sus peajes',
+        pie: '<span class="txt-3 fs12">Cada paso cuenta una vez, aunque Gopass repita la fila con la nota crédito de su devolución.</span>' }) +
+      '<div id="pjFaltan">' + UI.card('Devoluciones que pueden faltar · ' + esc(mesTxt), tablaF, { flush: true, cls: 'mb16', sub: 'Regresos en los que unos peajes devolvieron y otros no',
+        pie: pieF ? '<span class="txt-3 fs12">' + esc(pieF) + '</span>' : '' }) + '</div>' +
+      '<div class="grid g2">' +
+        UI.card('Por peaje · ' + esc(mesTxt), tablaP, { flush: true, sub: '«Regreso»: el sentido en que Gopass suele devolver',
+          pie: ordenC.length > TOPE ? '<span class="link fs12" data-act="peajesTodos">' + (UIState.peajesTodos ? 'Ver solo los ' + TOPE + ' que más cobraron' : 'Ver los ' + ordenC.length + ' peajes') +
+            '</span>' : '' }) +
+        '<div>' + UI.card('Gasto por mes · ' + y, columnas, { cls: 'mb16', sub: 'Lo que costaron los peajes, sin lo devuelto' }) + UI.card('Archivos cargados', archivos, { flush: true }) + '</div>' +
+      '</div>';
+    return { titulo, sub, html, despues: () => {
+      const sel = $('#pjMes');
+      if (sel) sel.addEventListener('change', () => { UIState.peajesMes = sel.value; Router.pintar(true); });
     } };
   },
 
@@ -14175,6 +14727,88 @@ Object.assign(Ventanas, {
     g.innerHTML = Icon('save', '', 14) + (nuevos.length ? 'Guardar ' + nuevos.length + (nuevos.length === 1 ? ' tanqueo' : ' tanqueos') : 'Nada nuevo');
   },
 
+  /* Cargar el Excel de Transacciones de Gopass (ver Peajes): se lee, se
+     muestra qué trae y qué ya estaba, y las placas que no están en Flota */
+  cargaPeajes() {
+    const m = Modal.abrir({
+      titulo: 'Cargar peajes de Gopass', sub: 'El Excel de «Transacciones» de Gopass, tal como sale', ancho: 'wide', sinFoco: true,
+      cuerpo: Dz.html('pjDz', 'Escoja o arrastre los archivos', 'Uno o varios Excel de Transacciones de Gopass, sin editarlos: un mes, una semana o todo el año',
+        '.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', true) + '<div id="pjPrev"></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarPeajes" disabled>' + Icon('save', '', 14) + 'Guardar</button>'
+    });
+    Dz.bind('pjDz', files => this.previaPeajes(m, files));
+  },
+  async previaPeajes(m, files) {
+    const caja = $('#pjPrev', m), g = $('[data-act="guardarPeajes"]', m), aviso = (k, ic, x) => '<div class="alert a-' + k + ' mt12">' + Icon(ic) + '<div>' + x + '</div></div>';
+    const vez = (m._vez || 0) + 1;
+    files = [].concat(files);
+    m._vez = vez;
+    m._nuevos = null;
+    g.disabled = true;
+    g.innerHTML = Icon('save', '', 14) + 'Guardar';
+    /* Los archivos solo se leen: no se guardan en ninguna parte */
+    $('#pjDzF', m).innerHTML = files.map(f => '<div class="dz-file">' + Icon('file', '', 15) + '<span class="f1 trunc">' + esc(f.name) + '</span>' +
+      '<span class="txt-3 fs11 nowrap">' + Peso.txt(f.size) + ' · solo se lee, no se guarda</span></div>').join('');
+    caja.innerHTML = '<div class="hint mt12">Leyendo…</div>';
+    const leidos = [], malos = [];
+    for (const f of files) {
+      try {
+        const r = Peajes.leer((await Xlsx.leer(await f.arrayBuffer()))[0].filas, f.name);
+        if (r) leidos.push({ f, r }); else malos.push(esc(f.name) + ': no tiene las columnas del Excel de Transacciones de Gopass');
+      } catch (e) { malos.push(esc(f.name) + ': ' + esc((e && e.message) || 'no se pudo leer')); }
+    }
+    /* Si mientras tanto se escogieron otros archivos, esta lectura ya no sirve */
+    if (!document.body.contains(m) || m._vez !== vez) return;
+    const noSirven = malos.length ? aviso('warn', 'warn', '<b>' + (malos.length === 1 ? 'Un archivo no se pudo leer' : malos.length + ' archivos no se pudieron leer') + ':</b> ' +
+      malos.join(' · ') + '. En Gopass, en Transacciones, descargue el Excel y cárguelo tal como sale.') : '';
+    /* Todos juntos, sin repetir: la misma transacción en dos archivos va una sola vez */
+    const porId = new Map();
+    leidos.forEach(x => x.r.lista.forEach(t => { if (!porId.has(t.id)) porId.set(t.id, t); }));
+    const todos = Array.from(porId.values()), enDos = leidos.reduce((s, x) => s + x.r.lista.length, 0) - todos.length;
+    if (!todos.length) {
+      caja.innerHTML = noSirven + (leidos.length ? aviso('warn', 'warn', '<b>No se encontraron peajes' + (leidos.length === 1 ? ' en el archivo' : ' en los archivos') +
+        '.</b> ¿Es el Excel de Transacciones de Gopass?') : '');
+      return;
+    }
+    const fechas = todos.map(x => x.fecha).sort();
+    let ya;
+    try { ya = await Peajes.yaEstan(fechas[0], fechas[fechas.length - 1]); } catch (e) {
+      if (document.body.contains(m) && m._vez === vez) caja.innerHTML = noSirven + aviso('warn', 'warn', Peajes.falta(e) ? '<b>Todavía no se puede cargar.</b> Falta correr en Supabase el SQL 032.'
+        : '<b>No se pudo revisar qué ya estaba cargado.</b> ' + esc((e && e.message) || '') + ' Escoja el archivo otra vez.');
+      return;
+    }
+    if (!document.body.contains(m) || m._vez !== vez) return;
+    const nuevos = todos.filter(x => !ya.has(x.id)), suma = l => l.reduce((s, x) => s + x.valor, 0);
+    const pasos = todos.filter(x => x.tipo === 'paso'), devs = todos.filter(x => x.tipo === 'devolucion'), recs = todos.filter(x => x.tipo === 'recobro');
+    const placas = Array.from(new Set(pasos.map(x => x.placa))).sort(), sinU = placas.filter(p => !Peajes.unidadDe(p));
+    const repetidas = leidos.reduce((s, x) => s + x.r.repetidas, 0), malas = leidos.filter(x => x.r.malas.length), otros = {};
+    leidos.forEach(x => Object.keys(x.r.otros).forEach(k => { otros[k] = (otros[k] || 0) + x.r.otros[k]; }));
+    const dato = (l, v, s) => '<div class="oc-dato"><div class="l">' + esc(l) + '</div><div class="v">' + esc(v) + '</div>' + (s ? '<div class="m">' + esc(s) + '</div>' : '') + '</div>';
+    const cifra = x => x.toLocaleString('es-CO');
+    caja.innerHTML = noSirven + '<div class="oc-datos mt12">' +
+        dato('Fechas', Fecha.corta(fechas[0]) + ' a ' + Fecha.corta(fechas[fechas.length - 1]),
+          cifra(pasos.length) + (pasos.length === 1 ? ' paso' : ' pasos') + ' · ' + placas.length + (placas.length === 1 ? ' placa' : ' placas')) +
+        dato('Cobrado', Money.format(suma(pasos)), leidos.length > 1 ? leidos.length + ' archivos' : '') +
+        dato('Devuelto', Money.format(suma(devs) - suma(recs)), cifra(devs.length) + (devs.length === 1 ? ' devolución' : ' devoluciones') +
+          (recs.length ? ' · ' + recs.length + (recs.length === 1 ? ' recobro' : ' recobros') : '')) + '</div>' +
+      (repetidas ? aviso('info', 'info', cifra(repetidas) + (repetidas === 1 ? ' fila sale repetida' : ' filas salen repetidas') +
+        ' (Gopass repite el paso con la nota crédito de su devolución): cada uno va una sola vez.') : '') +
+      (enDos ? aviso('info', 'info', cifra(enDos) + (enDos === 1 ? ' transacción viene en más de un archivo y va una sola vez.' : ' transacciones vienen en más de un archivo y van una sola vez.')) : '') +
+      (nuevos.length < todos.length ? aviso('info', 'info', cifra(todos.length - nuevos.length) + ' de estas transacciones ya estaban cargadas y no se repiten. ' +
+        (nuevos.length ? 'Se guardan las ' + cifra(nuevos.length) + ' nuevas.' : 'No hay nada nuevo.')) : '') +
+      (Object.keys(otros).length ? aviso('info', 'info', 'No se guardan las filas de ' + Object.keys(otros).map(k => '«' + esc(k) + '» (' + cifra(otros[k]) + ')').join(', ')
+        .replace(/, ([^,]*)$/, ' ni de $1') + ': no son peajes.') : '') +
+      (malas.length ? aviso('warn', 'warn', malas.map(x => (leidos.length > 1 ? esc(x.f.name) + ': ' : '') + x.r.malas.length +
+        (x.r.malas.length === 1 ? ' fila no se entendió' : ' filas no se entendieron') + ' (fila ' + x.r.malas.slice(0, 8).join(', ') + (x.r.malas.length > 8 ? '…' : '') + ')').join(' · ') +
+        '. No se cargan.') : '') +
+      (sinU.length ? '<div class="oc-sec">Placas que no están en Flota</div>' + sinU.map(p => '<div class="field"><label class="mono">' + esc(p) + '</label>' +
+        '<select class="inp" data-pgp="' + attr(p) + '"><option value="">Sin vehículo (cuenta como gasto general)</option>' + Opc.unidades('') + '</select></div>').join('') +
+        '<div class="hint">Lo que asigne aquí queda guardado para las próximas cargas.</div>' : '');
+    m._nuevos = nuevos;
+    g.disabled = !nuevos.length;
+    g.innerHTML = Icon('save', '', 14) + (nuevos.length ? 'Guardar ' + cifra(nuevos.length) + (nuevos.length === 1 ? ' transacción' : ' transacciones') : 'Nada nuevo');
+  },
+
   /* Las posibles irregularidades del combustible (ver Tanqueos.irregularidades),
      en una ventana sobre el área. Con «todas», también las que ya se revisaron. */
   irregularidades(todas) {
@@ -15624,6 +16258,74 @@ Object.assign(Acciones, {
     Tanqueos.lista().forEach(t => { if (t.placa === p) t.unidad = u.id; });
     Modal.cerrar(m);
     Toast.show('Listo: los tanqueos de <b>' + esc(p) + '</b> quedan en <b>' + esc(UI.placaTxt(u)) + '</b>.');
+    Router.pintar(true);
+  },
+  /* ---------------------------------------------------- Los peajes (ver Peajes) */
+  cargarPeajes() {
+    if (Peajes.estado === 'falta') { Toast.show('Todavía no se puede: falta correr en Supabase el SQL 032.', 'warn'); return; }
+    Ventanas.cargaPeajes();
+  },
+  async guardarPeajes(el) {
+    const m = el.closest('.modal-bd'), nuevos = (m && m._nuevos) || [];
+    if (!nuevos.length || el.disabled) return;
+    /* Las placas que se asignaron quedan para las próximas cargas */
+    const asignadas = {};
+    $$('select[data-pgp]', m).forEach(s => { if (s.value) asignadas[s.dataset.pgp] = s.value; });
+    if (Object.keys(asignadas).length) Config.placasGopass = Object.assign({}, Config.placasGopass, asignadas);
+    el.disabled = true;
+    try {
+      await Peajes.guardar(nuevos, (i, n) => { el.innerHTML = Icon('save', '', 14) + 'Guardando… ' + Math.round(i / n * 100) + ' %'; });
+    } catch (e) {
+      el.disabled = false;
+      el.innerHTML = Icon('save', '', 14) + 'Guardar otra vez';
+      Toast.show('No se pudo guardar todo: ' + esc((e && e.message) || '') + '. Lo que alcanzó a guardarse queda; pulse «Guardar otra vez».', 'err');
+      return;
+    }
+    const pasos = nuevos.filter(x => x.tipo === 'paso').length, fechas = nuevos.map(x => x.fecha).sort();
+    Modal.cerrar(m);
+    Toast.show('Listo: se guardaron <b>' + nuevos.length.toLocaleString('es-CO') + (nuevos.length === 1 ? ' transacción' : ' transacciones') + '</b> de Gopass (' +
+      pasos.toLocaleString('es-CO') + (pasos === 1 ? ' paso' : ' pasos') + '), del ' + esc(Fecha.corta(fechas[0])) + ' al ' + esc(Fecha.corta(fechas[fechas.length - 1])) + '.');
+    UIState.peajesMes = fechas[fechas.length - 1].slice(0, 7);
+    if (Router.actual().vista === 'peajes') Router.pintar(true); else Router.ir('peajes');
+  },
+  peajesReintentar() { Peajes.olvidar(); Router.pintar(true); },
+  /* Las flechitas de la tabla por vehículo: la primera vez de mayor a menor y otro clic la voltea (solo en memoria) */
+  ordenPeajes(el) {
+    const o = UIState.peajesOrden, k = el.dataset.k;
+    UIState.peajesOrden = { k, asc: o.k === k ? !o.asc : false };
+    Router.pintar(true);
+  },
+  peajesTodos() { UIState.peajesTodos = !UIState.peajesTodos; Router.pintar(true); },
+  verFaltanPeajes() { const c = $('#pjFaltan'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+  /* «Reclamar» o «Está bien» en un regreso al que le puede faltar una devolución, con «Deshacer» */
+  async peajeRevision(el) {
+    const ids = (el.dataset.ids || '').split(',').filter(Boolean), k = el.dataset.k;
+    try { if (!(await Peajes.revisar(ids, k))) return; } catch (e) { Toast.show('No se pudo guardar: ' + esc((e && e.message) || '') + '. Intente otra vez.', 'err'); return; }
+    Toast.show((k === 'bien' ? 'Listo: ese regreso queda revisado y ya no sale.' : 'Listo: ese regreso queda como reclamado a Gopass. Si llega la devolución, deja de salir solo.') +
+      ' <span class="link" data-act="peajeDeshacer">Deshacer</span>');
+  },
+  async peajeDeshacer() {
+    try { await Peajes.deshacer(); } catch (e) { Toast.show('No se pudo deshacer: ' + esc((e && e.message) || ''), 'err'); }
+  },
+  /* Una placa de Gopass que no está en Flota: se asigna una vez a su unidad */
+  asignarPlacaGopass(el) {
+    const p = el.dataset.p, n = Peajes.meses.filter(x => x.placa === p).reduce((a, x) => a + x.pasos, 0);
+    const m = Modal.abrir({
+      titulo: 'Asignar la placa ' + p, ancho: 'm-hoja', sub: 'Así la trae Gopass. Sus peajes, los de ahora y los que lleguen, van al vehículo que escoja.',
+      cuerpo: '<div class="field mb0"><label>Vehículo</label><select class="inp" id="agU"><option value="">Escoja el vehículo</option>' + Opc.unidades('') + '</select>' +
+        '<div class="hint">' + n + (n === 1 ? ' paso tiene' : ' pasos tienen') + ' esta placa.</div></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarPlacaGopass" data-p="' + attr(p) + '" disabled>' +
+        Icon('save', '', 14) + 'Guardar</button>'
+    });
+    const s = $('#agU', m), g = $('[data-act="guardarPlacaGopass"]', m);
+    s.addEventListener('change', () => { g.disabled = !s.value; });
+  },
+  guardarPlacaGopass(el) {
+    const m = el.closest('.modal-bd'), p = el.dataset.p, u = Q.unidad($('#agU', m).value);
+    if (!u) return;
+    Config.placasGopass = Object.assign({}, Config.placasGopass, { [p]: u.id });
+    Modal.cerrar(m);
+    Toast.show('Listo: los peajes de <b>' + esc(p) + '</b> quedan en <b>' + esc(UI.placaTxt(u)) + '</b>.');
     Router.pintar(true);
   },
   verConductor(el) { Ventanas.conductor(Q.conductor(el.dataset.c)); },
@@ -19307,6 +20009,7 @@ const Mapa = {
     poner('configuracion', { clave: 'rendimiento', valor: config.rendimiento });
     poner('configuracion', { clave: 'gps', valor: config.gps });
     if (Object.keys(config.placasDistracom || {}).length) poner('configuracion', { clave: 'distracom_placas', valor: config.placasDistracom });
+    if (Object.keys(config.placasGopass || {}).length) poner('configuracion', { clave: 'gopass_placas', valor: config.placasGopass });
     if (Object.keys(config.histProv || {}).length) poner('configuracion', { clave: 'historico_proveedores', valor: config.histProv });
     if (Object.keys(config.tiposRuta || {}).length) poner('configuracion', { clave: 'rutas_tipos', valor: config.tiposRuta });
     if (Object.keys(config.rutasLiq || {}).length) poner('configuracion', { clave: 'rutas_liquidadas', valor: config.rutasLiq });
@@ -19387,6 +20090,7 @@ const Mapa = {
       kmDia: cfg.km_dia != null ? cfg.km_dia : Config.kmDia,
       rendimiento: cfg.rendimiento && typeof cfg.rendimiento === 'object' && cfg.rendimiento.min < cfg.rendimiento.max ? cfg.rendimiento : Config.rendimiento,
       placasDistracom: cfg.distracom_placas && typeof cfg.distracom_placas === 'object' ? cfg.distracom_placas : {},
+      placasGopass: cfg.gopass_placas && typeof cfg.gopass_placas === 'object' ? cfg.gopass_placas : {},
       histProv: cfg.historico_proveedores && typeof cfg.historico_proveedores === 'object' ? cfg.historico_proveedores : {},
       tiposRuta: cfg.rutas_tipos && typeof cfg.rutas_tipos === 'object' ? cfg.rutas_tipos : {},
       rutasLiq: cfg.rutas_liquidadas && typeof cfg.rutas_liquidadas === 'object' ? cfg.rutas_liquidadas : {},
