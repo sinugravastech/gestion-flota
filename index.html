@@ -7149,9 +7149,16 @@ const Tanqueos = {
    id es el «ID Transacción» de Gopass, así que nada se repite: ni la fila que
    Gopass repite con la nota crédito de la devolución, ni lo ya cargado.
    Lo que costó un paso: lo cobrado, menos lo devuelto, más lo recobrado.
-   Gopass devuelve casi todo en los regresos, y en cada peaje casi siempre en
-   el mismo sentido: el «regreso» de un peaje es el sentido con más
-   devoluciones. Un viaje son los pasos seguidos de una placa, con menos de
+   Gopass cobra la categoría del chip (el tractocamión con todos sus ejes).
+   Cuando el camión regresa vacío con un eje levantado, la caseta lo cuenta
+   con un eje menos (la categoría de abajo) y Gopass devuelve la diferencia el
+   mismo día: en esa fila, «Valor» es el precio nuevo del paso y lo devuelto
+   es «Valor Total» (Juan, 09/11/2026: el saldo de la cuenta solo cuadra
+   así). Por eso devuelve casi siempre en un solo sentido por peaje: el
+   «regreso» de un peaje es el sentido con más de esas devoluciones. Las del
+   100 % (San Carlos, Purgatorio) son otra cosa, quizás una exención de ese
+   peaje: cuentan como devueltas, pero no marcan el regreso ni los viajes.
+   Un viaje son los pasos seguidos de una placa, con menos de
    cinco horas entre uno y otro. Si en un regreso unos peajes devolvieron y
    otros no, a los otros les puede faltar la devolución; lo que podría faltar
    es lo cobrado menos lo que suele quedar en ese peaje. Juan los marca
@@ -7167,7 +7174,8 @@ const Tanqueos = {
 const Peajes = {
   /* Los títulos de las columnas del Excel de Gopass que se usan */
   COLS: { id: 'ID Transacción', codigo: 'Código Paso', fechaServ: 'Fecha Servicio', fechaTr: 'Fecha Transacción', placa: 'Placa', servicio: 'Servicio',
-    comercio: 'Comercio', sentido: 'Sentido', estado: 'Estado Transacción', valor: 'Valor', ajuste: 'ID Transacción Ajuste' },
+    comercio: 'Comercio', sentido: 'Sentido', estado: 'Estado Transacción', valor: 'Valor', ajuste: 'ID Transacción Ajuste',
+    valorTotal: 'Valor Total', abonoTr: 'Abono Transacción', valorPaso: 'Valor Paso' },
   SERVICIOS: { 'Peajes': 'paso', 'Abonos Peaje': 'devolucion', 'Cobro pendiente peaje': 'recobro' },
   /* Más de cinco horas entre un paso y el siguiente de la misma placa: es otro viaje */
   VIAJE_H: 5,
@@ -7226,9 +7234,13 @@ const Peajes = {
       if (!tipo) { if (servicio) otros[servicio] = (otros[servicio] || 0) + 1; continue; }
       const id = g('id');
       if (porId.has(id)) { repetidas++; continue; }
-      const fh = this.fechaHora(g('fechaServ')) || this.fechaHora(g('fechaTr')), valor = Number(g('valor').replace(',', '.'));
-      if (!id || !fh || !g('valor') || !isFinite(valor) || (tipo !== 'paso' && !g('ajuste'))) { malas.push(i + 1); continue; }
-      porId.set(id, { id, tipo, fecha: fh.fecha, hora: fh.hora, placa: this.norm(g('placa')), peaje: g('comercio'), sentido: g('sentido'), valor: Math.abs(valor),
+      /* Lo que mueve la plata: en un paso, lo cobrado («Valor»); en una devolución o un recobro, «Valor Total», porque su «Valor» es
+         el precio nuevo del paso. Si no viene, |«Abono Transacción»| o «Valor Paso» − «Valor» */
+      const fh = this.fechaHora(g('fechaServ')) || this.fechaHora(g('fechaTr')), n = k => (g(k) === '' ? NaN : Number(g(k).replace(',', '.')));
+      const valor = n('valor'), total = n('valorTotal'), abono = n('abonoTr'), paso = n('valorPaso');
+      const monto = tipo === 'paso' ? valor : isFinite(total) ? total : isFinite(abono) ? abono : paso - valor;
+      if (!id || !fh || !isFinite(monto) || (tipo !== 'paso' && !g('ajuste'))) { malas.push(i + 1); continue; }
+      porId.set(id, { id, tipo, fecha: fh.fecha, hora: fh.hora, placa: this.norm(g('placa')), peaje: g('comercio'), sentido: g('sentido'), valor: Math.abs(monto),
         paso_id: tipo === 'paso' ? null : g('ajuste'), codigo: g('codigo'), estado: g('estado'), archivo: String(archivo || '').slice(0, 200) });
     }
     return { lista: Array.from(porId.values()), repetidas, otros, malas };
@@ -7292,11 +7304,12 @@ const Peajes = {
   listaMeses(placas) {
     return Array.from(new Set(this.meses.filter(m => !placas || placas.includes(m.placa)).map(m => m.mes).concat([hoyISO.slice(0, 7)]))).sort().reverse();
   },
-  /* El sentido del regreso de un peaje: el que más devoluciones tiene; el que nunca devuelve no tiene */
+  /* El sentido del regreso de un peaje: el que más devoluciones de un eje tiene (sin las del 100 %, que dejan el paso en cero); el
+     que nunca devuelve no tiene */
   regreso(peaje) {
     if (!this._regreso) {
       const n = {};
-      this.sentidos.forEach(x => { const k = x.peaje + '|' + x.sentido; n[k] = (n[k] || 0) + x.conDev; });
+      this.sentidos.forEach(x => { if (!(x.neto > 0)) return; const k = x.peaje + '|' + x.sentido; n[k] = (n[k] || 0) + x.conDev; });
       this._regreso = {};
       Object.keys(n).forEach(k => {
         const [p, s] = k.split('|'), ya = this._regreso[p];
@@ -7308,7 +7321,7 @@ const Peajes = {
   /* Lo que suele quedar de un paso después de su devolución: lo de ese peaje, sentido y valor o, si no hay, lo más común de ese
      peaje y sentido */
   netoUsual(p) {
-    const l = this.sentidos.filter(x => x.peaje === p.peaje && x.sentido === p.sentido && x.neto != null), igual = l.find(x => x.valor === p.valor);
+    const l = this.sentidos.filter(x => x.peaje === p.peaje && x.sentido === p.sentido && x.neto > 0), igual = l.find(x => x.valor === p.valor);
     if (igual) return igual.neto;
     const mas = l.sort((a, b) => b.conDev - a.conDev)[0];
     return mas ? mas.neto : null;
@@ -7327,17 +7340,18 @@ const Peajes = {
     });
     return out;
   },
-  /* Los regresos de un mes en los que unos peajes devolvieron y otros no. Cada uno con sus pasos de regreso, los que pueden faltar
-     (con lo que podría faltar) y lo que Juan anotó: pendiente, reclamar o bien. Y cuántos regresos no tuvieron ninguna devolución,
-     de las placas a las que Gopass sí les devuelve (puede que volvieran cargados) */
+  /* Los regresos de un mes en los que unos peajes devolvieron la diferencia del eje y otros no. Cada uno con sus pasos de regreso,
+     los que pueden faltar (con lo que podría faltar) y lo que Juan anotó: pendiente, reclamar o bien. Y cuántos regresos no tuvieron
+     ninguna devolución, de las placas que sí levantan el eje (puede que volvieran cargadas). Una devolución de un eje deja algo por
+     pagar; las del 100 % no cuentan para esto */
   faltan(lista, mes) {
-    const conDev = new Set(this.meses.filter(m => m.conDev > 0).map(m => m.placa)), out = { viajes: [], ninguno: 0 };
+    const deEje = p => p.devuelto > 0 && p.devuelto < p.valor, ejes = new Set(lista.filter(deEje).map(p => p.placa)), out = { viajes: [], ninguno: 0 };
     this.viajes(lista).forEach(v => {
       const rg = v.filter(p => this.regreso(p.peaje) === p.sentido);
-      if (!rg.length || rg[0].fecha.slice(0, 7) !== mes || !conDev.has(rg[0].placa)) return;
+      if (!rg.length || rg[0].fecha.slice(0, 7) !== mes || !ejes.has(rg[0].placa)) return;
       const sin = rg.filter(p => !(p.devuelto > 0));
       if (sin.length === rg.length) { out.ninguno++; return; }
-      if (!sin.length) return;
+      if (!sin.length || !rg.some(deEje)) return;
       const faltan = sin.map(p => { const n = this.netoUsual(p), r = p.extra.revision || {}; return { p, v: n == null ? 0 : Math.max(0, p.valor - n), rev: r.k || '', f: r.f || '' }; });
       out.viajes.push({ placa: rg[0].placa, u: this.unidadDe(rg[0].placa), rg, faltan, v: faltan.reduce((s, f) => s + f.v, 0),
         estado: faltan.every(f => f.rev === 'bien') ? 'bien' : faltan.some(f => f.rev === 'reclamar') ? 'reclamar' : 'pendiente',
@@ -9693,18 +9707,19 @@ const MantRemolque = {
   },
   html(pre) {
     return '<div class="field hidden" id="' + pre + 'RemF"><label for="' + pre + 'Rem">Remolque <span class="txt-3">(si también entró)</span></label>' +
-      '<select class="inp" id="' + pre + 'Rem"></select><div class="hint">Se abre también su propio ingreso, con ' +
+      '<select class="inp" id="' + pre + 'Rem"></select><div class="hint">Escójalo solo si también entró: se abre su propio ingreso, con ' +
       (pre === 'mc' ? 'la misma entrada, el taller y «¿Qué pasó?»' : 'la misma fecha y el mismo proveedor') + '. Su valor, sus órdenes y sus partes van en él.</div></div>';
   },
-  /* Con el camión escogido, su remolque. En una volqueta sin remolque no sale */
+  /* Con el camión escogido, la lista de remolques, con el suyo de primero. De entrada, «Sin remolque»: casi siempre entra solo el
+     camión, y escogido de entrada abría el ingreso del remolque sin querer (Juan, 09/11/2026). En una volqueta sin remolque no sale */
   poner(m, pre, u) {
     const f = $('#' + pre + 'RemF', m), s = $('#' + pre + 'Rem', m);
     if (!f || !s) return;
-    const actual = u && u.remolque && Q.unidad(u.remolque) ? u.remolque : '';
-    const ver = this.aplica(u) && this.lista(u).length > 0 && (Plano.clave(u) !== 'volqueta' || Boolean(actual));
+    const suyo = u && u.remolque && Q.unidad(u.remolque) ? u.remolque : '';
+    const ver = this.aplica(u) && this.lista(u).length > 0 && (Plano.clave(u) !== 'volqueta' || Boolean(suyo));
     f.classList.toggle('hidden', !ver);
-    s.innerHTML = ver ? this.opciones(u, actual) : '<option value="">Sin remolque</option>';
-    s.value = ver ? actual : '';
+    s.innerHTML = ver ? this.opciones(u, '') : '<option value="">Sin remolque</option>';
+    s.value = '';
   },
   leer(m, pre) {
     const f = $('#' + pre + 'RemF', m), s = $('#' + pre + 'Rem', m);
@@ -13174,7 +13189,7 @@ Object.assign(Vistas, {
       UI.card('Por vehículo · ' + esc(mesTxt), tablaU, { flush: true, cls: 'mb16', sub: 'Clic en un vehículo para ver sus peajes',
         pie: '<span class="txt-3 fs12">Cada paso cuenta una vez, aunque Gopass repita la fila con la nota crédito de su devolución.</span>' }) +
       cajaFuera +
-      '<div id="pjFaltan">' + UI.card('Devoluciones que pueden faltar · ' + esc(mesTxt), tablaF, { flush: true, cls: 'mb16', sub: 'Regresos en los que unos peajes devolvieron y otros no',
+      '<div id="pjFaltan">' + UI.card('Devoluciones que pueden faltar · ' + esc(mesTxt), tablaF, { flush: true, cls: 'mb16', sub: 'Regresos en los que unos peajes devolvieron la diferencia del eje levantado y otros no',
         pie: pieF ? '<span class="txt-3 fs12">' + esc(pieF) + '</span>' : '' }) + '</div>' +
       '<div class="grid g2">' +
         UI.card('Por peaje · ' + esc(mesTxt), tablaP, { flush: true, sub: '«Regreso»: el sentido en que Gopass suele devolver',
@@ -14811,7 +14826,10 @@ Object.assign(Ventanas, {
       return;
     }
     if (!document.body.contains(m) || m._vez !== vez) return;
-    const nuevos = todos.filter(x => !ya.has(x.id)), suma = l => l.reduce((s, x) => s + x.valor, 0);
+    /* Los pasos que ya estaban no se repiten. Las devoluciones y los recobros se guardan siempre, con el valor del archivo: así,
+       cargar otra vez el mismo Excel corrige lo cargado antes (lo que Juan anota va en los pasos y no se toca) */
+    const nuevos = todos.filter(x => x.tipo !== 'paso' || !ya.has(x.id)), suma = l => l.reduce((s, x) => s + x.valor, 0);
+    const yaPasos = todos.filter(x => x.tipo === 'paso' && ya.has(x.id)).length, otraVez = todos.filter(x => x.tipo !== 'paso' && ya.has(x.id)).length;
     const pasos = todos.filter(x => x.tipo === 'paso'), devs = todos.filter(x => x.tipo === 'devolucion'), recs = todos.filter(x => x.tipo === 'recobro');
     const placas = Array.from(new Set(pasos.map(x => x.placa))).sort(), sinU = placas.filter(p => !Peajes.unidadDe(p));
     const repetidas = leidos.reduce((s, x) => s + x.r.repetidas, 0), malas = leidos.filter(x => x.r.malas.length), otros = {};
@@ -14827,8 +14845,9 @@ Object.assign(Ventanas, {
       (repetidas ? aviso('info', 'info', cifra(repetidas) + (repetidas === 1 ? ' fila sale repetida' : ' filas salen repetidas') +
         ' (Gopass repite el paso con la nota crédito de su devolución): cada uno va una sola vez.') : '') +
       (enDos ? aviso('info', 'info', cifra(enDos) + (enDos === 1 ? ' transacción viene en más de un archivo y va una sola vez.' : ' transacciones vienen en más de un archivo y van una sola vez.')) : '') +
-      (nuevos.length < todos.length ? aviso('info', 'info', cifra(todos.length - nuevos.length) + ' de estas transacciones ya estaban cargadas y no se repiten. ' +
-        (nuevos.length ? 'Se guardan las ' + cifra(nuevos.length) + ' nuevas.' : 'No hay nada nuevo.')) : '') +
+      (yaPasos ? aviso('info', 'info', cifra(yaPasos) + (yaPasos === 1 ? ' paso ya estaba cargado y no se repite.' : ' pasos ya estaban cargados y no se repiten.')) : '') +
+      (otraVez ? aviso('info', 'info', cifra(otraVez) + (otraVez === 1 ? ' devolución que ya estaba se guarda otra vez' : ' devoluciones y recobros que ya estaban se guardan otra vez') +
+        ', con el valor de este archivo.') : '') +
       (Object.keys(otros).length ? aviso('info', 'info', 'No se guardan las filas de ' + Object.keys(otros).map(k => '«' + esc(k) + '» (' + cifra(otros[k]) + ')').join(', ')
         .replace(/, ([^,]*)$/, ' ni de $1') + ': no son peajes.') : '') +
       (malas.length ? aviso('warn', 'warn', malas.map(x => (leidos.length > 1 ? esc(x.f.name) + ': ' : '') + x.r.malas.length +
@@ -16316,8 +16335,10 @@ Object.assign(Acciones, {
     }
     const pasos = nuevos.filter(x => x.tipo === 'paso').length, fechas = nuevos.map(x => x.fecha).sort();
     Modal.cerrar(m);
-    Toast.show('Listo: se guardaron <b>' + nuevos.length.toLocaleString('es-CO') + (nuevos.length === 1 ? ' transacción' : ' transacciones') + '</b> de Gopass (' +
-      pasos.toLocaleString('es-CO') + (pasos === 1 ? ' paso' : ' pasos') + '), del ' + esc(Fecha.corta(fechas[0])) + ' al ' + esc(Fecha.corta(fechas[fechas.length - 1])) + '.');
+    const otros = nuevos.length - pasos, c = x => x.toLocaleString('es-CO');
+    Toast.show('Listo: se guardaron <b>' + [pasos ? c(pasos) + (pasos === 1 ? ' paso' : ' pasos') : '',
+      otros ? c(otros) + (otros === 1 ? ' devolución o recobro' : ' devoluciones y recobros') : ''].filter(Boolean).join(' y ') + '</b> de Gopass, del ' +
+      esc(Fecha.corta(fechas[0])) + ' al ' + esc(Fecha.corta(fechas[fechas.length - 1])) + '.');
     UIState.peajesMes = fechas[fechas.length - 1].slice(0, 7);
     if (Router.actual().vista === 'peajes') Router.pintar(true); else Router.ir('peajes');
   },
