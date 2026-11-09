@@ -5823,7 +5823,9 @@ const Buscador = {
   MAX: 60,
   _b: null,
   _l: null,
-  _mover: () => Buscador.colocar(),
+  /* Al moverse la página o la ventana de atrás, la lista sigue pegada al campo. Lo que se mueve dentro de la propia lista no cuenta:
+     si contaba, cada vez que se bajaba la lista volvía arriba (Juan, 09/11/2026: «no permite hacer scroll») */
+  _mover: e => { if (!e || e.target !== Buscador._l) Buscador.colocar(); },
   poner(sel) {
     if (!sel || sel._bus) return;
     const inp = document.createElement('input');
@@ -5896,6 +5898,7 @@ const Buscador = {
       (n && !hay.length ? '<div class="bus-nada">Ninguno coincide con «' + esc(q.trim()) + '».</div>' : '') +
       (hay.length > this.MAX ? '<div class="bus-mas">Se ven ' + this.MAX + ' de ' + hay.length + ': siga escribiendo para encontrarlo.</div>' : '') +
       (nuevo ? fila(b.ops[b.ops.length - 1], b.ops.length - 1) : '');
+    l.scrollTop = 0;
     /* Resaltado: buscando, el primero que coincide (o «+ Agregar»); si no, el escogido */
     b.hl = n ? (hay.length ? b.ops.indexOf(lista.find(o => !o.cls)) : b.ops.length - 1) : b.ops.findIndex(o => o.v && o.v === b.sel.value);
     this.colocar();
@@ -5952,13 +5955,15 @@ const Buscador = {
     const b = this._b, l = this._l;
     if (!b || !l) return;
     if (!b.inp.isConnected) { this.cerrar(); return; }
-    const r = b.inp.getBoundingClientRect(), abajo = innerHeight - r.bottom - 8, arriba = r.top - 8;
+    /* Para medirla se le quita el alto máximo, y con eso vuelve arriba: se guarda hasta dónde estaba bajada */
+    const r = b.inp.getBoundingClientRect(), abajo = innerHeight - r.bottom - 8, arriba = r.top - 8, bajada = l.scrollTop;
     l.style.maxHeight = '';
     const alto = Math.min(l.scrollHeight, 300), bajo = abajo >= alto || abajo >= arriba, ancho = Math.max(r.width, 240);
     l.style.width = ancho + 'px';
     l.style.left = Math.max(8, Math.min(r.left, innerWidth - ancho - 8)) + 'px';
     l.style.maxHeight = Math.max(120, Math.min(300, bajo ? abajo : arriba)) + 'px';
     l.style.top = (bajo ? r.bottom + 4 : r.top - 4 - Math.min(alto, arriba)) + 'px';
+    l.scrollTop = bajada;
   }
 };
 
