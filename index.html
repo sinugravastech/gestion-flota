@@ -6957,8 +6957,11 @@ const Tanqueos = {
   ETIQUETAS: { placa: ['Placa'], fecha: ['Fecha'], km: ['Kilometraje'], rec: ['Kilometraje Recorrido'], producto: ['Producto'],
     galones: ['Galonaje Factura'], valor: ['Valor Factura'], estacion: ['Estacion', 'Estación'], total: ['Total:'] },
   lista() { return Datos.tanqueos || []; },
-  /* Para las cuentas: sin los vehículos de un tercero (ver Q.tercero) */
-  propios() { return this.lista().filter(t => !t.unidad || !Q.tercero(Q.unidad(t.unidad))); },
+  /* Si el tanqueo es de un vehículo de Flota: su placa casó con una unidad o Juan se la asignó */
+  deFlota: t => Boolean(t.unidad && Q.unidad(t.unidad)),
+  /* Para las cuentas: solo los vehículos de Flota, sin los de un tercero (ver Q.tercero). Lo de las placas que no están en Flota va
+     aparte y no suma (Juan, 09/11/2026: «lo recomendable en Distracom también es dejar aparte esas placas») */
+  propios() { return this.lista().filter(t => this.deFlota(t) && !Q.tercero(Q.unidad(t.unidad))); },
   norm: p => String(p || '').toUpperCase().replace(/[^A-Z0-9]/g, ''),
   esUrea: t => /UREA/i.test(t.producto),
   /* La unidad de una placa de Distracom: la que tiene esa placa en Flota, o la
@@ -7069,8 +7072,9 @@ const Tanqueos = {
   },
   delMes: (l, mes) => l.filter(t => t.fecha.slice(0, 7) === mes),
   meses() { return Array.from(new Set(this.lista().map(t => t.fecha.slice(0, 7)))).sort().reverse(); },
-  /* Para el Dashboard: el gasto en combustible, con su fecha y su vehículo */
-  gastos() { return this.lista().map(t => ({ fecha: t.fecha, unidad: t.unidad, valor: t.valor, cat: 'combustible' })); },
+  /* Para el Dashboard: el gasto en combustible, con su fecha y su vehículo, solo de los vehículos de Flota (los de un tercero los
+     quita Tablero.gastos) */
+  gastos() { return this.lista().filter(t => this.deFlota(t)).map(t => ({ fecha: t.fecha, unidad: t.unidad, valor: t.valor, cat: 'combustible' })); },
   rindeTxt: k => (k == null ? '—' : k.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' km/gal'),
   galTxt: g => g.toLocaleString('es-CO', { maximumFractionDigits: g < 100 ? 1 : 0 }) + ' gal',
   mesTxt: m => Fecha.mes(Fecha.parse(m + '-01')),
@@ -7154,7 +7158,9 @@ const Tanqueos = {
    «Reclamar» o «Está bien» (en extra); si después llega la devolución, dejan
    de salir solos.
    La placa va a la unidad que la tiene en Flota o a la que Juan le asignó
-   (Config.placasGopass). Los de un tercero salen aparte y no suman al gasto.
+   (Config.placasGopass). Los de un tercero y las placas que no están en
+   Flota salen aparte y no suman en nada (Juan, 09/11/2026: «que entre
+   solamente la información de los vehículos que yo tengo»).
    El resumen de cada mes por placa (para el área, la ficha y el Dashboard)
    se pide una vez, y los pasos, por mes. No van en flota_cambios.
    ========================================================================== */
@@ -7184,6 +7190,8 @@ const Peajes = {
     return a && Q.unidad(a) ? a : null;
   },
   deTercero(placa) { const u = this.unidadDe(placa); return Boolean(u && Q.tercero(Q.unidad(u))); },
+  /* Si los peajes de una placa suman en las cuentas de la flota: tiene vehículo en Flota y no es de un tercero */
+  cuenta(placa) { const u = this.unidadDe(placa); return Boolean(u && !Q.tercero(Q.unidad(u))); },
   /* «PEAJE MATA DE CAÑA» → «Mata de Caña» */
   nombre(c) {
     return String(c || '').trim().replace(/^PEAJE\s+/i, '').split(/\s+/).map((w, i) => (i && /^(de|del|la|las|el|los|y)$/i.test(w) ? w.toLowerCase()
@@ -7337,10 +7345,12 @@ const Peajes = {
     });
     return out;
   },
-  /* Para el Dashboard: lo que costaron los peajes de cada mes por placa (los de un tercero los quita Tablero.gastos) */
+  /* Para el Dashboard: lo que costaron los peajes de cada mes por placa, solo de las que tienen vehículo en Flota (los de un
+     tercero los quita Tablero.gastos) */
   gastos() {
     this.pedir();
-    return this.meses.map(m => ({ fecha: m.mes + '-01', unidad: this.unidadDe(m.placa), valor: m.cobrado - m.devuelto, cat: 'peajes' })).filter(g => g.valor > 0);
+    return this.meses.map(m => ({ fecha: m.mes + '-01', unidad: this.unidadDe(m.placa), valor: m.cobrado - m.devuelto, cat: 'peajes' }))
+      .filter(g => g.unidad && g.valor > 0);
   },
   /* Los ids que ya están entre dos fechas (para la vista previa) */
   async yaEstan(desde, hasta) {
@@ -12912,14 +12922,16 @@ Object.assign(Vistas, {
       '<button class="btn btn-primary" data-act="cargarDistracom">' + Icon('upload', '', 14) + 'Cargar archivo de Distracom</button>');
     if (Sincro.sinTanqueos) return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') +
       '<div><b>Todavía no se puede cargar.</b> Falta correr en Supabase el SQL 023, que crea dónde guardar los tanqueos.</div></div>' };
-    if (!todos.length) return { titulo, sub, html: head + '<div class="card">' + UI.empty('fuel', 'Todavía no hay tanqueos',
+    /* Lo de las placas que no están en Flota: aparte, en su recuadro (ver Tanqueos.propios) */
+    const fuera = Tanqueos.lista().filter(t => !Tanqueos.deFlota(t));
+    if (!todos.length && !fuera.length) return { titulo, sub, html: head + '<div class="card">' + UI.empty('fuel', 'Todavía no hay tanqueos',
       'En Fleet Control, en Informes, descargue «Detalle Tanqueo A Tanqueo» en CSV y cárguelo aquí tal como sale. Se pueden cargar uno o varios archivos a la vez, ' +
       'cada uno de un mes o de una semana: lo que ya estaba cargado no se suma dos veces.') + '</div>' };
     const mes = meses.includes(UIState.combMes) ? UIState.combMes : meses[0];
     const delMes = Tanqueos.delMes(todos, mes), r = Tanqueos.resumen(delMes);
     const n = v => (v ? esc(Math.round(v).toLocaleString('es-CO')) : '—');
-    /* Por vehículo: las placas sin unidad van aparte. Las flechitas de cada
-       columna la ordenan; por defecto, el que más gastó (Juan, 01/11/2026) */
+    /* Por vehículo, solo los de Flota. Las flechitas de cada columna la
+       ordenan; por defecto, el que más gastó (Juan, 01/11/2026) */
     const grupos = {};
     delMes.forEach(t => { const k = t.unidad || 'p:' + t.placa; (grupos[k] = grupos[k] || []).push(t); });
     const cols = [['n', 'Tanqueos', r => r.n], ['comb', 'Combustible', r => r.galones], ['urea', 'Urea', r => r.urea || null], ['valor', 'Valor', r => r.valor],
@@ -12938,9 +12950,23 @@ Object.assign(Vistas, {
         (vals[i] && x === mes ? '<span>' + esc(Money.compacto(vals[i])) + '</span>' : '') +
         (vals[i] ? '<i style="height:' + Math.max(2, Math.round(vals[i] / tope * 100)) + '%' + (x === mes ? '' : ';opacity:.55') + '"></i>' : '') + '</div>').join('') + '</div>' +
       '<div class="cols-x">' + mm.map(x => '<span>' + esc(Fecha.parse(x + '-01').toLocaleDateString('es-CO', { month: 'short' }).replace('.', '')) + '</span>').join('') + '</div>';
-    const sinU = Array.from(new Set(todos.filter(t => !t.unidad).map(t => t.placa)));
+    /* Las placas de Distracom que no están en Flota en el mes: en su recuadro, con su total y «Asignar», sin sumar en nada */
+    const mesF = Tanqueos.delMes(fuera, mes), porP = {}, rF = Tanqueos.resumen(mesF);
+    mesF.forEach(t => (porP[t.placa] = porP[t.placa] || []).push(t));
+    const filasF = Object.keys(porP).map(p => ({ p, r: Tanqueos.resumen(porP[p]) })).sort((a, b) => b.r.valor - a.r.valor);
+    const cajaFuera = !filasF.length ? '' : UI.card('Placas que no están en Flota · ' + esc(Tanqueos.mesTxt(mes)),
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Placa</th><th class="num">Tanqueos</th><th class="num">Combustible</th><th class="num">Urea</th>' +
+        '<th class="num">Valor</th><th></th></tr></thead><tbody>' +
+        filasF.map(f => '<tr><td class="mono">' + esc(f.p) + '</td><td class="num">' + f.r.n + '</td><td class="num nowrap">' + esc(Tanqueos.galTxt(f.r.galones)) + '</td>' +
+          '<td class="num nowrap">' + (f.r.urea ? esc(Tanqueos.galTxt(f.r.urea)) : '—') + '</td><td class="num nowrap"><b>' + esc(Money.format(f.r.valor)) + '</b></td>' +
+          '<td class="tr"><span class="link fs12" data-act="asignarPlaca" data-p="' + attr(f.p) + '">Asignar</span></td></tr>').join('') + '</tbody>' +
+        (filasF.length > 1 ? '<tfoot><tr><td>Total aparte</td><td class="num">' + rF.n + '</td><td class="num nowrap">' + esc(Tanqueos.galTxt(rF.galones)) + '</td>' +
+          '<td class="num nowrap">' + (rF.urea ? esc(Tanqueos.galTxt(rF.urea)) : '—') + '</td><td class="num nowrap">' + esc(Money.format(rF.valor)) + '</td><td></td></tr></tfoot>' : '') +
+        '</table></div>',
+      { flush: true, cls: 'mb16', sub: 'Van aparte y no suman al gasto de la flota. Si alguna es de un vehículo, asígnela y desde ahí suma' });
+    /* Lo que trajo cada archivo, todo: también lo que no suma */
     const archivos = {};
-    todos.forEach(t => {
+    Tanqueos.lista().forEach(t => {
       const a = archivos[t.archivo] || (archivos[t.archivo] = { n: 0, desde: t.fecha, hasta: t.fecha });
       a.n++;
       if (t.fecha < a.desde) a.desde = t.fecha;
@@ -12950,9 +12976,6 @@ Object.assign(Vistas, {
        ficha, que abre la ventana con el detalle (Juan, 01/11/2026) */
     const irr = Tanqueos.irregularidades(), dob = irr.dobles.filter(x => !x.revisado).length;
     const html = head +
-      (sinU.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (sinU.length === 1 ? 'Una placa de Distracom no tiene vehículo' :
-        sinU.length + ' placas de Distracom no tienen vehículo') + ':</b> ' + sinU.map(p => '<span class="mono">' + esc(p) + '</span> <span class="link" data-act="asignarPlaca" data-p="' +
-        attr(p) + '">Asignar</span>').join(' · ') + '. Mientras tanto, su gasto cuenta como general.</div></div>' : '') +
       '<div class="toolbar"><label class="flex aic g8"><span class="txt-2 fs12">Mes</span><select class="inp" id="combMes" style="width:auto">' +
         meses.map(x => '<option value="' + x + '"' + (x === mes ? ' selected' : '') + '>' + esc(Tanqueos.mesTxt(x)) + '</option>').join('') + '</select></label></div>' +
       '<div class="grid g4 mb16">' +
@@ -12979,6 +13002,7 @@ Object.assign(Vistas, {
           '<td class="num nowrap">' + n(f.r.km) + '</td><td class="num nowrap">' + esc(Tanqueos.rindeTxt(f.r.rinde)) +
             (f.r.raros ? '<div class="dias d-warn">' + f.r.raros + (f.r.raros === 1 ? ' raro' : ' raros') + '</div>' : '') + '</td></tr>').join('') +
         '</tbody></table></div>', { flush: true, cls: 'mb16', sub: 'Clic en un vehículo para ver sus tanqueos' }) +
+      cajaFuera +
       '<div class="grid g2">' +
         UI.card('Gasto por mes · ' + y, columnas, { sub: 'Combustible y urea de Distracom' }) +
         UI.card('Archivos cargados', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Archivo</th><th>Fechas</th><th class="num">Tanqueos</th></tr></thead><tbody>' +
@@ -12995,7 +13019,8 @@ Object.assign(Vistas, {
   /* ---------------------------------------------------------------- Peajes
      Los pasos y las devoluciones de Gopass (ver Peajes), como la maqueta que
      aprobó Juan el 08/11/2026: el mes (por defecto el de hoy), lo que costó,
-     cada vehículo (los de un tercero aparte, sin sumar), las devoluciones que
+     cada vehículo (los de un tercero aparte, sin sumar), las placas que no
+     están en Flota (en su recuadro, sin sumar en nada), las devoluciones que
      pueden faltar, cada peaje por sentido, el gasto de cada mes y los
      archivos cargados */
   peajes() {
@@ -13023,9 +13048,10 @@ Object.assign(Vistas, {
     const det = Peajes.pasos(mes), lista = Array.isArray(det) ? det : null, fl = lista && Peajes.faltan(lista, mes);
     const abiertos = fl ? fl.viajes.filter(x => x.estado !== 'bien') : [];
     if (fl) filas.forEach(f => { const xs = abiertos.filter(x => x.placa === f.p); f.fn = xs.reduce((s, x) => s + x.faltan.length, 0); f.fv = xs.reduce((s, x) => s + x.v, 0); });
-    const propias = filas.filter(f => !f.ter), terceros = filas.filter(f => f.ter), s = k => propias.reduce((a, f) => a + (f[k] || 0), 0);
+    const propias = filas.filter(f => f.u && !f.ter), terceros = filas.filter(f => f.ter), fuera = filas.filter(f => !f.u);
+    const s = k => propias.reduce((a, f) => a + (f[k] || 0), 0);
     const r = { pasos: s('pasos'), cob: s('cob'), dev: s('dev'), nDev: s('nDev'), neto: s('neto'), fn: s('fn'), fv: s('fv') };
-    const propiosF = abiertos.filter(x => !terU(x.u)), terF = abiertos.filter(x => terU(x.u)), reclamados = propiosF.filter(x => x.estado === 'reclamar').length;
+    const propiosF = abiertos.filter(x => x.u && !terU(x.u)), terF = abiertos.filter(x => terU(x.u)), reclamados = propiosF.filter(x => x.estado === 'reclamar').length;
     const reintentar = '<span class="link" data-act="peajesReintentar">Intentar otra vez</span>';
     const kpis = UI.kpi({ label: 'Gasto en peajes', valor: n(r.neto), icono: 'pesos',
         meta: r.pasos + (r.pasos === 1 ? ' paso' : ' pasos') + ' en ' + esc(mesCorto) + ' · lo cobrado menos lo devuelto' }) +
@@ -13049,7 +13075,7 @@ Object.assign(Vistas, {
       '><td>' + celdaU(f) + '</td><td class="num">' + f.pasos + '</td><td class="num nowrap">' + n(f.cob) + '</td><td class="num nowrap">' + (f.dev ? n(f.dev) : '—') + '</td>' +
       '<td class="num nowrap"><b>' + n(f.neto) + '</b></td><td class="num nowrap">' + (f.fn == null ? '…' : f.fn ? '<span class="tx-warn" style="font-weight:650">' + n(f.fv) +
         '</span><div class="dias d-warn">' + f.fn + (f.fn === 1 ? ' peaje' : ' peajes') + '</div>' : '—') + '</td></tr>';
-    const tablaU = !filas.length ? UI.empty('peaje', 'Sin pasos en ' + esc(mesCorto), 'Cargue el Excel de Gopass con los días de este mes.')
+    const tablaU = !propias.length && !terceros.length ? UI.empty('peaje', 'Sin pasos de la flota en ' + esc(mesCorto), 'Cargue el Excel de Gopass con los días de este mes.')
       : '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th>' + cols.map(c => '<th class="num ord' + (c === col ? ' on' : '') + '" data-act="ordenPeajes" data-k="' +
           c[0] + '" aria-sort="' + (c === col ? (ord.asc ? 'ascending' : 'descending') : 'none') + '" title="Ordenar por ' + c[1].toLowerCase() + '">' +
           Icon(c === col ? (ord.asc ? 'chevU' : 'chevD') : 'ordenar', 'ord-f', 11) + c[1] + '</th>').join('') + '</tr></thead><tbody>' +
@@ -13080,7 +13106,7 @@ Object.assign(Vistas, {
       : !propiosF.length ? UI.empty('check', 'Nada por revisar', 'En ' + esc(mesCorto) + ', ningún regreso quedó a medias: o devolvieron todos sus peajes, o ninguno.')
       : '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Vehículo</th><th>Regreso</th><th>Peajes del regreso</th><th class="num">Podría faltar</th><th></th></tr></thead><tbody>' +
         propiosF.sort((a, b) => (b.rg[0].fecha + b.rg[0].hora).localeCompare(a.rg[0].fecha + a.rg[0].hora)).map(filaF).join('') + '</tbody></table></div>';
-    const bien = fl ? fl.viajes.filter(x => x.estado === 'bien' && !terU(x.u)).length : 0;
+    const bien = fl ? fl.viajes.filter(x => x.estado === 'bien' && x.u && !terU(x.u)).length : 0;
     const porTer = {};
     terF.forEach(x => { const q = porTer[x.placa] || (porTer[x.placa] = { n: 0, v: 0 }); q.n += x.faltan.length; q.v += x.v; });
     const pieF = !fl ? '' : [Object.keys(porTer).map(p => p + ' (de un tercero) tiene ' + porTer[p].n + ' más, por ' + Money.format(porTer[p].v) + '.').join(' '),
@@ -13088,10 +13114,10 @@ Object.assign(Vistas, {
       fl.ninguno ? (fl.ninguno === 1 ? 'Además, un regreso no tuvo ninguna devolución' : 'Además, ' + fl.ninguno + ' regresos no tuvieron ninguna devolución') +
         ': puede que el camión volviera cargado.' : ''].filter(Boolean).join(' ');
 
-    /* Cada peaje por sentido, sin los de un tercero; el que más cobró arriba */
+    /* Cada peaje por sentido, solo de los vehículos de la flota; el que más cobró arriba */
     const pj = {};
     (lista || []).forEach(p => {
-      if (p.fecha.slice(0, 7) !== mes || Peajes.deTercero(p.placa)) return;
+      if (p.fecha.slice(0, 7) !== mes || !Peajes.cuenta(p.placa)) return;
       const k = p.peaje + '|' + p.sentido, g = pj[k] || (pj[k] = { c: Peajes.nombre(p.peaje), s: p.sentido, reg: Peajes.regreso(p.peaje) === p.sentido, pasos: 0, nDev: 0, cob: 0, dev: 0 });
       g.pasos++; g.cob += p.valor; g.dev += p.devuelto;
       if (p.devuelto > 0) g.nDev++;
@@ -13111,7 +13137,7 @@ Object.assign(Vistas, {
     /* Los doce meses del año escogido: lo neto abajo y lo devuelto encima (las dos juntas son lo cobrado) */
     const y = +mes.slice(0, 4), mm = Array.from({ length: 12 }, (_, i) => y + '-' + String(i + 1).padStart(2, '0'));
     const vals = mm.map(x => {
-      const l = Peajes.meses.filter(m => m.mes === x && !Peajes.deTercero(m.placa));
+      const l = Peajes.meses.filter(m => m.mes === x && Peajes.cuenta(m.placa));
       return { neto: l.reduce((a, m) => a + m.cobrado - m.devuelto, 0), dev: l.reduce((a, m) => a + m.devuelto, 0) };
     });
     const tope = Math.max.apply(null, vals.map(v => v.neto + v.dev).concat([1])), alto = v => Math.max(2, Math.round(v / tope * 100));
@@ -13130,17 +13156,24 @@ Object.assign(Vistas, {
         '<td class="nowrap">' + esc(Fecha.corta(a.desde) + ' a ' + Fecha.corta(a.hasta)) + '</td><td class="num">' + a.pasos.toLocaleString('es-CO') + '</td></tr>').join('') +
       '</tbody></table></div>';
 
-    /* Las placas de Gopass que no están en Flota, de todos los meses */
-    const sinU = Array.from(new Set(Peajes.meses.filter(m => !Peajes.unidadDe(m.placa)).map(m => m.placa))).sort();
+    /* Las placas de Gopass que no están en Flota (ni asignadas) en el mes: en su recuadro, con su total y «Asignar», sin sumar en nada */
+    const sF = k => fuera.reduce((a, f) => a + f[k], 0);
+    const cajaFuera = !fuera.length ? '' : UI.card('Placas que no están en Flota · ' + esc(mesTxt),
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Placa</th><th class="num">Pasos</th><th class="num">Cobrado</th><th class="num">Devuelto</th>' +
+        '<th class="num">Neto</th><th></th></tr></thead><tbody>' +
+        fuera.sort((a, b) => b.neto - a.neto).map(f => '<tr><td class="mono">' + esc(f.p) + '</td><td class="num">' + f.pasos + '</td><td class="num nowrap">' + n(f.cob) + '</td>' +
+          '<td class="num nowrap">' + (f.dev ? n(f.dev) : '—') + '</td><td class="num nowrap"><b>' + n(f.neto) + '</b></td>' +
+          '<td class="tr"><span class="link fs12" data-act="asignarPlacaGopass" data-p="' + attr(f.p) + '">Asignar</span></td></tr>').join('') + '</tbody>' +
+        (fuera.length > 1 ? '<tfoot><tr><td>Total aparte</td><td class="num">' + sF('pasos') + '</td><td class="num nowrap">' + n(sF('cob')) + '</td>' +
+          '<td class="num nowrap">' + n(sF('dev')) + '</td><td class="num nowrap">' + n(sF('neto')) + '</td><td></td></tr></tfoot>' : '') + '</table></div>',
+      { flush: true, cls: 'mb16', sub: 'Van aparte y no suman al gasto de la flota. Si alguna es de un vehículo, asígnela y desde ahí suma' });
     const html = head +
-      (sinU.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (sinU.length === 1 ? 'Una placa de Gopass no tiene vehículo'
-        : sinU.length + ' placas de Gopass no tienen vehículo') + ':</b> ' + sinU.map(p => '<span class="mono">' + esc(p) + '</span> <span class="link" data-act="asignarPlacaGopass" data-p="' +
-        attr(p) + '">Asignar</span>').join(' · ') + '. Mientras tanto, su gasto cuenta como general.</div></div>' : '') +
       '<div class="toolbar"><label class="flex aic g8"><span class="txt-2 fs12">Mes</span><select class="inp" id="pjMes" style="width:auto">' +
         meses.map(x => '<option value="' + x + '"' + (x === mes ? ' selected' : '') + '>' + esc(Peajes.mesTxt(x)) + '</option>').join('') + '</select></label></div>' +
       '<div class="grid g4 mb16">' + kpis + '</div>' +
       UI.card('Por vehículo · ' + esc(mesTxt), tablaU, { flush: true, cls: 'mb16', sub: 'Clic en un vehículo para ver sus peajes',
         pie: '<span class="txt-3 fs12">Cada paso cuenta una vez, aunque Gopass repita la fila con la nota crédito de su devolución.</span>' }) +
+      cajaFuera +
       '<div id="pjFaltan">' + UI.card('Devoluciones que pueden faltar · ' + esc(mesTxt), tablaF, { flush: true, cls: 'mb16', sub: 'Regresos en los que unos peajes devolvieron y otros no',
         pie: pieF ? '<span class="txt-3 fs12">' + esc(pieF) + '</span>' : '' }) + '</div>' +
       '<div class="grid g2">' +
@@ -14720,7 +14753,7 @@ Object.assign(Ventanas, {
         (x.r.malas.length === 1 ? ' fila no se entendió' : ' filas no se entendieron') + ' (fila ' + x.r.malas.slice(0, 8).join(', ') + (x.r.malas.length > 8 ? '…' : '') + ')').join(' · ') +
         '. No se cargan.') : '') +
       (sinU.length ? '<div class="oc-sec">Placas que no están en Flota</div>' + sinU.map(p => '<div class="field"><label class="mono">' + esc(p) + '</label>' +
-        '<select class="inp" data-placa="' + attr(p) + '"><option value="">Sin vehículo (cuenta como gasto general)</option>' + Opc.unidades('') + '</select></div>').join('') +
+        '<select class="inp" data-placa="' + attr(p) + '"><option value="">No es de la flota (va aparte, no suma)</option>' + Opc.unidades('') + '</select></div>').join('') +
         '<div class="hint">Lo que asigne aquí queda guardado para las próximas cargas.</div>' : '');
     m._nuevos = nuevos;
     g.disabled = !nuevos.length;
@@ -14802,7 +14835,7 @@ Object.assign(Ventanas, {
         (x.r.malas.length === 1 ? ' fila no se entendió' : ' filas no se entendieron') + ' (fila ' + x.r.malas.slice(0, 8).join(', ') + (x.r.malas.length > 8 ? '…' : '') + ')').join(' · ') +
         '. No se cargan.') : '') +
       (sinU.length ? '<div class="oc-sec">Placas que no están en Flota</div>' + sinU.map(p => '<div class="field"><label class="mono">' + esc(p) + '</label>' +
-        '<select class="inp" data-pgp="' + attr(p) + '"><option value="">Sin vehículo (cuenta como gasto general)</option>' + Opc.unidades('') + '</select></div>').join('') +
+        '<select class="inp" data-pgp="' + attr(p) + '"><option value="">No es de la flota (va aparte, no suma)</option>' + Opc.unidades('') + '</select></div>').join('') +
         '<div class="hint">Lo que asigne aquí queda guardado para las próximas cargas.</div>' : '');
     m._nuevos = nuevos;
     g.disabled = !nuevos.length;
