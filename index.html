@@ -12809,7 +12809,12 @@ Object.assign(Vistas, {
     if (UIState.mantTab !== 'historial') return { titulo: 'Mantenimientos', sub: 'Por vehículo, con el plano de cada uno', html: head + tabs + Plano.vistaFlota(),
       despues: () => Plano.buscador() };
     const f = UIState.mant;
-    const todos = Datos.mantenimientos.slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
+    /* El día más nuevo arriba y, en un mismo día, primero lo que sigue en el taller, después lo programado y al final lo que ya salió
+       (Juan, 10/11/2026: «el que está en el taller me lo deja de último en lugar de ponérmelo de primero»); en cada grupo, la hora de
+       entrada (o de la cita) más tarde primero y, si no, el último que se registró */
+    const grupo = m => (m.estado === 'taller' ? 0 : m.estado === 'programado' ? 1 : 2), hora = m => m.horaEntrada || (m.programado && m.programado.h) || '';
+    const todos = Datos.mantenimientos.slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || grupo(a) - grupo(b) || hora(b).localeCompare(hora(a)) ||
+      (b.ts || 0) - (a.ts || 0));
     const taller = todos.filter(m => m.estado === 'taller'), prog = todos.filter(m => m.estado === 'programado'), vencidos = prog.filter(Programado.vencido);
     const sinOrden = todos.filter(m => Compras.malas(m)), pend = todos.filter(m => Pendiente.de(m).length);
     const lista = todos.filter(m => f === 'todos' || (f === 'taller' || f === 'programado' ? m.estado === f : f === 'pendientes' ? Pendiente.de(m).length : m.tipo === f));
@@ -19665,27 +19670,49 @@ const Cache = {
       } catch (e) { ok(); }
     });
   },
+  /* Los bytes de un archivo (con FileReader en los navegadores que no tienen arrayBuffer), o null si no se pudo en 4 segundos */
+  bytes(b) {
+    const leer = b.arrayBuffer ? b.arrayBuffer() : new Promise((ok, mal) => { const f = new FileReader(); f.onload = () => ok(f.result); f.onerror = () => mal(f.error); f.readAsArrayBuffer(b); });
+    return Promise.race([leer, new Promise(ok => setTimeout(() => ok(null), 4000))]).catch(() => null);
+  },
+  /* Se guardan los bytes y su tipo, y al leerlos se arma un Blob nuevo (Juan, 10/11/2026: en el celular «salen con un signo de
+     interrogación»): en el iPhone, un Blob guardado en IndexedDB a veces ya no se puede abrir en otra sesión y la foto sale con «?».
+     Lo guardado antes como Blob se prueba leer: si se puede, queda como bytes; si no, se borra y se baja otra vez */
   async leer(k) {
     const db = await this.db();
     if (!db) return null;
-    return new Promise(ok => {
+    const r = await new Promise(ok => {
       try {
         const st = db.transaction('a', 'readwrite').objectStore('a'), q = st.get(k);
         q.onsuccess = () => {
-          const r = q.result;
-          if (r) { r.t = Date.now(); st.put(r); }
-          ok(r ? r.blob : null);
+          const x = q.result;
+          if (x) { x.t = Date.now(); st.put(x); }
+          ok(x || null);
         };
         q.onerror = () => ok(null);
       } catch (e) { ok(null); }
     });
+    if (!r) return null;
+    if (r.buf) return new Blob([r.buf], { type: r.tipo || '' });
+    const buf = r.blob ? await this.bytes(r.blob) : null;
+    if (!buf || (r.tam && buf.byteLength !== r.tam)) { this.quitar(k); return null; }
+    const b = new Blob([buf], { type: r.blob.type || '' });
+    this.poner(k, b);
+    return b;
   },
   async poner(k, blob) {
     const db = await this.db();
     if (!db || !blob) return;
-    try { db.transaction('a', 'readwrite').objectStore('a').put({ k, blob, t: Date.now(), tam: blob.size }); } catch (e) { return; }
+    const buf = await this.bytes(blob);
+    if (!buf) return;
+    try { db.transaction('a', 'readwrite').objectStore('a').put({ k, buf, tipo: blob.type || '', t: Date.now(), tam: buf.byteLength }); } catch (e) { return; }
     clearTimeout(this._recorte);
     this._recorte = setTimeout(() => this.recortar(), 3000);
+  },
+  async quitar(k) {
+    const db = await this.db();
+    if (!db) return;
+    try { db.transaction('a', 'readwrite').objectStore('a').delete(k); } catch (e) { /* sin caché: no pasa nada */ }
   },
   /* Si pasa del tope, se van primero los que hace más tiempo no se usan */
   async recortar() {
