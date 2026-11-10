@@ -1033,6 +1033,27 @@ tr.pj-ter td{opacity:.62}
 .ll-nota > svg{color:var(--accent);flex:0 0 auto;margin-top:2px}
 .av-ll{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--accent);font-weight:600;margin-left:6px;white-space:nowrap}
 @media (max-width:600px){.cs-ll{flex-direction:column;align-items:flex-start}}
+/* Lo que costó lo de la llanta (Juan, 09/11/2026): en el caso, en «Editar todo» y, en la historia de una parte, lo suyo «de» todo el arreglo */
+.cs-ll-v .inp{max-width:170px}
+.av-llv label{display:flex;align-items:center;gap:6px}
+.av-llv label svg{color:var(--accent)}
+.pm-tl-f .v small{display:block;font-size:10.5px;font-weight:500;color:var(--text-3);text-align:right;white-space:nowrap}
+/* Los arreglos con una orden que ya no está en Facturación (Juan, 10/11/2026): cuál es, «Ver el arreglo» y «Quitar la orden» */
+.mant-malas{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.mant-mala{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text)}
+.mant-mala-q{font-size:12px;color:var(--text-2);margin-top:1px}
+@media (max-width:600px){.mant-mala > .f1{flex-basis:100%}}
+/* El valor de los viajes (Juan, 09/11/2026): el quinto número de la semana y del Histórico, la casilla del viaje y la de la ruta */
+.kpis4.kpis5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1100px){.kpis4.kpis5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.kpis4.kpis5{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.rt-val-v{display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap;margin-bottom:10px}
+.rt-val-v b{font-size:20px;font-weight:750;font-variant-numeric:tabular-nums;color:var(--text)}
+.rt-val-v span{font-size:12px;color:var(--text-3)}
+.rt-val .inp{max-width:220px}
+.rr-val .row{margin-bottom:0}
+.rr-desde-c{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rr-desde-c .inp{max-width:170px}
 .col i.pj-dev,.cols-ley i.pj-dev,html[data-theme="dark"] .col i.pj-dev,html[data-theme="dark"] .cols-ley i.pj-dev{background:var(--ok-500);opacity:.38}
 html[data-theme="dark"] .cols-ley i{background:var(--brand-400)}
 html[data-theme="dark"] .rk-t i.ex,html[data-theme="dark"] .col i.ex,html[data-theme="dark"] .cols-ley i.ex{background:var(--ink-500)}
@@ -1785,7 +1806,7 @@ html[data-theme="dark"] .rt-real{color:var(--ok-500)}
 .rt-liq{align-items:center;margin:0 0 12px}
 .rt-liq .btn{flex:0 0 auto}
 /* La ventana de liquidar y el histórico */
-.rt-lq-k{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.rt-lq-k{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
 .rt-lq-k > div{border:1px solid var(--border);border-radius:10px;padding:10px 12px;min-width:0}
 .rt-lq-k span{display:block;font-size:11px;font-weight:650;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em}
 .rt-lq-k b{display:block;font-size:20px;margin:3px 0 2px;font-variant-numeric:tabular-nums}
@@ -1917,6 +1938,8 @@ span.chip-adj{color:var(--text-3)}
 .mc-rapido #mcSel .zchip:not(.on){display:none}
 .mc-rapido.ver-lista #mcSel .zchip{display:inline-flex}
 .mc-rapido #mcVerLista{display:inline-block;margin-top:6px}
+/* «Ya quedó listo» en el registro corto (Juan, 10/11/2026): no hay después, así que las llantas salen aquí */
+.mc-rapido.mc-listo #mcLlantas,.mc-rapido.mc-listo #mcLlNueva{display:block}
 /* El caso en el taller (ver Ventanas.caso): a la izquierda, anotar y los
    avances; a la derecha, el resumen. En el celular, uno debajo del otro */
 .cs{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:24px;align-items:start}
@@ -3109,7 +3132,21 @@ const hoyISO = Fecha.iso(HOY);
 const R = n => Fecha.rel(n);
 const Money = {
   _f: new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }),
-  format(n) { return this._f.format(n || 0); }
+  format(n) { return this._f.format(n || 0); },
+  /* Los puntos de los miles mientras se escribe un valor, con el cursor detrás de los mismos dígitos (como el peso de báscula de Rutas) */
+  escribir(el) {
+    const v = el.value, fin = el.selectionStart == null ? v.length : el.selectionStart;
+    const d = v.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 12), x = d.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    if (x === v) return;
+    let n = Math.min(v.slice(0, fin).replace(/\D/g, '').length, d.length), i = 0;
+    while (n > 0 && i < x.length) { if (x[i] !== '.') n--; i++; }
+    el.value = x;
+    if (document.activeElement === el) el.setSelectionRange(i, i);
+  },
+  /* «30.000», con los puntos o sin ellos → 30000; vacío → null */
+  leer(s) { const d = String(s || '').replace(/\D/g, ''); return d === '' ? null : +d; },
+  /* Para ponerlo en un campo: 30000 → «30.000» */
+  campo: n => (n == null || n === '' ? '' : String(Math.round(+n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'))
 };
 
 /* ==========================================================================
@@ -6121,6 +6158,13 @@ const Compras = {
   },
   /* ¿Hay que revisarle las órdenes? Alguna ya no llega o es de otro vehículo */
   malas(m) { const c = this.deArreglo(m); return c.faltan + c.ajenas.length; },
+  /* Qué tiene: «Su orden ya no está en Facturación: la borraron o la anularon» u «OC-296-26 ahora es del SNW 936». Flota guarda solo el
+     número interno de la orden, así que de la que ya no llega no se sabe el código */
+  malasTxt(m) {
+    const c = this.deArreglo(m);
+    return c.ajenas.map(o => o.codigo + ' ahora es ' + (Q.unidad(o.flota_id) ? 'del ' + UI.placaTxt(Q.unidad(o.flota_id)) : 'de otro vehículo'))
+      .concat(c.faltan ? [(c.faltan === 1 ? 'Su orden ya no está' : c.faltan + ' de sus órdenes ya no están') + ' en Facturación: la borraron o la anularon'] : []).join(' · ');
+  },
   /* El valor de un arreglo en una línea: lo que cuenta y sus órdenes */
   valorTxt(m) {
     const c = this.deArreglo(m);
@@ -8334,16 +8378,27 @@ const Plano = {
     const c = Compras.deArreglo(m), o = !c.deOrden && m.oc && Datos.ocs.find(x => x.numero === m.oc);
     return o ? UI.totalOC(o) : c.valor;
   },
+  /* Lo que le toca a cada parte de un arreglo: su valor, por igual entre sus partes. Si en un avance se escribió cuánto costó lo de una
+     llanta (Juan, 09/11/2026), eso va a «llantas», sin pasarse del valor del arreglo, y el resto se reparte entre las otras partes */
+  reparto(m) {
+    const c = this.costo(m), ks = (m.partes || []).map(p => p.k), otras = ks.filter(k => k !== 'llantas'), ll = Llantas.valorEscrito(m), r = {};
+    if (ll != null && (otras.length || !ks.length)) {
+      const x = Math.min(ll, c);
+      r.llantas = x;
+      otras.forEach(k => { r[k] = (r[k] || 0) + (c - x) / otras.length; });
+    } else ks.forEach(k => { r[k] = (r[k] || 0) + c / ks.length; });
+    return r;
+  },
   /* Por parte: cuántos arreglos, cuánto gasto y el último. Si un arreglo tocó
-     varias partes, su valor se reparte entre ellas. */
+     varias partes, su valor se reparte entre ellas (ver reparto). */
   porParte(lista) {
     const r = {};
     lista.forEach(m => {
-      const ps = m.partes || [], c = this.costo(m);
-      ps.forEach(p => {
-        const x = r[p.k] || (r[p.k] = { n: 0, gasto: 0, ult: '' });
+      const rep = this.reparto(m);
+      Object.keys(rep).forEach(k => {
+        const x = r[k] || (r[k] = { n: 0, gasto: 0, ult: '' });
         x.n++;
-        x.gasto += c / ps.length;
+        x.gasto += rep[k];
         if (m.fecha > x.ult) x.ult = m.fecha;
       });
     });
@@ -8474,8 +8529,11 @@ const Plano = {
     /* La parte que más gasta en toda la flota, por su nombre */
     const porNombre = {};
     del12.forEach(m => {
-      const u = Q.unidad(m.unidad), ps = m.partes || [], c = this.costo(m);
-      ps.forEach(p => { const n = this.nombre(u, p); porNombre[n] = (porNombre[n] || 0) + c / ps.length; });
+      const u = Q.unidad(m.unidad), rep = this.reparto(m);
+      Object.keys(rep).forEach(k => {
+        const n = this.nombre(u, (m.partes || []).find(p => p.k === k) || { k, n: k === 'llantas' ? 'Llantas y rines' : k });
+        porNombre[n] = (porNombre[n] || 0) + rep[k];
+      });
     });
     const masGasta = Object.keys(porNombre).filter(n => porNombre[n] > 0).sort((a, b) => porNombre[b] - porNombre[a])[0];
     const listo = Novedades.listo(), conNov = listo ? us.map(u => [u, Novedades.de(u)]).filter(x => x[1].length) : [];
@@ -8612,9 +8670,10 @@ const Plano = {
   panel(u, k, p, lista, pp, novs) {
     if (!p) return this.panelTodo(u, lista, novs);
     const st = UIState.plano, esLlantas = p.k === 'llantas' && Llantas.aplica(u), x = pp[p.k] || { n: 0, gasto: 0, ult: '' };
-    let mios = lista.filter(m => (m.partes || []).some(r => r.k === p.k));
+    /* En «Llantas y rines», también los arreglos de otra parte en los que se escribió cuánto costó lo de una llanta (ver reparto) */
+    let mios = lista.filter(m => (m.partes || []).some(r => r.k === p.k) || (p.k === 'llantas' && Llantas.valorEscrito(m) != null));
     const llantas = esLlantas ? this.panelLlantas(u, mios) : '';
-    if (esLlantas && st.llanta) mios = mios.filter(m => (m.llantas || []).includes(st.llanta));
+    if (esLlantas && st.llanta) mios = mios.filter(m => Llantas.deArreglo(m).includes(st.llanta));
     return UI.card(esc(p.n),
       '<div class="zp-h"><p>' + esc(p.d || '') + '</p><div class="zp-n"><b>' + x.n + '</b><span>' + (x.n === 1 ? 'arreglo' : 'arreglos') + '</span></div></div>' +
       novs.filter(n => n.parte === p.k).map(n => this.cajaNovedad(u, n)).join('') +
@@ -8646,7 +8705,7 @@ const Plano = {
   /* Las llantas vistas desde arriba, con el color de sus arreglos */
   panelLlantas(u, lista) {
     const st = UIState.plano, cuenta = {}, nivel = {};
-    lista.forEach(m => (m.llantas || []).forEach(p => { cuenta[p] = (cuenta[p] || 0) + 1; }));
+    lista.forEach(m => Llantas.deArreglo(m).forEach(p => { cuenta[p] = (cuenta[p] || 0) + 1; }));
     Object.keys(cuenta).forEach(p => { nivel[p] = this.NIVEL(cuenta[p]); });
     const puesta = st.llanta ? Llantas.puesta(u, st.llanta) : null;
     return '<div class="pl-llantas"><div class="pl-ll-d">' + Llantas.svg(u, { nivel, sel: st.llanta ? [st.llanta] : [], act: 'planoLlanta' }) + '</div>' +
@@ -8672,8 +8731,13 @@ const Plano = {
   /* Un arreglo en la historia de una parte */
   itemTl(u, m, k, marcar, nota) {
     const prev = m.tipo === 'preventivo', c = this.costo(m), otras = (m.partes || []).filter(r => r.k !== k);
+    /* En la historia de una parte, lo que le tocó a ella (Juan, 09/11/2026: «me resulta raro»); si el arreglo fue de más, «de» todo su valor */
+    const v = !k ? c : k === 'llantas' ? Llantas.costo(m) : this.reparto(m)[k] || 0;
+    const valor = !k || Math.round(v) === Math.round(c) ? (c ? esc(Money.format(c)) : '—')
+      : v ? esc(Money.format(v)) + '<small>de ' + esc(Money.format(c)) + ' del arreglo</small>'
+      : '<small' + (k === 'llantas' ? ' title="En el avance no se escribió cuánto costó lo de la llanta"' : '') + '>Sin valor ' + (k === 'llantas' ? 'en llantas' : 'en esta parte') + '</small>';
     return '<div class="pm-tl-i"><div class="pm-tl-f"><span>' + esc(Fecha.corta(m.fecha)) + '</span>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') +
-        (m.estado === 'taller' ? UI.pill('bad', 'En taller') : m.estado === 'programado' ? UI.pill('violet', 'Programado') : '') + '<span class="v">' + (c ? esc(Money.format(c)) : '—') + '</span></div>' +
+        (m.estado === 'taller' ? UI.pill('bad', 'En taller') : m.estado === 'programado' ? UI.pill('violet', 'Programado') : '') + '<span class="v">' + valor + '</span></div>' +
       '<div class="pm-tl-t">' + esc(Avances.titulo(m)) + (m.componente ? '<span> · ' + esc(m.componente) + '</span>' : '') + '</div>' + (nota || '') +
       (m.falla ? '<div class="pm-tl-q"><span>Qué pasó:</span> ' + esc(m.falla) + '</div>' : '') + Avances.lista(m) +
       '<div class="pm-tl-m">' + MantRemolque.chip(m) + UI.chipsProv(m, 11) +
@@ -9002,9 +9066,22 @@ const Llantas = {
   alArreglo(r, l) { if (l && l.length && (r.partes || []).some(p => p.k === 'llantas')) r.llantas = Array.from(new Set((r.llantas || []).concat(l))); },
   /* «Eje 1 · izquierda y Eje 2 · derecha, por fuera» */
   nombres(l, corto) { const x = l.map(p => this.nombre(p, corto)); return x.length > 1 ? x.slice(0, -1).join(', ') + ' y ' + x[x.length - 1] : x[0] || ''; },
-  /* Lo que le tocó a las llantas: si el arreglo tocó varias partes, se reparte, como en el plano. Si solo un avance habla de una llanta
-     (el arreglo es de otra parte), sale en su historia pero no cuenta como gasto en llantas */
-  costo(m) { return (m.partes || []).some(p => p.k === 'llantas') || (m.llantas || []).length || m.llanta ? Plano.costo(m) / ((m.partes || []).length || 1) : 0; },
+  /* Lo que le tocó a las llantas (ver Plano.reparto): si el arreglo tocó varias partes, se reparte, como en el plano. Si es de otra parte y
+     en un avance se escribió cuánto costó lo de una llanta, eso, que se le resta a la otra parte. Si un avance solo habla de una llanta,
+     sin valor, sale en su historia pero no cuenta como gasto en llantas */
+  costo(m) {
+    if ((m.partes || []).some(p => p.k === 'llantas') || this.valorEscrito(m) != null) return Plano.reparto(m).llantas || 0;
+    return (m.llantas || []).length || m.llanta ? Plano.costo(m) / ((m.partes || []).length || 1) : 0;
+  },
+  /* Lo que costó lo de las llantas, escrito en los avances (Juan, 09/11/2026: «¿No debería contarse?»), o null si no se escribió */
+  valorEscrito(m) {
+    const ns = (m.notas || []).filter(n => (n.llantas || []).length && +n.llValor > 0);
+    return ns.length ? ns.reduce((s, n) => s + +n.llValor, 0) : null;
+  },
+  /* En el caso se pregunta cuánto costó si el arreglo no es de «Llantas y rines» (si lo es, todo su valor ya cuenta en llantas) */
+  preguntaValor: r => !(r.partes || []).some(p => p.k === 'llantas'),
+  /* « · $ 30.000», para la etiqueta de la llanta de un avance */
+  valorTxt: n => (+n.llValor > 0 ? ' · ' + Money.format(n.llValor) : ''),
   /* Cuántos registros tiene cada posición */
   porPosicion(lista) {
     const out = {};
@@ -9131,7 +9208,8 @@ const LlantasArea = {
   /* Lo que se anotó de esta llanta en los avances del arreglo (Juan, 09/11/2026): resaltado, con el número del arreglo y «Abrir el caso» */
   notas(m, pos) {
     return Avances.de(m).filter(n => (n.llantas || []).includes(pos)).map(n => '<div class="ll-nota">' + Icon('disc', '', 14) + '<div><b>' + esc(n.t || 'Fotos') + '</b>' +
-      '<div class="txt-3 fs12">' + esc(Avances.cuando(n) + (n.cierre ? ' · salió del taller' : '') + (m.numero ? ' · anotado en ' + m.numero : '')) +
+      '<div class="txt-3 fs12">' + esc(Avances.cuando(n) + (n.cierre ? ' · salió del taller' : '') + (+n.llValor > 0 ? ' · costó ' + Money.format(n.llValor) : '') +
+        (m.numero ? ' · anotado en ' + m.numero : '')) +
       ' · <span class="link" data-act="llantaCaso" data-m="' + attr(m.id) + '">Abrir el caso</span></div></div></div>').join('');
   },
   /* Una llanta: lo que tiene puesto y lo que se le ha hecho */
@@ -9216,8 +9294,11 @@ const LlantaForm = {
    anotación se agrega debajo de la anterior. En el PDF, cada foto sale debajo
    de su anotación, en orden (ver Formatos.trabajoCorrectivo). */
 const Avances = {
+  /* En el orden en que pasaron. La de la salida sin hora (la ventana de terminar con la salida de un día anterior) va al final de su día,
+     no al comienzo: la salida no puede quedar antes del último avance (Juan, 10/11/2026: «no me sale el último nodo») */
   de(m) {
-    return (m.notas || []).slice().sort((a, b) => (a.f + ' ' + (a.h || '')).localeCompare(b.f + ' ' + (b.h || '')) || (a.ts || 0) - (b.ts || 0));
+    const k = n => n.f + ' ' + (n.h || (n.cierre ? '99:99' : ''));
+    return (m.notas || []).slice().sort((a, b) => k(a).localeCompare(k(b)) || (a.ts || 0) - (b.ts || 0));
   },
   fotos(m, id) { return (m.fotosData || []).filter(f => (f.nota || '') === (id || '')); },
   cuando(n) { return Fecha.corta(n.f) + (n.h ? ' · ' + n.h : ''); },
@@ -9249,7 +9330,7 @@ const Avances = {
       const f = this.fotos(m, n.id).length;
       return '<div class="av-i' + (n.cierre ? ' cierre' : '') + '"><span class="av-c">' + esc(this.cuando(n)) + (n.cierre ? ' · salió del taller' : '') + '</span>' +
         esc(n.t || (f ? 'Fotos' : '—')) + (f ? '<span class="av-f">' + Icon('image', '', 11) + f + (f === 1 ? ' foto' : ' fotos') + '</span>' : '') +
-        ((n.llantas || []).length ? '<span class="av-ll">' + Icon('disc', '', 11) + esc(Llantas.nombres(n.llantas, true)) + '</span>' : '') + '</div>';
+        ((n.llantas || []).length ? '<span class="av-ll">' + Icon('disc', '', 11) + esc(Llantas.nombres(n.llantas, true) + Llantas.valorTxt(n)) + '</span>' : '') + '</div>';
     }).join('') + '</div>';
   },
   nueva: (f, h, t, cierre) => Object.assign({ id: 'n' + marca().toString(36), f, h, t, ts: marca() }, cierre ? { cierre: true } : {}),
@@ -9629,6 +9710,7 @@ const AvancesForm = {
     cont.addEventListener('input', e => {
       const t = e.target, b = t.closest('[data-av]'), x = b && m._av.find(a => String(a.k) === b.dataset.av);
       if (!x || !t.dataset.c) return;
+      if (t.dataset.c === 'llValor') Money.escribir(t);
       x[t.dataset.c] = t.value;
       m._avCambio();
     });
@@ -9658,6 +9740,10 @@ const AvancesForm = {
           '<div class="field"><label>Hora</label><input class="inp" type="time" data-c="h" value="' + attr(a.h) + '"></div></div>' +
         '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" data-c="t" rows="2" placeholder="Ej.: se desmontó la llanta y el rin estaba partido">' +
           esc(a.t) + '</textarea></div>' +
+        /* La llanta del avance y cuánto costó (Juan, 09/11/2026), si el arreglo no es de llantas (o ya se había escrito) */
+        ((a.llantas || []).length && this.preguntaValor(m, a) ? '<div class="field av-llv"><label>' + Icon('disc', '', 12) + esc(Llantas.nombres(a.llantas)) +
+          ': ¿cuánto costó? <span class="txt-3">(opcional)</span></label><input class="inp tr-valor" data-c="llValor" inputmode="numeric" autocomplete="off" placeholder="Ej.: 30.000" value="' +
+          attr(a.llValor || '') + '"><div class="hint mt4">Cuenta como gasto en llantas y sale del valor del arreglo.</div></div>' : '') +
         '<div class="field mb0"><label>Fotos de este avance <span class="txt-3">(opcional)</span></label>' +
           Dz.camara(pre + 'AvDz' + a.k) + Dz.html(pre + 'AvDz' + a.k, '<span class="solo-web">Arrastre aquí las fotos</span><span class="solo-cel">Escoger de la galería</span>',
             '<span class="solo-web">A cada una se le escribe qué muestra</span>', 'image/*', true) +
@@ -9683,11 +9769,13 @@ const AvancesForm = {
     $$('button', el).forEach(b => b.addEventListener('click', () => { a.fotos.splice(+b.dataset.i, 1); this.fotos(m, a); m._avCambio(); }));
   },
   hay(m) { return (m._av || []).some(a => a.t.trim() || a.fotos.length); },
+  /* Si el arreglo es de «Llantas y rines», todo su valor ya cuenta en llantas: no se pregunta (salvo que ya se hubiera escrito) */
+  preguntaValor: (m, a) => !(m._partes || []).includes('llantas') || Boolean(a.llValor),
   /* Los bloques con algo escrito o con fotos, listos para guardar (ver Avances) */
   leer(m) {
     return (m._av || []).filter(a => a.t.trim() || a.fotos.length)
       .map(a => ({ n: a.id ? Object.assign({ id: a.id, f: a.f || hoyISO, h: a.h || '', t: a.t.trim(), ts: a.ts || marca() }, a.cierre ? { cierre: true } : {},
-          a.espera ? { espera: true } : {}, (a.llantas || []).length ? { llantas: a.llantas } : {})
+          a.espera ? { espera: true } : {}, (a.llantas || []).length ? { llantas: a.llantas } : {}, (a.llantas || []).length && Money.leer(a.llValor) ? { llValor: Money.leer(a.llValor) } : {})
         : Avances.nueva(a.f || hoyISO, a.h || '', a.t.trim()),
         fotos: a.fotos.map(f => ({ id: f.id, src: f.src, txt: f.txt, tam: f.tam, antes: f.antes })) }));
   },
@@ -9902,7 +9990,7 @@ const EditarArreglo = {
     const fotos = id => Avances.fotos(r, id).map(f => ({ id: f.id, txt: f.txt || '', src: src(f), tam: f.tam, antes: f.antes }));
     m._fotos = fotos('');
     m._av = Avances.de(r).map(n => Object.assign(AvancesForm.bloque(n.f), { id: n.id, ts: n.ts, h: n.h || '', t: n.t || '', fotos: fotos(n.id) }, n.cierre ? { cierre: true } : {},
-      n.espera ? { espera: true } : {}, (n.llantas || []).length ? { llantas: n.llantas.slice() } : {}))
+      n.espera ? { espera: true } : {}, (n.llantas || []).length ? { llantas: n.llantas.slice() } : {}, +n.llValor > 0 ? { llValor: Money.campo(n.llValor) } : {}))
       .concat(abierto || !notas ? [AvancesForm.bloque(hoyISO)] : []);
     AvancesForm.pintar(m);
     m._pintarFotos();
@@ -9930,7 +10018,7 @@ const EditarArreglo = {
   firma(m) {
     const d = Leer.correctivo(m);
     return JSON.stringify([d.entrada, d.horaEntrada, d.programado ? d.programado.h : '', d.salida, d.trabajo, d.componente, d.falla, d.lectura, d.valor, d.partes.map(p => p.k), d.llantas, d.llanta, d.repMismo,
-      d.notas.map(n => [n.id, n.f, n.h, n.t]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort(), d.adjuntos.map(a => a.id), d.valorTaller, d.valorRep, d.aMano || null]);
+      d.notas.map(n => [n.id, n.f, n.h, n.t, n.llValor || 0]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort(), d.adjuntos.map(a => a.id), d.valorTaller, d.valorRep, d.aMano || null]);
   },
   /* Guardar, apagado hasta que algo cambie */
   vigilar(m, r) {
@@ -10552,6 +10640,8 @@ const PlanoForm = {
           '<span class="link" data-act="regNov" data-nov="' + attr(n.i) + '">Este arreglo la atiende</span></div></div>').join('');
     }
     LlantaForm.pintar(m);
+    /* Si se marca o se quita «Llantas y rines», los avances con llanta preguntan o no cuánto costó */
+    if (m._avCont && (m._av || []).some(a => (a.llantas || []).length)) AvancesForm.pintar(m);
   },
   /* Lo que depende de la unidad: la lectura y las órdenes de compra */
   unidad(m) {
@@ -12485,12 +12575,17 @@ const Formatos = {
       (x.fs.length ? '<div class="pn-fs">' + x.fs.map(f => '<figure class="pn-foto">' + img(f) + pie(f) + '</figure>').join('') + '</div>' : '') + '</div></div>';
     /* Primero cómo llegó (o la cita, si está programado) con las fotos del registro, que se numeran primero porque salen primero */
     const sueltas = fotos.filter(f => !f.nota || !notas.some(n => n.id === f.nota));
+    /* Terminado sin nota de salida (con avances y sin escribir nada al terminar): la salida va de último, como en la ventana del caso, con
+       lo que se hizo (Juan, 10/11/2026: «no me sale el último nodo, que es cuando sale del taller») */
+    const salio = Boolean(d.salida) && !d.taller && d.estado !== 'taller' && d.estado !== 'programado' && !notas.some(n => n.cierre);
     const lista = [{ c: 'ini', fs: sueltas, h: esc(d.estado === 'programado' ? 'Programado · ' + Programado.txt(d.programado || { f: d.entrada }, true)
       : Fecha.corta(d.entrada) + (d.horaEntrada ? ' · ' + d.horaEntrada : '') + ' · Entró al taller') }].concat(notas.map(n => ({ c: n.cierre ? 'fin' : '', t: n.t, fs: fotos.filter(f => f.nota === n.id),
       h: esc(Avances.cuando(n) + (n.cierre ? ' · Salió del taller' : '')) + (n.espera ? '<span class="pn-tag">Esperando repuestos</span>' : '') +
-        ((n.llantas || []).length ? '<span class="pn-tag">' + esc((n.llantas.length > 1 ? 'Llantas: ' : 'Llanta: ') + Llantas.nombres(n.llantas)) + '</span>' : '') })));
+        ((n.llantas || []).length ? '<span class="pn-tag">' + esc((n.llantas.length > 1 ? 'Llantas: ' : 'Llanta: ') + Llantas.nombres(n.llantas) + Llantas.valorTxt(n)) + '</span>' : '') })),
+      salio ? [{ c: 'fin', t: d.trabajo || '', fs: [], h: esc(Fecha.corta(d.salida) + ' · Salió del taller') }] : []);
     const nodos = lista.map((x, k) => nodo(x, k === lista.length - 1));
-    return (d.trabajo ? '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo) + '</div>' : '') +
+    /* Lo que se hizo va arriba, salvo que ya vaya en la salida */
+    return (d.trabajo && !salio ? '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo) + '</div>' : '') +
       '<div class="dp-sec dp-libre"><div class="dp-ini"><div class="dp-sec-t">' +
         esc('Historial de la reparación · ' + notas.length + (notas.length === 1 ? ' avance' : ' avances')) + '</div>' +
         '<div class="pn">' + nodos[0] + '</div></div>' + (nodos.length > 1 ? '<div class="pn">' + nodos.slice(1).join('') + '</div>' : '') + '</div>';
@@ -12689,9 +12784,17 @@ Object.assign(Vistas, {
       (vencidos.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (vencidos.length === 1 ? 'Un arreglo programado no ha ingresado' : vencidos.length + ' arreglos programados no han ingresado') +
         ':</b> ' + esc(vencidos.map(m => UI.placaTxt(Q.unidad(m.unidad)) + ' (' + Fecha.num(m.fecha) + ')').join(', ')) + '. Si ya llegó, use «Ingresó»; si se movió la cita, cámbiela con un clic en su fila.' +
         (f === 'programado' ? '' : ' <span class="link" data-act="filtroMant" data-v="programado">Ver los programados</span>') + '</div></div>' : '') +
-      (sinOrden.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (sinOrden.length === 1 ? 'Un arreglo tiene una orden' : sinOrden.length + ' arreglos tienen una orden') +
+      /* Cuál es y qué orden (Juan, 10/11/2026: «debe mostrarme en cuál o indicarme en cuál está el error»): la orden borrada no se ve en
+         ningún lado (Flota guarda solo su número interno), así que aquí sale el arreglo, con «Ver el arreglo» y «Quitar la orden» */
+      (sinOrden.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div class="f1"><b>' + (sinOrden.length === 1 ? 'Un arreglo tiene una orden' : sinOrden.length + ' arreglos tienen una orden') +
         ' que ya no está en Facturación o que ahora es de otro vehículo.</b> Mientras tanto ' + (sinOrden.length === 1 ? 'cuenta' : 'cuentan') +
-        ' su propio valor. En la lista se ve cuál es; en la ficha del vehículo se puede quitar.</div></div>' : '') +
+        ' su propio valor. Si esa orden ya no va con el arreglo, quítela:<div class="mant-malas">' + sinOrden.map(m => {
+          const u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo';
+          return '<div class="mant-mala"><div class="f1"><b>' + esc([m.numero, u ? UI.placaTxt(u) : '', Fecha.num(m.fecha)].filter(Boolean).join(' · ')) + '</b>' +
+            esc(' · ' + (prev ? 'Preventivo' : 'Correctivo') + (m.falla ? ': ' + m.falla : '')) + '<div class="mant-mala-q">' + esc(Compras.malasTxt(m)) + '</div></div>' +
+            '<span class="link fs12" data-act="' + (m.estado === 'taller' || m.estado === 'programado' || !prev ? 'anotarAvance' : 'editarMant') + '" data-m="' + attr(m.id) + '">Ver el arreglo</span>' +
+            '<button type="button" class="btn btn-sm" data-act="quitarOrdenesFaltan" data-m="' + attr(m.id) + '">' + Icon('x', '', 12) + 'Quitar la orden</button></div>';
+        }).join('') + '</div></div></div>' : '') +
       (pend.length ? '<div class="alert a-warn mb16">' + Icon('warn') + '<div><b>' + (pend.length === 1 ? 'A un arreglo le falta' : 'A ' + pend.length + ' arreglos les falta') +
         ' el valor o la orden de Facturación.</b> Quedan pendientes hasta que se pongan: un clic en su fila abre el arreglo para completarlo. ' +
         (f === 'pendientes' ? '' : '<span class="link" data-act="filtroMant" data-v="pendientes">Ver cuáles</span>') + '</div></div>' : '') +
@@ -14117,7 +14220,7 @@ Object.assign(Ventanas, {
             Dz.html('mcAdj', '<span class="solo-web">Factura, cotización o informe del taller</span><span class="solo-cel">Escoger el archivo</span>',
               '<span class="solo-web">PDF o foto del documento; las fotos del arreglo van a la derecha</span>', 'application/pdf,image/*', true) + '</div>' +
         '</div></div>',
-      pie: (rapido ? '<span class="txt-3 fs12 mf-left">Las órdenes, los valores y las llantas van después.</span>'
+      pie: (rapido ? '<span class="txt-3 fs12 mf-left" id="mcPieT">Las órdenes, los valores y las llantas van después.</span>'
           : '<span class="mf-left flex g8">' + (r0 ? Ventanas.botonEliminar(r0) : '') +
             '<button class="btn" data-act="vistaCorrectivo">' + Icon('eye', '', 14) + 'Vista previa del PDF</button></span>') +
         '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" id="mcGuardar" data-act="guardarCorrectivo">' + Icon('save', '', 14) +
@@ -14202,6 +14305,10 @@ Object.assign(Ventanas, {
       const v = b.dataset.v, abierto = v !== 'cerrado', antes = m._estado !== 'cerrado';
       if (m._estado === v) return;
       m._estado = v;
+      /* Ya quedó listo: las llantas se escogen aquí, porque no hay caso ni «Terminar» después (ver .mc-listo) */
+      m.classList.toggle('mc-listo', v === 'cerrado');
+      if ($('#mcPieT', m)) $('#mcPieT', m).textContent = v === 'cerrado' ? 'Las órdenes y los valores van después, con «Editar todo».'
+        : 'Las órdenes, los valores y las llantas van después.';
       $$('#mcEst button', m).forEach(x => x.classList.toggle('on', x === b));
       $('#mcSal', m).classList.toggle('hidden', abierto);
       $('#mcTC', m).classList.toggle('hidden', abierto);
@@ -14297,7 +14404,8 @@ Object.assign(Ventanas, {
     /* La llanta del avance (Juan, 09/11/2026: «que me muestre el esquema de llantas, y que ya quede la anotación»): «Llanta» abre el
        dibujo y se tocan una o varias. Van con el avance (o con la nota de la salida) y salen en el área Llantas, en esa llanta */
     m._llantas = [];
-    const bLl = $('#csLl', m), pLl = $('#csLlP', m);
+    m._llValor = '';
+    const bLl = $('#csLl', m), pLl = $('#csLlP', m), fresco = () => Datos.mantenimientos.find(x => x.id === r.id) || r;
     m._pintarLl = () => {
       if (!bLl) return;
       const ver = bLl.getAttribute('aria-pressed') === 'true' || m._llantas.length > 0;
@@ -14306,8 +14414,29 @@ Object.assign(Ventanas, {
       pLl.innerHTML = '<div class="cs-ll-d">' + Llantas.svg(u, { sel: m._llantas, act: 'csLlanta' }) + '</div><div class="f1"><div class="cs-ll-t">¿De qué llanta habla? ' +
           'Tóquela en el dibujo</div>' + (m._llantas.length ? m._llantas.map(p => '<span class="chip cs-ll-c">' + Icon('disc', '', 12) + esc(Llantas.nombre(p)) + '</span>').join(' ') +
           ' <span class="link fs12" data-act="csLlQuitar">Quitar</span>' : '<span class="txt-3 fs12">Ninguna todavía.</span>') +
+        /* Si el arreglo es de otra parte, cuánto costó lo de la llanta (Juan, 09/11/2026): cuenta en llantas y se le resta a esa parte */
+        (m._llantas.length && Llantas.preguntaValor(fresco()) ? '<div class="field mb0 mt8 cs-ll-v"><label for="csLlV">¿Cuánto costó lo de ' +
+          (m._llantas.length > 1 ? 'las llantas' : 'la llanta') + '? <span class="txt-3">(opcional)</span></label><input class="inp inp-sm" id="csLlV" inputmode="numeric" ' +
+          'autocomplete="off" placeholder="Ej.: 30.000" value="' + attr(m._llValor) + '"><div class="hint mt4" id="csLlVh"></div></div>' : '') +
         '<div class="hint mt8">El avance queda en esa llanta: sale aquí y en el área Llantas, en la historia de esa llanta.</div></div>';
+      m._pintarLlV();
     };
+    /* Debajo del valor, de dónde sale: del valor del arreglo, restándoselo a la otra parte */
+    m._pintarLlV = () => {
+      const h = $('#csLlVh', m);
+      if (!h) return;
+      const rr = fresco(), c = Plano.costo(rr), x = Money.leer(m._llValor), otras = (rr.partes || []).filter(p => p.k !== 'llantas').map(p => Plano.nombre(u, p));
+      const a = otras.length ? 'se le resta a ' + (otras.length > 1 ? otras.slice(0, -1).join(', ') + ' y ' + otras[otras.length - 1] : otras[0]) : 'sale del valor del arreglo';
+      h.classList.toggle('tx-warn', Boolean(x && c && x > c));
+      h.textContent = x && c && x > c ? 'Es más que el valor de todo el arreglo (' + Money.format(c) + '): en llantas cuenta hasta ese valor.'
+        : 'Cuenta como gasto en llantas y ' + a + (c ? ': el arreglo sigue valiendo ' + Money.format(c) + '.' : ' cuando el arreglo tenga su valor.');
+    };
+    if (pLl) pLl.addEventListener('input', e => {
+      if (e.target.id !== 'csLlV') return;
+      Money.escribir(e.target);
+      m._llValor = e.target.value;
+      m._pintarLlV();
+    });
     if (bLl) bLl.addEventListener('click', () => {
       const ver = bLl.getAttribute('aria-pressed') !== 'true';
       bLl.setAttribute('aria-pressed', String(ver));
@@ -14387,7 +14516,7 @@ Object.assign(Ventanas, {
     $('#csTl', m).innerHTML = (fin && !notas.some(n => n.cierre) ? it(Fecha.corta(r.salida || r.fecha), esc(r.trabajo || ''), [], salio) : '') +
       notas.map(n => it(Avances.cuando(n), esc(n.t || (Avances.fotos(r, n.id).length ? 'Fotos' : '—')), Avances.fotos(r, n.id),
         (n.espera ? ' ' + UI.pill('warn', 'Esperando repuestos') : '') + (n.cierre ? salio : '') + ((n.llantas || []).length ? ' <span class="chip cs-ll-c">' + Icon('disc', '', 11) +
-          esc((n.llantas.length > 1 ? 'Llantas · ' : 'Llanta · ') + Llantas.nombres(n.llantas)) + '</span>' : ''))).join('') +
+          esc((n.llantas.length > 1 ? 'Llantas · ' : 'Llanta · ') + Llantas.nombres(n.llantas) + Llantas.valorTxt(n)) + '</span>' : ''))).join('') +
       it(prog ? 'Programado · ' + Programado.txt(Programado.de(r), true) : Fecha.corta(r.fecha) + (r.horaEntrada ? ' · ' + r.horaEntrada : ''),
         '<b>' + (prog ? 'Programado.' : 'Entró al taller.') + '</b> ' + esc(r.falla || ''),
         Avances.fotos(r, ''), '', 'ini');
@@ -14415,6 +14544,10 @@ Object.assign(Ventanas, {
         '<span class="link fs12" data-act="casoOrdenes" data-m="' + attr(r.id) + '">' + (c.esta.length ? 'Relacionar o quitar órdenes' : '+ Relacionar una orden') +
           '</span></div>' +
       dato(fin ? 'Valor' : 'Valor hasta hoy', c.valor ? '<b>' + esc(Money.format(c.valor)) + '</b>' : '') +
+      /* Lo que costó lo de las llantas, escrito en los avances: sale de ese valor (ver Plano.reparto) */
+      (Llantas.valorEscrito(r) != null && (!(r.partes || []).length || (r.partes || []).some(x => x.k !== 'llantas'))
+        ? dato('En llantas', '<b>' + esc(Money.format(Plano.costo(r) ? Llantas.costo(r) : Llantas.valorEscrito(r))) + '</b><div class="txt-3 fs12">' +
+          (Plano.costo(r) ? 'Sale de ese valor' : 'Cuenta cuando el arreglo tenga su valor') + '</div>') : '') +
       (Adjuntos.de(r).length ? '<div class="cs-d"><span class="l">Adjuntos</span>' + UI.clip(r, 13) + '</div>' : '') +
       '<div class="cs-acc"><button class="btn btn-sm" data-act="casoEditar" data-m="' + attr(r.id) + '">' + Icon('edit', '', 13) + 'Editar todo</button>' +
         /* «Terminar arreglo» va abajo del recuadro de los avances (Juan, 08/11/2026) */
@@ -15328,9 +15461,9 @@ Object.assign(Acciones, {
     const t = $('#csT', m).value.trim();
     if (!t && !m._fotos.length) return;
     /* Cuándo pasó (Juan, 05/11/2026: «no es la hora actual, sino algo que pasó hace 2 horas»): lo de la caja */
-    const ll = (m._llantas || []).slice();
+    const ll = (m._llantas || []).slice(), lv = ll.length && Llantas.preguntaValor(r) ? Money.leer(m._llValor) : null;
     Avances.agregar(r, Object.assign(Avances.nueva($('#csF', m).value || hoyISO, $('#csH', m).value || ahora(), t), m._espera ? { espera: true } : {},
-      ll.length ? { llantas: ll } : {}), m._fotos);
+      ll.length ? { llantas: ll } : {}, lv ? { llValor: lv } : {}), m._fotos);
     Llantas.alArreglo(r, ll);
     if (m._espera) r.espera = true; else delete r.espera;
     /* También en el otro ingreso, si se marcó (ver MantRemolque.tambien): la nota y «Esperando repuestos»; las fotos se quedan aquí */
@@ -15354,13 +15487,14 @@ Object.assign(Acciones, {
     $('#csH', m).value = ahora();
     m._fotos = [];
     m._llantas = [];
+    m._llValor = '';
     if ($('#csLl', m)) $('#csLl', m).setAttribute('aria-pressed', 'false');
     if (m._pintarLl) m._pintarLl();
     m._pintarFotos();
     m._pintarCaso();
     const y = l => (l.length > 1 ? l.slice(0, -1).join(', ') + ' y ' + l[l.length - 1] : l[0] || '');
     Toast.show('Avance anotado en <b>' + esc(UI.placaTxt(u)) + '</b>' + (ll.length ? ', en ' + (ll.length > 1 ? 'las llantas ' : 'la llanta ') + '<b>' +
-      esc(Llantas.nombres(ll)) + '</b>' : '') + (ou ? ' y en <b>' + esc(UI.placaTxt(ou)) + '</b>' : '') + (nuevos.length ? ' con ' + esc(y(nuevos.map(x => x.c))) : '') +
+      esc(Llantas.nombres(ll)) + '</b>' + (lv ? ' (' + esc(Money.format(lv)) + ')' : '') : '') + (ou ? ' y en <b>' + esc(UI.placaTxt(ou)) + '</b>' : '') + (nuevos.length ? ' con ' + esc(y(nuevos.map(x => x.c))) : '') +
       (r.espera ? ': esperando repuestos.' : '.'));
     Router.pintar(true);
   },
@@ -15383,6 +15517,8 @@ Object.assign(Acciones, {
     const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
     if (!m || !u || r.estado !== 'taller') return;
     const t = $('#csT', m).value.trim(), f = $('#csF', m).value || hoyISO, h = $('#csH', m).value || '', hay = (r.notas || []).length > 0;
+    /* Lo que costó lo de la llanta, antes de que los componentes tocados le sumen otra parte */
+    const lv0 = Llantas.preguntaValor(r) ? Money.leer(m._llValor) : null;
     if (Ventanas.terminaConVentana(r)) {
       /* Las llantas que se tocaron quedan en el arreglo; la ventana de terminar las trae marcadas */
       Llantas.alArreglo(r, m._llantas);
@@ -15412,9 +15548,9 @@ Object.assign(Acciones, {
     }
     /* Con historial, lo escrito y sus fotos son la última anotación, la de la salida; sin historial, «¿Qué se hizo?», como en la ventana */
     /* Con una llanta tocada, lo escrito va como la nota de la salida, con su llanta, aunque no tenga historial */
-    const ll = (m._llantas || []).slice();
+    const ll = (m._llantas || []).slice(), lv = ll.length ? lv0 : null;
     if (hay || ll.length) {
-      if (t || m._fotos.length) Avances.agregar(r, Object.assign(Avances.nueva(f, h, t, true), ll.length ? { llantas: ll } : {}), m._fotos);
+      if (t || m._fotos.length) Avances.agregar(r, Object.assign(Avances.nueva(f, h, t, true), ll.length ? { llantas: ll } : {}, lv ? { llValor: lv } : {}), m._fotos);
       Llantas.alArreglo(r, ll);
     } else {
       r.trabajo = t;
@@ -20894,6 +21030,52 @@ const Rutas = {
   /* «+550 kg», «−1.200 kg» o «0 kg»: el peso real menos lo programado (que está en toneladas) */
   difTxt(d) { const x = Math.round(d * 1000); return (x > 0 ? '+' : x < 0 ? '−' : '') + this.miles(x) + ' kg'; },
 
+  /* ---- El valor de los viajes (Juan, 09/11/2026: «el campo de el valor… para que tú también vayas contabilizando los valores»): lo que
+     le pagan a SINUGRAVAS por cada viaje. Cada ruta tiene el suyo, por tonelada o por viaje, y desde qué día (r.tarifas, en extra: sin
+     SQL). El primero sirve para todos los viajes; si cambia, desde el día que se diga, y los de antes se quedan con el de antes. Un viaje
+     puede tener otro, escrito en él (v.valor). No sale en lo que se manda a los conductores ---- */
+  tarifas(r) { return ((r && r.tarifas) || []).filter(x => x && typeof x === 'object').slice().sort((a, b) => (a.desde || '').localeCompare(b.desde || '')); },
+  /* La de ese día: la última que empezó ese día o antes (la primera, sin fecha, desde siempre); sin día, la última */
+  tarifa(r, f) { const ts = this.tarifas(r).filter(x => !x.desde || !f || x.desde <= f); return ts.length ? ts[ts.length - 1] : null; },
+  tarifaUlt(r) { const ts = this.tarifas(r); return ts.length ? ts[ts.length - 1] : null; },
+  porTxt: p => (p === 'ton' ? 'por tonelada' : 'por viaje'),
+  tarifaTxt(x) { return x && x.valor != null ? Money.format(x.valor) + ' ' + this.porTxt(x.por) : 'sin valor'; },
+  /* En la lista de rutas: el de hoy y, si ya se puso otro para más adelante, desde cuándo */
+  tarifaCelda(r) {
+    const x = this.tarifa(r, hoyISO), u = this.tarifaUlt(r), c = y => Money.format(y.valor) + (y.por === 'ton' ? ' / t' : ' / viaje');
+    return (x && x.valor != null ? esc(c(x)) : '—') + (u && u !== x && u.desde > hoyISO ? '<div class="dias">' + esc('Desde el ' + this.dia(u.desde) + ': ' +
+      (u.valor != null ? c(u) : 'sin valor')) + '</div>' : '');
+  },
+  /* «al comienzo, $ 120.000 por tonelada · desde el 1 dic 2026, $ 130.000 por tonelada» */
+  historialTxt(r) {
+    const ts = this.tarifas(r);
+    return ts.length > 1 ? 'Valores que ha tenido: ' + ts.map(x => (x.desde ? 'desde el ' + this.dia(x.desde) + ' ' + x.desde.slice(0, 4) : 'al comienzo') + ', ' +
+      this.tarifaTxt(x)).join(' · ') + '.' : '';
+  },
+  /* Para una ruta nueva, el que más tienen las otras (al empezar, por tonelada) */
+  porComun() {
+    const n = { ton: 0, viaje: 0 };
+    Datos.rutas.forEach(r => { const x = this.tarifaUlt(r); if (x && x.valor != null) n[x.por === 'viaje' ? 'viaje' : 'ton']++; });
+    return n.viaje > n.ton ? 'viaje' : 'ton';
+  },
+  /* El valor de un viaje: el escrito en él; si no, el de su ruta ese día. Por tonelada, con el peso de báscula o, mientras no lo tenga,
+     con las toneladas programadas («estimado») */
+  valorDe(v) {
+    if (v.valor != null) return { valor: +v.valor, como: 'mano' };
+    const x = this.tarifa(this.ruta(v.ruta), v.fecha);
+    if (!x || x.valor == null) return { valor: null, como: 'sin' };
+    if (x.por !== 'ton') return { valor: +x.valor, como: 'viaje', t: x };
+    const real = v.pesoReal != null, ton = real ? +v.pesoReal : v.ton != null ? +v.ton : null;
+    return ton == null ? { valor: null, como: 'sinTon', t: x } : { valor: Math.round(x.valor * ton), como: real ? 'ton' : 'estimado', t: x, ton };
+  },
+  /* Cómo se sacó: «25.400 kg × $ 120.000 por tonelada» */
+  comoTxt(x) {
+    return x.como === 'mano' ? 'Escrito en este viaje' : x.como === 'viaje' ? 'El de la ruta: ' + Money.format(x.t.valor) + ' por viaje'
+      : x.como === 'ton' ? this.kgTxt(x.ton) + ' × ' + Money.format(x.t.valor) + ' por tonelada'
+      : x.como === 'estimado' ? 'Estimado: ' + this.tonTxt(x.ton) + ' programadas × ' + Money.format(x.t.valor) + ' por tonelada, hasta que tenga el peso de báscula'
+      : x.como === 'sinTon' ? 'La ruta se paga por tonelada, pero el viaje no tiene toneladas' : 'Su ruta no tiene valor: se pone en la pestaña «Rutas»';
+  },
+
   /* ---- Los datos ---- */
   ruta(id) { return Datos.rutas.find(r => r.id === id); },
   viaje(id) { return Datos.viajes.find(v => v.id === id); },
@@ -21203,16 +21385,19 @@ const Rutas = {
   semanaHtml() {
     const l = this.semana(), vs = this.vistos(l), nb = this.bandeja().filter(v => this.visible(v)).length, vista = UIState.rutas.vista, liq = this.liquidada(l);
     const n = k => vs.filter(v => v.estado === k).length, al = vs.filter(v => this.revisar(v).length).length;
-    const ton = vs.filter(v => v.estado !== 'no').reduce((s, v) => s + (+v.ton || 0), 0);
+    const ton = vs.filter(v => v.estado !== 'no').reduce((s, v) => s + (+v.ton || 0), 0), sv = this.suma(vs);
     const tipos = this.tipos().filter(t => vs.some(v => (this.ruta(v.ruta) || {}).tipo === t)).map(t => t.toLowerCase());
     const lista = tipos.length > 1 ? tipos.slice(0, -1).join(', ') + ' y ' + tipos[tipos.length - 1] : tipos[0] || '';
     const enHoy = l <= hoyISO && hoyISO <= this.mas(l, 6);
-    return '<div class="kpis4 mb16">' +
+    return '<div class="kpis4 kpis5 mb16">' +
         UI.kpi({ label: 'Viajes de la semana', valor: vs.length, icono: 'calendar', meta: esc('Semana ' + this.semanaTxt(l)) + (nb ? ' · ' + nb + ' por programar' : '') }) +
         UI.kpi({ label: 'Hechos', valor: n('hecho') + '<small> de ' + vs.length + '</small>', icono: 'check', color: 'var(--ok-500)',
           meta: [n('no') ? n('no') + ' no se ' + (n('no') === 1 ? 'hizo' : 'hicieron') : '', n('ruta') ? n('ruta') + ' en ruta' : ''].filter(Boolean).join(' · ') || 'Se marcan en la ventana de cada viaje' }) +
         UI.kpi({ label: 'Toneladas programadas', valor: ton.toLocaleString('es-CO'), icono: 'truck', meta: lista ? esc(lista.charAt(0).toUpperCase() + lista.slice(1)) : 'Sin viajes esta semana' }) +
         UI.kpi({ label: 'Para revisar', valor: al, icono: 'warn', color: 'var(--warn-500)', vcolor: al ? 'var(--warn-500)' : '', meta: 'Taller, documentos o licencia antes de salir' }) +
+        /* Lo que valen los viajes de la semana, sin los «No se hizo» (ver valorDe) */
+        UI.kpi({ label: 'Valor de la semana', valor: sv.conValor ? esc(Money.format(sv.valor)) : '—', icono: 'pesos', color: 'var(--ok-500)',
+          meta: esc(this.valorNota(sv)) || (sv.n ? 'Lo que pagan sus rutas' : 'Sin viajes esta semana') }) +
       '</div>' +
       '<div class="toolbar rt-tool"><div class="rt-sem"><button type="button" class="btn btn-sm btn-icon" data-act="rtSemana" data-v="-1" title="Semana anterior" aria-label="Semana anterior">' +
           Icon('back', '', 14) + '</button><b>' + esc('Semana ' + this.semanaTxt(l)) + '</b><button type="button" class="btn btn-sm btn-icon" data-act="rtSemana" data-v="1" title="Semana siguiente" aria-label="Semana siguiente">' +
@@ -21250,12 +21435,12 @@ const Rutas = {
           Datos.rutas.filter(r => r.tipo === t).length + '</span></button>').join('') + '</div>' +
         '<span class="tb-sp"></span><button type="button" class="btn btn-primary" data-act="rtRuta">' + Icon('plus', '', 14) + 'Nueva ruta</button></div>' +
       (Datos.rutas.length ? '<div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Ruta</th><th>Tipo de operación</th><th>Cliente o frente</th><th>Tipo interno</th>' +
-        '<th class="num">Ton. estándar</th><th class="num">Viajes esta semana</th><th>Estado</th><th></th></tr></thead><tbody>' +
+        '<th class="num">Ton. estándar</th><th class="num">Valor</th><th class="num">Viajes esta semana</th><th>Estado</th><th></th></tr></thead><tbody>' +
         lista.map(r => {
           const n = sem.filter(v => v.ruta === r.id).length;
           return '<tr' + (r.activa === false ? ' class="rt-inact"' : '') + '><td><b>' + esc(r.origen + ' → ' + r.destino) + '</b>' + (r.obs ? '<div class="dias">' + esc(r.obs) + '</div>' : '') + '</td>' +
             '<td class="nowrap">' + this.punto(r.tipo) + esc(r.tipo || '—') + '</td><td>' + esc(r.cliente || '—') + '</td><td>' + esc(r.interno || '—') + '</td>' +
-            '<td class="num">' + this.tonTxt(r.ton) + '</td><td class="num">' + (n || '—') + '</td><td>' + (r.activa === false ? UI.pill('nr', 'Inactiva') : UI.pill('ok', 'Activa')) + '</td>' +
+            '<td class="num">' + this.tonTxt(r.ton) + '</td><td class="num nowrap">' + this.tarifaCelda(r) + '</td><td class="num">' + (n || '—') + '</td><td>' + (r.activa === false ? UI.pill('nr', 'Inactiva') : UI.pill('ok', 'Activa')) + '</td>' +
             '<td class="tr"><button type="button" class="btn btn-sm" data-act="rtRuta" data-r="' + attr(r.id) + '">' + Icon('edit', '', 12) + 'Editar</button></td></tr>';
         }).join('') + '</tbody></table></div></div>'
         : '<div class="card">' + UI.empty('ruta', 'Todavía no hay rutas', 'Cree la primera con «Nueva ruta».') + '</div>');
@@ -21282,7 +21467,7 @@ const Rutas = {
     const cs = $('#rtC', m).value, otro = cs === '__otro';
     return { ruta: $('#rtR', m).value, unidad: $('#rtU', m).value || null, conductor: otro ? null : cs || null, conductorTxt: otro ? $('#rtCx', m).value.trim().replace(/\s+/g, ' ') : '',
       fecha: $('#rtF', m).value || null, hora: $('#rtH', m).value, ton: this.tonLeer($('#rtT', m).value), estado: e ? e.dataset.v : 'prog', nota: $('#rtN', m).value.trim(),
-      pesoReal: this.kgLeer($('#rtPR', m).value), tiquete: m._tq || null };
+      pesoReal: this.kgLeer($('#rtPR', m).value), tiquete: m._tq || null, valor: Money.leer($('#rtV', m).value) };
   },
   abrir(id, o) {
     o = o || {};
@@ -21310,7 +21495,7 @@ const Rutas = {
       titulo: !v0 ? 'Programar viaje' : this.programado(v) ? 'Viaje · ' + this.placa(v.unidad) + ' · ' + this.diaSem(v.fecha).toLowerCase() + ' ' + this.dia(v.fecha) : 'Viaje · por programar',
       sub: r ? esc(this.nombreTMS(r)) : 'Ruta, camión, conductor y día', ancho: 'm-hoja',
       cuerpo: (fija ? '<div class="alert a-info mb12">' + Icon('lock') + '<div><b>Semana liquidada el ' + esc(this.cuando(liq.f).replace(/\.$/, '')) + '.</b> Solo se puede poner ' +
-          'el peso real y el tiquete. Para cambiar lo demás, reabra la semana.</div></div>' : '') + '<div id="rtAl"></div><div id="rtSem"></div>' +
+          'el peso real, el tiquete y el valor. Para cambiar lo demás, reabra la semana.</div></div>' : '') + '<div id="rtAl"></div><div id="rtSem"></div>' +
         '<div class="field"><label for="rtR">Ruta</label>' + rutaSel + '</div>' +
         '<div class="row"><div class="field"><label for="rtU">Camión</label><select class="inp" id="rtU"><option value="">Sin camión todavía</option>' +
             opc(cams.map(x => [x.id, UI.placaTxt(x) + (x.clase ? ' · ' + x.clase : '') + (Q.tercero(x) ? ' · Tercero' : '')]), v.unidad || '') + '</select></div>' +
@@ -21336,7 +21521,12 @@ const Rutas = {
           '<div class="rt-bas-c"><div class="field mb0"><label for="rtPR">Peso real (kg)</label><input class="inp" id="rtPR" inputmode="numeric" autocomplete="off" value="' +
             attr(this.kgEsc(v.pesoReal)) + '" placeholder="Ej.: 31.450"><div class="hint mt4" id="rtPRd"></div></div>' +
           '<div class="field mb0"><label>Tiquete de báscula <span class="txt-3">(opcional)</span></label>' +
-            Dz.html('rtTq', this.TQ_TIT, '<span class="solo-web">PDF o foto del tiquete</span>', 'application/pdf,image/*', false) + '</div></div></div>',
+            Dz.html('rtTq', this.TQ_TIT, '<span class="solo-web">PDF o foto del tiquete</span>', 'application/pdf,image/*', false) + '</div></div></div>' +
+        /* El valor (Juan, 09/11/2026): el de su ruta, con cómo se sacó, o el escrito aquí si este viaje se pagó distinto */
+        '<div class="rt-bas rt-val"><div class="rt-bas-h">' + Icon('pesos', '', 15) + '<b>Valor del viaje</b><span>Lo que pagan por este viaje</span></div>' +
+          '<div class="rt-val-v" id="rtVv"></div>' +
+          '<div class="field mb0"><label for="rtV">Otro valor para este viaje <span class="txt-3">(opcional)</span></label><input class="inp" id="rtV" inputmode="numeric" ' +
+            'autocomplete="off" value="' + attr(Money.campo(v.valor)) + '" placeholder="Si se pagó distinto"><div class="hint mt4">Vacío: el de la ruta.</div></div></div>',
       pie: (v0 && !fija ? '<button type="button" class="btn btn-ghost btn-del mf-left" data-act="rtQuitar" data-v="' + attr(v0.id) + '">' + Icon('trash', '', 14) + 'Quitar</button>' : '') +
         '<button type="button" class="btn" data-act="cerrarModal">Cancelar</button><button type="button" class="btn btn-primary" data-act="rtGuardar">' + Icon('save', '', 14) + 'Guardar</button>'
     });
@@ -21361,6 +21551,10 @@ const Rutas = {
       $('#rtPRd', m).classList.toggle('tx-warn', poco);
       $('#rtPRd', m).textContent = poco ? '¿Seguro? Son kilos: ' + this.kgTxt(d.pesoReal) + '. Si eran toneladas, escríbalas en kilos (31 t son 31.000 kg).'
         : dif == null ? '' : !dif ? 'Igual a lo programado.' : this.miles(dif) + ' kg ' + (dif > 0 ? 'más' : 'menos') + ' de lo programado (' + this.tonTxt(d.ton) + ').';
+      /* El valor, con lo que dice la ventana: la ruta, el día, el peso y las toneladas; si se escribió otro, también el de la ruta */
+      const vx = this.valorDe(Object.assign({}, v, d)), deRuta = d.valor != null ? this.valorDe(Object.assign({}, v, d, { valor: null })) : null;
+      $('#rtVv', m).innerHTML = (vx.valor != null ? '<b>' + esc(Money.format(vx.valor)) + '</b>' : '<b class="txt-3">Sin valor</b>') +
+        '<span>' + esc(this.comoTxt(vx) + (deRuta && deRuta.valor != null ? ' · el de la ruta sería ' + Money.format(deRuta.valor) : '')) + '</span>';
       $('#rtC option[value=""]', m).textContent = this.delCamion(d.unidad);
       $('#rtAl', m).innerHTML = al.length ? '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>Revisar antes de salir</b><div class="rt-al-l">' +
         al.map(a => '<span>' + esc(a) + '.</span>').join('') + '</div>Se puede programar igual.</div></div>' : '';
@@ -21387,6 +21581,7 @@ const Rutas = {
         .then(() => { m._tqCargando = false; pintarTq(); });
     });
     pr.addEventListener('input', () => this.kgFormatear(pr));
+    $('#rtV', m).addEventListener('input', e => Money.escribir(e.target));
     /* La ruta trae sus toneladas estándar, si no se habían cambiado */
     let previa = r;
     $('#rtR', m).addEventListener('change', () => {
@@ -21429,12 +21624,14 @@ const Rutas = {
     /* En una semana liquidada solo cambian el peso real y el tiquete */
     if (v && this.fija(v)) {
       this.ultimo = { antes: [JSON.parse(JSON.stringify(v))] };
+      const soloValor = (v.pesoReal == null ? null : +v.pesoReal) === d.pesoReal && JSON.stringify(v.tiquete || null) === JSON.stringify(d.tiquete || null);
       v.pesoReal = d.pesoReal;
       v.tiquete = d.tiquete;
-      ['pesoReal', 'tiquete'].forEach(k => { if (v[k] == null) delete v[k]; });
+      v.valor = d.valor;
+      ['pesoReal', 'tiquete', 'valor'].forEach(k => { if (v[k] == null) delete v[k]; });
       Modal.cerrar(m);
       Router.pintar(true);
-      Toast.show('Peso en báscula guardado. <span class="link" data-act="rtDeshacer">Deshacer</span>');
+      Toast.show((soloValor ? 'Valor del viaje guardado.' : 'Peso en báscula guardado.') + ' <span class="link" data-act="rtDeshacer">Deshacer</span>');
       return;
     }
     if (this.programado(d) && this.liquidada(d.fecha)) {
@@ -21444,7 +21641,7 @@ const Rutas = {
     const antes = v ? JSON.parse(JSON.stringify(v)) : null, notas = antes ? this.diferencias(antes, d) : [];
     if (!v) v = { id: this.nuevoId('v'), cambios: [] };
     Object.assign(v, d);
-    ['conductorTxt', 'pesoReal', 'tiquete'].forEach(k => { if (v[k] == null || v[k] === '') delete v[k]; });
+    ['conductorTxt', 'pesoReal', 'tiquete', 'valor'].forEach(k => { if (v[k] == null || v[k] === '') delete v[k]; });
     this.fijarConductor(v);
     if (!antes) {
       this.anotar(v, this.programado(v) ? 'Se programó: ' + this.lugar(v) : 'Se creó en «Por programar»');
@@ -21529,8 +21726,11 @@ const Rutas = {
   suma(vs) {
     const h = vs.filter(v => v.estado !== 'no'), con = h.filter(v => v.pesoReal != null), par = con.filter(v => v.ton != null);
     const s = (xs, f) => Math.round(xs.reduce((a, v) => a + f(v), 0) * 100) / 100;
+    /* El valor (ver valorDe): lo de los que lo tienen, y cuántos son estimados o no lo tienen */
+    const val = h.map(v => this.valorDe(v)), cv = val.filter(x => x.valor != null);
     return { n: h.length, no: vs.length - h.length, ton: s(h, v => +v.ton || 0), real: s(con, v => +v.pesoReal), conPeso: con.length, sinPeso: h.length - con.length,
-      dif: s(par, v => v.pesoReal - v.ton), tonDif: s(par, v => +v.ton), conDif: par.length };
+      dif: s(par, v => v.pesoReal - v.ton), tonDif: s(par, v => +v.ton), conDif: par.length,
+      valor: cv.reduce((a, x) => a + x.valor, 0), conValor: cv.length, sinValor: h.length - cv.length, estimados: val.filter(x => x.como === 'estimado').length };
   },
   /* Los viajes por tipo, camión, conductor o ruta, con lo que suma cada uno: del que más viajes tiene al que menos */
   grupos(vs, que) {
@@ -21547,12 +21747,17 @@ const Rutas = {
     return this.punto(r.tipo) + esc(this.nombre(r)) + (r.cliente ? '<div class="dias">' + esc(r.cliente) + '</div>' : '');
   },
   pl: (n, uno, varios) => n + ' ' + (n === 1 ? uno : varios),
+  /* «3 estimados · 1 viaje sin valor» */
+  valorNota(s) { return [s.estimados ? this.pl(s.estimados, 'estimado', 'estimados') : '', s.sinValor ? this.pl(s.sinValor, 'viaje sin valor', 'viajes sin valor') : ''].filter(Boolean).join(' · '); },
+  /* El valor en una tabla, con los que no lo tienen debajo */
+  valorCelda(x) { return x.conValor ? esc(Money.format(x.valor)) + (x.sinValor ? '<div class="dias rt-sinp">' + x.sinValor + ' sin valor</div>' : '') : '—'; },
   /* Arriba de la semana liquidada: cuándo se liquidó, lo que suma y «Reabrir» */
   liqBanda(l, liq) {
     const s = this.suma(this.deSemana(l));
     return '<div class="alert a-ok rt-liq">' + Icon('lock') + '<div class="f1"><b>Semana liquidada el ' + esc(this.cuando(liq.f).replace(/\.$/, '')) + '.</b> ' +
-      esc(this.pl(s.n, 'viaje hecho', 'viajes hechos') + (s.conPeso ? ' · ' + this.kgTxt(s.real) + ' de peso real' : '') + (s.sinPeso ? ' · ' + this.pl(s.sinPeso, 'sin peso real', 'sin peso real') : '')) +
-      '. Ya no se mueve ni se agrega nada; el peso real y el tiquete se pueden poner todavía, abriendo cada viaje.</div>' +
+      esc(this.pl(s.n, 'viaje hecho', 'viajes hechos') + (s.conPeso ? ' · ' + this.kgTxt(s.real) + ' de peso real' : '') + (s.sinPeso ? ' · ' + this.pl(s.sinPeso, 'sin peso real', 'sin peso real') : '') +
+        (s.conValor ? ' · ' + Money.format(s.valor) : '')) +
+      '. Ya no se mueve ni se agrega nada; el peso real, el tiquete y el valor se pueden poner todavía, abriendo cada viaje.</div>' +
       '<button type="button" class="btn btn-sm" data-act="rtReabrir">' + Icon('refresh', '', 13) + 'Reabrir la semana</button></div>';
   },
   liquidar() {
@@ -21565,23 +21770,27 @@ const Rutas = {
       sin.length ? pl(sin.length, 'viaje no tiene', 'viajes no tienen') + ' el peso real: ' + sin.slice(0, 4).map(v => this.placa(v.unidad) + ' el ' +
         this.diaSem(v.fecha).toLowerCase() + ' ' + this.dia(v.fecha)).join(', ') + (sin.length > 4 ? ' y ' + (sin.length - 4) + ' más' : '') + '. Se puede poner después.' : '',
       s.no ? pl(s.no, 'viaje está marcado', 'viajes están marcados') + ' «No se hizo»: no ' + (s.no === 1 ? 'cuenta.' : 'cuentan.') : '',
-      nb ? pl(nb, 'ficha sigue', 'fichas siguen') + ' en «Por programar»: no ' + (nb === 1 ? 'entra' : 'entran') + ' en la liquidación.' : ''].filter(Boolean);
+      nb ? pl(nb, 'ficha sigue', 'fichas siguen') + ' en «Por programar»: no ' + (nb === 1 ? 'entra' : 'entran') + ' en la liquidación.' : '',
+      s.sinValor ? pl(s.sinValor, 'viaje no tiene', 'viajes no tienen') + ' valor: su ruta no lo tiene. Se pone en la pestaña «Rutas».' : ''].filter(Boolean);
     const tabla = (que, cab) => '<div class="rt-lq-b"><table class="tbl"><thead><tr><th>' + cab + '</th><th class="num">Viajes</th><th class="num">Programadas</th>' +
-      '<th class="num">Peso real</th></tr></thead><tbody>' + this.grupos(vs, que).map(x => '<tr><td>' + this.grupoHtml(que, x) + '</td><td class="num">' + x.n + '</td>' +
+      '<th class="num">Peso real</th><th class="num">Valor</th></tr></thead><tbody>' + this.grupos(vs, que).map(x => '<tr><td>' + this.grupoHtml(que, x) + '</td><td class="num">' + x.n + '</td>' +
         '<td class="num nowrap">' + esc(this.tonTxt(x.ton)) + '</td><td class="num nowrap">' + (x.conPeso ? esc(this.kgTxt(x.real)) : '—') +
-        (x.sinPeso && x.conPeso ? '<div class="dias rt-sinp">' + x.sinPeso + ' sin peso</div>' : '') + '</td></tr>').join('') + '</tbody></table></div>';
+        (x.sinPeso && x.conPeso ? '<div class="dias rt-sinp">' + x.sinPeso + ' sin peso</div>' : '') + '</td><td class="num nowrap">' + this.valorCelda(x) + '</td></tr>').join('') +
+      '</tbody></table></div>';
     Modal.abrir({
       titulo: 'Liquidar la semana', sub: esc('Semana ' + this.semanaTxt(l)), ancho: 'wide', sinFoco: true,
       cuerpo: '<div class="rt-lq-k"><div><span>Viajes</span><b>' + s.n + '</b><em>' + (pasan ? esc(pl(pasan, 'programado o en ruta queda', 'programados o en ruta quedan')) +
             ' «Hecho»' : 'Todos ya están marcados') + '</em></div>' +
           '<div><span>Toneladas programadas</span><b>' + esc(this.tonTxt(s.ton)) + '</b><em>De los viajes que cuentan</em></div>' +
           '<div><span>Peso real</span><b>' + (s.conPeso ? esc(this.kgTxt(s.real)) : '—') + '</b><em>' + (s.conPeso ? esc(pl(s.conPeso, 'viaje con peso', 'viajes con peso') +
-            (s.conDif ? ' · ' + this.difTxt(s.dif) + ' frente a lo programado' : '')) : 'Ningún viaje tiene el peso real todavía') + '</em></div></div>' +
+            (s.conDif ? ' · ' + this.difTxt(s.dif) + ' frente a lo programado' : '')) : 'Ningún viaje tiene el peso real todavía') + '</em></div>' +
+          '<div><span>Valor</span><b>' + (s.conValor ? esc(Money.format(s.valor)) : '—') + '</b><em>' + esc(this.valorNota(s) || (s.conValor ? 'Lo que pagan sus rutas'
+            : 'Ninguna ruta tiene valor todavía')) + '</em></div></div>' +
         (avisos.length ? '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>Antes de liquidar</b><div class="rt-al-l">' + avisos.map(a => '<span>' + esc(a) + '</span>').join('') +
           '</div>Se puede liquidar igual.</div></div>' : '') +
         (UIState.rutas.ver ? '<div class="hint mb12">Se liquida toda la semana, con todos los tipos de operación, aunque arriba se vean solo algunos.</div>' : '') +
         tabla('tipo', 'Tipo de operación') + tabla('camion', 'Camión') +
-        '<p class="txt-2 fs12 mb0">Al liquidar, la semana se cierra: no se mueve ni se agrega nada. El peso real y el tiquete se pueden poner después, y la semana ' +
+        '<p class="txt-2 fs12 mb0">Al liquidar, la semana se cierra: no se mueve ni se agrega nada. El peso real, el tiquete y el valor se pueden poner después, y la semana ' +
           'se puede reabrir. Lo de cada mes sale en «Histórico».</p>',
       pie: '<button type="button" class="btn" data-act="cerrarModal">Cancelar</button><button type="button" class="btn btn-primary" data-act="rtLiquidarSi">' +
         Icon('lock', '', 14) + 'Liquidar la semana</button>'
@@ -21597,7 +21806,8 @@ const Rutas = {
     Modal.cerrarTodo();
     Router.pintar(true);
     const s = this.suma(vs);
-    Toast.show('Semana liquidada: <b>' + esc(this.pl(s.n, 'viaje', 'viajes') + ', ' + this.tonTxt(s.ton) + ' programadas' + (s.conPeso ? ' y ' + this.kgTxt(s.real) + ' de peso real' : '')) +
+    Toast.show('Semana liquidada: <b>' + esc(this.pl(s.n, 'viaje', 'viajes') + ', ' + this.tonTxt(s.ton) + ' programadas' + (s.conPeso ? ', ' + this.kgTxt(s.real) + ' de peso real' : '') +
+      (s.conValor ? ' y ' + Money.format(s.valor) : '')) +
       '</b>. Lo de cada mes sale en «Histórico».');
   },
   reabrir() {
@@ -21606,7 +21816,7 @@ const Rutas = {
     Modal.abrir({
       titulo: 'Reabrir la semana', sub: esc('Semana ' + this.semanaTxt(l) + ' · liquidada el ' + this.cuando(liq.f)), sinFoco: true,
       cuerpo: '<p class="mb0">La semana vuelve a quedar abierta: se pueden mover, agregar y cambiar sus viajes. Los viajes siguen como están, con su estado, su peso ' +
-        'real y su tiquete. Cuando termine, se liquida otra vez.</p>',
+        'real, su tiquete y su valor. Cuando termine, se liquida otra vez.</p>',
       pie: '<button type="button" class="btn" data-act="cerrarModal">Cancelar</button><button type="button" class="btn btn-primary" data-act="rtReabrirSi">' +
         Icon('refresh', '', 14) + 'Reabrir la semana</button>'
     });
@@ -21651,7 +21861,7 @@ const Rutas = {
       'Cuando termine una semana, en la pestaña «Semana» use «Liquidar semana». Aquí sale lo de cada mes: los viajes, las toneladas y el peso real.') + '</div></div>';
     const semanas = ls.filter(l => this.mas(l, 6) >= (per.desde || '') && (!per.hasta || l <= per.hasta));
     const pct = s.tonDif ? (x => (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' %')(s.dif / s.tonDif * 100) : '';
-    const kpis = '<div class="kpis4 mb16">' +
+    const kpis = '<div class="kpis4 kpis5 mb16">' +
       UI.kpi({ label: 'Viajes', valor: s.n, icono: 'truck', meta: esc(pl(semanas.length, 'semana liquidada', 'semanas liquidadas') + ' ' + per.txt) +
         (s.no ? ' · ' + s.no + (s.no === 1 ? ' no se hizo' : ' no se hicieron') : '') }) +
       UI.kpi({ label: 'Peso real', valor: s.conPeso ? esc(this.miles(this.kg(s.real))) + '<small> kg</small>' : '—', icono: 'ticket', color: 'var(--ok-500)',
@@ -21659,24 +21869,26 @@ const Rutas = {
       UI.kpi({ label: 'Toneladas programadas', valor: esc(s.ton.toLocaleString('es-CO')), icono: 'calendar',
         meta: s.conDif ? esc('Diferencia: ' + this.difTxt(s.dif) + (pct ? ' (' + pct + ')' : '') + ' en los que tienen peso') : 'De los viajes hechos' }) +
       UI.kpi({ label: 'Sin peso real', valor: s.sinPeso, icono: 'warn', color: 'var(--warn-500)', vcolor: s.sinPeso ? 'var(--warn-500)' : '',
-        meta: s.sinPeso ? 'Se pone abriendo el viaje en su semana' : s.n ? 'Todos tienen su peso' : 'Sin viajes ' + esc(per.txt) }) + '</div>';
+        meta: s.sinPeso ? 'Se pone abriendo el viaje en su semana' : s.n ? 'Todos tienen su peso' : 'Sin viajes ' + esc(per.txt) }) +
+      UI.kpi({ label: 'Valor', valor: s.conValor ? esc(Money.format(s.valor)) : '—', icono: 'pesos', color: 'var(--ok-500)',
+        meta: esc(this.valorNota(s)) || (s.conValor ? 'De los viajes hechos' : s.n ? 'Sus rutas no tienen valor todavía' : 'Sin viajes ' + esc(per.txt)) }) + '</div>';
     const tabla = (que, titulo, cab) => {
       const gs = this.grupos(vs, que);
       return UI.card(titulo, '<div class="tbl-wrap"><table class="tbl rt-ht"><thead><tr><th>' + cab + '</th><th class="num">Viajes</th><th class="num">Programadas</th>' +
-        '<th class="num">Peso real</th><th class="num">Diferencia</th></tr></thead><tbody>' + gs.map(x => '<tr><td>' + this.grupoHtml(que, x) + '</td><td class="num">' + x.n +
+        '<th class="num">Peso real</th><th class="num">Diferencia</th><th class="num">Valor</th></tr></thead><tbody>' + gs.map(x => '<tr><td>' + this.grupoHtml(que, x) + '</td><td class="num">' + x.n +
           '</td><td class="num nowrap">' + esc(this.tonTxt(x.ton)) + '</td><td class="num nowrap">' + (x.conPeso ? esc(this.kgTxt(x.real)) : '—') +
           (x.sinPeso ? '<div class="dias rt-sinp">' + x.sinPeso + ' sin peso</div>' : '') + '</td><td class="num nowrap">' + (x.conDif ? esc(this.difTxt(x.dif)) : '—') +
-          '</td></tr>').join('') + '</tbody></table></div>', { flush: true });
+          '</td><td class="num nowrap">' + this.valorCelda(x) + '</td></tr>').join('') + '</tbody></table></div>', { flush: true });
     };
     const semHtml = UI.card('Semanas liquidadas', semanas.length ? '<div class="tbl-wrap"><table class="tbl rt-ht"><thead><tr><th>Semana</th><th>Liquidada</th>' +
-        '<th class="num">Viajes</th><th class="num">Programadas</th><th class="num">Peso real</th><th class="num">Sin peso</th><th></th></tr></thead><tbody>' +
+        '<th class="num">Viajes</th><th class="num">Programadas</th><th class="num">Peso real</th><th class="num">Sin peso</th><th class="num">Valor</th><th></th></tr></thead><tbody>' +
       semanas.map(l => {
         const x = this.suma(vs.filter(v => this.lunes(v.fecha) === l)), lq = Config.rutasLiq[l] || {};
         const parte = Boolean((per.desde && l < per.desde) || (per.hasta && this.mas(l, 6) > per.hasta));
         return '<tr><td><b>' + esc('Semana ' + this.semanaTxt(l)) + '</b>' + (parte ? '<div class="dias">Solo sus días ' + esc(per.txt) + '</div>' : '') + '</td>' +
           '<td class="nowrap">' + esc(lq.f ? this.cuando(lq.f) : '—') + '</td><td class="num">' + x.n + '</td><td class="num nowrap">' + esc(this.tonTxt(x.ton)) + '</td>' +
           '<td class="num nowrap">' + (x.conPeso ? esc(this.kgTxt(x.real)) : '—') + '</td><td class="num">' + (x.sinPeso ? '<span class="rt-sinp">' + x.sinPeso + '</span>' : '—') +
-          '</td><td class="tr"><button type="button" class="btn btn-sm" data-act="rtIrSemana" data-v="' + l + '">' + Icon('calendar', '', 12) + 'Ver la semana</button></td></tr>';
+          '</td><td class="num nowrap">' + this.valorCelda(x) + '</td><td class="tr"><button type="button" class="btn btn-sm" data-act="rtIrSemana" data-v="' + l + '">' + Icon('calendar', '', 12) + 'Ver la semana</button></td></tr>';
       }).join('') + '</tbody></table></div>' : UI.empty('calendar', 'No hay semanas liquidadas ' + esc(per.txt), 'Escoja otro período arriba.'), { flush: true });
     return '<div class="rt-hpag">' + bar + kpis + (vs.length ? '<div class="grid g2 mb16">' + tabla('tipo', 'Por tipo de operación', 'Tipo') +
       tabla('camion', 'Por camión', 'Camión') + tabla('conductor', 'Por conductor', 'Conductor') + tabla('ruta', 'Por ruta', 'Ruta') + '</div>' : '') + semHtml + '</div>';
@@ -21687,13 +21899,18 @@ const Rutas = {
     if (!vs.length) { Toast.show('No hay viajes liquidados ' + esc(per.txt) + ' para el Excel.', 'warn'); return; }
     const COLS = [['Semana (lunes)', 13, 'fecha'], ['Fecha', 11, 'fecha'], ['Día', 10], ['Hora', 7, 'hora'], ['Tipo de operación', 20], ['Ruta', 52], ['Origen', 22],
       ['Destino', 22], ['Cliente o frente', 22], ['Tipo interno', 16], ['Camión', 11], ['Tercero', 8], ['Conductor', 28], ['Estado', 11], ['Toneladas programadas', 13, 'ton'],
-      ['Peso real (kg)', 12, 'miles'], ['Diferencia (kg)', 12, 'miles'], ['Tiquete', 30], ['Nota', 36], ['Liquidada el', 12, 'fecha']];
+      ['Peso real (kg)', 12, 'miles'], ['Diferencia (kg)', 12, 'miles'], ['Valor por', 18], ['Tarifa ($)', 13, 'pesos'], ['Valor ($)', 14, 'pesos'], ['Tiquete', 30], ['Nota', 36],
+      ['Liquidada el', 12, 'fecha']];
     const dia = f => (f ? Fecha.iso(new Date(f)) : '');
     const filas = vs.map((v, k) => {
       const i = k + 2, r = this.ruta(v.ruta) || {}, u = Q.unidad(v.unidad), c = this.conductor(v), lq = Config.rutasLiq[this.lunes(v.fecha)] || {};
+      /* El valor: cómo se paga (Viaje, Tonelada o escrito en el viaje) y la tarifa; la columna Valor lo calcula. Los «No se hizo», sin valor */
+      const x = v.estado === 'no' ? null : this.valorDe(v), sin = !x || x.como === 'sin';
+      const por = sin ? '' : x.como === 'mano' ? 'Escrito en el viaje' : x.t.por === 'ton' ? 'Tonelada' : 'Viaje', tar = sin ? null : x.como === 'mano' ? x.valor : +x.t.valor;
       return { v: [this.lunes(v.fecha), v.fecha, this.diaSem(v.fecha), v.hora || '', r.tipo || 'Sin tipo', this.nombreTMS(r), r.origen || '', r.destino || '', r.cliente || '',
         r.interno || '', this.placa(v.unidad), u && Q.tercero(u) ? 'Sí' : 'No', c ? c.nombre : 'Sin conductor', (this.ESTADOS[v.estado] || ['—'])[0],
         v.ton != null ? +v.ton : null, v.pesoReal != null ? this.kg(v.pesoReal) : null, { fx: 'IF(OR(O' + i + '="",P' + i + '=""),"",P' + i + '-O' + i + '*1000)' },
+        por, tar, { fx: 'IF(S' + i + '="","",IF(R' + i + '="Tonelada",IF(AND(O' + i + '="",P' + i + '=""),"",ROUND(IF(P' + i + '="",O' + i + ',P' + i + '/1000)*S' + i + ',0)),S' + i + '))' },
         v.tiquete ? v.tiquete.nombre : '', v.nota || '', dia(lq.f)], gris: v.estado === 'no' };
     });
     /* El resumen: por tipo, camión, conductor y ruta, de los hechos */
@@ -21704,15 +21921,16 @@ const Rutas = {
     const bloque = (titulo, cab1, col, nombreDe) => {
       const hs = vs.filter(v => v.estado !== 'no'), n = new Map();
       hs.forEach(v => { const k = nombreDe(v); n.set(k, (n.get(k) || 0) + 1); });
-      res.push([{ v: titulo, e: { fuente: 'titulo' } }], [], cab([cab1, 'Viajes hechos', 'Toneladas programadas', 'Peso real (kg)', 'Sin peso real', 'Diferencia (kg)']));
+      res.push([{ v: titulo, e: { fuente: 'titulo' } }], [], cab([cab1, 'Viajes hechos', 'Toneladas programadas', 'Peso real (kg)', 'Sin peso real', 'Diferencia (kg)', 'Valor ($)']));
       const i0 = res.length + 1;
       [...n.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]))).forEach(([k]) => {
         const i = res.length + 1, de = R(col) + ',$A' + i + ',' + R('N') + ',"Hecho"';
         res.push([fil(k), fil({ fx: 'COUNTIFS(' + de + ')' }, 'cuenta'), fil({ fx: 'SUMIFS(' + R('O') + ',' + de + ')' }, 'ton'), fil({ fx: 'SUMIFS(' + R('P') + ',' + de + ')' }, 'miles'),
-          fil({ fx: 'COUNTIFS(' + de + ',' + R('P') + ',"")' }, 'cuenta'), fil({ fx: 'SUMIFS(' + R('Q') + ',' + de + ')' }, 'miles')]);
+          fil({ fx: 'COUNTIFS(' + de + ',' + R('P') + ',"")' }, 'cuenta'), fil({ fx: 'SUMIFS(' + R('Q') + ',' + de + ')' }, 'miles'), fil({ fx: 'SUMIFS(' + R('T') + ',' + de + ')' }, 'pesos')]);
       });
       const i1 = res.length;
-      res.push([fil('Total', '', true)].concat(['B', 'C', 'D', 'E', 'F'].map((c, j) => fil({ fx: 'SUM(' + c + i0 + ':' + c + i1 + ')' }, j === 0 || j === 3 ? 'cuenta' : j === 1 ? 'ton' : 'miles', true))), [], []);
+      res.push([fil('Total', '', true)].concat(['B', 'C', 'D', 'E', 'F', 'G'].map((c, j) => fil({ fx: 'SUM(' + c + i0 + ':' + c + i1 + ')' },
+        j === 0 || j === 3 ? 'cuenta' : j === 1 ? 'ton' : j === 5 ? 'pesos' : 'miles', true))), [], []);
     };
     bloque('Por tipo de operación', 'Tipo de operación', 'E', v => (this.ruta(v.ruta) || {}).tipo || 'Sin tipo');
     bloque('Por camión', 'Camión', 'K', v => this.placa(v.unidad));
@@ -21720,26 +21938,27 @@ const Rutas = {
     bloque('Por ruta', 'Ruta', 'F', v => this.nombreTMS(this.ruta(v.ruta) || {}));
     /* Cada semana liquidada, con sus días del período */
     const COLS_S = [['Semana (lunes)', 13, 'fecha'], ['Hasta (domingo)', 13, 'fecha'], ['Liquidada el', 12, 'fecha'], ['Viajes hechos', 10, 'cuenta'],
-      ['Toneladas programadas', 13, 'ton'], ['Peso real (kg)', 12, 'miles'], ['Sin peso real', 10, 'cuenta'], ['Diferencia (kg)', 12, 'miles']];
+      ['Toneladas programadas', 13, 'ton'], ['Peso real (kg)', 12, 'miles'], ['Sin peso real', 10, 'cuenta'], ['Diferencia (kg)', 12, 'miles'], ['Valor ($)', 14, 'pesos']];
     const sems = [...new Set(vs.map(v => this.lunes(v.fecha)))].sort();
     const filasS = sems.map((l, k) => {
       const i = k + 2, de = R('A') + ',$A' + i + ',' + R('N') + ',"Hecho"';
       return { v: [l, this.mas(l, 6), dia((Config.rutasLiq[l] || {}).f), { fx: 'COUNTIFS(' + de + ')' }, { fx: 'SUMIFS(' + R('O') + ',' + de + ')' }, { fx: 'SUMIFS(' + R('P') + ',' + de + ')' },
-        { fx: 'COUNTIFS(' + de + ',' + R('P') + ',"")' }, { fx: 'SUMIFS(' + R('Q') + ',' + de + ')' }] };
+        { fx: 'COUNTIFS(' + de + ',' + R('P') + ',"")' }, { fx: 'SUMIFS(' + R('Q') + ',' + de + ')' }, { fx: 'SUMIFS(' + R('T') + ',' + de + ')' }] };
     });
     const ahora = new Date(), hh = String(ahora.getHours()).padStart(2, '0') + ':' + String(ahora.getMinutes()).padStart(2, '0');
     const leer = [['Rutas liquidadas · SINUGRAVAS', 'titulo'], [''], ['Descargado de Flota el ' + Fecha.num(hoyISO) + ' a las ' + hh + '. Período: ' + nombre + '.'],
       ['Trae ' + pl(vs.length, 'viaje', 'viajes') + ' de ' + pl(sems.length, 'semana liquidada', 'semanas liquidadas') + '.'], [''], ['Las hojas', 'cab'],
       ['Viajes: una fila por viaje de las semanas liquidadas, por su día. Los «No se hizo» van en gris y no cuentan en los resúmenes.'],
-      ['Resumen: los viajes hechos, las toneladas programadas, el peso real y la diferencia por tipo de operación, camión, conductor y ruta, con fórmulas que suman la hoja Viajes.'],
+      ['Resumen: los viajes hechos, las toneladas programadas, el peso real, la diferencia y el valor por tipo de operación, camión, conductor y ruta, con fórmulas que suman la hoja Viajes.'],
       ['Semanas: lo mismo por cada semana liquidada. Una semana que cae en dos meses sale en cada mes con sus días.'], [''], ['Lo que hay que saber', 'cab'],
       ['El peso real es el de la báscula, escrito en cada viaje, en kilos. Lo programado va en toneladas. La diferencia, en kilos, es el peso real menos lo programado, solo en los viajes que tienen los dos.'],
+      ['El valor es lo que pagan por cada viaje: el de su ruta ese día o el escrito en el viaje. «Valor por» dice cómo se paga y «Tarifa», cuánto. Por tonelada, la columna Valor multiplica la tarifa por el peso real; si el viaje no lo tiene, por las toneladas programadas (estimado). Los «No se hizo» no tienen valor.'],
       ['Los tiquetes no van en el Excel: la columna Tiquete dice cuál tiene cada viaje, y se ven en Flota, abriendo el viaje.'],
       ['Es una foto del momento: lo que se corrija aquí no vuelve a Flota. Las correcciones se hacen en Flota.']];
     const hojas = [
       { nombre: 'Cómo leer', anchos: [150], sinRejilla: true, filas: leer.map(x => [{ v: x[0], e: { fuente: x[1] || '' } }]) },
       ExcelMant.tabla('Viajes', COLS, filas, { activa: true }),
-      { nombre: 'Resumen', anchos: [52, 13, 14, 13, 12, 13], sinRejilla: true, filas: res },
+      { nombre: 'Resumen', anchos: [52, 13, 14, 13, 12, 13, 15], sinRejilla: true, filas: res },
       ExcelMant.tabla('Semanas', COLS_S, filasS)];
     const archivo = 'Rutas liquidadas - ' + nombre + '.xlsx';
     Xlsx.bajar(Xlsx.armar(hojas, 'Rutas liquidadas SINUGRAVAS · ' + nombre), archivo);
@@ -22120,14 +22339,18 @@ const Rutas = {
      ya hay una igual, avisa (no bloquea) ---- */
   leerRuta(m) {
     const limpio = x => String(x || '').trim().replace(/\s+/g, ' ');
+    const valor = Money.leer($('#rrV', m).value), p = $('#rrP button.on', m);
     return { tipo: $('#rrTipo', m).value, interno: $('#rrInt', m).value, origen: limpio($('#rrO', m).value), destino: limpio($('#rrD', m).value),
-      cliente: limpio($('#rrC', m).value), ton: this.tonLeer($('#rrT', m).value), obs: limpio($('#rrObs', m).value) };
+      cliente: limpio($('#rrC', m).value), ton: this.tonLeer($('#rrT', m).value), obs: limpio($('#rrObs', m).value),
+      valor, por: valor == null ? null : p ? p.dataset.v : 'ton' };
   },
   abrirRuta(id) {
     const r0 = id ? this.ruta(id) : null;
     if (id && !r0) { Toast.show('Esa ruta ya no está.', 'warn'); return; }
     const r = r0 || { tipo: this.tipos()[0] || '', interno: this.internos()[0] || '', origen: '', destino: '', cliente: '', ton: null, obs: '' };
     const opc = (lista, actual) => (actual && !lista.includes(actual) ? [actual] : []).concat(lista).map(x => '<option' + (x === actual ? ' selected' : '') + '>' + esc(x) + '</option>').join('');
+    /* El valor que tiene (el último que se puso) y cómo se paga; una ruta nueva, como la mayoría */
+    const t0 = r0 ? this.tarifaUlt(r0) : null, por0 = t0 && t0.valor != null ? t0.por : this.porComun();
     const m = Modal.abrir({
       titulo: r0 ? 'Editar ruta' : 'Nueva ruta', sub: r0 ? esc(this.nombreTMS(r0)) : 'Sale en la lista para programar', ancho: 'm-hoja',
       cuerpo: '<div id="rrAl"></div>' +
@@ -22138,6 +22361,16 @@ const Rutas = {
         '<div class="row"><div class="field"><label for="rrC">Cliente o frente</label><input class="inp" id="rrC" autocomplete="off" value="' + attr(r.cliente) + '"></div>' +
           '<div class="field" style="max-width:160px"><label for="rrT">Ton. estándar</label><input class="inp" id="rrT" inputmode="decimal" autocomplete="off" value="' + attr(this.tonEsc(r.ton)) + '"></div></div>' +
         '<div class="field mb0"><label for="rrObs">Observación <span class="txt-3">(opcional)</span></label><input class="inp" id="rrObs" autocomplete="off" value="' + attr(r.obs || '') + '"></div>' +
+        /* El valor (Juan, 09/11/2026): lo que pagan por esta ruta, por tonelada o por viaje; si cambia, desde cuándo */
+        '<div class="rt-bas rr-val"><div class="rt-bas-h">' + Icon('pesos', '', 15) + '<b>Valor</b><span>Lo que le pagan a SINUGRAVAS por esta ruta</span></div>' +
+          '<div class="row"><div class="field" style="max-width:200px"><label for="rrV">Valor <span class="txt-3">(opcional)</span></label><input class="inp" id="rrV" inputmode="numeric" ' +
+              'autocomplete="off" value="' + attr(Money.campo(t0 ? t0.valor : null)) + '" placeholder="Ej.: 120.000"></div>' +
+            '<div class="field"><label>Se paga</label><div class="seg" id="rrP">' + [['ton', 'Por tonelada'], ['viaje', 'Por viaje']].map(o => '<button type="button" data-v="' + o[0] +
+              '" class="' + (por0 === o[0] ? 'on' : '') + '">' + o[1] + '</button>').join('') + '</div></div></div>' +
+          '<div class="field rr-desde hidden" id="rrDesde"><label>¿Desde cuándo?</label><div class="rr-desde-c"><div class="seg" id="rrDq">' +
+              '<button type="button" data-v="dia" class="on">Desde un día</button><button type="button" data-v="todos">Para todos los viajes</button></div>' +
+            '<input class="inp" type="date" id="rrDf" value="' + hoyISO + '" aria-label="Desde qué día"></div><div class="hint mt4" id="rrDh"></div></div>' +
+          '<div class="hint" id="rrVh"></div></div>' +
         '<div class="hint mt12" id="rrNom"></div>' +
         '<div class="hint mt8">Los tipos de operación y los tipos internos se cambian en Catálogo.</div>',
       pie: (r0 ? '<button type="button" class="btn btn-ghost mf-left" data-act="rtActivar" data-r="' + attr(r0.id) + '">' + Icon(r0.activa === false ? 'eye' : 'eyeOff', '', 14) +
@@ -22153,8 +22386,19 @@ const Rutas = {
       $('#rrNom', m).textContent = 'El nombre largo, como en el Excel, se arma solo: ' + (d.origen || d.destino ? this.nombreTMS(d) : 'TIPO | ORIGEN → DESTINO | CLIENTE') + '.';
       $('#rrAl', m).innerHTML = igual ? '<div class="alert a-warn mb12">' + Icon('warn') + '<div><b>Ya hay una ruta igual</b>' + esc(this.nombreTMS(igual)) +
         (igual.activa === false ? ' (inactiva)' : '') + '. Se puede guardar igual.</div></div>' : '';
+      /* Si cambia el valor que tenía: desde un día (los viajes de antes se quedan con el de antes) o para todos (para corregir un error) */
+      const cambio = Boolean(t0) && ((t0.valor == null ? null : +t0.valor) !== d.valor || (d.valor != null && t0.por !== d.por));
+      const q = ($('#rrDq button.on', m) || { dataset: {} }).dataset.v || 'dia', f = $('#rrDf', m).value, previo = f ? this.tarifa(r0, this.mas(f, -1)) : null;
+      $('#rrDesde', m).classList.toggle('hidden', !cambio);
+      $('#rrDf', m).classList.toggle('hidden', q === 'todos');
+      $('#rrDh', m).textContent = !cambio ? '' : q === 'todos' || !f ? 'Cambia el valor de todos los viajes de esta ruta, también los de antes: sirve para corregir un error.'
+        : 'Los viajes desde el ' + this.dia(f) + ' toman el nuevo; los de antes se quedan con ' + (previo && previo.valor != null ? this.tarifaTxt(previo) : 'el de antes') + '.';
+      $('#rrVh', m).textContent = !t0 && d.valor != null ? 'Sirve para todos los viajes de esta ruta, también los que ya están programados.' : this.historialTxt(r0);
       g.disabled = !d.origen || !d.destino || JSON.stringify(d) === antes;
     };
+    m._t0 = t0;
+    $('#rrV', m).addEventListener('input', e => Money.escribir(e.target));
+    $$('#rrP button, #rrDq button', m).forEach(b => b.addEventListener('click', () => { $$('button', b.parentNode).forEach(x => x.classList.toggle('on', x === b)); revisar(); }));
     t.addEventListener('input', () => { const s = t.value.replace(/[^\d,.]/g, ''); if (s !== t.value) t.value = s; });
     ['input', 'change'].forEach(ev => m.addEventListener(ev, () => setTimeout(revisar)));
     revisar();
@@ -22167,10 +22411,24 @@ const Rutas = {
     let r = m._id ? this.ruta(m._id) : null;
     if (m._id && !r) { Modal.cerrar(m); Toast.show('Esa ruta ya no está.', 'warn'); return; }
     if (!r) { r = { id: this.nuevoId('r'), activa: true }; Datos.rutas.push(r); }
+    const nv = { valor: d.valor, por: d.por };
+    delete d.valor;
+    delete d.por;
     Object.assign(r, d);
+    /* El valor, si cambió: el primero (o «Para todos los viajes») sirve para todos; si no, desde el día escogido, y los de antes se quedan */
+    const t0 = this.tarifaUlt(r), cambio = (t0 && t0.valor != null ? +t0.valor : null) !== nv.valor || (nv.valor != null && (t0 ? t0.por : null) !== nv.por);
+    const q = ($('#rrDq button.on', m) || { dataset: {} }).dataset.v || 'dia', f = $('#rrDf', m).value;
+    const desde = cambio && t0 && q !== 'todos' && f ? f : '';
+    if (cambio) {
+      const nueva = { desde, valor: nv.valor, por: nv.valor != null ? nv.por : null };
+      if (desde) r.tarifas = this.tarifas(r).filter(x => (x.desde || '') < desde).concat([nueva]);
+      else if (nv.valor == null) delete r.tarifas;
+      else r.tarifas = [nueva];
+    }
     Modal.cerrar(m);
     Router.pintar(true);
-    Toast.show('Ruta guardada: <b>' + esc(this.nombre(r)) + '</b>.');
+    Toast.show('Ruta guardada: <b>' + esc(this.nombre(r)) + '</b>' + (cambio ? ', ' + esc(nv.valor != null ? this.tarifaTxt(nv) : 'sin valor') +
+      (desde ? ' desde el ' + this.dia(desde) : nv.valor != null ? ', para todos sus viajes' : '') : '') + '.');
   },
   activar(el) {
     const r = this.ruta(el.dataset.r);
