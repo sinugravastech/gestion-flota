@@ -1965,7 +1965,7 @@ span.chip-adj{color:var(--text-3)}
 /* Debajo de «¿Qué pasó?» al abrir el caso (ver Ventanas.correctivo); y la hora de entrada, angosta */
 .sug.f-sug{align-items:center}
 .sug.f-sug:empty{display:none}
-.row>#mcEHC{flex:0 1 128px}
+.row>#mcEHC,.row>#mcSHC,.row>#mpHC{flex:0 1 128px}
 /* Lo que supone por el síntoma (ver Sintomas): punteado hasta que se toca */
 .sug .chip.supone{border-style:dashed;border-color:var(--border-strong);background:transparent}
 .sug .chip.supone.on{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
@@ -3910,10 +3910,12 @@ const Q = {
      del camión que lo arrastra, y se cambia en el camión. El que un remolque
      tuviera guardado antes ya no se usa en ninguna parte. */
   camionDe: u => Datos.unidades.find(x => x.remolque === u.id),
+  /* El conductor escrito de un vehículo de un tercero (Juan, 10/11/2026: «tienen operarios que no son de nosotros»): no está en RH, así
+     que se reconoce por su nombre, como el escrito a mano en un viaje (ver Rutas.conductor). Sin documentos ni ficha que abrir */
+  escritoDe: u => { const n = String(((u && u.tercero) || {}).conductor || '').trim(); return n ? { id: 'txt:' + Catalogo.clave(n), nombre: n, docs: {}, escrito: true } : null; },
   conductorDe(u) {
-    if (u.tipo !== 'remolque') return Q.conductor(u.conductor);
-    const cam = Q.camionDe(u);
-    return cam ? Q.conductor(cam.conductor) : undefined;
+    const x = u.tipo !== 'remolque' ? u : Q.camionDe(u);
+    return x ? Q.escritoDe(x) || Q.conductor(x.conductor) : undefined;
   },
   /* Las unidades de un conductor, sin remolques: el remolque va con su camión */
   unidadesDe: id => Datos.unidades.filter(u => u.conductor === id && u.tipo !== 'remolque'),
@@ -4166,7 +4168,7 @@ const UI = {
     const ruta = c && c.fotoRh, url = FotoRH.url(ruta);
     if (ruta && !url) FotoRH.pedir([ruta]);
     return '<span class="av' + (cls ? ' ' + cls : '') + '"' + (ruta ? ' data-foto="' + attr(ruta) + '"' : '') +
-      (c && !quieto ? ' data-act="verConductor" data-c="' + attr(c.id) + '" title="Ver su ficha"' : '') + '>' +
+      (c && !quieto && !c.escrito ? ' data-act="verConductor" data-c="' + attr(c.id) + '" title="Ver su ficha"' : '') + '>' +
       (url ? '<img src="' + attr(url) + '" alt="">' : esc(this.iniciales(c ? c.nombre : ''))) + '</span>';
   },
   file(nombre, id) {
@@ -9314,6 +9316,8 @@ const Avances = {
     const u = this.ultimoMomento(m);
     return f + ' ' + (h || '23:59') < u.k ? 'La salida no puede quedar antes ' + (u.avance ? 'del último avance' : 'de la entrada') + ' (' + u.txt + '). Revise la fecha y la hora.' : '';
   },
+  /* La hora en que salió del taller: la escrita (Juan, 10/11/2026) o, en los de antes, la del avance de la salida */
+  horaSalida(m) { const c = this.de(m).filter(n => n.cierre).pop(); return m.horaSalida || (c && c.h) || ''; },
   /* El título del arreglo en las listas: lo que se hizo o, si va por anotaciones, cuántas lleva */
   titulo(m) {
     const n = (m.notas || []).length;
@@ -9712,6 +9716,8 @@ const AvancesForm = {
       if (!x || !t.dataset.c) return;
       if (t.dataset.c === 'llValor') Money.escribir(t);
       x[t.dataset.c] = t.value;
+      /* El avance de la salida mueve también «Salió del taller» (ver EditarArreglo.salidaJunta) */
+      if (x.cierre && (t.dataset.c === 'f' || t.dataset.c === 'h') && m._alSalida) m._alSalida(x);
       m._avCambio();
     });
     cont.addEventListener('click', e => {
@@ -9969,7 +9975,7 @@ const EditarArreglo = {
     $('#mcNC .hint', m).textContent = abierto ? 'Corrija lo que haga falta y escriba lo nuevo en el último avance. Si llegaron varios, «Agregar otro avance».'
       : 'Los avances que tuvo el arreglo: también se pueden corregir.';
     $('#mcSal', m).classList.toggle('hidden', abierto);
-    if (!abierto) $('#mcS', m).value = r.salida || r.fecha || hoyISO;
+    if (!abierto) { $('#mcS', m).value = r.salida || r.fecha || hoyISO; $('#mcSH', m).value = Avances.horaSalida(r); }
     $('#mcFotosL', m).innerHTML = prog ? 'Fotos de cómo está <span class="txt-3">(opcional)</span>'
       : m._conAvances ? 'Fotos de cómo llegó <span class="txt-3">(opcional)</span>' : 'Fotos del arreglo';
     /* El taller y quien puso los repuestos */
@@ -9992,6 +9998,7 @@ const EditarArreglo = {
     m._av = Avances.de(r).map(n => Object.assign(AvancesForm.bloque(n.f), { id: n.id, ts: n.ts, h: n.h || '', t: n.t || '', fotos: fotos(n.id) }, n.cierre ? { cierre: true } : {},
       n.espera ? { espera: true } : {}, (n.llantas || []).length ? { llantas: n.llantas.slice() } : {}, +n.llValor > 0 ? { llValor: Money.campo(n.llValor) } : {}))
       .concat(abierto || !notas ? [AvancesForm.bloque(hoyISO)] : []);
+    if (!abierto) this.salidaJunta(m);
     AvancesForm.pintar(m);
     m._pintarFotos();
     /* Sus adjuntos (ver Adjuntos) */
@@ -10013,11 +10020,26 @@ const EditarArreglo = {
     }
     this.vigilar(m, r);
   },
+  /* La salida es una sola (Juan, 10/11/2026): «Salió del taller» y el avance de la salida, si lo tiene, dicen lo mismo. Al abrir, el
+     avance toma la fecha y la hora de la salida; al cambiar una, cambia la otra (ver AvancesForm.montar) */
+  salidaJunta(m) {
+    const cierre = () => (m._av || []).filter(a => a.cierre).pop(), a0 = cierre();
+    if (a0) { a0.f = $('#mcS', m).value || a0.f; a0.h = $('#mcSH', m).value; }
+    m._alSalida = a => { if (a.f) $('#mcS', m).value = a.f; $('#mcSH', m).value = a.h || ''; };
+    ['#mcS', '#mcSH'].forEach(s => $(s, m).addEventListener('input', () => {
+      const a = cierre();
+      if (!a) return;
+      a.f = $('#mcS', m).value || a.f;
+      a.h = $('#mcSH', m).value;
+      const b = m._avCont && m._avCont.querySelector('[data-av="' + a.k + '"]');
+      if (b) { b.querySelector('[data-c="f"]').value = a.f; b.querySelector('[data-c="h"]').value = a.h; }
+    }));
+  },
   /* Lo que se guardaría, para compararlo con lo de al abrir. El taller y los
      repuestos van aparte: su lista puede llegar después (ver ProvFact.alAbrir) */
   firma(m) {
     const d = Leer.correctivo(m);
-    return JSON.stringify([d.entrada, d.horaEntrada, d.programado ? d.programado.h : '', d.salida, d.trabajo, d.componente, d.falla, d.lectura, d.valor, d.partes.map(p => p.k), d.llantas, d.llanta, d.repMismo,
+    return JSON.stringify([d.entrada, d.horaEntrada, d.programado ? d.programado.h : '', d.salida, d.horaSalida, d.trabajo, d.componente, d.falla, d.lectura, d.valor, d.partes.map(p => p.k), d.llantas, d.llanta, d.repMismo,
       d.notas.map(n => [n.id, n.f, n.h, n.t, n.llValor || 0]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort(), d.adjuntos.map(a => a.id), d.valorTaller, d.valorRep, d.aMano || null]);
   },
   /* Guardar, apagado hasta que algo cambie */
@@ -10039,12 +10061,18 @@ const EditarArreglo = {
     const conTrabajo = !$('#mcTC', m).classList.contains('hidden');
     if (conTrabajo && !d.trabajo) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#mcT', m).focus(); return; }
     if (r.estado === 'cerrado' && !conTrabajo && !d.notas.length) { Toast.show('Deje al menos un avance con lo que se hizo.', 'err'); return; }
+    /* La salida no puede quedar antes de lo último que pasó (ver Avances.salidaAntes), ahora con su hora (Juan, 10/11/2026) */
+    if (r.estado === 'cerrado') {
+      const mal = Avances.salidaAntes({ fecha: d.entrada, horaEntrada: d.horaEntrada, notas: (m._conAvances ? d.notas : r.notas || []).filter(n => !n.cierre) },
+        d.salida || r.salida, d.horaSalida);
+      if (mal) { Toast.show(esc(mal), 'err'); $('#mcSH', m).focus(); return; }
+    }
     const antes = new Set((r.notas || []).map(n => n.id)), nuevos = d.notas.filter(n => !antes.has(n.id)).length;
     const poner = (k, v) => { if (v === undefined || v === '' || (Array.isArray(v) && !v.length)) delete r[k]; else r[k] = v; };
     r.fecha = d.entrada;
     poner('horaEntrada', d.horaEntrada);
     if (r.estado === 'programado') r.programado = d.programado;
-    if (r.estado === 'cerrado') r.salida = d.salida || r.salida;
+    if (r.estado === 'cerrado') { r.salida = d.salida || r.salida; poner('horaSalida', d.horaSalida); }
     if (conTrabajo) r.trabajo = d.trabajo;
     poner('componente', d.componente);
     poner('componentes', d.componentes);
@@ -10081,7 +10109,7 @@ const EditarPreventivo = {
      aparte: su lista puede llegar después (ver ProvFact.alAbrir) */
   firma(m, r) {
     const f = m._archivo;
-    return JSON.stringify([$('#mpF', m).value, $('#mpL', m).value.trim(), $('#mpT', m).value.trim(), Leer.pesos(m._manualV), Boolean(m._manoV),
+    return JSON.stringify([$('#mpF', m).value, $('#mpH', m).value, $('#mpL', m).value.trim(), $('#mpT', m).value.trim(), Leer.pesos(m._manualV), Boolean(m._manoV),
       PlanoForm.escogidas(m).map(p => p.k), Compras.leer($('#mpO', m), r).slice().sort(), f ? [f.name, f.size, f.lastModified] : null,
       (m._fotos || []).map(x => [x.id, x.txt])]);
   },
@@ -10105,6 +10133,7 @@ const EditarPreventivo = {
     const a = m._archivo ? await Archivos.conBoton(el, () => Archivos.preparar(m._archivo)) : null;
     const antes = this.cambio(u, r), partes = PlanoForm.escogidas(m), valor = Leer.pesos(m._manualV);
     r.fecha = $('#mpF', m).value || r.fecha;
+    if ($('#mpH', m).value) r.horaEntrada = $('#mpH', m).value; else delete r.horaEntrada;
     r.trabajo = $('#mpT', m).value.trim() || 'Cambio de aceite';
     r.lectura = $('#mpL', m).value.trim();
     if (valor) r.valor = valor; else delete r.valor;
@@ -11007,9 +11036,10 @@ const Vistas = {
      con clic en su foto o en su nombre; en un remolque, el del camión que lo
      arrastra. Mientras se seleccionan unidades, nada tiene clic */
   pieQuien(u, c, sel) {
-    const ver = c && !sel ? ' data-act="verConductor" data-c="' + attr(c.id) + '"' : '', aviso = ConductoresRH.aviso(c, u);
+    const ver = c && !sel && !c.escrito ? ' data-act="verConductor" data-c="' + attr(c.id) + '"' : '', aviso = ConductoresRH.aviso(c, u);
     if (aviso) return '<span class="tx-warn"' + ver + ' title="' + attr(c.nombre + ' · ' + aviso) + '">' + Icon('warn', '', 12) + esc(UI.corto(c)) + '</span>';
-    return '<span' + ver + (ver ? ' title="Ver su ficha"' : '') + '>' + (c ? UI.avatar(c, 'xs', true) : Icon('user', '', 12)) + esc(UI.corto(c)) + '</span>';
+    return '<span' + ver + (ver ? ' title="Ver su ficha"' : c && c.escrito ? ' title="' + attr(c.nombre + ' · conductor del tercero') + '"' : '') + '>' +
+      (c ? UI.avatar(c, 'xs', true) : Icon('user', '', 12)) + esc(UI.corto(c)) + '</span>';
   },
   /* El enganche, en una línea más del pie: el remolque del camión, o el
      camión que arrastra al remolque. Su placa lleva a esa unidad */
@@ -11117,7 +11147,8 @@ const Vistas = {
                   '<small>' + Icon('user', '', 11) + 'Conductor u operador</small>' +
                   '<div class="fact-sel">' + (c ? UI.avatar(c, 'xs') : '') +
                     '<span' + (ret ? ' class="tx-warn"' : '') + '>' + esc(c ? c.nombre : 'Sin asignar') + '</span>' + Icon('chevD', '', 13) + '</div>' +
-                  '<span' + (ret ? ' class="tx-warn"' : '') + '>' + (ret ? esc(ret) : c ? (c.cat ? 'Licencia ' + esc(c.cat) : 'Sin categoría de licencia') : 'Clic para asignar') +
+                  '<span' + (ret ? ' class="tx-warn"' : '') + '>' + (ret ? esc(ret) : c && c.escrito ? 'Del tercero · escrito en Flota'
+                    : c ? (c.cat ? 'Licencia ' + esc(c.cat) : 'Sin categoría de licencia') : 'Clic para asignar') +
                   '</span></div>') +
             fact('clipboard', 'Última inspección', u.insp ? Fecha.corta(u.insp) : 'Sin registro', u.insp ? Fecha.hace(u.insp) : '', ins.k) +
             fact('tool', 'Último mantenimiento', ultX ? Fecha.corta(ultX.fecha) : ult ? Fecha.corta(ult.fecha) : 'Sin registros',
@@ -11713,13 +11744,16 @@ const Ventanas = {
           (tipo === 'canoa' ? campo('nuMarca', 'Nombre de la canoa', '', 'Canoa 03') : campo('nuMarca', 'Marca') + campo('nuLinea', 'Línea')) +
           (tipo === 'canoa' ? '' : campo('nuModelo', 'Modelo (año)', ' inputmode="numeric"') + campo('nuColor', 'Color')) +
           /* El remolque no lleva conductor propio: es el del camión que lo arrastra (ver Q.conductorDe) */
-          (tipo === 'remolque' ? '' : '<div class="field"><label>Conductor u operador</label><select class="inp" id="nuCond">' + Opc.conductores('', 'Sin asignar', false, tipo) + '</select></div>') +
+          (tipo === 'remolque' ? '' : '<div class="field" id="nuCondC"' + (prop === 'tercero' ? ' hidden' : '') + '><label>Conductor u operador</label><select class="inp" id="nuCond">' +
+            Opc.conductores('', 'Sin asignar', false, tipo) + '</select></div>') +
         '</div>' +
         /* De SINUGRAVAS o de un tercero que les presta el servicio (Juan, 07/11/2026) */
         '<div class="field"><label>Propiedad</label><div class="seg" id="nuProp">' + [['propio', 'De SINUGRAVAS'], ['tercero', 'De un tercero']]
           .map(o => '<button type="button" data-v="' + o[0] + '"' + (o[0] === prop ? ' class="on"' : '') + '>' + o[1] + '</button>').join('') + '</div></div>' +
         '<div class="grid g2" id="nuTer" style="gap:0 14px"' + (prop === 'tercero' ? '' : ' hidden') + '>' +
-          campo('nuTerQuien', '¿Quién presta el servicio?', '', 'Empresa o persona') + campo('nuTerTel', 'Contacto (opcional)', ' inputmode="tel"', 'Teléfono') + '</div>' +
+          campo('nuTerQuien', '¿Quién presta el servicio?', '', 'Empresa o persona') + campo('nuTerTel', 'Contacto (opcional)', ' inputmode="tel"', 'Teléfono') +
+          /* Su conductor, escrito (Juan, 10/11/2026): no está en RH. El remolque lleva el del camión */
+          (tipo === 'remolque' ? '' : campo('nuTerCond', tipo === 'maquinaria' ? 'Operador del tercero (opcional)' : 'Conductor del tercero (opcional)', ' maxlength="80"', 'Nombre y apellido')) + '</div>' +
         Dz.html('nuDz', 'Foto de la unidad', 'Arrastre la foto aquí o haga clic para buscarla', 'image/*', false) +
         '<div id="nuPrev"></div>';
       $$('.tsel', m).forEach(b => b.addEventListener('click', () => { tipo = b.dataset.tipo; m._foto = null; pintar(); }));
@@ -11727,6 +11761,8 @@ const Ventanas = {
         prop = b.dataset.v;
         $$('#nuProp button', m).forEach(x => x.classList.toggle('on', x === b));
         $('#nuTer', m).hidden = prop !== 'tercero';
+        /* De un tercero, el conductor se escribe abajo; la lista de RH es para los de SINUGRAVAS */
+        if ($('#nuCondC', m)) $('#nuCondC', m).hidden = prop === 'tercero';
         if (prop === 'tercero') $('#nuTerQuien', m).focus();
       }));
       /* La foto se comprime al crear la unidad (ver Guardadas.poner) */
@@ -11815,7 +11851,11 @@ const Ventanas = {
       lista.push(c);
       if (c.de === 'clase') return '<div class="field">' + et + '<select class="inp" id="' + id + '">' +
         clases.map(x => '<option' + (x === u.clase ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select></div>';
-      if (c.de === 'conductor') return '<div class="field">' + et + '<select class="inp" id="' + id + '">' + Opc.conductores(u.conductor || '', 'Sin asignar', true, u.tipo) + '</select></div>';
+      /* De un tercero, el nombre se escribe (Juan, 10/11/2026); de SINUGRAVAS, el de la lista de RH */
+      if (c.de === 'conductor') return '<div class="field">' + et + '<div class="ed-prop"' + (u.tercero ? ' hidden' : '') + '><select class="inp" id="' + id + '">' +
+        Opc.conductores(u.conductor || '', 'Sin asignar', true, u.tipo) + '</select></div>' +
+        '<div class="ed-ter"' + (u.tercero ? '' : ' hidden') + '><input class="inp" id="edTerCond" maxlength="80" autocomplete="off" placeholder="Nombre del conductor del tercero" value="' +
+        attr(((u.tercero || {}).conductor) || '') + '"><div class="hint">Del tercero: no está en RH, se escribe el nombre.</div></div></div>';
       const v = c.de ? u[c.de] : (u.ficha || {})[HojaVida.nombre(c)];
       return '<div class="field">' + et + '<input class="inp" id="' + id + '"' + (c.fecha ? ' type="date"' : '') + (c.de === 'modelo' ? ' inputmode="numeric"' : '') +
         ' value="' + attr(v == null ? '' : v) + '"></div>';
@@ -11840,6 +11880,7 @@ const Ventanas = {
     $$('#edProp button', m).forEach(b => b.addEventListener('click', () => {
       $$('#edProp button', m).forEach(x => x.classList.toggle('on', x === b));
       $$('.ed-ter', m).forEach(x => { x.hidden = b.dataset.v !== 'tercero'; });
+      $$('.ed-prop', m).forEach(x => { x.hidden = b.dataset.v === 'tercero'; });
     }));
   },
 
@@ -11864,6 +11905,8 @@ const Ventanas = {
 
   /* Cambiar el conductor u operador, de la lista de los que están registrados */
   cambioConductor(u) {
+    /* De un tercero (Juan, 10/11/2026): sus conductores no están en RH, así que se escribe el nombre (ver Q.escritoDe) */
+    if (Q.tercero(u)) { this.conductorTercero(u); return; }
     const c = Q.conductor(u.conductor);
     const enOtras = id => Q.unidadesDe(id).filter(x => x !== u).map(x => UI.placaTxt(x));
     const quien = u.tipo === 'maquinaria' ? 'operador' : 'conductor';
@@ -11886,6 +11929,26 @@ const Ventanas = {
     });
   },
 
+  /* El conductor de un vehículo de un tercero: escrito, con los nombres ya escritos para escoger */
+  conductorTercero(u) {
+    const c = Q.conductorDe(u), quien = u.tipo === 'maquinaria' ? 'operador' : 'conductor';
+    const nombres = [...new Set(Datos.unidades.map(x => Q.escritoDe(x)).filter(Boolean).map(x => x.nombre).concat(Datos.viajes.map(v => v.conductorTxt).filter(Boolean)))]
+      .sort((a, b) => a.localeCompare(b));
+    const m = Modal.abrir({
+      titulo: 'Cambiar ' + quien, sub: esc(UI.placaTxt(u) + ' · ' + u.clase + ' ' + UI.nombre(u)),
+      cuerpo: '<div class="alert a-info mb16">' + Icon('briefcase') + '<div>Es de un tercero' + (u.tercero.quien ? ' (' + esc(u.tercero.quien) + ')' : '') +
+          ': sus conductores no están en Recursos Humanos, así que se escribe el nombre. Hoy está asignado: <b>' + esc(c ? c.nombre : 'nadie') + '</b>. ' +
+          'Sale solo en Rutas, en cada viaje de este vehículo.</div></div>' +
+        '<div class="field"><label for="cdT">' + (quien === 'operador' ? 'Operador' : 'Conductor') + ' del tercero</label><input class="inp" id="cdT" list="cdTL" maxlength="80" ' +
+          'autocomplete="off" placeholder="Nombre y apellido" value="' + attr(c && c.escrito ? c.nombre : '') + '"><datalist id="cdTL">' +
+          nombres.map(n => '<option value="' + attr(n) + '">').join('') + '</datalist><div class="hint">Vacío: queda sin ' + quien + '.</div></div>' +
+        '<div class="row"><div class="field"><label>Fecha del cambio</label><input class="inp" type="date" id="cdF" value="' + hoyISO + '"></div><div></div></div>' +
+        '<div class="field mb0"><label>Motivo u observación</label><textarea class="inp" id="cdM" placeholder="Opcional"></textarea></div>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarCambioConductor" data-u="' + u.id + '">' +
+        Icon('save', '', 14) + 'Guardar cambio</button>'
+    });
+    setTimeout(() => { const i = $('#cdT', m); if (i) i.focus(); }, 60);
+  },
   /* El remolque de un camión: uno por camión. Si el escogido estaba con otro
      camión, pasa a este y el otro queda sin remolque (Juan, 02/11/2026) */
   cambioRemolque(u) {
@@ -12100,15 +12163,14 @@ const Acciones = {
        Los demás datos no: la actividad es la historia de la unidad, no de lo
        que se edita. */
     const placaAntes = u.placa;
+    /* De un tercero, el conductor es el escrito (ver Q.escritoDe); el de la lista solo cuenta si es de SINUGRAVAS */
+    const pb0 = $('#edProp button.on', m), terNuevo = pb0 ? pb0.dataset.v === 'tercero' : Q.tercero(u), condAntes = u.tipo === 'remolque' ? null : Q.conductorDe(u);
     let cambios = 0, detCond = '';
     m._campos.forEach((c, i) => {
       const nuevo = c.de === 'placa' ? placa : v(i);
       if (nuevo === null) return;
       if (c.de === 'conductor') {
-        if ((nuevo || null) !== (u.conductor || null)) {
-          detCond = detConductor(Q.conductor(u.conductor), Q.conductor(nuevo || null));
-          u.conductor = nuevo || null;
-        }
+        if (!terNuevo && (nuevo || null) !== (u.conductor || null)) u.conductor = nuevo || null;
         return;
       }
       const k = HojaVida.nombre(c), antes = c.de ? u[c.de] : (u.ficha || {})[k];
@@ -12123,8 +12185,15 @@ const Acciones = {
     /* De SINUGRAVAS o de un tercero */
     const pb = $('#edProp button.on', m);
     if (pb) {
-      const ter = pb.dataset.v === 'tercero' ? { quien: $('#edTerQuien', m).value.trim(), contacto: $('#edTerTel', m).value.trim() } : null;
+      const condT = terNuevo && $('#edTerCond', m) ? $('#edTerCond', m).value.trim().replace(/\s+/g, ' ') : '';
+      const ter = pb.dataset.v === 'tercero' ? Object.assign({ quien: $('#edTerQuien', m).value.trim(), contacto: $('#edTerTel', m).value.trim() }, condT ? { conductor: condT } : {}) : null;
       if (JSON.stringify(ter) !== JSON.stringify(u.tercero || null)) { if (ter) u.tercero = ter; else delete u.tercero; cambios++; }
+      /* El escrito manda: el de la lista se quita */
+      if (condT && u.conductor) u.conductor = null;
+    }
+    const condDespues = u.tipo === 'remolque' ? null : Q.conductorDe(u);
+    if ((condAntes ? condAntes.id : null) !== (condDespues ? condDespues.id : null)) {
+      detCond = detConductor(condAntes, condDespues) + (condDespues && condDespues.escrito ? ' (del tercero)' : '');
     }
     if (!cambios && !detCond) { Toast.show('No cambió ningún dato.', 'warn'); return; }
     if (u.placa !== placaAntes) Guardadas.renombrarTarjeta(u);
@@ -12165,6 +12234,21 @@ const Acciones = {
   },
   guardarCambioConductor(el) {
     const m = el.closest('.modal-bd'), u = Q.unidad(el.dataset.u);
+    /* De un tercero: el nombre escrito (ver Ventanas.conductorTercero) */
+    if ($('#cdT', m)) {
+      const antesT = Q.conductorDe(u), n = $('#cdT', m).value.trim().replace(/\s+/g, ' ');
+      if (n === (antesT && antesT.escrito ? antesT.nombre : '') && !u.conductor) { Toast.show('Es la misma persona que ya está asignada.', 'warn'); return; }
+      if (n) u.tercero.conductor = n; else delete u.tercero.conductor;
+      u.conductor = null;
+      const despuesT = Q.conductorDe(u);
+      Actividad.registrar(u, 'conductor', u.tipo === 'maquinaria' ? 'Cambio de operador' : 'Cambio de conductor', detConductor(antesT, despuesT, $('#cdM', m).value.trim()) +
+        (despuesT ? ' (del tercero)' : ''), [], $('#cdF', m).value || hoyISO);
+      Modal.cerrar(m);
+      Toast.show(despuesT ? '<b>' + esc(despuesT.nombre) + '</b> quedó asignado a ' + esc(UI.placaTxt(u)) + '. Sale solo en sus viajes de Rutas.'
+        : esc(UI.placaTxt(u)) + ' quedó sin conductor asignado.');
+      Router.pintar(true);
+      return;
+    }
     const nuevo = $('#cdN', m).value || null;
     if (nuevo === (u.conductor || null)) { Toast.show('Es la misma persona que ya está asignada.', 'warn'); return; }
     const antes = Q.conductor(u.conductor), despues = Q.conductor(nuevo), motivo = $('#cdM', m).value.trim();
@@ -12363,13 +12447,14 @@ const Acciones = {
     const u = {
       id: 'n' + Date.now(), tipo, clase: v('nuClase'), placa,
       marca: tipo === 'canoa' ? '' : v('nuMarca'), linea: v('nuLinea'), alias: tipo === 'canoa' ? (v('nuMarca') || placa) : '',
-      modelo: v('nuModelo'), color: v('nuColor'), conductor: v('nuCond') || null, foto: null,
+      modelo: v('nuModelo'), color: v('nuColor'), conductor: m._prop() === 'tercero' ? null : v('nuCond') || null, foto: null,
       ficha: {}, docs: {}, otros: [], insp: null, comp: Comparendos.nueva({ tipo }), compHist: []
     };
-    if (m._prop() === 'tercero') u.tercero = { quien: v('nuTerQuien'), contacto: v('nuTerTel') };
+    if (m._prop() === 'tercero') u.tercero = Object.assign({ quien: v('nuTerQuien'), contacto: v('nuTerTel') }, v('nuTerCond') ? { conductor: v('nuTerCond').replace(/\s+/g, ' ') } : {});
     Datos.unidades.push(u);
     if (m._foto) Guardadas.poner(u, 'foto', m._foto).then(() => { const r = Router.actual(); if (r.vista === 'unidad' && r.id === u.id) Router.pintar(true); });
     if (u.conductor) Actividad.registrar(u, 'conductor', tipo === 'maquinaria' ? 'Cambio de operador' : 'Cambio de conductor', 'Se asignó a ' + Q.conductor(u.conductor).nombre);
+    else if (Q.escritoDe(u)) Actividad.registrar(u, 'conductor', tipo === 'maquinaria' ? 'Cambio de operador' : 'Cambio de conductor', 'Se asignó a ' + Q.escritoDe(u).nombre + ' (del tercero)');
     Modal.cerrar(m);
     Toast.show('Unidad creada: <b>' + esc(UI.placaTxt(u)) + '</b>');
     Router.ir('unidad/' + u.id);
@@ -12492,10 +12577,11 @@ const Formatos = {
     const u = d.unidad, p = d.prov, c = Q.conductorDe(u), conPlaca = u.tipo === 'carga' || u.tipo === 'remolque', horas = u.tipo === 'maquinaria';
     const k = Plano.clave(u), partes = d.partes || [], zonas = partes.map(x => (Plano.parte(k, x.k) || {}).zona).filter(Boolean);
     return this.cabecera('Mantenimiento preventivo', 'Servicio programado de la unidad', Fecha.corta(d.fecha), 'Preventivo del',
-        [[UI.placaTxt(u), u.clase, MantRemolque.pdf(d), d.fecha ? 'el ' + Fecha.larga(d.fecha) : ''].filter(Boolean).join(' · '), d.lectura ? (horas ? 'Horómetro ' : 'Kilometraje ') + d.lectura : '']) +
+        [[UI.placaTxt(u), u.clase, MantRemolque.pdf(d), d.fecha ? 'el ' + Fecha.larga(d.fecha) + (d.horaEntrada ? ' a las ' + Programado.hora(d.horaEntrada) : '') : ''].filter(Boolean).join(' · '), d.lectura ? (horas ? 'Horómetro ' : 'Kilometraje ') + d.lectura : '']) +
       this.sec('Unidad', this.campos([[conPlaca ? 'Placa' : 'Código', UI.placaTxt(u)], ['Tipo', TIPOS[u.tipo].nombre + ' · ' + u.clase],
         ['Marca y línea', UI.nombre(u) || '—'], ['Conductor', c ? c.nombre : 'Sin asignar']])) +
-      this.sec('Servicio', this.campos([['Proveedor', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'], ['Fecha', Fecha.larga(d.fecha)],
+      this.sec('Servicio', this.campos([['Proveedor', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'],
+        ['Fecha', Fecha.larga(d.fecha) + (d.horaEntrada ? ' · ' + Programado.hora(d.horaEntrada) : '')],
         [horas ? 'Horómetro' : 'Kilometraje', d.lectura || '—']].concat(TallerRep.campos(d)).concat(d.adjunto ? [['Adjunto', d.adjunto]] : []))) +
       (partes.length ? this.sec('Partes que tocó', '<div class="dp-arreglo"><div class="dp-plano">' + Plano.svg(k, { mini: true, sel: zonas }) + '</div>' +
         '<div class="dp-fields"><div class="dp-f"><label>Partes</label><span>' + esc(partes.map(x => Plano.nombre(u, x)).join(', ')) + '</span></div></div></div>') : '') +
@@ -12582,7 +12668,7 @@ const Formatos = {
       : Fecha.corta(d.entrada) + (d.horaEntrada ? ' · ' + d.horaEntrada : '') + ' · Entró al taller') }].concat(notas.map(n => ({ c: n.cierre ? 'fin' : '', t: n.t, fs: fotos.filter(f => f.nota === n.id),
       h: esc(Avances.cuando(n) + (n.cierre ? ' · Salió del taller' : '')) + (n.espera ? '<span class="pn-tag">Esperando repuestos</span>' : '') +
         ((n.llantas || []).length ? '<span class="pn-tag">' + esc((n.llantas.length > 1 ? 'Llantas: ' : 'Llanta: ') + Llantas.nombres(n.llantas) + Llantas.valorTxt(n)) + '</span>' : '') })),
-      salio ? [{ c: 'fin', t: d.trabajo || '', fs: [], h: esc(Fecha.corta(d.salida) + ' · Salió del taller') }] : []);
+      salio ? [{ c: 'fin', t: d.trabajo || '', fs: [], h: esc(Fecha.corta(d.salida) + (d.horaSalida ? ' · ' + d.horaSalida : '') + ' · Salió del taller') }] : []);
     const nodos = lista.map((x, k) => nodo(x, k === lista.length - 1));
     /* Lo que se hizo va arriba, salvo que ya vaya en la salida */
     return (d.trabajo && !salio ? '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo) + '</div>' : '') +
@@ -13863,8 +13949,8 @@ Object.assign(Ventanas, {
             (est.k === 'nr' ? '' : UI.pill(est.k, 'Documentos: ' + est.txt.toLowerCase())) + '</div>' +
           (ult ? '<div class="vh-km"><span>' + (u.tipo === 'maquinaria' ? 'Horómetro' : 'Kilometraje') + '</span><b>' + esc(Aceite.fmt(u, ult.valor)) + '</b><em>' +
             esc(Fecha.hace(ult.fecha)) + '</em></div>' : '') + '</div></div>' +
-        '<div class="vh-sec"><span class="l">Conductor</span>' + (cd
-          ? fila(' data-act="verConductor" data-c="' + attr(cd.id) + '" title="Ver su ficha"', UI.avatar(cd, '', true), esc(cd.nombre),
+        '<div class="vh-sec"><span class="l">Conductor</span>' + (cd && cd.escrito ? fila('', UI.avatar(cd, '', true), esc(cd.nombre), 'Conductor del tercero · escrito en Flota', true)
+          : cd ? fila(' data-act="verConductor" data-c="' + attr(cd.id) + '" title="Ver su ficha"', UI.avatar(cd, '', true), esc(cd.nombre),
             esc([cd.cat ? 'Licencia ' + cd.cat : 'Sin categoría de licencia', lic.k === 'ok' ? 'vigente' : lic.txt.toLowerCase(), vence ? 'vence el ' + Fecha.num(vence) : ''].filter(Boolean).join(' · ')))
           : '<div class="v vacio">' + (u.tipo === 'remolque' && !cam ? 'Sin camión, sin conductor' : 'Sin conductor asignado') + '</div>') + '</div>' +
         (u.tipo === 'remolque' ? '<div class="vh-sec"><span class="l">Lo arrastra</span>' + (cam ? otra(cam) : '<div class="v vacio">Ningún camión lo tiene asignado</div>') + '</div>'
@@ -13970,7 +14056,9 @@ Object.assign(Ventanas, {
           '<br>Al guardar, la novedad pasa a «Abiertas».</div></div>' : '') +
         /* Al corregirlo, o desde una novedad, la unidad no se cambia: va en el título */
         '<div class="row"><div class="field' + (r0 || nov ? ' hidden' : '') + '"><label>Unidad</label><select class="inp" id="mpU">' + Opc.unidades(r0 ? u0.id : o.u) + '</select></div>' +
-        '<div class="field"><label>Fecha</label><input class="inp" type="date" id="mpF" value="' + attr(r0 ? r0.fecha : hoyISO) + '"></div></div>' +
+        '<div class="field"><label>Fecha</label><input class="inp" type="date" id="mpF" value="' + attr(r0 ? r0.fecha : hoyISO) + '"></div>' +
+        /* La hora (Juan, 10/11/2026: «no tengo campo para poner la hora»), como la de entrada del correctivo */
+        '<div class="field" id="mpHC"><label>Hora</label><input class="inp" type="time" id="mpH" value="' + attr(r0 ? r0.horaEntrada || '' : ahora()) + '"></div></div>' +
         (r0 ? '' : MantRemolque.html('mp')) +
         '<div class="row"><div class="field"><label>Proveedor</label><select class="inp" id="mpP"><option value="">Sin proveedor</option>' +
           ProvFact.opciones(r0 ? ProvFact.valor(r0) : ProvFact.ultimoPreventivo()) + ProvFact.opcionNuevo() + '</select>' +
@@ -14204,7 +14292,9 @@ Object.assign(Ventanas, {
             /* La hora en que entró (Juan, 06/11/2026), como la de la cita del programado */
             '<div class="field" id="mcEHC"><label>Hora</label><input class="inp" type="time" id="mcEH" value="' + ahora() + '"></div>' +
             '<div class="field" id="mcLC"><label>Kilometraje</label><input class="inp" id="mcL"></div></div>' +
-          '<div class="row"><div class="field" id="mcSal"><label>Salió del taller</label><input class="inp" type="date" id="mcS" value="' + hoyISO + '"></div></div>' +
+          '<div class="row" id="mcSal"><div class="field"><label>Salió del taller</label><input class="inp" type="date" id="mcS" value="' + hoyISO + '"></div>' +
+            /* La hora en que salió (Juan, 10/11/2026: «no me deja poner hora»), como la de la entrada */
+            '<div class="field" id="mcSHC"><label>Hora</label><input class="inp" type="time" id="mcSH" value="' + ahora() + '"></div><div class="field"></div></div>' +
           '<div class="field mb0"><label id="mcFotosL">Fotos del arreglo</label>' +
             Dz.camara('mcDz') + Dz.html('mcDz', '<span class="solo-web">Arrastre aquí las fotos que mandan los conductores</span><span class="solo-cel">Escoger de la galería</span>',
               '<span class="solo-web">Puede soltar varias a la vez; a cada una se le escribe qué muestra</span>', 'image/*', true) +
@@ -14513,7 +14603,7 @@ Object.assign(Ventanas, {
     const notas = Avances.de(r).reverse(), salio = ' ' + UI.pill('ok', 'Salió del taller');
     /* Cerrado: ya no se anotan avances aquí (se corrige con «Editar todo») */
     $('#csCaja', m).classList.toggle('hidden', fin);
-    $('#csTl', m).innerHTML = (fin && !notas.some(n => n.cierre) ? it(Fecha.corta(r.salida || r.fecha), esc(r.trabajo || ''), [], salio) : '') +
+    $('#csTl', m).innerHTML = (fin && !notas.some(n => n.cierre) ? it(Fecha.corta(r.salida || r.fecha) + (r.horaSalida ? ' · ' + r.horaSalida : ''), esc(r.trabajo || ''), [], salio) : '') +
       notas.map(n => it(Avances.cuando(n), esc(n.t || (Avances.fotos(r, n.id).length ? 'Fotos' : '—')), Avances.fotos(r, n.id),
         (n.espera ? ' ' + UI.pill('warn', 'Esperando repuestos') : '') + (n.cierre ? salio : '') + ((n.llantas || []).length ? ' <span class="chip cs-ll-c">' + Icon('disc', '', 11) +
           esc((n.llantas.length > 1 ? 'Llantas · ' : 'Llanta · ') + Llantas.nombres(n.llantas) + Llantas.valorTxt(n)) + '</span>' : ''))).join('') +
@@ -15279,7 +15369,7 @@ const Leer = {
     const r0 = m._editar ? Datos.mantenimientos.find(x => x.id === m._editar) : null, tr = TallerRep.leer(m, 'mc', r0);
     return {
       numero: (r0 && r0.numero) || Num.mc(), unidad: u, prov: tr.prov, rep: tr.rep, repMismo: tr.repMismo, taller, notas,
-      entrada, horaEntrada: m._estado === 'programado' ? '' : ($('#mcEH', m) || {}).value || '', salida: taller ? '' : $('#mcS', m).value || entrada,
+      entrada, horaEntrada: m._estado === 'programado' ? '' : ($('#mcEH', m) || {}).value || '', salida: taller ? '' : $('#mcS', m).value || entrada, horaSalida: taller ? '' : ($('#mcSH', m) || {}).value || '',
       programado: m._estado === 'programado' ? { f: entrada, h: $('#mcH', m).value } : null,
       trabajo: taller ? '' : $('#mcT', m).value.trim(),
       fotos: m._fotos.concat(...av.map(a => a.fotos.map(f => Object.assign({}, f, { nota: a.n.id })))),
@@ -15560,6 +15650,8 @@ Object.assign(Acciones, {
     if (o) Avances.agregar(o, Avances.nueva(f, h, t), []);
     r.estado = 'cerrado';
     r.salida = f;
+    /* La hora del recuadro es la de la salida (Juan, 10/11/2026), aunque no se escriba nada */
+    if (h) r.horaSalida = h; else delete r.horaSalida;
     delete r.espera;
     Modal.cerrar(m);
     Ventanas.caso(r);
@@ -15880,6 +15972,7 @@ Object.assign(Acciones, {
     }
     r.estado = 'cerrado';
     r.salida = salida;
+    if (salida === hoyISO) r.horaSalida = ahora(); else delete r.horaSalida;
     delete r.espera;
     Modal.cerrar(m);
     Toast.show('Arreglo terminado: <b>' + esc(UI.placaTxt(u)) + '</b> salió del taller el ' + esc(Fecha.larga(salida)) + '.' + MantRemolque.sigue(r));
@@ -16001,7 +16094,7 @@ Object.assign(Acciones, {
     const fecha = $('#mpF', m).value || hoyISO, trabajo = $('#mpT', m).value.trim() || (m._casoNovs.length ? m._casoNovs[0].texto : 'Cambio de aceite'), lectura = $('#mpL', m).value.trim();
     const partes = PlanoForm.escogidas(m);
     const r = {
-      id: 'mt' + Date.now(), unidad: u.id, tipo: 'preventivo', fecha, trabajo, lectura, valor: Leer.pesos(m._manualV) || undefined,
+      id: 'mt' + Date.now(), unidad: u.id, tipo: 'preventivo', fecha, horaEntrada: $('#mpH', m).value || undefined, trabajo, lectura, valor: Leer.pesos(m._manualV) || undefined,
       aMano: m._manoV && ValorOrden.de([$('#mpO', m)]).length ? { v: true } : undefined,
       adjunto: a ? a.nombre : 'Inspección rápida ' + u.placa + '.pdf', adjuntoId: a ? a.id : undefined, estado: 'cerrado', hora: ahora(), ts: marca(),
       partes: partes.length ? partes : undefined,
@@ -16121,6 +16214,9 @@ Object.assign(Acciones, {
     if (m._editar) { EditarArreglo.guardar(m, d); return; }
     /* Si sigue en el taller, se guarda sin «¿Qué se hizo?»: va en el historial (ver Avances) */
     if (!d.taller && !d.trabajo) { Toast.show('Escriba qué se hizo: el arreglo.', 'err'); $('#mcT', m).focus(); return; }
+    /* La salida no puede quedar antes de la entrada (ver Avances.salidaAntes), ahora con su hora (Juan, 10/11/2026) */
+    const malS = d.taller ? '' : Avances.salidaAntes({ fecha: d.entrada, horaEntrada: d.horaEntrada, notas: [] }, d.salida, d.horaSalida);
+    if (malS) { Toast.show(esc(malS), 'err'); $('#mcSH', m).focus(); return; }
     /* Sin la parte, el arreglo no sale en el plano: se avisa, pero se deja guardar */
     if (!d.partes.length && !m._sinParte) {
       m._sinParte = true;
@@ -16136,7 +16232,7 @@ Object.assign(Acciones, {
       adjuntos: d.adjuntos.length ? d.adjuntos : undefined,
       valor: d.valor || undefined, lectura: d.lectura || undefined, estado: d.programado ? 'programado' : d.salida ? 'cerrado' : 'taller', hora: ahora(), ts: marca(),
       /* La hora en que entró al taller (ver Leer.correctivo) */
-      horaEntrada: d.horaEntrada || undefined, programado: d.programado || undefined,
+      horaEntrada: d.horaEntrada || undefined, horaSalida: d.salida && d.horaSalida ? d.horaSalida : undefined, programado: d.programado || undefined,
       /* Lo del plano: las partes, el componente, qué pasó, las llantas y las novedades del preoperacional que atiende */
       partes: d.partes.length ? d.partes : undefined, componente: d.componente || undefined, componentes: d.componentes.length ? d.componentes : undefined,
       falla: d.falla || undefined,
@@ -16169,7 +16265,7 @@ Object.assign(Acciones, {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     if (!r) return;
     const fotos = () => (r.fotosData || []).map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : null, txt: f.txt }));
-    const d = { unidad: Q.unidad(r.unidad), prov: Q.provDe(r), fecha: r.fecha, lectura: r.lectura, trabajo: r.trabajo, partes: r.partes || [],
+    const d = { unidad: Q.unidad(r.unidad), prov: Q.provDe(r), fecha: r.fecha, horaEntrada: r.horaEntrada, lectura: r.lectura, trabajo: r.trabajo, partes: r.partes || [],
       adjunto: r.adjuntoId ? r.adjunto : '', valor: r.valor, aMano: r.aMano, ordenes: r.ordenes || [], fotos: fotos(), enlace: r.enlace };
     const v = Ventanas.vistaPrevia('Mantenimiento preventivo', Formatos.preventivo(d));
     /* Las fotos se bajan al abrirlo; cuando llegan, el PDF se dibuja otra vez */
@@ -16185,7 +16281,7 @@ Object.assign(Acciones, {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     const fotos = () => r.fotosData ? r.fotosData.map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || null, txt: f.txt, nota: f.nota }))
       : Array.from({ length: r.fotos || 0 }, (_, i) => ({ src: null, txt: 'Foto ' + (i + 1) + ' de ' + r.fotos + ' (ejemplo)' }));
-    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.provDe(r), rep: Q.repDe(r), repMismo: r.repMismo, entrada: r.fecha, horaEntrada: r.horaEntrada, salida: r.salida, trabajo: r.trabajo, fotos: fotos(),
+    const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.provDe(r), rep: Q.repDe(r), repMismo: r.repMismo, entrada: r.fecha, horaEntrada: r.horaEntrada, salida: r.salida, horaSalida: r.horaSalida, trabajo: r.trabajo, fotos: fotos(),
       partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [], llanta: r.llanta, notas: r.notas || [],
       valor: r.valor, valorTaller: r.valorTaller, valorRep: r.valorRep, aMano: r.aMano, ordenes: r.ordenes || [], estado: r.estado, programado: r.programado,
       enlace: r.enlace };
@@ -20090,11 +20186,11 @@ const ConductoresRH = {
   },
   /* Retirado en RH pero todavía asignado: la unidad lo avisa hasta que se
      escoja otro (Juan, 01/11/2026) */
-  retirado: c => Boolean(c) && !Datos.conductores.includes(c),
+  retirado: c => Boolean(c) && !c.escrito && !Datos.conductores.includes(c),
   /* Lo que la unidad avisa de su conductor: que se retiró o que en RH le
      cambiaron el cargo a otro tipo. Si no hay nada que avisar, '' */
   aviso(c, u) {
-    if (!c) return '';
+    if (!c || c.escrito) return '';
     if (this.retirado(c)) return 'Retirado en RH: asigne otro';
     return u && c.rhTipo && this.TIPO[u.tipo] && c.rhTipo !== this.TIPO[u.tipo] ? 'Cambió de cargo en RH: asigne otro' : '';
   }
@@ -21128,7 +21224,8 @@ const Rutas = {
   fijarConductor(v) {
     if (v.estado === 'prog' || v.conductor || v.conductorTxt || !v.unidad) return;
     const c = this.conductor(v);
-    if (c) v.conductor = c.id;
+    /* El del tercero es escrito (ver Q.escritoDe): queda como escrito, no como uno de RH */
+    if (c && c.escrito) v.conductorTxt = c.nombre; else if (c) v.conductor = c.id;
   },
   lugar(v) { return this.programado(v) ? this.diaSem(v.fecha).toLowerCase() + ' ' + this.dia(v.fecha) + ' · ' + this.placa(v.unidad) : '«Por programar»'; },
   /* El historial de cambios del viaje ya no se lleva (Juan, 08/11/2026: «no me gustaría llevarlo»); lo de antes queda sin verse */
