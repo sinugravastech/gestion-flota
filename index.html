@@ -1741,9 +1741,13 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .rt-v .rt-ei{margin-left:auto}
 .rt-v.e-hecho .rt-ei{color:var(--ok-500)}
 .rt-v.e-ruta .rt-ei{color:var(--warn-500)}
-.rt-v.e-no{opacity:.55}
-.rt-v.e-no b{text-decoration:line-through}
-.rt-v.e-no .rt-ei{color:var(--dang-500)}
+.rt-v.e-carg .rt-ei{color:var(--violet-500)}
+/* «No se hizo», en gris (Juan, 11/11/2026: «que se evidencie y que no tome nada de protagonismo frente a los demás»): sin el color del tipo y tachada */
+.rt-v.e-no{border-left-color:color-mix(in srgb,var(--text-3) 45%,transparent);background:color-mix(in srgb,var(--text-3) 8%,transparent)}
+.rt-v.e-no:hover,.rt-v.e-no:focus-visible{background:color-mix(in srgb,var(--text-3) 14%,transparent)}
+.rt-v.e-no b{color:var(--text-3);font-weight:600;text-decoration:line-through}
+.rt-v.e-no span,.rt-v.e-no .rt-ei,.rt-v.e-no .rt-cd.otro,.rt-v.e-no .rt-cd.sin{color:var(--text-3);font-weight:400}
+.rt-v.e-no .rt-ti,.rt-v.e-no .rt-real{filter:grayscale(1);opacity:.6}
 .rt-v.rt-arr{opacity:.35}
 /* La imagen del tipo de operación: en la ficha, al lado de la hora (así el nombre tiene todo el ancho), y en lugar del punto de color.
    No se arrastra sola: el clic es de la ficha */
@@ -1796,6 +1800,10 @@ html.arrastrando .toasts{pointer-events:none}
 .rt-lista td:nth-child(3){width:90px;text-align:right}
 .rt-lista td:nth-child(4){width:30%}
 .rt-lista td:nth-child(5){width:190px}
+/* «No se hizo», en gris también en «Por día» */
+.rt-lista tr.rt-no td,.rt-lista tr.rt-no b,.rt-lista tr.rt-no .dias{color:var(--text-3)}
+.rt-lista tr.rt-no td:nth-child(2) b{text-decoration:line-through}
+.rt-lista tr.rt-no .rt-img,.rt-lista tr.rt-no .rt-dot,.rt-lista tr.rt-no .rt-real{filter:grayscale(1);opacity:.6}
 .rt-inact td{color:var(--text-3)}
 .rt-inact td b{font-weight:600}
 /* El peso en báscula (Juan, 08/11/2026): el real con ✓ en la ficha y en la lista; su parte en la ventana del viaje */
@@ -2054,6 +2062,14 @@ html[data-theme="dark"] .field .prov-nota.aviso{color:var(--warn-500)}
 .av-b{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;background:var(--surface-2)}
 .av-b-h{display:flex;align-items:center;justify-content:space-between;margin:-4px -4px 6px 0}
 .av-b-h b{font-size:12.5px}
+/* Un avance antes de la entrada (Juan, 11/11/2026: «no me salió ningún aviso»): se avisa, sin impedir anotarlo ni guardar (ver Avances.antesDeEntrar) */
+.av-antes{display:flex;align-items:flex-start;gap:6px;margin-top:8px;font-size:12px;line-height:1.4;color:var(--warn-700)}
+.av-antes svg{flex:0 0 12px;margin-top:2px}
+.av-b .av-antes{margin:-5px 0 11px}
+/* En «Editar todo», la entrada de primera en el historial, como un bloque más (ver EditarArreglo.poner) */
+.av-ent .row .field{margin-bottom:8px}
+.av-ent .row>#mcEHC{flex:1 1 180px}
+.av-ent .hint{margin-top:0}
 html[data-theme="dark"] .pl-taller{color:var(--dang-500)}
 .pl-btn{width:100%;justify-content:center;margin-top:10px}
 /* Las llantas vistas desde arriba */
@@ -3230,6 +3246,7 @@ const Icon = (() => {
     clipboard: '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/>',
     ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><path d="M13 5v2M13 11v2M13 17v2"/>',
     racimo: '<path d="M12 2v3"/><circle cx="12" cy="8.5" r="3"/><circle cx="7.5" cy="14" r="3"/><circle cx="16.5" cy="14" r="3"/><circle cx="12" cy="19" r="3"/>',
+    caja: '<path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/>',
     cart: '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>',
     briefcase: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
     camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
@@ -9333,6 +9350,14 @@ const Avances = {
     const u = this.ultimoMomento(m);
     return f + ' ' + (h || '23:59') < u.k ? 'La salida no puede quedar antes ' + (u.avance ? 'del último avance' : 'de la entrada') + ' (' + u.txt + '). Revise la fecha y la hora.' : '';
   },
+  /* Un avance antes de la entrada (Juan, 11/11/2026: «cuando iba a escribir un avance que sucedió mucho antes… no me salió ningún aviso»):
+     casi siempre es una hora mal escrita, la del avance o la de la entrada. Solo se avisa: no impide anotarlo ni guardar. En un programado
+     no, porque ahí se anotan cosas antes de que entre. Sin hora, el avance cuenta hasta el final del día y la entrada desde el comienzo.
+     Cuándo entró, para decirlo («11 de nov de 2026 · 08:29»), o nada si está bien */
+  antesDeEntrar(m, f, h) {
+    if (!m || !m.fecha || !f || m.estado === 'programado' || m.programado) return '';
+    return f + ' ' + (h || '23:59') < m.fecha + ' ' + (m.horaEntrada || '00:00') ? Fecha.corta(m.fecha) + (m.horaEntrada ? ' · ' + m.horaEntrada : '') : '';
+  },
   /* La hora en que salió del taller: la escrita (Juan, 10/11/2026) o, en los de antes, la del avance de la salida */
   horaSalida(m) { const c = this.de(m).filter(n => n.cierre).pop(); return m.horaSalida || (c && c.h) || ''; },
   /* El título del arreglo en las listas: lo que se hizo o, si va por anotaciones, cuántas lleva */
@@ -9735,6 +9760,7 @@ const AvancesForm = {
       x[t.dataset.c] = t.value;
       /* El avance de la salida mueve también «Salió del taller» (ver EditarArreglo.salidaJunta) */
       if (x.cierre && (t.dataset.c === 'f' || t.dataset.c === 'h') && m._alSalida) m._alSalida(x);
+      if (t.dataset.c === 'f' || t.dataset.c === 'h') this.revisarEntrada(m);
       m._avCambio();
     });
     cont.addEventListener('click', e => {
@@ -9761,6 +9787,7 @@ const AvancesForm = {
           '" title="Quitar este avance" aria-label="Quitar este avance">' + Icon('x', '', 12) + '</button></div>' : '') +
         '<div class="row"><div class="field"><label>Fecha</label><input class="inp" type="date" data-c="f" value="' + attr(a.f) + '"></div>' +
           '<div class="field"><label>Hora</label><input class="inp" type="time" data-c="h" value="' + attr(a.h) + '"></div></div>' +
+        '<div class="av-antes hidden" data-av-antes="' + a.k + '"></div>' +
         '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" data-c="t" rows="2" placeholder="Ej.: se desmontó la llanta y el rin estaba partido">' +
           esc(a.t) + '</textarea></div>' +
         /* La llanta del avance y cuánto costó (Juan, 09/11/2026), si el arreglo no es de llantas (o ya se había escrito) */
@@ -9780,6 +9807,7 @@ const AvancesForm = {
       Dz.bind(pre + 'AvDz' + a.k, files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
         .then(lista => { lista.forEach(x => a.fotos.push({ id: x.id, src: Archivos.vistos.get(x.id).url, txt: '' })); this.fotos(m, a); m._avCambio(); }));
     });
+    this.revisarEntrada(m);
   },
   /* Las fotos de un bloque, cada una con lo que muestra */
   fotos(m, a) {
@@ -9792,6 +9820,19 @@ const AvancesForm = {
     $$('button', el).forEach(b => b.addEventListener('click', () => { a.fotos.splice(+b.dataset.i, 1); this.fotos(m, a); m._avCambio(); }));
   },
   hay(m) { return (m._av || []).some(a => a.t.trim() || a.fotos.length); },
+  /* Los avances que quedan antes de la entrada (Juan, 11/11/2026), con la entrada como está en el formulario: el aviso en su bloque,
+     sin impedir guardar. Cambia al corregir la entrada o el avance (ver Avances.antesDeEntrar) */
+  revisarEntrada(m) {
+    const e = $('#mcE', m), r = m._editar ? Datos.mantenimientos.find(x => x.id === m._editar) : null;
+    if (!e || !m._avCont) return;
+    const ent = { estado: m._estado, programado: r && r.programado, fecha: e.value, horaEntrada: ($('#mcEH', m) || {}).value || '' };
+    (m._av || []).forEach(a => {
+      const el = m._avCont.querySelector('[data-av-antes="' + a.k + '"]'), x = el ? Avances.antesDeEntrar(ent, a.f, a.h) : '';
+      if (!el) return;
+      el.innerHTML = x ? Icon('warn', '', 12) + '<span>Queda antes de la entrada (' + esc(x) + '). Revise esta hora o la de la entrada, arriba.</span>' : '';
+      el.classList.toggle('hidden', !x);
+    });
+  },
   /* Si el arreglo es de «Llantas y rines», todo su valor ya cuenta en llantas: no se pregunta (salvo que ya se hubiera escrito) */
   preguntaValor: (m, a) => !(m._partes || []).includes('llantas') || Boolean(a.llValor),
   /* Los bloques con algo escrito o con fotos, listos para guardar (ver Avances) */
@@ -9991,6 +10032,18 @@ const EditarArreglo = {
     $('#mcNC', m).classList.toggle('hidden', !m._conAvances);
     $('#mcNC .hint', m).textContent = abierto ? 'Corrija lo que haga falta y escriba lo nuevo en el último avance. Si llegaron varios, «Agregar otro avance».'
       : 'Los avances que tuvo el arreglo: también se pueden corregir.';
+    /* La entrada, de primera en el historial (Juan, 11/11/2026: «no puedo modificar fecha y hora de ese primer como avance que uno
+       cuenta cuando abre un mantenimiento correctivo»; estaban abajo, después de todos los avances): la fecha, la hora y el
+       kilometraje con que entró, en un bloque como el de los avances. Son los mismos campos: se leen y se guardan igual */
+    if (m._conAvances && !prog) {
+      const fila = $('#mcEC', m).parentElement, b = document.createElement('div');
+      b.className = 'av-b av-ent';
+      b.innerHTML = '<div class="av-b-h"><b>Entró al taller</b></div>';
+      $('label', $('#mcEC', m)).textContent = 'Fecha';
+      b.append(fila);
+      b.insertAdjacentHTML('beforeend', '<div class="hint">Lo que pasó se corrige arriba, en «¿Qué pasó?», y las fotos de cómo llegó, al final.</div>');
+      $('#mcAv', m).before(b);
+    }
     $('#mcSal', m).classList.toggle('hidden', abierto);
     if (!abierto) { $('#mcS', m).value = r.salida || r.fecha || hoyISO; $('#mcSH', m).value = Avances.horaSalida(r); }
     $('#mcFotosL', m).innerHTML = prog ? 'Fotos de cómo está <span class="txt-3">(opcional)</span>'
@@ -14361,6 +14414,8 @@ Object.assign(Ventanas, {
     if (r0) m._editar = r0.id;
     /* Los avances, si sigue en el taller (ver AvancesForm) */
     AvancesForm.montar(m, $('#mcAv', m), 'mc');
+    /* Al corregir la entrada, el aviso de los avances que quedan antes (ver AvancesForm.revisarEntrada) */
+    ['#mcE', '#mcEH'].forEach(x => $(x, m).addEventListener('input', () => AvancesForm.revisarEntrada(m)));
     TallerRep.montar(m, 'mc', null);
     /* En el registro corto, el taller va a la derecha, antes de las fotos */
     if (rapido) {
@@ -14514,7 +14569,9 @@ Object.assign(Ventanas, {
                 Icon('clock', '', 11) + 'Esperando repuestos</button>' +
               /* Cuándo pasó: ahora, o lo que se escriba si fue antes */
               '<span class="cs-cuando" title="Cuándo pasó: si no fue ahora, cámbielo"><input class="inp inp-sm" type="date" id="csF" value="' + hoyISO + '" aria-label="Fecha del avance">' +
-                '<input class="inp inp-sm" type="time" id="csH" value="' + ahora() + '" aria-label="Hora del avance"></span></div>' + MantRemolque.tambien(r) +
+                '<input class="inp inp-sm" type="time" id="csH" value="' + ahora() + '" aria-label="Hora del avance"></span></div>' +
+              /* Si queda antes de la entrada, el aviso (ver m._revisarCuando) */
+              '<div class="av-antes hidden" id="csAntes"></div>' + MantRemolque.tambien(r) +
               /* Abajo, «Anotar avance» a la izquierda y «Terminar arreglo» a la derecha (Juan, 08/11/2026): con este, lo escrito queda como el
                  último comentario y la fecha y la hora son las de la salida (ver Acciones.terminarCaso) */
               '<div class="cs-nuevo-b"><button class="btn btn-primary btn-sm" data-act="anotarCaso" data-m="' + attr(r.id) + '" disabled>' + Icon('send', '', 13) + 'Anotar avance</button>' +
@@ -14619,7 +14676,16 @@ Object.assign(Ventanas, {
       $$('#csFotos button', m).forEach(b => b.addEventListener('click', () => { m._fotos.splice(+b.dataset.i, 1); m._pintarFotos(); }));
       revisar();
     };
-    m._pintarCaso = () => { this.pintarCaso(m, r); m._pintarSug(); };
+    /* Un avance antes de la entrada (Juan, 11/11/2026: «cuando iba a escribir un avance que sucedió mucho antes… no me salió ningún
+       aviso»): debajo de la fecha y la hora, sin impedir anotarlo (ver Avances.antesDeEntrar) */
+    m._revisarCuando = () => {
+      const e = Avances.antesDeEntrar(fresco(), $('#csF', m).value, $('#csH', m).value), a = $('#csAntes', m);
+      a.innerHTML = e ? Icon('warn', '', 12) + '<span>Este avance queda antes de la entrada (' + esc(e) + '). Puede anotarlo igual; si la hora que está mal ' +
+        'es la de la entrada, corríjala en «Editar todo».</span>' : '';
+      a.classList.toggle('hidden', !e);
+    };
+    ['#csF', '#csH'].forEach(x => $(x, m).addEventListener('input', m._revisarCuando));
+    m._pintarCaso = () => { this.pintarCaso(m, r); m._pintarSug(); m._revisarCuando(); };
     ponerEspera();
     m._pintarCaso();
     /* Las fotos que ya tiene se bajan al abrirlo */
@@ -21115,7 +21181,8 @@ const Rutas = {
      Catálogo: verde (fruta de palma), café (almendra), ámbar (aceite),
      turquesa (fertilizante), morado (nutricomplemento) y los siguientes */
   COLORES: ['#2f9e5b', '#a8692b', '#d99a1e', '#1c96a4', '#8a5ac2', '#d0566c', '#4f6bd8', '#7a8a2e', '#c2569e', '#5a7a8c'],
-  ESTADOS: { prog: ['Programado', 'info'], ruta: ['En ruta', 'warn'], hecho: ['Hecho', 'ok'], no: ['No se hizo', 'bad'] },
+  /* Los estados del viaje: «Cargado» desde el 11/11/2026 (Juan; SQL 033). «No se hizo» va en gris y no sale en lo de los conductores */
+  ESTADOS: { prog: ['Programado', 'info'], ruta: ['En ruta', 'warn'], carg: ['Cargado', 'violet'], hecho: ['Hecho', 'ok'], no: ['No se hizo', 'nr'] },
   DIAS: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
   MES: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
   /* Lo último que se hizo, para «Deshacer»: viajes nuevos (copia), cómo
@@ -21138,7 +21205,7 @@ const Rutas = {
     const s = this.imagen(tipo);
     return s ? '<img class="rt-img" src="' + attr(s) + '" alt="">' : '<i class="rt-dot" style="--c:' + this.color(tipo) + '"></i>';
   },
-  estIc: e => (e === 'ruta' ? Icon('truck', '', 11) : e === 'hecho' ? Icon('check', '', 11) : e === 'no' ? Icon('x', '', 11) : ''),
+  estIc: e => (e === 'ruta' ? Icon('truck', '', 11) : e === 'carg' ? Icon('caja', '', 11) : e === 'hecho' ? Icon('check', '', 11) : e === 'no' ? Icon('x', '', 11) : ''),
 
   /* ---- Las fechas: la semana va de lunes a domingo ---- */
   mas(f, n) { const d = Fecha.parse(f); d.setDate(d.getDate() + n); return Fecha.iso(d); },
@@ -21261,6 +21328,10 @@ const Rutas = {
   tiposVer() { const ts = this.tipos(); return ts.concat([...new Set(Datos.rutas.map(r => r.tipo))].filter(t => t && !ts.includes(t))); },
   visible(v) { const ver = UIState.rutas.ver; return !ver || ver.includes((this.ruta(v.ruta) || {}).tipo); },
   vistos(l) { return this.deSemana(l).filter(v => this.visible(v)); },
+  /* Lo que va a los conductores, en la imagen y en el PDF: sin los «No se hizo» (Juan, 11/11/2026: «eso no le interesa a los conductores») */
+  paraConductores(l) { return this.vistos(l).filter(v => v.estado !== 'no'); },
+  /* Si no queda nada para ellos porque todo lo de esos días «No se hizo», decirlo */
+  soloNo(l, dias) { return this.vistos(l).some(v => dias.includes(v.fecha)) ? ': los que hay están marcados «No se hizo» y no salen' : ''; },
   /* «aceite», «fruta de palma y aceite»; vacío si se ven todos */
   queTxt() {
     const ver = UIState.rutas.ver;
@@ -21358,7 +21429,8 @@ const Rutas = {
   },
   leyenda() {
     return '<div class="rt-ley">' + this.tipos().map(t => '<span>' + this.punto(t) + esc(t) + '</span>').join('') +
-      '<span class="rt-ley-sep"></span><span>' + Icon('truck', '', 11) + 'En ruta</span><span>' + Icon('check', '', 11) + 'Hecho</span><span>' + Icon('x', '', 11) + 'No se hizo</span>' +
+      '<span class="rt-ley-sep"></span><span>' + Icon('truck', '', 11) + 'En ruta</span><span>' + Icon('caja', '', 11) + 'Cargado</span><span>' + Icon('check', '', 11) + 'Hecho</span>' +
+      '<span>' + Icon('x', '', 11) + 'No se hizo: en gris, y no sale en la imagen ni en el PDF</span>' +
       '<span>' + Icon('warn', '', 11) + 'Revisar antes de salir</span><span><i class="rt-real">' + Icon('check', '', 11) + 'kg</i>Peso real de la báscula</span>' +
       '<span class="rt-ley-sep"></span><span>' + Icon('mover', '', 11) +
       'Arrastre una ficha para moverla · con Ctrl presionada se copia (la casilla se pone verde)</span>' +
@@ -21531,13 +21603,13 @@ const Rutas = {
       const ds = vs.filter(v => v.fecha === f).sort(this.enOrden), ton = ds.reduce((s, v) => s + (+v.ton || 0), 0);
       return '<div class="rt-dia"><div class="rt-dia-h"><b>' + esc(this.diaSem(f) + ' ' + this.dia(f)) + (f === hoyISO ? ' · hoy' : '') + '</b><span>' +
           ds.length + (ds.length === 1 ? ' viaje' : ' viajes') + ' · ' + this.tonTxt(ton) + '</span>' +
-          '<button type="button" class="btn btn-sm btn-ghost rt-dia-pdf" data-act="rtImagen" data-f="' + f + '" title="Copia este día como imagen, para pegarla en el grupo">' +
+          '<button type="button" class="btn btn-sm btn-ghost rt-dia-pdf" data-act="rtImagen" data-f="' + f + '" title="Copia este día como imagen, para pegarla en el grupo. Sin los «No se hizo»">' +
             Icon('image', '', 13) + 'Copiar imagen del día</button>' +
-          '<button type="button" class="btn btn-sm btn-ghost" data-act="rtPdf" data-f="' + f + '" title="Descarga en PDF la imagen de este día, para los conductores">' +
+          '<button type="button" class="btn btn-sm btn-ghost" data-act="rtPdf" data-f="' + f + '" title="Descarga en PDF la imagen de este día, para los conductores. Sin los «No se hizo»">' +
             Icon('print', '', 13) + 'PDF del día</button></div>' +
         '<table class="tbl rt-lista"><tbody>' + ds.map(v => {
           const r = this.ruta(v.ruta) || {}, c = this.conductor(v), al = this.revisar(v);
-          return '<tr class="row-click" data-act="rtViaje" data-v="' + attr(v.id) + '"><td class="nowrap mono">' + esc(v.hora || '—') + '</td><td>' + this.punto(r.tipo) +
+          return '<tr class="row-click' + (v.estado === 'no' ? ' rt-no' : '') + '" data-act="rtViaje" data-v="' + attr(v.id) + '"><td class="nowrap mono">' + esc(v.hora || '—') + '</td><td>' + this.punto(r.tipo) +
             '<b>' + esc(this.nombre(r)) + '</b><div class="dias">' + esc([r.tipo, r.cliente, v.nota].filter(Boolean).join(' · ')) + '</div></td>' +
             '<td class="num nowrap">' + (v.pesoReal != null ? '<span class="rt-real" title="' + attr('Peso real en báscula' + (v.ton != null ? '; programadas ' +
               this.tonTxt(v.ton) : '')) + '">' + Icon('check', '', 11) + esc(this.kgTxt(v.pesoReal)) + '</span>' : this.tonTxt(v.ton)) +
@@ -21559,7 +21631,8 @@ const Rutas = {
     return '<div class="kpis4 kpis5 mb16">' +
         UI.kpi({ label: 'Viajes de la semana', valor: vs.length, icono: 'calendar', meta: esc('Semana ' + this.semanaTxt(l)) + (nb ? ' · ' + nb + ' por programar' : '') }) +
         UI.kpi({ label: 'Hechos', valor: n('hecho') + '<small> de ' + vs.length + '</small>', icono: 'check', color: 'var(--ok-500)',
-          meta: [n('no') ? n('no') + ' no se ' + (n('no') === 1 ? 'hizo' : 'hicieron') : '', n('ruta') ? n('ruta') + ' en ruta' : ''].filter(Boolean).join(' · ') || 'Se marcan en la ventana de cada viaje' }) +
+          meta: [n('no') ? n('no') + ' no se ' + (n('no') === 1 ? 'hizo' : 'hicieron') : '', n('ruta') ? n('ruta') + ' en ruta' : '',
+          n('carg') ? n('carg') + (n('carg') === 1 ? ' cargado' : ' cargados') : ''].filter(Boolean).join(' · ') || 'Se marcan en la ventana de cada viaje' }) +
         UI.kpi({ label: 'Toneladas programadas', valor: ton.toLocaleString('es-CO'), icono: 'truck', meta: lista ? esc(lista.charAt(0).toUpperCase() + lista.slice(1)) : 'Sin viajes esta semana' }) +
         UI.kpi({ label: 'Para revisar', valor: al, icono: 'warn', color: 'var(--warn-500)', vcolor: al ? 'var(--warn-500)' : '', meta: 'Taller, documentos o licencia antes de salir' }) +
         /* Lo que valen los viajes de la semana, sin los «No se hizo» (ver valorDe) */
@@ -21571,9 +21644,9 @@ const Rutas = {
           Icon('chevR', '', 14) + '</button>' + (enHoy ? '' : '<button type="button" class="btn btn-sm" data-act="rtSemana" data-v="0">Esta semana</button>') + '</div>' +
         '<div class="seg">' + [['camion', 'Por camión'], ['dia', 'Por día']].map(o => '<button type="button" class="' + (vista === o[0] ? 'on' : '') + '" data-act="rtVista" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div>' +
         '<span class="tb-sp"></span>' + (liq ? '' : '<button type="button" class="btn" data-act="rtCopiar">' + Icon('copiar', '', 14) + 'Copiar la semana anterior</button>') +
-        '<button type="button" class="btn" data-act="rtPdf" title="Descarga en PDF la misma imagen de «Copiar imagen»">' + Icon('pdf', '', 14) + 'PDF para los conductores</button>' +
+        '<button type="button" class="btn" data-act="rtPdf" title="Descarga en PDF la misma imagen de «Copiar imagen», sin los «No se hizo»">' + Icon('pdf', '', 14) + 'PDF para los conductores</button>' +
         '<button type="button" class="btn" data-act="rtImagen" title="Copia ' + (vista === 'dia' ? 'la lista por día' : 'el tablero') +
-          ' como imagen, con lo que se ve, para pegarla en el grupo">' + Icon('image', '', 14) + 'Copiar imagen</button>' +
+          ' como imagen, con lo que se ve (sin los «No se hizo»), para pegarla en el grupo">' + Icon('image', '', 14) + 'Copiar imagen</button>' +
         /* Liquidar (Juan, 08/11/2026: «liquidación de cronograma»): con el resumen de la semana; liquidada, se cierra y se puede reabrir */
         (liq ? '' : '<button type="button" class="btn" data-act="rtLiquidar" title="Cierra la semana con lo que se hizo: los viajes quedan «Hecho» y ya no se mueven">' +
           Icon('lock', '', 14) + 'Liquidar semana</button>') + '</div>' + (liq ? this.liqBanda(l, liq) : '') +
@@ -21902,7 +21975,7 @@ const Rutas = {
   },
 
   /* ---- Liquidar la semana (Juan, 08/11/2026: «liquidación de cronograma»): cuando termina, se cierra con lo que se hizo. Los
-     programados y en ruta quedan «Hecho», con el conductor de ese día. La semana ya no se mueve, no se le agrega nada y no se cambia
+     programados, en ruta y cargados quedan «Hecho», con el conductor de ese día. La semana ya no se mueve, no se le agrega nada y no se cambia
      nada fuera del peso real y el tiquete. Avisa lo que falta, sin bloquear. «Reabrir» la abre otra vez, con los viajes como quedaron ---- */
   /* Lo que suman unos viajes: los que cuentan (los «No se hizo» no), sus toneladas programadas, el peso real de los que lo tienen y la
      diferencia (el real menos lo programado) en los que tienen los dos */
@@ -21956,7 +22029,7 @@ const Rutas = {
     const l = this.semana(), vs = this.deSemana(l), s = this.suma(vs), fin = this.mas(l, 6), pl = this.pl;
     if (this.liquidada(l)) { Router.pintar(true); return; }
     if (!vs.length) { Toast.show('La semana ' + esc(this.semanaTxt(l)) + ' no tiene viajes para liquidar.', 'warn'); return; }
-    const pasan = vs.filter(v => v.estado === 'prog' || v.estado === 'ruta').length, nb = this.bandeja().length;
+    const pasan = vs.filter(v => ['prog', 'ruta', 'carg'].includes(v.estado)).length, nb = this.bandeja().length;
     const sin = vs.filter(v => v.estado !== 'no' && v.pesoReal == null).sort((a, b) => a.fecha.localeCompare(b.fecha) || this.enOrden(a, b));
     const avisos = [fin >= hoyISO ? 'La semana todavía no termina: va hasta el ' + this.largo(fin).toLowerCase() + '.' : '',
       sin.length ? pl(sin.length, 'viaje no tiene', 'viajes no tienen') + ' el peso real: ' + sin.slice(0, 4).map(v => this.placa(v.unidad) + ' el ' +
@@ -21971,7 +22044,7 @@ const Rutas = {
       '</tbody></table></div>';
     Modal.abrir({
       titulo: 'Liquidar la semana', sub: esc('Semana ' + this.semanaTxt(l)), ancho: 'wide', sinFoco: true,
-      cuerpo: '<div class="rt-lq-k' + (s.fruta ? ' cinco' : '') + '"><div><span>Viajes</span><b>' + s.n + '</b><em>' + (pasan ? esc(pl(pasan, 'programado o en ruta queda', 'programados o en ruta quedan')) +
+      cuerpo: '<div class="rt-lq-k' + (s.fruta ? ' cinco' : '') + '"><div><span>Viajes</span><b>' + s.n + '</b><em>' + (pasan ? esc(pl(pasan, 'programado, en ruta o cargado queda', 'programados, en ruta o cargados quedan')) +
             ' «Hecho»' : 'Todos ya están marcados') + '</em></div>' +
           '<div><span>Toneladas programadas</span><b>' + esc(this.tonTxt(s.ton)) + '</b><em>De los viajes que cuentan</em></div>' +
           '<div><span>Peso real</span><b>' + (s.conPeso ? esc(this.kgTxt(s.real)) : '—') + '</b><em>' + (s.conPeso ? esc(pl(s.conPeso, 'viaje con peso', 'viajes con peso') +
@@ -21993,7 +22066,7 @@ const Rutas = {
   liquidarSi() {
     const l = this.semana(), vs = this.deSemana(l);
     if (!this.liquidada(l)) {
-      vs.forEach(v => { if (v.estado === 'prog' || v.estado === 'ruta') v.estado = 'hecho'; this.fijarConductor(v); });
+      vs.forEach(v => { if (['prog', 'ruta', 'carg'].includes(v.estado)) v.estado = 'hecho'; this.fijarConductor(v); });
       Config.rutasLiq = Object.assign({}, Config.rutasLiq, { [l]: { f: new Date().toISOString() } });
       this.ultimo = null;
     }
@@ -22169,8 +22242,8 @@ const Rutas = {
   /* ---- El PDF para los conductores (Juan, 08/11/2026: «que se descargue el horario tal cual como cuando uno copia la imagen de la
      semana»): la misma imagen de «Copiar imagen» (el tablero, la lista por día o un día), en un PDF de una hoja de su mismo tamaño ---- */
   async pdf(f) {
-    const l = this.semana(), dias = f ? [f] : this.fechas(l), vs = this.vistos(l).filter(v => dias.includes(v.fecha)), que = this.queTxt();
-    if (!vs.length) { Toast.show('No hay viajes ' + (que ? 'de ' + esc(que) + ' ' : '') + (f ? 'ese día' : 'esta semana') + ' para el PDF.', 'warn'); return; }
+    const l = this.semana(), dias = f ? [f] : this.fechas(l), vs = this.paraConductores(l).filter(v => dias.includes(v.fecha)), que = this.queTxt();
+    if (!vs.length) { Toast.show('No hay viajes ' + (que ? 'de ' + esc(que) + ' ' : '') + (f ? 'ese día' : 'esta semana') + ' para el PDF' + this.soloNo(l, dias) + '.', 'warn'); return; }
     const lista = Boolean(f) || UIState.rutas.vista === 'dia';
     const titulo = f && !que ? 'Programación del ' + this.largo(f).toLowerCase() : this.titulo();
     const nombre = 'programacion-' + (que ? sinTildes(que).replace(/[^a-z0-9]+/g, '-') + '-' : '') + (f || 'semana-' + l) + '.pdf';
@@ -22358,7 +22431,7 @@ const Rutas = {
   /* El tablero: una fila por camión con viajes y una columna por día. Igual que en la plataforma (Juan, 07/11/2026): la foto del
      camión junto a su placa y, en cada ficha, la imagen del tipo junto a la hora y el conductor de ese viaje */
   imgTablero(l) {
-    const I = this.IMG, fs = this.fechas(l), vs = this.vistos(l), M = 28, CU = 214, CD = 172, W = M * 2 + CU + CD * 7, AF = CD - 12;
+    const I = this.IMG, fs = this.fechas(l), vs = this.paraConductores(l), M = 28, CU = 214, CD = 172, W = M * 2 + CU + CD * 7, AF = CD - 12;
     const us = [...new Set(vs.map(v => v.unidad))].map(id => Q.unidad(id)).filter(Boolean).sort((a, b) => String(a.placa).localeCompare(String(b.placa)));
     /* Primero se mide: la ruta de cada ficha en hasta tres renglones */
     const g0 = document.createElement('canvas').getContext('2d'), lin = new Map();
@@ -22405,8 +22478,7 @@ const Rutas = {
         const x = x0 + CU + i * CD + 6;
         let yy = y + 6;
         cel.forEach(v => {
-          const rt = this.ruta(v.ruta) || {}, col = this.color(rt.tipo), hh = alto(v), no = v.estado === 'no', ls = lin.get(v.id);
-          g.globalAlpha = no ? 0.55 : 1;
+          const rt = this.ruta(v.ruta) || {}, col = this.color(rt.tipo), hh = alto(v), ls = lin.get(v.id);
           g.save();
           this.caja(g, x, yy, AF, hh, 7);
           g.clip();
@@ -22414,24 +22486,19 @@ const Rutas = {
           g.fillStyle = col; g.fillRect(x, yy, 4, hh);
           g.restore();
           g.fillStyle = I.texto; g.font = '600 12.5px ' + I.letra;
-          ls.forEach((s, kk) => {
-            const ty = yy + 20 + kk * 16;
-            g.fillText(s, x + 12, ty);
-            if (no) g.fillRect(x + 12, ty - 4.5, g.measureText(s).width, 1.2);
-          });
+          ls.forEach((s, kk) => g.fillText(s, x + 12, yy + 20 + kk * 16));
           /* La imagen del tipo junto a la hora */
           const yh = yy + 20 + ls.length * 16 + 2, ic = (this._iconos || new Map()).get(rt.tipo);
           let xh = x + 12;
           if (ic) { g.drawImage(ic, xh, yh - 12, 15, 15); xh += 19; }
           g.fillStyle = I.texto2; g.font = '400 12px ' + I.letra;
-          g.fillText([v.hora, this.pesoTxt(v), no ? 'no se hizo' : ''].filter(Boolean).join(' · '), xh, yh);
+          g.fillText([v.hora, this.pesoTxt(v)].filter(Boolean).join(' · '), xh, yh);
           /* El conductor de ese viaje: en azul si ese día maneja otro; en naranja si no hay */
           const cd = this.conductor(v), def = Q.conductorDe(u), otro = Boolean((v.conductor || v.conductorTxt) && cd && (!def || def.id !== cd.id));
           const yc = yh + 17, cc = otro ? '#2a52ad' : cd ? I.texto2 : '#c8860d';
           this.dibPersona(g, x + 12, yc, cc);
           g.fillStyle = cc; g.font = (otro || !cd ? '650 ' : '400 ') + '11.5px ' + I.letra;
           g.fillText(this.renglones(g, cd ? this.cortoNombre(cd.nombre) : 'Sin conductor', AF - 34, 1)[0] || '', x + 25, yc);
-          g.globalAlpha = 1;
           yy += hh + 6;
         });
       });
@@ -22450,7 +22517,7 @@ const Rutas = {
   /* La lista: un cuadro por día, con la hora, la ruta, las toneladas, el
      camión y su conductor, y la nota */
   imgLista(l, dias, f) {
-    const I = this.IMG, vs = this.vistos(l).filter(v => dias.includes(v.fecha)), M = 28, W = 940, TW = W - 2 * M;
+    const I = this.IMG, vs = this.paraConductores(l).filter(v => dias.includes(v.fecha)), M = 28, W = 940, TW = W - 2 * M;
     const C = { hora: 16, ruta: 86, ton: 470, cam: 494, nota: 716 }, HF = 54, HD = 42, ds = dias.filter(x => vs.some(v => v.fecha === x));
     const top = M + 66, H = top + ds.reduce((s, x) => s + HD + vs.filter(v => v.fecha === x).length * HF + 14, 0) + 16 + this.pieAlto(W, M, this.tiposDe(vs)) + 22;
     const k = this.escala(W, H), c = document.createElement('canvas');
@@ -22475,9 +22542,8 @@ const Rutas = {
       g.strokeStyle = I.borde;
       g.lineWidth = 1;
       fil.forEach((v, i) => {
-        const yy = y + HD + i * HF, rt = this.ruta(v.ruta) || {}, cd = this.conductor(v), no = v.estado === 'no', t = this.pesoTxt(v) || '—';
+        const yy = y + HD + i * HF, rt = this.ruta(v.ruta) || {}, cd = this.conductor(v), t = this.pesoTxt(v) || '—';
         this.raya(g, M, yy + 0.5, M + TW, yy + 0.5);
-        g.globalAlpha = no ? 0.55 : 1;
         g.fillStyle = I.texto; g.font = '700 14px ' + I.mono; g.fillText(v.hora || '—', M + C.hora, yy + 24);
         const icL = (this._iconos || new Map()).get(rt.tipo);
         if (icL) g.drawImage(icL, M + C.ruta - 2, yy + 11, 15, 15);
@@ -22485,9 +22551,8 @@ const Rutas = {
         g.fillStyle = I.texto; g.font = '600 14px ' + I.letra;
         const nom = this.renglones(g, this.nombre(rt), C.ton - C.ruta - 90, 1)[0] || '';
         g.fillText(nom, M + C.ruta + 16, yy + 24);
-        if (no) g.fillRect(M + C.ruta + 16, yy + 19, g.measureText(nom).width, 1.3);
         g.fillStyle = I.texto3; g.font = '400 12px ' + I.letra;
-        g.fillText(this.renglones(g, [rt.tipo, rt.cliente, no ? 'no se hizo' : ''].filter(Boolean).join(' · '), C.ton - C.ruta - 90, 1)[0] || '', M + C.ruta + 16, yy + 42);
+        g.fillText(this.renglones(g, [rt.tipo, rt.cliente].filter(Boolean).join(' · '), C.ton - C.ruta - 90, 1)[0] || '', M + C.ruta + 16, yy + 42);
         g.fillStyle = I.texto; g.font = '400 13.5px ' + I.letra; g.fillText(t, M + C.ton - g.measureText(t).width, yy + 24);
         g.font = '700 14px ' + I.mono; g.fillText(this.placa(v.unidad), M + C.cam, yy + 24);
         g.fillStyle = I.texto3; g.font = '400 12px ' + I.letra;
@@ -22496,7 +22561,6 @@ const Rutas = {
           g.fillStyle = I.texto2;
           this.renglones(g, v.nota, TW - C.nota - 16, 2).forEach((s, k) => g.fillText(s, M + C.nota, yy + 24 + k * 16));
         }
-        g.globalAlpha = 1;
       });
       g.restore();
       g.strokeStyle = I.borde;
@@ -22510,8 +22574,8 @@ const Rutas = {
   /* «Copiar imagen»: va al portapapeles para pegarla con Ctrl + V. Si el
      navegador no deja copiar, se descarga para adjuntarla */
   copiarImagen(f) {
-    const l = this.semana(), dias = f ? [f] : this.fechas(l), vs = this.vistos(l).filter(v => dias.includes(v.fecha)), que = this.queTxt();
-    if (!vs.length) { Toast.show('No hay viajes ' + (que ? 'de ' + esc(que) + ' ' : '') + (f ? 'ese día' : 'esta semana') + ' para copiar.', 'warn'); return; }
+    const l = this.semana(), dias = f ? [f] : this.fechas(l), vs = this.paraConductores(l).filter(v => dias.includes(v.fecha)), que = this.queTxt();
+    if (!vs.length) { Toast.show('No hay viajes ' + (que ? 'de ' + esc(que) + ' ' : '') + (f ? 'ese día' : 'esta semana') + ' para copiar' + this.soloNo(l, dias) + '.', 'warn'); return; }
     const lista = Boolean(f) || UIState.rutas.vista === 'dia';
     const titulo = f && !que ? 'Programación del ' + this.largo(f).toLowerCase() : this.titulo();
     const nombre = 'programacion-' + (que ? sinTildes(que).replace(/[^a-z0-9]+/g, '-') + '-' : '') + (f || 'semana-' + l);
