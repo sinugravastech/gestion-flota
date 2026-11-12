@@ -1756,8 +1756,8 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 /* La espera para cargar en la ficha (Juan, 11/11/2026): mientras está en sitio, desde qué hora; después, cuánto esperó */
 .rt-v .rt-esp{gap:4px;color:var(--teal-700)}
 .rt-v .rt-esp i{font-style:normal;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* Las horas de cada estado, en la ventana del viaje */
-.rt-ti{margin-top:10px;padding:10px 12px 6px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2)}
+/* Las horas de cada estado, en la ventana del viaje. Con su propio nombre: rt-ti es la imagen del tipo en la ficha */
+.rt-tiempos{margin-top:10px;padding:10px 12px 6px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2)}
 .rt-ti-t{font-size:11.5px;color:var(--text-3);margin-bottom:8px}
 .rt-ti-f{display:grid;grid-template-columns:118px minmax(0,1fr) 120px;gap:8px;align-items:center;margin-bottom:6px}
 .rt-ti-f span{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--text-2)}
@@ -21852,7 +21852,7 @@ const Rutas = {
         '<div class="field"><label>Estado</label><div class="seg" id="rtE">' + Object.keys(this.ESTADOS).map(k => '<button type="button" data-v="' + k + '" class="' +
           (v.estado === k ? 'on' : '') + '">' + this.ESTADOS[k][0] + '</button>').join('') + '</div>' +
           /* Cuándo pasó cada estado (Juan, 11/11/2026): al tocar uno, sale con la fecha y la hora de ahora; si fue antes, se cambia */
-          '<div class="rt-ti" id="rtTi" hidden></div></div>' +
+          '<div class="rt-tiempos" id="rtTi" hidden></div></div>' +
         '<div class="field mb0"><label for="rtN">Nota <span class="txt-3">(opcional)</span></label><input class="inp" id="rtN" maxlength="200" autocomplete="off" value="' +
           attr(v.nota || '') + '" placeholder="Ej.: cargar antes de las 10"></div>' +
         /* El peso en báscula (Juan, 08/11/2026: «registrar el peso real»): se pone después del viaje, aunque la semana ya esté liquidada */
