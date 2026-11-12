@@ -1751,6 +1751,8 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .rt-v.e-carg .rt-ei{color:var(--violet-500)}
 .rt-v.e-sitio .rt-ei{color:var(--teal-500)}
 .rt-v.e-desc .rt-ei{color:var(--rosa-500)}
+.rt-v.e-cargando .rt-ei{color:var(--violet-500)}
+.rt-v.e-destino .rt-ei{color:var(--teal-500)}
 /* La espera para cargar en la ficha (Juan, 11/11/2026): mientras está en sitio, desde qué hora; después, cuánto esperó */
 .rt-v .rt-esp{gap:4px;color:var(--teal-700)}
 .rt-v .rt-esp i{font-style:normal;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1761,7 +1763,9 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .rt-ti-f span{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--text-2)}
 .rt-ti-f[data-k="sitio"] svg{color:var(--teal-500)}.rt-ti-f[data-k="carg"] svg{color:var(--violet-500)}.rt-ti-f[data-k="ruta"] svg{color:var(--warn-500)}
 .rt-ti-f[data-k="desc"] svg{color:var(--rosa-500)}.rt-ti-f[data-k="hecho"] svg{color:var(--ok-500)}
-.rt-ti-r{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);margin:2px 0 4px}
+.rt-ti-f[data-k="cargando"] svg{color:var(--violet-500)}.rt-ti-f[data-k="destino"] svg{color:var(--teal-500)}
+.rt-ti-r{display:grid;gap:3px;font-size:12px;color:var(--text-2);margin:2px 0 4px}
+.rt-ti-r > div{display:flex;align-items:center;gap:6px}
 .rt-ti-r:empty{display:none}
 @media (max-width:600px){.rt-ti-f{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.rt-ti-f span{grid-column:1/-1}}
 /* En el histórico, la sección de la espera para cargar */
@@ -1848,10 +1852,11 @@ html[data-theme="dark"] .rt-real{color:var(--ok-500)}
 .rt-v.fija{cursor:pointer;-webkit-user-drag:none}
 /* Y en su ventana, lo que ya no se cambia se ve quieto */
 .rt-fija .inp:disabled{background:var(--surface-3);color:var(--text-3);border-color:var(--border);cursor:not-allowed}
-/* Los siete estados en una fila (Juan, 11/11/2026); en el celular no caben: van en cuadrícula, para que se vean todos */
-#rtE button{padding:0 8px}
-@media (max-width:600px){#rtE{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;border:0;overflow:visible;background:none}
-  #rtE button{border:1px solid var(--border-strong);border-radius:var(--radius-sm);justify-content:center}#rtE button.on{border-color:var(--accent)}}
+/* Los nueve estados (Juan, 11/11/2026): no caben en una fila; van en dos, cada uno con su borde; en el celular, de a tres */
+#rtE{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;border:0;overflow:visible;background:none}
+#rtE button{border:1px solid var(--border-strong);border-radius:var(--radius-sm);justify-content:center;padding:0 6px}
+#rtE button.on{border-color:var(--accent)}
+@media (max-width:600px){#rtE{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}}
 .rt-fija #rtE button:disabled{cursor:not-allowed}
 .rt-fija #rtE button:disabled:not(.on){color:var(--text-3)}
 .rt-liq{align-items:center;margin:0 0 12px}
@@ -21216,10 +21221,10 @@ const Rutas = {
      Catálogo: verde (fruta de palma), café (almendra), ámbar (aceite),
      turquesa (fertilizante), morado (nutricomplemento) y los siguientes */
   COLORES: ['#2f9e5b', '#a8692b', '#d99a1e', '#1c96a4', '#8a5ac2', '#d0566c', '#4f6bd8', '#7a8a2e', '#c2569e', '#5a7a8c'],
-  /* Los estados del viaje, en su orden (Juan, 11/11/2026; SQL 033 y 034). «En sitio» es «Esperando en sitio», para cargar. «No se hizo»
-     va en gris y no sale en lo de los conductores */
-  ESTADOS: { prog: ['Programado', 'info'], sitio: ['En sitio', 'teal'], carg: ['Cargado', 'violet'], ruta: ['En ruta', 'warn'], desc: ['Descargando', 'rosa'],
-    hecho: ['Hecho', 'ok'], no: ['No se hizo', 'nr'] },
+  /* Los estados del viaje, en su orden (Juan, 11/11/2026; SQL 033, 034 y 035): «En sitio», cuando llega a cargar; «Cargando», cuando
+     empieza el cargue; «En destino», cuando llega a donde descarga. «No se hizo» va en gris y no sale en lo de los conductores */
+  ESTADOS: { prog: ['Programado', 'info'], sitio: ['En sitio', 'teal'], cargando: ['Cargando', 'violet'], carg: ['Cargado', 'violet'], ruta: ['En ruta', 'warn'],
+    destino: ['En destino', 'teal'], desc: ['Descargando', 'rosa'], hecho: ['Hecho', 'ok'], no: ['No se hizo', 'nr'] },
   DIAS: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
   MES: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
   /* Lo último que se hizo, para «Deshacer»: viajes nuevos (copia), cómo
@@ -21243,11 +21248,11 @@ const Rutas = {
     return s ? '<img class="rt-img" src="' + attr(s) + '" alt="">' : '<i class="rt-dot" style="--c:' + this.color(tipo) + '"></i>';
   },
   /* El ícono de cada estado en la ficha; Programado no lleva */
-  EST_IC: { sitio: 'clock', carg: 'caja', ruta: 'truck', desc: 'download', hecho: 'check', no: 'x' },
+  EST_IC: { sitio: 'clock', cargando: 'upload', carg: 'caja', ruta: 'truck', destino: 'pin', desc: 'download', hecho: 'check', no: 'x' },
   estIc(e) { return this.EST_IC[e] ? Icon(this.EST_IC[e], '', 11) : ''; },
   /* Las horas de cada estado (Juan, 11/11/2026: «mi idea es llevar un registro de cuánto el conductor espera… hasta que le carguen»): en
-     v.tiempos, { sitio: { f, h }, carg, ruta, desc, hecho }, en el extra del viaje. Al quitar el viaje se van con él */
-  TI: ['sitio', 'carg', 'ruta', 'desc', 'hecho'],
+     v.tiempos, { sitio: { f, h }, cargando, carg, ruta, destino, desc, hecho }, en el extra del viaje. Al quitar el viaje se van con él */
+  TI: ['sitio', 'cargando', 'carg', 'ruta', 'destino', 'desc', 'hecho'],
   hmin: h => { const [a, b] = String(h || '').split(':').map(Number); return (a || 0) * 60 + (b || 0); },
   /* Los minutos de un estado a otro, o nada si falta una fecha o una hora, o si la segunda queda antes */
   entre(v, a, b) {
@@ -21256,8 +21261,27 @@ const Rutas = {
     const m = Math.round((Fecha.parse(y.f) - Fecha.parse(x.f)) / 6e4) + this.hmin(y.h) - this.hmin(x.h);
     return m >= 0 ? m : null;
   },
-  /* La espera para cargar: de «En sitio» a «Cargado». Los «No se hizo» no cuentan */
-  esperaMin(v) { return v.estado === 'no' ? null : this.entre(v, 'sitio', 'carg'); },
+  /* Lo que se mide con las horas (Juan, 11/11/2026), de un estado a otro: en el cargue, la espera, el cargue y el total en el sitio; el
+     viaje; y en el descargue, la espera, el descargue y el total en el destino. Sin «Cargando», el total en el sitio se sigue sabiendo.
+     Los «No se hizo» no cuentan. n: el nombre; t: cómo se dice; ic: su ícono */
+  MED: {
+    espC: { a: 'sitio', b: 'cargando', n: 'Espera para cargar', t: 'Esperó {} para cargar', ic: 'clock' },
+    cargue: { a: 'cargando', b: 'carg', n: 'Cargue', t: 'Cargó en {}', ic: 'upload' },
+    sitio: { a: 'sitio', b: 'carg', n: 'En el sitio de cargue', t: 'Estuvo {} en el sitio de cargue', ic: 'caja' },
+    viaje: { a: 'ruta', b: 'destino', n: 'Viaje', t: 'El viaje duró {}', ic: 'truck' },
+    espD: { a: 'destino', b: 'desc', n: 'Espera para descargar', t: 'Esperó {} para descargar', ic: 'clock' },
+    descargue: { a: 'desc', b: 'hecho', n: 'Descargue', t: 'Descargó en {}', ic: 'download' },
+    destino: { a: 'destino', b: 'hecho', n: 'En el destino', t: 'Estuvo {} en el destino', ic: 'pin' }
+  },
+  medir(v, k) { const x = this.MED[k]; return v.estado === 'no' ? null : this.entre(v, x.a, x.b); },
+  /* Los tiempos que tiene un viaje, para decirlos: sin el total del sitio (o del destino) si ya están sus dos partes */
+  medidas(v) {
+    const x = {};
+    Object.keys(this.MED).forEach(k => { const m = this.medir(v, k); if (m != null) x[k] = m; });
+    if (x.espC != null && x.cargue != null) delete x.sitio;
+    if (x.espD != null && x.descargue != null) delete x.destino;
+    return Object.keys(x).map(k => ({ k, m: x[k], txt: this.MED[k].t.replace('{}', this.durTxt(x[k])) }));
+  },
   /* «45 min», «2 h 35 min», «1 d 3 h» */
   durTxt(min) {
     const d = Math.floor(min / 1440), h = Math.floor(min % 1440 / 60), m = min % 60;
@@ -21471,11 +21495,13 @@ const Rutas = {
        vehículo»): el del camión o, en azul, el que se escogió para ese viaje. Se cambia abriendo el viaje */
     const u = v.unidad ? Q.unidad(v.unidad) : null, cd = u || v.conductor ? this.conductor(v) : null, def = u ? Q.conductorDe(u) : null;
     const otro = Boolean((v.conductor || v.conductorTxt) && cd && (!def || def.id !== cd.id));
-    /* La espera para cargar (Juan, 11/11/2026): mientras está en sitio, desde qué hora; después, cuánto esperó */
-    const ts = (v.tiempos || {}).sitio, em = this.esperaMin(v), enSitio = em == null && v.estado === 'sitio' && ts && ts.h;
-    /* En la ficha, corto para que se vea la hora: «desde las 05:40»; en el título, «esperando desde las 05:40» */
-    const desde = enSitio ? 'desde las ' + ts.h + (ts.f !== v.fecha ? ' del ' + this.dia(ts.f) : '') : '';
-    const esp = em != null ? 'esperó ' + this.durTxt(em) : enSitio ? 'esperando ' + desde : '', linea = em != null ? esp : desde;
+    /* Los tiempos (Juan, 11/11/2026): mientras espera en el sitio o en el destino, desde qué hora («desde las 05:40», corto para que se
+       vea); ya cargando, cuánto esperó para cargar (o, sin la hora de «Cargando», cuánto estuvo en el sitio). En el título, todos */
+    const ti = v.tiempos || {}, eC = this.medir(v, 'espC'), sT = this.medir(v, 'sitio');
+    const aqui = (v.estado === 'sitio' || v.estado === 'destino') && ti[v.estado] && ti[v.estado].h ? ti[v.estado] : null;
+    const linea = aqui ? 'desde las ' + aqui.h + (aqui.f !== v.fecha ? ' del ' + this.dia(aqui.f) : '') : eC != null ? 'esperó ' + this.durTxt(eC)
+      : sT != null ? this.durTxt(sT) + ' en el sitio' : '';
+    const esp = [aqui ? 'esperando ' + linea : ''].concat(this.medidas(v).map(x => x.txt.toLowerCase())).filter(Boolean).join(' · ');
     const tit = this.nombreTMS(r) + ' · ' + (prog ? this.ESTADOS[v.estado][0] : 'por programar') + (esp ? ' (' + esp + ')' : '') +
       (u || v.conductor ? ' · Conductor: ' + (cd ? cd.nombre + (otro ? ' (el del camión es ' + (def ? def.nombre : 'ninguno') + ')' : '') : 'sin asignar') : '') +
       (v.pesoReal != null ? ' · Peso real: ' + this.kgTxt(v.pesoReal) + (v.ton != null ? ' (programadas ' + this.tonTxt(v.ton) + ')' : '') : '') +
@@ -21492,8 +21518,10 @@ const Rutas = {
   },
   leyenda() {
     return '<div class="rt-ley">' + this.tipos().map(t => '<span>' + this.punto(t) + esc(t) + '</span>').join('') +
-      '<span class="rt-ley-sep"></span><span>' + Icon('clock', '', 11) + 'En sitio: esperando para cargar (ya cargado, la ficha dice cuánto esperó)</span><span>' + Icon('caja', '', 11) + 'Cargado</span>' +
-      '<span>' + Icon('truck', '', 11) + 'En ruta</span><span>' + Icon('download', '', 11) + 'Descargando</span><span>' + Icon('check', '', 11) + 'Hecho</span>' +
+      '<span class="rt-ley-sep"></span><span>' + Icon('clock', '', 11) + 'En sitio: llegó a cargar</span><span>' + Icon('upload', '', 11) + 'Cargando</span>' +
+      '<span>' + Icon('caja', '', 11) + 'Cargado</span><span>' + Icon('truck', '', 11) + 'En ruta</span><span>' + Icon('pin', '', 11) + 'En destino: llegó a descargar</span>' +
+      '<span>' + Icon('download', '', 11) + 'Descargando</span><span>' + Icon('check', '', 11) + 'Hecho</span>' +
+      '<span>' + Icon('clock', '', 11) + 'En la ficha, desde qué hora espera y, ya cargando, cuánto esperó</span>' +
       '<span>' + Icon('x', '', 11) + 'No se hizo: en gris, y no sale en la imagen ni en el PDF</span>' +
       '<span>' + Icon('warn', '', 11) + 'Revisar antes de salir</span><span><i class="rt-real">' + Icon('check', '', 11) + 'kg</i>Peso real de la báscula</span>' +
       '<span class="rt-ley-sep"></span><span>' + Icon('mover', '', 11) +
@@ -21695,8 +21723,9 @@ const Rutas = {
     return '<div class="kpis4 kpis5 mb16">' +
         UI.kpi({ label: 'Viajes de la semana', valor: vs.length, icono: 'calendar', meta: esc('Semana ' + this.semanaTxt(l)) + (nb ? ' · ' + nb + ' por programar' : '') }) +
         UI.kpi({ label: 'Hechos', valor: n('hecho') + '<small> de ' + vs.length + '</small>', icono: 'check', color: 'var(--ok-500)',
-          meta: [n('sitio') ? n('sitio') + ' en sitio' : '', n('carg') ? n('carg') + (n('carg') === 1 ? ' cargado' : ' cargados') : '', n('ruta') ? n('ruta') + ' en ruta' : '',
-            n('desc') ? n('desc') + ' descargando' : '', n('no') ? n('no') + ' no se ' + (n('no') === 1 ? 'hizo' : 'hicieron') : ''].filter(Boolean).join(' · ') ||
+          meta: [n('sitio') ? n('sitio') + ' en sitio' : '', n('cargando') ? n('cargando') + ' cargando' : '', n('carg') ? n('carg') + (n('carg') === 1 ? ' cargado' : ' cargados') : '',
+            n('ruta') ? n('ruta') + ' en ruta' : '', n('destino') ? n('destino') + ' en destino' : '', n('desc') ? n('desc') + ' descargando' : '',
+            n('no') ? n('no') + ' no se ' + (n('no') === 1 ? 'hizo' : 'hicieron') : ''].filter(Boolean).join(' · ') ||
             'Se marcan en la ventana de cada viaje' }) +
         UI.kpi({ label: 'Toneladas programadas', valor: ton.toLocaleString('es-CO'), icono: 'truck', meta: lista ? esc(lista.charAt(0).toUpperCase() + lista.slice(1)) : 'Sin viajes esta semana' }) +
         UI.kpi({ label: 'Para revisar', valor: al, icono: 'warn', color: 'var(--warn-500)', vcolor: al ? 'var(--warn-500)' : '', meta: 'Taller, documentos o licencia antes de salir' }) +
@@ -21953,17 +21982,23 @@ const Rutas = {
       }).join('') + '<div class="rt-ti-r" id="rtTiR"></div>';
     this.tiResumen(m);
   },
-  /* Debajo de las horas: cuánto esperó para cargar o desde cuándo espera; y, sin bloquear, si una hora queda antes de la del estado anterior */
+  /* Debajo de las horas: los tiempos que ya se pueden sacar y, si está esperando, cargando o descargando, desde cuándo (y cuánto lleva,
+     si es de hoy); y, sin bloquear, si una hora queda antes de la del estado anterior */
   tiResumen(m) {
     const el = $('#rtTiR', m);
     if (!el) return;
-    const e = $('#rtE button.on', m), est = e ? e.dataset.v : 'prog', x = { estado: est, tiempos: this.tiLeer(m, est) }, s = x.tiempos.sitio;
-    const ks = this.TI.filter(k => x.tiempos[k] && x.tiempos[k].h), mal = ks.findIndex((k, j) => j > 0 && this.entre(x, ks[j - 1], k) == null), esp = this.esperaMin(x);
+    const e = $('#rtE button.on', m), est = e ? e.dataset.v : 'prog', x = { estado: est, tiempos: this.tiLeer(m, est) };
+    const ks = this.TI.filter(k => x.tiempos[k] && x.tiempos[k].h), mal = ks.findIndex((k, j) => j > 0 && this.entre(x, ks[j - 1], k) == null);
     el.classList.toggle('tx-warn', mal > 0);
-    el.innerHTML = mal > 0 ? Icon('warn', '', 12) + '<span>«' + esc(this.ESTADOS[ks[mal]][0]) + '» queda antes de «' + esc(this.ESTADOS[ks[mal - 1]][0]) + '»: revise las horas.</span>'
-      : esp != null ? Icon('clock', '', 12) + '<span>Esperó <b>' + esc(this.durTxt(esp)) + '</b> para cargar.</span>'
-      : est === 'sitio' && s && s.h ? Icon('clock', '', 12) + '<span>Esperando desde las ' + esc(s.h) +
-        (s.f === hoyISO && this.hmin(ahora()) >= this.hmin(s.h) ? ' (' + esc(this.durTxt(this.hmin(ahora()) - this.hmin(s.h))) + ')' : '') + '.</span>' : '';
+    if (mal > 0) {
+      el.innerHTML = '<div>' + Icon('warn', '', 12) + '<span>«' + esc(this.ESTADOS[ks[mal]][0]) + '» queda antes de «' + esc(this.ESTADOS[ks[mal - 1]][0]) +
+        '»: revise las horas.</span></div>';
+      return;
+    }
+    const t = x.tiempos[est], va = { sitio: 'Esperando para cargar', cargando: 'Cargando', destino: 'Esperando para descargar', desc: 'Descargando' }[est];
+    const lleva = t && t.h && t.f === hoyISO && this.hmin(ahora()) >= this.hmin(t.h) ? ' (' + this.durTxt(this.hmin(ahora()) - this.hmin(t.h)) + ')' : '';
+    el.innerHTML = this.medidas(x).map(y => '<div>' + Icon(this.MED[y.k].ic, '', 12) + '<span>' + esc(y.txt).replace(this.durTxt(y.m), '<b>' + this.durTxt(y.m) + '</b>') +
+        '.</span></div>').join('') + (va && t && t.h ? '<div>' + Icon('clock', '', 12) + '<span>' + esc(va + ' desde las ' + t.h + lleva) + '.</span></div>' : '');
   },
   TQ_TIT: '<span class="solo-web">Arrastre aquí el tiquete o haga clic</span><span class="solo-cel">Escoger el tiquete</span>',
   /* Lo que cambió, para el historial */
@@ -22280,36 +22315,44 @@ const Rutas = {
       }).join('') + '</tbody></table></div>' : UI.empty('calendar', 'No hay semanas liquidadas ' + esc(per.txt), 'Escoja otro período arriba.'), { flush: true });
     return '<div class="rt-hpag">' + bar + kpis + (vs.length ? '<div class="grid g2 mb16">' + tabla('tipo', 'Por tipo de operación', 'Tipo') +
       tabla('camion', 'Por camión', 'Camión') + tabla('conductor', 'Por conductor', 'Conductor') + tabla('ruta', 'Por ruta', 'Ruta') + '</div>' : '') +
-      (vs.length ? this.esperaHtml(vs, per) : '') + semHtml + '</div>';
+      (vs.length ? this.tiemposHtml(vs, per) : '') + semHtml + '</div>';
   },
-  /* En el histórico, la espera para cargar (Juan, 11/11/2026): el promedio, la más larga y los viajes que no la tienen; y por sitio de
-     cargue (el origen de la ruta), tipo, camión y conductor, del que más espera al que menos. Sin los «No se hizo» */
-  esperaHtml(vs, per) {
-    const hs = vs.filter(v => v.estado !== 'no'), xs = hs.map(v => ({ v, m: this.esperaMin(v) })).filter(x => x.m != null), pl = this.pl;
-    const cab = '<h3 class="rt-hsec">' + Icon('clock', '', 16) + 'Espera para cargar<span>De «En sitio» a «Cargado», con las horas de cada viaje</span></h3>';
-    if (!xs.length) return cab + '<div class="card mb16">' + UI.empty('clock', 'Ningún viaje tiene todavía las dos horas ' + per.txt,
-      'Se ponen en la ventana de cada viaje: al marcar «En sitio» y «Cargado» sale la hora de ahora, y se cambia si fue antes.') + '</div>';
-    const prom = ys => Math.round(ys.reduce((a, y) => a + y.m, 0) / ys.length), mas = ys => ys.reduce((a, y) => (y.m > a.m ? y : a));
-    const top = mas(xs), rt = this.ruta(top.v.ruta) || {}, sin = hs.length - xs.length;
-    const kpis = '<div class="grid g3 mb16">' +
-      UI.kpi({ label: 'Espera promedio', valor: esc(this.durTxt(prom(xs))), icono: 'clock', color: 'var(--teal-500)', meta: esc(pl(xs.length, 'viaje medido', 'viajes medidos') + ' ' + per.txt) }) +
-      UI.kpi({ label: 'La más larga', valor: esc(this.durTxt(top.m)), icono: 'warn', color: 'var(--warn-500)',
-        meta: esc([rt.origen || 'Sin origen', this.placa(top.v.unidad), this.diaSem(top.v.fecha).toLowerCase() + ' ' + this.dia(top.v.fecha)].join(' · ')) }) +
-      UI.kpi({ label: 'Sin las dos horas', valor: sin, icono: 'info', color: 'var(--ink-400)',
-        meta: sin ? esc(pl(sin, 'viaje hecho no entra', 'viajes hechos no entran') + ' en la espera') : 'Todos los viajes hechos las tienen' }) + '</div>';
-    const tabla = (titulo, cab1, clave, nombre) => {
-      const g = new Map();
-      xs.forEach(y => { const k = clave(y.v); if (!g.has(k)) g.set(k, []); g.get(k).push(y); });
-      const fs = [...g.entries()].map(([k, ys]) => ({ k, ys, p: prom(ys), l: mas(ys).m })).sort((a, b) => b.p - a.p || b.ys.length - a.ys.length);
-      return UI.card(titulo, '<div class="tbl-wrap"><table class="tbl rt-ht"><thead><tr><th>' + cab1 + '</th><th class="num">Viajes</th><th class="num">Promedio</th>' +
-        '<th class="num">La más larga</th></tr></thead><tbody>' + fs.map(x => '<tr><td>' + nombre(x) + '</td><td class="num">' + x.ys.length + '</td><td class="num nowrap"><b>' +
-        esc(this.durTxt(x.p)) + '</b></td><td class="num nowrap">' + esc(this.durTxt(x.l)) + '</td></tr>').join('') + '</tbody></table></div>', { flush: true });
+  /* En el histórico, los tiempos de los viajes (Juan, 11/11/2026): los promedios del período y, por sitio de cargue (el origen de la
+     ruta), sitio de descargue (el destino), tipo, camión y conductor, del que más espera al que menos. Cada tiempo, solo de los viajes
+     que tienen sus dos horas; sin los «No se hizo» */
+  tiemposHtml(vs, per) {
+    const pl = this.pl, K = Object.keys(this.MED);
+    const ms = vs.filter(v => v.estado !== 'no').map(v => { const o = { v }; K.forEach(k => { o[k] = this.medir(v, k); }); return o; });
+    const con = (xs, k) => xs.filter(x => x[k] != null);
+    const prom = (xs, k) => { const ys = con(xs, k); return ys.length ? Math.round(ys.reduce((a, y) => a + y[k], 0) / ys.length) : null; };
+    const cab = '<h3 class="rt-hsec">' + Icon('clock', '', 16) + 'Tiempos de los viajes<span>Con la hora de cada estado; cada tiempo, de los viajes que tienen sus dos horas</span></h3>';
+    if (!ms.some(x => K.some(k => x[k] != null))) return cab + '<div class="card mb16">' + UI.empty('clock', 'Ningún viaje tiene todavía las horas para medir ' + per.txt,
+      'Se ponen en la ventana de cada viaje: al marcar un estado sale con la fecha y la hora de ahora, y se cambia si fue antes.') + '</div>';
+    const kpi = (k, color) => {
+      const ys = con(ms, k), p = prom(ms, k), top = ys.length ? ys.reduce((a, y) => (y[k] > a[k] ? y : a)) : null;
+      return UI.kpi({ label: this.MED[k].n, valor: p != null ? esc(this.durTxt(p)) : '—', icono: this.MED[k].ic, color,
+        meta: ys.length ? esc(pl(ys.length, 'viaje', 'viajes') + (ys.length > 1 ? ' · la más larga, ' + this.durTxt(top[k]) : '')) : 'Sin viajes con las dos horas' });
     };
+    const kpis = '<div class="grid g3 mb16">' + kpi('espC', 'var(--teal-500)') + kpi('cargue', 'var(--violet-500)') + kpi('sitio', 'var(--violet-500)') +
+      kpi('espD', 'var(--teal-500)') + kpi('descargue', 'var(--rosa-500)') + kpi('viaje', 'var(--warn-500)') + '</div>';
+    /* cols: [tiempo, encabezado]; ord: la columna por la que se ordena (en negrilla), la que más viajes tiene */
+    const tabla = (titulo, cab1, clave, nombre, cols, ord) => {
+      const g = new Map();
+      ms.filter(x => cols.some(c => x[c[0]] != null)).forEach(x => { const k = clave(x.v); if (!g.has(k)) g.set(k, []); g.get(k).push(x); });
+      if (!g.size) return '';
+      const fs = [...g.entries()].map(([k, xs]) => ({ k, xs, p: cols.map(c => prom(xs, c[0])) })).sort((a, b) => (b.p[ord] || 0) - (a.p[ord] || 0) || b.xs.length - a.xs.length);
+      return UI.card(titulo, '<div class="tbl-wrap"><table class="tbl rt-ht"><thead><tr><th>' + cab1 + '</th><th class="num">Viajes</th>' +
+        cols.map(c => '<th class="num">' + esc(c[1]) + '</th>').join('') + '</tr></thead><tbody>' + fs.map(x => '<tr><td>' + nombre(x) + '</td><td class="num">' + x.xs.length + '</td>' +
+        x.p.map((p, j) => '<td class="num nowrap">' + (p == null ? '—' : j !== ord ? esc(this.durTxt(p)) : '<b>' + esc(this.durTxt(p)) + '</b>') + '</td>').join('') + '</tr>').join('') +
+        '</tbody></table></div>', { flush: true });
+    };
+    const de = c => v => (this.ruta(v.ruta) || {})[c] || 'Sin ' + c, tres = [['espC', 'Espera cargue'], ['sitio', 'En el sitio'], ['espD', 'Espera descargue']];
     return cab + kpis + '<div class="grid g2 mb16">' +
-      tabla('Por sitio de cargue', 'Sitio', v => (this.ruta(v.ruta) || {}).origen || 'Sin origen', x => esc(x.k)) +
-      tabla('Por tipo de operación', 'Tipo', v => (this.ruta(v.ruta) || {}).tipo || 'Sin tipo', x => this.punto(x.k) + esc(x.k)) +
-      tabla('Por camión', 'Camión', v => v.unidad || '', x => '<b class="mono">' + esc(this.placa(x.k)) + '</b>') +
-      tabla('Por conductor', 'Conductor', v => (this.conductor(v) || {}).id || '', x => esc((this.conductor(x.ys[0].v) || {}).nombre || 'Sin conductor')) + '</div>';
+      tabla('Por sitio de cargue', 'Sitio', de('origen'), x => esc(x.k), [['espC', 'Espera'], ['cargue', 'Cargue'], ['sitio', 'Total']], 2) +
+      tabla('Por sitio de descargue', 'Sitio', de('destino'), x => esc(x.k), [['espD', 'Espera'], ['descargue', 'Descargue'], ['destino', 'Total']], 2) +
+      tabla('Por tipo de operación', 'Tipo', v => (this.ruta(v.ruta) || {}).tipo || 'Sin tipo', x => this.punto(x.k) + esc(x.k), tres, 1) +
+      tabla('Por camión', 'Camión', v => v.unidad || '', x => '<b class="mono">' + esc(this.placa(x.k)) + '</b>', tres, 1) +
+      tabla('Por conductor', 'Conductor', v => (this.conductor(v) || {}).id || '', x => esc((this.conductor(x.xs[0].v) || {}).nombre || 'Sin conductor'), tres, 1) + '</div>';
   },
   /* El Excel del histórico: una fila por viaje de las semanas liquidadas del período y los resúmenes con fórmulas que suman la hoja «Viajes» */
   hExcel() {
@@ -22320,9 +22363,9 @@ const Rutas = {
       ['Peso real (kg)', 12, 'miles'], ['Diferencia (kg)', 12, 'miles'], ['Racimos', 10, 'miles'], ['Kg por racimo', 10, 'dec1'], ['Valor por', 18], ['Tarifa ($)', 13, 'pesos'],
       ['Valor ($)', 14, 'pesos'], ['Tiquete', 30], ['Nota', 36],
       ['Liquidada el', 12, 'fecha'],
-      /* Las horas de cada estado y la espera para cargar (Juan, 11/11/2026), al final: las columnas de los resúmenes no se mueven */
-      ['En sitio', 16, 'fechaHora'], ['Cargado', 16, 'fechaHora'], ['En ruta', 16, 'fechaHora'], ['Descargando', 16, 'fechaHora'], ['Hecho (hora)', 16, 'fechaHora'],
-      ['Espera para cargar', 12, 'duracion']];
+      /* Las horas de cada estado y los tiempos (Juan, 11/11/2026), al final: las columnas de los resúmenes no se mueven */
+      ['En sitio', 16, 'fechaHora'], ['Cargando', 16, 'fechaHora'], ['Cargado', 16, 'fechaHora'], ['En ruta', 16, 'fechaHora'], ['En destino', 16, 'fechaHora'],
+      ['Descargando', 16, 'fechaHora'], ['Hecho (hora)', 16, 'fechaHora']].concat(Object.keys(this.MED).map(k => [this.MED[k].n, 13, 'duracion']));
     const dia = f => (f ? Fecha.iso(new Date(f)) : '');
     const filas = vs.map((v, k) => {
       const i = k + 2, r = this.ruta(v.ruta) || {}, u = Q.unidad(v.unidad), c = this.conductor(v), lq = Config.rutasLiq[this.lunes(v.fecha)] || {};
@@ -22336,8 +22379,11 @@ const Rutas = {
         v.racimos != null ? +v.racimos : null, { fx: 'IF(OR(P' + i + '="",R' + i + '="",R' + i + '=0),"",ROUND(P' + i + '/R' + i + ',1))' },
         por, tar, { fx: 'IF(U' + i + '="","",IF(T' + i + '="Tonelada",IF(AND(O' + i + '="",P' + i + '=""),"",ROUND(IF(P' + i + '="",O' + i + ',P' + i + '/1000)*U' + i + ',0)),U' + i + '))' },
         v.tiquete ? v.tiquete.nombre : '', v.nota || '', dia(lq.f)].concat(this.TI.map(k => (t => (t && t.f ? t.f + (t.h ? ' ' + t.h : '') : ''))((v.tiempos || {})[k])),
-        /* La espera, de En sitio (Z) a Cargado (AA), como en Flota: solo si tiene las dos horas */
-        this.esperaMin(v) == null ? '' : { fx: 'IF(OR(Z' + i + '="",AA' + i + '=""),"",IF(AA' + i + '<Z' + i + ',"",AA' + i + '-Z' + i + '))' }), gris: v.estado === 'no' };
+        /* Cada tiempo, de la hora de un estado (desde la columna Z) a la de otro, como en Flota: solo si tiene las dos horas */
+        Object.keys(this.MED).map(k => {
+          const a = Xlsx.col(25 + this.TI.indexOf(this.MED[k].a)) + i, b = Xlsx.col(25 + this.TI.indexOf(this.MED[k].b)) + i;
+          return this.medir(v, k) == null ? '' : { fx: 'IF(OR(' + a + '="",' + b + '=""),"",IF(' + b + '<' + a + ',"",' + b + '-' + a + '))' };
+        })), gris: v.estado === 'no' };
     });
     /* El resumen: por tipo, camión, conductor y ruta, de los hechos */
     const fin = filas.length + 1, R = c => 'Viajes!$' + c + '$2:$' + c + '$' + fin;
@@ -22380,7 +22426,7 @@ const Rutas = {
       ['Semanas: lo mismo por cada semana liquidada. Una semana que cae en dos meses sale en cada mes con sus días.'], [''], ['Lo que hay que saber', 'cab'],
       ['El peso real es el de la báscula, escrito en cada viaje, en kilos. Lo programado va en toneladas. La diferencia, en kilos, es el peso real menos lo programado, solo en los viajes que tienen los dos.'],
       ['Los racimos son los de la fruta, escritos en cada viaje junto al peso de báscula. «Kg por racimo» es el peso real entre los racimos, en los viajes que tienen los dos.'],
-      ['Las horas de cada estado (En sitio, Cargado, En ruta, Descargando y Hecho) son las que se pusieron en Flota al marcarlo. «Espera para cargar» va de «En sitio» a «Cargado», en horas y minutos, solo en los viajes que tienen las dos horas.'],
+      ['Las horas de cada estado (En sitio, Cargando, Cargado, En ruta, En destino, Descargando y Hecho) son las que se pusieron en Flota al marcarlo. Los tiempos van al final, en horas y minutos, solo en los viajes que tienen sus dos horas: la espera para cargar (de En sitio a Cargando), el cargue (de Cargando a Cargado), el total en el sitio de cargue (de En sitio a Cargado), el viaje (de En ruta a En destino), la espera para descargar (de En destino a Descargando), el descargue (de Descargando a Hecho) y el total en el destino (de En destino a Hecho).'],
       ['El valor es lo que pagan por cada viaje: el de su ruta ese día o el escrito en el viaje. «Valor por» dice cómo se paga y «Tarifa», cuánto. Por tonelada, la columna Valor multiplica la tarifa por el peso real; si el viaje no lo tiene, por las toneladas programadas (estimado). Los «No se hizo» no tienen valor.'],
       ['Los tiquetes no van en el Excel: la columna Tiquete dice cuál tiene cada viaje, y se ven en Flota, abriendo el viaje.'],
       ['Es una foto del momento: lo que se corrija aquí no vuelve a Flota. Las correcciones se hacen en Flota.']];
