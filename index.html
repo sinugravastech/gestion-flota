@@ -1783,6 +1783,24 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
    No se arrastra sola: el clic es de la ficha */
 .rt-v .rt-ti{width:16px;height:16px;object-fit:contain;flex:0 0 auto;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
 .rt-img{width:16px;height:16px;object-fit:contain;flex:0 0 auto;vertical-align:-3px;pointer-events:none}
+/* La app de los conductores (12/11/2026): lo que marcó el conductor desde su celular, en la ficha y en la ventana del viaje */
+.rt-v .rt-mc{display:inline-flex;align-items:center;color:var(--accent)}
+.rt-ti-f .rt-mc{display:inline-flex;color:var(--accent);margin-left:2px}
+.rt-app-l{display:grid;gap:6px;margin-bottom:10px}
+.rt-app-n{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--text-2)}
+.rt-app-n svg{flex:0 0 auto;margin-top:2px;color:var(--accent)}
+.rt-app-n b{color:var(--text);font-weight:600}
+.rt-app-n i{font-style:normal;color:var(--text-3);margin-left:auto;white-space:nowrap;padding-left:8px}
+.rt-tqs{display:grid;gap:8px}
+.rt-tqc{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:12.5px}
+.rt-tqc > svg{flex:0 0 auto;color:var(--accent)}
+.rt-tqc-t{min-width:0;display:grid;gap:1px}
+.rt-tqc-t b{font-size:13px}
+.rt-tqc-t span{color:var(--text-3)}
+.rt-tqc-t .link{display:inline-flex;align-items:center;gap:4px;width:max-content;color:var(--accent)}
+.rt-rev{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-weight:600;cursor:pointer;white-space:nowrap;font-size:12.5px}
+.rt-rev input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;margin:0}
+.rt-app-ay{margin:14px 0 0 18px;display:grid;gap:6px;font-size:13px;color:var(--text-2);line-height:1.5}
 /* Catálogo: la imagen y el color de cada tipo de operación */
 .cat-op.cat-tipo{align-items:center}
 .cat-img{flex:0 0 auto;width:46px;height:46px;border-radius:10px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;margin-right:12px;cursor:pointer}
@@ -5350,6 +5368,8 @@ const Persistencia = {
     Datos.actividad.forEach(a => (a.adjuntos || []).forEach(x => ver(x.id)));
     /* El tiquete de báscula de cada viaje (ver Rutas.abrir) */
     (Datos.viajes || []).forEach(v => v.tiquete && ver(v.tiquete.id));
+    /* Y las fotos de los tiquetes que suben los conductores desde su app (12/11/2026) */
+    (Datos.viajes || []).forEach(v => (v.tiquetes || []).forEach(q => q && q.archivo && ver(q.archivo.id)));
     if (Firma.datos().firma) usados.add(Firma.CLAVE);
     return usados;
   },
@@ -11863,7 +11883,9 @@ const Ventanas = {
         '<div class="grid g2" id="nuTer" style="gap:0 14px"' + (prop === 'tercero' ? '' : ' hidden') + '>' +
           campo('nuTerQuien', '¿Quién presta el servicio?', '', 'Empresa o persona') + campo('nuTerTel', 'Contacto (opcional)', ' inputmode="tel"', 'Teléfono') +
           /* Su conductor, escrito (Juan, 10/11/2026): no está en RH. El remolque lleva el del camión */
-          (tipo === 'remolque' ? '' : campo('nuTerCond', tipo === 'maquinaria' ? 'Operador del tercero (opcional)' : 'Conductor del tercero (opcional)', ' maxlength="80"', 'Nombre y apellido')) + '</div>' +
+          (tipo === 'remolque' ? '' : campo('nuTerCond', tipo === 'maquinaria' ? 'Operador del tercero (opcional)' : 'Conductor del tercero (opcional)', ' maxlength="80"', 'Nombre y apellido') +
+            /* Con su cédula entra a la app de los conductores (12/11/2026) */
+            campo('nuTerCed', 'Su cédula, para la app (opcional)', ' inputmode="numeric" maxlength="15"', 'Solo los números')) + '</div>' +
         Dz.html('nuDz', 'Foto de la unidad', 'Arrastre la foto aquí o haga clic para buscarla', 'image/*', false) +
         '<div id="nuPrev"></div>';
       $$('.tsel', m).forEach(b => b.addEventListener('click', () => { tipo = b.dataset.tipo; m._foto = null; pintar(); }));
@@ -11965,7 +11987,9 @@ const Ventanas = {
       if (c.de === 'conductor') return '<div class="field">' + et + '<div class="ed-prop"' + (u.tercero ? ' hidden' : '') + '><select class="inp" id="' + id + '">' +
         Opc.conductores(u.conductor || '', 'Sin asignar', true, u.tipo) + '</select></div>' +
         '<div class="ed-ter"' + (u.tercero ? '' : ' hidden') + '><input class="inp" id="edTerCond" maxlength="80" autocomplete="off" placeholder="Nombre del conductor del tercero" value="' +
-        attr(((u.tercero || {}).conductor) || '') + '"><div class="hint">Del tercero: no está en RH, se escribe el nombre.</div></div></div>';
+        attr(((u.tercero || {}).conductor) || '') + '"><div class="hint">Del tercero: no está en RH, se escribe el nombre.</div>' +
+        '<input class="inp mt8" id="edTerCed" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="Su cédula, para la app (opcional)" value="' +
+        attr(((u.tercero || {}).cedula) || '') + '"><div class="hint">Con esa cédula entra a la app de los conductores.</div></div></div>';
       const v = c.de ? u[c.de] : (u.ficha || {})[HojaVida.nombre(c)];
       return '<div class="field">' + et + '<input class="inp" id="' + id + '"' + (c.fecha ? ' type="date"' : '') + (c.de === 'modelo' ? ' inputmode="numeric"' : '') +
         ' value="' + attr(v == null ? '' : v) + '"></div>';
@@ -12052,6 +12076,9 @@ const Ventanas = {
         '<div class="field"><label for="cdT">' + (quien === 'operador' ? 'Operador' : 'Conductor') + ' del tercero</label><input class="inp" id="cdT" list="cdTL" maxlength="80" ' +
           'autocomplete="off" placeholder="Nombre y apellido" value="' + attr(c && c.escrito ? c.nombre : '') + '"><datalist id="cdTL">' +
           nombres.map(n => '<option value="' + attr(n) + '">').join('') + '</datalist><div class="hint">Vacío: queda sin ' + quien + '.</div></div>' +
+        /* Con su cédula entra a la app de los conductores (12/11/2026) */
+        '<div class="field"><label for="cdTC">Su cédula, para la app <span class="txt-3">(opcional)</span></label><input class="inp" id="cdTC" inputmode="numeric" maxlength="15" ' +
+          'autocomplete="off" placeholder="Solo los números" value="' + attr(u.tercero.cedula || '') + '"><div class="hint">Si cambia el ' + quien + ', cambie también la cédula.</div></div>' +
         '<div class="row"><div class="field"><label>Fecha del cambio</label><input class="inp" type="date" id="cdF" value="' + hoyISO + '"></div><div></div></div>' +
         '<div class="field mb0"><label>Motivo u observación</label><textarea class="inp" id="cdM" placeholder="Opcional"></textarea></div>',
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="guardarCambioConductor" data-u="' + u.id + '">' +
@@ -12296,7 +12323,9 @@ const Acciones = {
     const pb = $('#edProp button.on', m);
     if (pb) {
       const condT = terNuevo && $('#edTerCond', m) ? $('#edTerCond', m).value.trim().replace(/\s+/g, ' ') : '';
-      const ter = pb.dataset.v === 'tercero' ? Object.assign({ quien: $('#edTerQuien', m).value.trim(), contacto: $('#edTerTel', m).value.trim() }, condT ? { conductor: condT } : {}) : null;
+      const cedT = terNuevo && $('#edTerCed', m) ? $('#edTerCed', m).value.replace(/\D/g, '') : '';
+      const ter = pb.dataset.v === 'tercero' ? Object.assign({ quien: $('#edTerQuien', m).value.trim(), contacto: $('#edTerTel', m).value.trim() }, condT ? { conductor: condT } : {},
+        cedT ? { cedula: cedT } : {}) : null;
       if (JSON.stringify(ter) !== JSON.stringify(u.tercero || null)) { if (ter) u.tercero = ter; else delete u.tercero; cambios++; }
       /* El escrito manda: el de la lista se quita */
       if (condT && u.conductor) u.conductor = null;
@@ -12346,8 +12375,10 @@ const Acciones = {
     const m = el.closest('.modal-bd'), u = Q.unidad(el.dataset.u);
     /* De un tercero: el nombre escrito (ver Ventanas.conductorTercero) */
     if ($('#cdT', m)) {
-      const antesT = Q.conductorDe(u), n = $('#cdT', m).value.trim().replace(/\s+/g, ' ');
-      if (n === (antesT && antesT.escrito ? antesT.nombre : '') && !u.conductor) { Toast.show('Es la misma persona que ya está asignada.', 'warn'); return; }
+      const antesT = Q.conductorDe(u), n = $('#cdT', m).value.trim().replace(/\s+/g, ' '), ced = ($('#cdTC', m) ? $('#cdTC', m).value : '').replace(/\D/g, '');
+      if (n === (antesT && antesT.escrito ? antesT.nombre : '') && !u.conductor && ced === (u.tercero.cedula || '')) { Toast.show('Es la misma persona que ya está asignada.', 'warn'); return; }
+      if (ced) u.tercero.cedula = ced; else delete u.tercero.cedula;
+      if (n === (antesT && antesT.escrito ? antesT.nombre : '') && !u.conductor) { Modal.cerrar(m); Toast.show('Cédula de ' + esc(n || 'su conductor') + ' guardada: con ella entra a la app.'); Router.pintar(true); return; }
       if (n) u.tercero.conductor = n; else delete u.tercero.conductor;
       u.conductor = null;
       const despuesT = Q.conductorDe(u);
@@ -12560,7 +12591,8 @@ const Acciones = {
       modelo: v('nuModelo'), color: v('nuColor'), conductor: m._prop() === 'tercero' ? null : v('nuCond') || null, foto: null,
       ficha: {}, docs: {}, otros: [], insp: null, comp: Comparendos.nueva({ tipo }), compHist: []
     };
-    if (m._prop() === 'tercero') u.tercero = Object.assign({ quien: v('nuTerQuien'), contacto: v('nuTerTel') }, v('nuTerCond') ? { conductor: v('nuTerCond').replace(/\s+/g, ' ') } : {});
+    if (m._prop() === 'tercero') u.tercero = Object.assign({ quien: v('nuTerQuien'), contacto: v('nuTerTel') }, v('nuTerCond') ? { conductor: v('nuTerCond').replace(/\s+/g, ' ') } : {},
+      v('nuTerCed').replace(/\D/g, '') ? { cedula: v('nuTerCed').replace(/\D/g, '') } : {});
     Datos.unidades.push(u);
     if (m._foto) Guardadas.poner(u, 'foto', m._foto).then(() => { const r = Router.actual(); if (r.vista === 'unidad' && r.id === u.id) Router.pintar(true); });
     if (u.conductor) Actividad.registrar(u, 'conductor', tipo === 'maquinaria' ? 'Cambio de operador' : 'Cambio de conductor', 'Se asignó a ' + Q.conductor(u.conductor).nombre);
@@ -19723,6 +19755,902 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
 })();
 
 /* ==========================================================================
+   §G  LA APP DE LOS CONDUCTORES — cada conductor marca desde su celular el
+       estado de sus viajes de Rutas (Juan, 12/11/2026: «que el conductor
+       pueda ingresar de forma muy sencilla y le aparezcan botones muy simples
+       de los estados»). Vive en este mismo archivo y se abre con «?conductor»
+       (flota.sinugravas.com/?conductor). Entra con su cédula, que el celular
+       recuerda. La hora de cada estado es la del celular al tocar el botón.
+       Anota lo que pase y sube la foto del tiquete. Sin señal, lo marcado
+       queda en el celular (IndexedDB «sigf-conductor») y se sube solo: con la
+       app abierta o, en segundo plano, con el sw.js (el único archivo aparte,
+       aprobado por Juan el 12/11/2026). Ver el SQL 036. Va dentro de una
+       función para que sus nombres no choquen con los de la plataforma.
+   ========================================================================== */
+const AppConductor = (() => {
+  const CSS = `
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --azul: #20449a; --azul-osc: #193680; --azul-prof: #132966; --azul-cl: #d5def5; --azul-cl2: #edf1fb;
+  --tinta: #161d24; --tinta-2: #4e5d6b; --gris: #6b7c8c; --borde: #dde4ea; --borde-2: #c3ced8; --fondo: #f3f5f8;
+  --ok: #0a6c42; --ok-bg: #e9f7ef; --ok-l: #b6e4c8; --aviso: #9a3d07; --aviso-bg: #fff3e8; --aviso-l: #fed7aa; --mal: #93261e; --mal-bg: #fdecec;
+  --font: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  --mono: "Cascadia Mono", "SF Mono", Consolas, "Roboto Mono", monospace;
+}
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { font-family: var(--font); background: var(--fondo); color: var(--tinta); font-size: 15px; line-height: 1.45; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.app { max-width: 480px; margin: 0 auto; min-height: 100vh; padding-bottom: 120px; }
+.ap-h { position: sticky; top: 0; z-index: 30; background: #fff; }
+.ap-fila { display: flex; align-items: center; gap: 10px; padding: 9px 14px 10px 16px; }
+.ap-s { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--borde); display: block; background: #fff; flex: 0 0 auto; }
+.ap-t { flex: 1; min-width: 0; line-height: 1.15; }
+.ap-t b { display: block; font-size: 14.5px; letter-spacing: .06em; color: var(--azul-prof); }
+.ap-t span { display: block; font-size: 11.5px; color: var(--gris); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.red { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-l); }
+.red i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.red.sin { background: var(--aviso-bg); color: var(--aviso); border-color: var(--aviso-l); }
+.ap-linea { height: 3px; background: var(--azul); }
+.cont { padding: 14px 14px 8px; }
+h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
+.hoy { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.hoy p, .sub0 { font-size: 12.5px; color: var(--gris); }
+.placa { display: inline-flex; align-items: center; height: 30px; padding: 0 10px; border: 2px solid var(--tinta); border-radius: 6px; font-family: var(--mono); font-weight: 700;
+  font-size: 15px; letter-spacing: .09em; background: #fff; white-space: nowrap; }
+.placa.peq { height: 22px; font-size: 12px; padding: 0 6px; border-width: 1.5px; letter-spacing: .06em; }
+.et { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); margin: 16px 2px 7px; }
+.pend { display: flex; gap: 10px; align-items: flex-start; background: var(--aviso-bg); border: 1px solid var(--aviso-l); color: #9a3412; border-radius: 12px; padding: 11px 13px;
+  margin-top: 12px; font-size: 13px; line-height: 1.45; }
+.pend b { color: #7c2d12; }
+.pend svg { flex: 0 0 auto; margin-top: 2px; }
+.pend.mal { background: var(--mal-bg); border-color: #f5c2bd; color: var(--mal); }
+.pend.mal b { color: var(--mal); }
+.pend .q { margin-left: auto; flex: 0 0 auto; background: #fff; border: 1px solid #f5c2bd; color: var(--mal); border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 12px; }
+.vj { background: #fff; border: 1px solid var(--borde); border-radius: 16px; padding: 14px; box-shadow: 0 1px 2px rgba(13,19,25,.04); margin-bottom: 10px; }
+.vj-top { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--tinta-2); font-weight: 600; }
+.vj-top img, .vj-top .pto { width: 22px; height: 22px; flex: 0 0 auto; object-fit: contain; }
+.pto { display: inline-block; border-radius: 50%; background: var(--c); width: 12px !important; height: 12px !important; margin: 0 5px; }
+.vj-top .hr { margin-left: auto; font-family: var(--mono); font-weight: 700; color: var(--tinta); font-size: 13px; white-space: nowrap; }
+.rt { margin: 10px 0 12px; }
+.rt div { display: flex; align-items: center; gap: 10px; font-size: 16.5px; font-weight: 700; line-height: 1.25; }
+.rt .pt { width: 12px; height: 12px; border-radius: 50%; border: 2.5px solid var(--azul); flex: 0 0 auto; background: #fff; }
+.rt .pt.f { background: var(--azul); }
+.rt .ln { display: block; width: 2px; height: 12px; background: var(--azul-cl); margin: 2px 0 2px 5px; }
+.paso { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.paso i { height: 5px; border-radius: 5px; background: var(--borde); }
+.paso i.on { background: var(--azul); }
+.est { font-size: 13px; color: var(--tinta-2); margin: 8px 0 12px; }
+.est b { color: var(--azul); }
+.grande { width: 100%; min-height: 70px; border: 0; border-radius: 15px; background: var(--azul); color: #fff; display: flex; align-items: center; gap: 14px; padding: 10px 16px;
+  text-align: left; box-shadow: 0 6px 14px rgba(32,68,154,.25); }
+.grande:active { transform: scale(.99); background: var(--azul-osc); }
+.grande .ic { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,.16); display: grid; place-items: center; flex: 0 0 auto; }
+.grande b { display: block; font-size: 19px; line-height: 1.2; }
+.grande span span { display: block; font-size: 12.5px; opacity: .85; }
+.sec { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.btn-s { min-height: 46px; border: 1.5px solid var(--borde-2); border-radius: 12px; background: #fff; color: var(--tinta); font-size: 14px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 10px; text-align: center; }
+.btn-s.hecho { border-color: var(--ok-l); background: var(--ok-bg); color: var(--ok); }
+.btn-s:disabled { opacity: .6; }
+.marcas { margin-top: 12px; border-top: 1px solid var(--borde); padding-top: 6px; }
+.marca { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; padding: 5px 0; }
+.marca > svg { color: var(--azul); flex: 0 0 auto; margin-top: 1px; }
+.marca .tx { min-width: 0; }
+.marca .tx i { display: block; font-style: normal; font-size: 12px; color: var(--gris); }
+.marca .h { margin-left: auto; font-family: var(--mono); font-weight: 700; font-size: 13px; white-space: nowrap; }
+.marca .sb { flex: 0 0 auto; color: var(--ok); margin-top: 1px; }
+.marca .sb.no { color: var(--aviso); }
+.fin { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+.fin .ok { width: 38px; height: 38px; border-radius: 50%; background: var(--ok-bg); border: 2px solid var(--ok-l); display: grid; place-items: center; color: var(--ok); flex: 0 0 auto; }
+.fin b { display: block; font-size: 16px; }
+.fin span { display: block; font-size: 12.5px; color: var(--gris); }
+.res { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+.res div { background: var(--fondo); border-radius: 10px; padding: 8px 10px; }
+.res b { display: block; font-size: 15px; }
+.res span { display: block; font-size: 11.5px; color: var(--gris); }
+.tq { display: flex; align-items: center; gap: 10px; border: 1px solid var(--ok-l); background: var(--ok-bg); border-radius: 12px; padding: 8px 10px; font-size: 13px; margin-bottom: 8px; }
+.tq > svg { flex: 0 0 auto; color: var(--ok); }
+.tq b { display: block; }
+.tq span { color: var(--tinta-2); font-size: 12px; }
+.tq.falta { border-color: var(--aviso-l); background: var(--aviso-bg); }
+.tq.falta > svg { color: var(--aviso); }
+.tq .btn-s { margin-left: auto; min-height: 36px; font-size: 13px; }
+.mas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fila { width: 100%; background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; text-align: left; }
+.fila img, .fila .pto { width: 20px; height: 20px; flex: 0 0 auto; object-fit: contain; }
+.fila b { display: block; font-size: 13.5px; line-height: 1.3; }
+.fila span { display: block; color: var(--gris); font-size: 12px; }
+.fila .hr { margin-left: auto; text-align: right; font-family: var(--mono); font-weight: 700; font-size: 12.5px; white-space: nowrap; }
+.fila .hr span { font-family: var(--font); font-weight: 400; }
+.fila .hr .ok { color: var(--ok); font-family: var(--font); font-weight: 700; }
+.vacio { background: #fff; border: 1px dashed var(--borde-2); border-radius: 14px; padding: 18px 14px; text-align: center; color: var(--gris); font-size: 13.5px; }
+.vacio b { display: block; color: var(--tinta); font-size: 15px; margin-bottom: 3px; }
+.pie { font-size: 11.5px; color: var(--gris); text-align: center; margin: 16px 10px 0; line-height: 1.5; }
+.pie button { border: 0; background: none; color: var(--azul); font-weight: 700; font-size: 12px; text-decoration: underline; padding: 6px; }
+/* La entrada */
+.tj { background: #fff; border: 1px solid var(--borde); border-radius: 14px; padding: 14px; margin: 14px 0 12px; }
+.lb { display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--gris); margin: 0 0 5px; }
+.inp, .area { width: 100%; border: 1.5px solid var(--borde-2); border-radius: 10px; font: inherit; font-size: 16px; color: var(--tinta); background: #fff; -webkit-appearance: none; appearance: none; }
+.inp { height: 48px; padding: 0 13px; }
+.inp.num { font-family: var(--mono); font-weight: 700; font-size: 18px; letter-spacing: .02em; }
+.area { min-height: 92px; padding: 10px 12px; resize: none; line-height: 1.4; }
+.inp:focus, .area:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(32,68,154,.14); }
+.ayuda { font-size: 11.5px; color: var(--gris); margin-top: 6px; display: flex; align-items: center; gap: 5px; }
+.ayuda.mal { color: var(--mal); font-weight: 600; }
+.btn-p { width: 100%; height: 52px; border: 0; border-radius: 13px; background: var(--azul); color: #fff; font-size: 16px; font-weight: 700; display: flex; align-items: center;
+  justify-content: center; gap: 8px; }
+.btn-p:disabled { opacity: .55; }
+.btn-t { width: 100%; height: 44px; border: 0; background: none; color: var(--tinta-2); font-size: 14px; font-weight: 700; margin-top: 4px; }
+.btn-t.mal { color: var(--mal); height: 36px; font-size: 13px; }
+.campo { margin-bottom: 12px; }
+.fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* Las hojas de abajo */
+.fondo { position: fixed; inset: 0; z-index: 80; background: rgba(16,24,40,.45); display: flex; align-items: flex-end; justify-content: center; }
+.hoja { background: #fff; width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 10px 16px calc(18px + env(safe-area-inset-bottom));
+  box-shadow: 0 -10px 30px rgba(16,24,40,.18); max-height: 92vh; overflow-y: auto; }
+.hoja .asa { width: 40px; height: 4px; border-radius: 4px; background: var(--borde-2); margin: 0 auto 12px; }
+.hoja h3 { font-size: 17px; color: var(--azul-prof); line-height: 1.25; }
+.hoja .sub { font-size: 12.5px; color: var(--gris); margin: 2px 0 14px; }
+.hoja .vj { border: 0; box-shadow: none; padding: 0; margin: 0; }
+.foto { width: 100%; border: 2px dashed var(--borde-2); border-radius: 14px; height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  color: var(--azul); font-weight: 700; background: var(--azul-cl2); margin-bottom: 12px; }
+.foto span { font-size: 12px; font-weight: 400; color: var(--gris); }
+.foto-ok { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+.foto-ok img { width: 92px; height: 122px; border-radius: 10px; border: 1px solid var(--borde); object-fit: cover; flex: 0 0 auto; background: #e6eaee; }
+.foto-ok b { display: block; font-size: 14px; }
+.foto-ok span { display: block; font-size: 12px; color: var(--gris); margin: 2px 0 8px; }
+.foto-ok .btn-s { min-height: 38px; font-size: 13px; padding: 0 12px; }
+.op { width: 100%; color: var(--tinta); display: flex; align-items: center; gap: 12px; border: 1.5px solid var(--borde); border-radius: 12px; background: #fff; padding: 10px 12px;
+  margin-bottom: 8px; text-align: left; }
+.op b { display: block; font-size: 15px; }
+.op span { display: block; font-size: 12px; color: var(--gris); }
+.op svg { color: var(--azul); flex: 0 0 auto; }
+.listo { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom)); width: calc(100% - 24px); max-width: 456px; z-index: 70;
+  background: #13202f; color: #fff; border-radius: 14px; padding: 12px 12px 10px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; box-shadow: 0 10px 24px rgba(16,24,40,.3); }
+.listo > svg { color: #6ee7a8; flex: 0 0 auto; }
+.listo .tx { min-width: 0; flex: 1; }
+.listo b { display: block; font-size: 14px; line-height: 1.25; }
+.listo span { display: block; font-size: 12px; opacity: .75; }
+.listo .acc { width: 100%; display: flex; justify-content: flex-end; gap: 6px; }
+.listo .acc:empty { display: none; }
+.listo button { height: 36px; border-radius: 9px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: #fff; font-size: 13px; font-weight: 700; padding: 0 10px;
+  display: inline-flex; align-items: center; gap: 5px; }
+.listo.err > svg { color: #fca5a5; }
+.giro { width: 30px; height: 30px; border: 3px solid var(--azul-cl); border-top-color: var(--azul); border-radius: 50%; margin: 30px auto 12px; animation: giro .8s linear infinite; }
+@keyframes giro { to { transform: rotate(360deg); } }
+`;
+  const HTML = `
+<div class="app">
+<header class="ap-h">
+  <div class="ap-fila"><img class="ap-s" id="acEmb" alt="SINUGRAVAS" hidden><div class="ap-t"><b>SINUGRAVAS</b><span id="acSub">Mis viajes</span></div>
+    <button type="button" class="red" id="acRed" title="La conexión del celular"><i></i><span>En línea</span></button></div>
+  <div class="ap-linea"></div>
+</header>
+<main class="cont" id="acCont"><div class="giro"></div></main>
+</div>
+<div id="acCapa"></div>
+<input type="file" id="acFoto" accept="image/*" capture="environment" hidden>`;
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const miles = n => String(Math.round(Math.abs(Number(n) || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const Local = {
+    leer(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } },
+    poner(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento: dura lo que dure la página */ } },
+    quitar(k) { try { localStorage.removeItem(k); } catch (e) { /* nada */ } }
+  };
+  const LOCAL = new URLSearchParams(location.search).get('nube') === 'local';
+
+  /* Los estados, en el orden de Rutas; cada uno con su botón (lo que dice el conductor) */
+  const ORDEN = ['prog', 'sitio', 'cargando', 'carg', 'ruta', 'destino', 'desc', 'hecho'];
+  const NOMBRE = { prog: 'Programado', sitio: 'En sitio', cargando: 'Cargando', carg: 'Cargado', ruta: 'En ruta', destino: 'En destino', desc: 'Descargando', hecho: 'Hecho' };
+  const BOT = {
+    sitio: ['Llegué a cargar', 'Toque apenas llegue al sitio de cargue', 'pin'],
+    cargando: ['Empezaron a cargar', 'Toque cuando le empiecen a cargar', 'upload'],
+    carg: ['Ya cargué', 'Toque cuando terminen de cargar', 'caja'],
+    ruta: ['Salí a ruta', 'Toque al salir hacia el descargue', 'truck'],
+    destino: ['Llegué a descargar', 'Toque apenas llegue al sitio de descargue', 'pin'],
+    desc: ['Empezaron a descargar', 'Toque cuando le empiecen a descargar', 'download'],
+    hecho: ['Ya descargué', 'Toque cuando terminen de descargar', 'check'],
+    regreso: ['Voy de regreso', '', 'regreso'],
+    parqueo: ['Parqueé el carro', '', 'parqueo'],
+    nota: ['Anotación', '', 'lapiz'],
+    tiquete: ['Tiquete', '', 'camera']
+  };
+  const IC = {
+    upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    caja: '<line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
+    truck: '<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+    pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+    lapiz: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>',
+    lista: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+    sinred: '<line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>',
+    nube: '<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><polyline points="9 15 11 17 15 13"/>',
+    espera: '<polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>',
+    mic: '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>',
+    deshacer: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+    regreso: '<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>',
+    parqueo: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/>',
+    warn: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+  };
+  const ic = (n, s, w) => '<svg width="' + (s || 18) + '" height="' + (s || 18) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 2) +
+    '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (IC[n] || '') + '</svg>';
+
+  /* Fechas y horas: las del celular */
+  const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const dos = n => String(n).padStart(2, '0');
+  const isoDe = d => d.getFullYear() + '-' + dos(d.getMonth() + 1) + '-' + dos(d.getDate());
+  const horaDe = d => dos(d.getHours()) + ':' + dos(d.getMinutes());
+  const hoyIso = () => isoDe(new Date());
+  const sumar = (f, n) => { const d = new Date(f + 'T12:00:00'); d.setDate(d.getDate() + n); return isoDe(d); };
+  const diaTxt = f => { const d = new Date(f + 'T12:00:00'); return DIAS[d.getDay()].slice(0, 3) + ' ' + d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3); };
+  const cuandoTxt = f => (f === hoyIso() ? 'hoy' : f === sumar(hoyIso(), 1) ? 'mañana' : f === sumar(hoyIso(), -1) ? 'ayer' : diaTxt(f));
+  const minDe = t => (t && t.f && t.h ? Math.round(new Date(t.f + 'T' + t.h + ':00').getTime() / 60000) : null);
+  const durTxt = m => { const h = Math.floor(m / 60), x = m % 60; return h ? h + ' h' + (x ? ' ' + dos(x) + ' min' : '') : x + ' min'; };
+  const nuevoId = p => (p || '') + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const corto = n => { const p = String(n || '').trim().split(/\s+/); return p.length >= 4 ? p[0] + ' ' + p[2] : p.slice(0, 2).join(' '); };
+
+  /* Lo de cada tipo de operación que se escogió en Catálogo: su imagen, su color y si lleva racimos (como Rutas.estilo) */
+  const clave = t => String(t || '').trim().replace(/\s+/g, ' ').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const estilo = t => ((D && D.tipos) || {})[clave(t)] || {};
+  const punto = t => {
+    const s = estilo(t).img;
+    if (/^data:image\/(webp|png|jpeg);base64,/.test(s || '')) return '<img src="' + esc(s) + '" alt="">';
+    const c = /^#[0-9a-f]{6}$/i.test(estilo(t).color || '') ? estilo(t).color : '#8a94a3';
+    return '<i class="pto" style="--c:' + c + '"></i>';
+  };
+  const conRacimos = t => { const e = estilo(t).racimos; return e ? e === 'si' : /frut|racim/i.test(t || ''); };
+
+  let CED = Local.leer('conductor.cedula', '');
+  let D = Local.leer('conductor.datos', null);
+  let enLinea = navigator.onLine !== false;
+  let hojaAbierta = null;
+  let enHistoria = false;
+  let ignorarAtras = false;
+  let PLACA = '';
+  let reloj = null;
+
+  /* --------------------------------------------------------------------------
+     La cola: lo marcado, en el celular hasta que el sistema lo recibe. Cada
+     envío tiene sus pasos (pedidos tal cual: la dirección, los encabezados y
+     el cuerpo) para que el sw.js los mande en segundo plano sin saber más.
+     «espera»: no se manda antes (los 8 segundos de «Deshacer»).
+     -------------------------------------------------------------------------- */
+  const Cola = {
+    lista: [],
+    _db: null,
+    db() {
+      if (!this._db) this._db = new Promise(ok => {
+        try {
+          const q = indexedDB.open('sigf-conductor', 1);
+          q.onupgradeneeded = () => q.result.createObjectStore('envios', { keyPath: 'id' });
+          q.onsuccess = () => ok(q.result);
+          q.onerror = q.onblocked = () => ok(null);
+        } catch (e) { ok(null); }
+      });
+      return this._db;
+    },
+    async tx(modo, f) {
+      const db = await this.db();
+      if (!db) return null;
+      return new Promise(ok => {
+        try {
+          const t = db.transaction('envios', modo), r = f(t.objectStore('envios'));
+          t.oncomplete = () => ok(r && 'result' in r ? r.result : null);
+          t.onerror = t.onabort = () => ok(null);
+        } catch (e) { ok(null); }
+      });
+    },
+    async cargar() {
+      const xs = await this.tx('readonly', st => st.getAll());
+      /* Sin IndexedDB se trabaja con lo de la memoria */
+      if (xs) this.lista = xs.sort((a, b) => a.orden - b.orden);
+    },
+    async guardar(it) {
+      if (!this.lista.includes(it)) { this.lista = this.lista.filter(x => x.id !== it.id).concat(it).sort((a, b) => a.orden - b.orden); }
+      await this.tx('readwrite', st => st.put(it));
+    },
+    async quitar(id) {
+      this.lista = this.lista.filter(x => x.id !== id);
+      await this.tx('readwrite', st => st.delete(id));
+    },
+    pendientes() { return this.lista.filter(x => !x.error); },
+    procesar() {
+      if (this.corriendo) { this.otra = true; return this.corriendo; }
+      this.corriendo = (async () => {
+        do { this.otra = false; await this.pasada(); } while (this.otra);
+      })().finally(() => { this.corriendo = null; pintar(); });
+      return this.corriendo;
+    },
+    async pasada() {
+      for (const it of this.lista.slice()) {
+        if (it.error || (it.espera && it.espera > Date.now())) continue;
+        try {
+          await enviar(it, x => this.guardar(x));
+          await this.quitar(it.id);
+          red(true);
+        } catch (e) {
+          if (e.cedula) { await salir(true); return; }
+          if (e.red) { red(false); return; }
+          if (e.luego) continue;
+          it.error = e.message;
+          await this.guardar(it);
+        }
+      }
+    }
+  };
+  /* Un envío, paso por paso, como en el sw.js. El paso que ya llegó no se repite */
+  async function enviar(it, guardar) {
+    for (let i = it.hecho || 0; i < it.pasos.length; i++) {
+      const p = it.pasos[i], ctl = new AbortController(), corte = setTimeout(() => ctl.abort(), p.bytes ? 120000 : 30000);
+      let res;
+      try {
+        res = await fetch(p.url, { method: p.metodo, headers: p.encabezados, body: p.bytes ? new Blob([p.bytes], { type: p.tipo }) : p.cuerpo, signal: ctl.signal });
+      } catch (e) {
+        throw Object.assign(new Error('Sin señal'), { red: true });
+      } finally { clearTimeout(corte); }
+      const txt = await res.text().catch(() => '');
+      let j = null;
+      try { j = txt ? JSON.parse(txt) : null; } catch (e) { /* no era JSON */ }
+      if (!res.ok) {
+        const ya = (p.okSi || []).includes(res.status) || (p.okTexto && new RegExp(p.okTexto, 'i').test(txt));
+        if (!ya) {
+          if (res.status >= 500 || res.status === 408 || res.status === 429) throw Object.assign(new Error('El sistema no respondió'), { red: true });
+          throw new Error((j && (j.message || j.msg || j.error)) || 'El sistema respondió ' + res.status);
+        }
+      } else if (p.exige) {
+        if (j && j.ok === false && j.motivo === 'cedula') throw Object.assign(new Error('cedula'), { cedula: true });
+        if (!j || !(j.recibidos || []).includes(p.exige)) {
+          const x = ((j && j.rechazados) || []).find(y => y.id === p.exige);
+          throw new Error(x ? x.motivo : (j && j.motivo) || 'El sistema no lo recibió');
+        }
+        if (j.datos && j.datos.ok) recibir(j.datos);
+      } else if (p.exigeOk && (!j || j.ok !== true)) {
+        if (j && j.motivo === 'cedula') throw Object.assign(new Error('cedula'), { cedula: true });
+        throw Object.assign(new Error((j && j.motivo) || 'El sistema no lo confirmó'), { luego: true });
+      }
+      it.hecho = i + 1;
+      await guardar(it);
+    }
+  }
+  const encabezados = tipo => ({ apikey: NUBE.llave, Authorization: 'Bearer ' + NUBE.llave, 'Content-Type': tipo || 'application/json' });
+  const pasoRpc = (nombre, args, extra) => Object.assign({ url: NUBE.url + '/rest/v1/rpc/' + nombre, metodo: 'POST', encabezados: encabezados(), cuerpo: JSON.stringify(args) }, extra);
+  async function rpc(nombre, args) {
+    const ctl = new AbortController(), corte = setTimeout(() => ctl.abort(), 20000);
+    let r;
+    try {
+      r = await fetch(NUBE.url + '/rest/v1/rpc/' + nombre, { method: 'POST', headers: encabezados(), body: JSON.stringify(args), signal: ctl.signal });
+    } catch (e) {
+      throw Object.assign(new Error('Sin señal'), { red: true });
+    } finally { clearTimeout(corte); }
+    const j = await r.json().catch(() => null);
+    if (!r.ok) throw Object.assign(new Error((j && j.message) || 'El sistema respondió ' + r.status), { red: r.status >= 500 });
+    return j;
+  }
+
+  /* --------------------------------------------------------------------------
+     Los datos: lo último que llegó queda en el celular para abrir sin señal
+     -------------------------------------------------------------------------- */
+  function recibir(d) {
+    D = { nombre: d.nombre, tercero: Boolean(d.tercero), tipos: d.tipos || {}, viajes: d.viajes || [], hoy: d.hoy, ahora: d.ahora, t: Date.now() };
+    Local.poner('conductor.datos', D);
+  }
+  async function traer() {
+    if (!CED) return;
+    try {
+      const j = await rpc('conductor_datos', { p_cedula: CED });
+      red(true);
+      if (j && j.ok) { recibir(j); pintar(); }
+      else if (j && j.motivo === 'cedula') await salir(true);
+    } catch (e) { if (e.red) red(false); }
+  }
+  function red(si) {
+    enLinea = si && navigator.onLine !== false;
+    const b = $('acRed');
+    if (!b) return;
+    b.className = 'red' + (enLinea ? '' : ' sin');
+    b.querySelector('span').textContent = enLinea ? 'En línea' : 'Sin señal';
+  }
+
+  /* Los viajes con lo que todavía está en el celular, como si ya hubiera llegado */
+  function vista() {
+    const vs = ((D && D.viajes) || []).map(v => JSON.parse(JSON.stringify(v)));
+    const por = new Map(vs.map(v => [v.id, v]));
+    Cola.lista.filter(it => !it.error).forEach(it => {
+      const e = it.ev, v = e && por.get(e.viaje);
+      if (!v) return;
+      const t = new Date(e.cuando), f = isoDe(t), h = horaDe(t);
+      if (ORDEN.includes(e.que)) {
+        v.tiempos = v.tiempos || {};
+        if (!v.tiempos[e.que] || !v.tiempos[e.que].f) v.tiempos[e.que] = { f, h, pend: true };
+        if (ORDEN.indexOf(e.que) > ORDEN.indexOf(v.estado)) v.estado = e.que;
+      } else if (e.que === 'regreso' || e.que === 'parqueo') {
+        v.vuelta = v.vuelta || {};
+        if (!v.vuelta[e.que]) v.vuelta[e.que] = { f, h, pend: true };
+      } else if (e.que === 'nota') {
+        if (!(v.notas || []).some(n => n.id === e.id)) (v.notas = v.notas || []).push({ id: e.id, k: e.k || '', t: e.nota, f, h, pend: true });
+      } else if (e.que === 'tiquete') {
+        if (!(v.tiquetes || []).some(x => x.id === e.id)) (v.tiquetes = v.tiquetes || []).push({ id: e.id, donde: e.donde, kg: e.kg ? +e.kg : null, racimos: e.racimos ? +e.racimos : null, foto: Boolean(e.archivo), pend: true });
+      }
+    });
+    return vs;
+  }
+  const porHora = (a, b) => (a.fecha + ' ' + (a.hora || '')).localeCompare(b.fecha + ' ' + (b.hora || ''));
+  const entre = (v, a, b) => { const x = minDe((v.tiempos || {})[a]), y = minDe((v.tiempos || {})[b]); return x != null && y != null && y >= x ? y - x : null; };
+  const siguiente = v => { const i = ORDEN.indexOf(v.estado); return i >= 0 && i < ORDEN.length - 1 ? ORDEN[i + 1] : null; };
+
+  /* --------------------------------------------------------------------------
+     Las pantallas: la entrada con la cédula y «Mis viajes»
+     -------------------------------------------------------------------------- */
+  function pintar() {
+    const sub = $('acSub');
+    if (!sub) return;
+    sub.textContent = CED && D ? 'Mis viajes · ' + corto(D.nombre || '') : 'Mis viajes';
+    red(enLinea);
+    if (!CED || !D) { pintarEntrada(); return; }
+    const vs = vista(), hoy = hoyIso();
+    const curso = vs.filter(v => v.estado !== 'prog' && v.estado !== 'hecho').sort(porHora);
+    const ahora = curso[0] || vs.filter(v => v.estado === 'prog' && v.fecha === hoy).sort(porHora)[0] || null;
+    const terminados = vs.filter(v => v.estado === 'hecho' && v.fecha >= sumar(hoy, -1)).sort((a, b) => porHora(b, a));
+    const despues = vs.filter(v => v !== ahora && v.estado === 'prog' && v.fecha >= hoy).sort(porHora);
+    const atras = vs.filter(v => v !== ahora && v.estado === 'prog' && v.fecha < hoy).sort(porHora);
+    const d = new Date(), placa = PLACA = (ahora || despues[0] || terminados[0] || {}).placa || '';
+    /* Lo que espera de verdad: no los ocho segundos para deshacer ni lo que espera el tiquete */
+    const pend = Cola.pendientes().filter(x => !x.espera || x.espera <= Date.now()), malos = Cola.lista.filter(x => x.error);
+    $('acCont').innerHTML =
+      '<div class="hoy"><div><h1>' + esc(DIAS[d.getDay()].charAt(0).toUpperCase() + DIAS[d.getDay()].slice(1) + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()]) + '</h1>' +
+        '<p>Sus viajes de hoy y de los próximos días</p></div>' + (placa ? '<span class="placa">' + esc(placaTxt(placa)) + '</span>' : '') + '</div>' +
+      (pend.length ? '<div class="pend">' + ic(enLinea ? 'espera' : 'sinred', 16) + '<div><b>' + (pend.length === 1 ? '1 cambio guardado' : pend.length + ' cambios guardados') +
+        ' en este celular.</b> ' + (enLinea && Cola.corriendo ? 'Subiendo…' : 'Cada uno con la hora en que lo tocó. Se suben solos apenas haya señal.') + '</div></div>' : '') +
+      malos.map(it => '<div class="pend mal">' + ic('warn', 16) + '<div><b>No se pudo subir «' + esc((BOT[it.ev.que] || ['Un cambio'])[0]) + '».</b> ' + esc(it.error) +
+        '</div><button type="button" class="q" data-act="quitarError" data-id="' + esc(it.id) + '">Quitar</button></div>').join('') +
+      '<p class="et">Ahora</p>' + (ahora ? tarjeta(ahora) : '<div class="vacio"><b>No tiene viajes para hoy</b>' +
+        (despues.length ? 'El próximo es ' + esc(cuandoTxt(despues[0].fecha)) + ' a las ' + esc(despues[0].hora || '—') + '.' : 'Cuando le programen uno, sale aquí.') + '</div>') +
+      curso.slice(1).map(v => tarjeta(v)).join('') +
+      (terminados.length ? '<p class="et">Terminados</p>' + terminados.map(v => fila(v, true)).join('') : '') +
+      (despues.length ? '<p class="et">Después</p>' + despues.map(v => fila(v)).join('') : '') +
+      (atras.length ? '<p class="et">Sin marcar de días anteriores</p>' + atras.map(v => fila(v)).join('') : '') +
+      '<p class="pie">La hora la pone el celular cuando usted toca cada botón. Si no hay señal, queda guardado y se sube solo.' +
+        '<br>Usted entró como <b>' + esc(D.nombre || '') + '</b>. <button type="button" data-act="salir">No soy yo</button></p>';
+  }
+  const placaTxt = p => String(p || '').replace(/^([A-Z]{3})(\d)/, '$1 $2');
+  function pintarEntrada() {
+    $('acCont').innerHTML = '<h1>Mis viajes</h1><p class="sub0">Para marcar desde el celular el estado de sus viajes de SINUGRAVAS.</p>' +
+      '<div class="tj"><label class="lb" for="acCed">Su cédula</label><input class="inp num" id="acCed" inputmode="numeric" autocomplete="off" maxlength="15" placeholder="Solo los números">' +
+        '<div class="ayuda" id="acCedAy">La primera vez hace falta señal. Después el celular la recuerda.</div></div>' +
+      '<button type="button" class="btn-p" id="acEntrar">Entrar</button>';
+    const i = $('acCed');
+    i.addEventListener('input', () => { const d = i.value.replace(/\D/g, ''); if (d !== i.value) i.value = d; });
+    i.addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+    $('acEntrar').addEventListener('click', entrar);
+  }
+  async function entrar() {
+    const ced = $('acCed').value.replace(/\D/g, ''), ay = $('acCedAy'), b = $('acEntrar');
+    ay.classList.add('mal');
+    if (ced.length < 5) { ay.textContent = 'Escriba su cédula completa, solo con los números.'; return; }
+    b.disabled = true;
+    b.textContent = 'Entrando…';
+    try {
+      const j = await rpc('conductor_datos', { p_cedula: ced });
+      red(true);
+      if (!j || !j.ok) {
+        ay.textContent = 'Esa cédula no está registrada como conductor de SINUGRAVAS. Revísela; si está bien, avísele al encargado de la flota.';
+        return;
+      }
+      CED = ced;
+      Local.poner('conductor.cedula', ced);
+      recibir(j);
+      pintar();
+      Sw.registrar();
+    } catch (e) {
+      if (e.red) red(false);
+      ay.textContent = e.red ? 'No hay señal. Para entrar la primera vez hace falta señal: intente otra vez donde tenga.' : 'No se pudo entrar: ' + e.message;
+    } finally {
+      if (document.body.contains(b)) { b.disabled = false; b.textContent = 'Entrar'; }
+    }
+  }
+  async function salir(porCedula) {
+    if (!porCedula && Cola.pendientes().length) {
+      aviso('Primero deje que se suban los cambios guardados en este celular.', true);
+      return;
+    }
+    CED = '';
+    D = null;
+    Local.quitar('conductor.cedula');
+    Local.quitar('conductor.datos');
+    for (const it of Cola.lista.slice()) await Cola.quitar(it.id);
+    cerrarHoja();
+    pintar();
+    if (porCedula) $('acCedAy').textContent = 'Su cédula ya no está registrada como conductor. Si es un error, avísele al encargado de la flota.';
+  }
+
+  /* La tarjeta de un viaje: lo que es, cómo va, el botón de lo que sigue y lo que se ha marcado */
+  function cabeza(v) {
+    return '<div class="vj-top">' + punto(v.tipo) + esc(v.tipo || 'Viaje') + '<span class="hr">' + esc(v.fecha === hoyIso() ? '' : cuandoTxt(v.fecha) + ' · ') + esc(v.hora || '—') +
+      (v.ton != null ? ' · ' + esc(String(v.ton).replace('.', ',')) + ' t' : '') + '</span></div>' +
+      '<div class="rt"><div><i class="pt"></i>' + esc(v.origen || '—') + '</div><i class="ln"></i><div><i class="pt f"></i>' + esc(v.destino || '—') + '</div></div>';
+  }
+  function estadoTxt(v) {
+    const t = v.tiempos || {}, e = v.estado, h = k => (t[k] && t[k].h ? t[k].h : '');
+    const x = (a, b) => { const m = entre(v, a, b); return m == null ? '' : durTxt(m); };
+    if (e === 'prog') return 'Programado para ' + esc(cuandoTxt(v.fecha)) + ' a las <b>' + esc(v.hora || '—') + '</b>';
+    if (e === 'sitio') return '<b>En sitio</b>' + (h('sitio') ? ' desde las ' + h('sitio') : '') + ' · esperando para cargar';
+    if (e === 'cargando') return '<b>Cargando</b>' + (h('cargando') ? ' desde las ' + h('cargando') : '') + (x('sitio', 'cargando') ? ' · esperó ' + x('sitio', 'cargando') : '');
+    if (e === 'carg') return '<b>Cargado</b>' + (h('carg') ? ' a las ' + h('carg') : '') + (x('cargando', 'carg') ? ' · cargó en ' + x('cargando', 'carg') : '');
+    if (e === 'ruta') return '<b>En ruta</b>' + (h('ruta') ? ' desde las ' + h('ruta') : '');
+    if (e === 'destino') return '<b>En destino</b>' + (h('destino') ? ' desde las ' + h('destino') : '') + (x('ruta', 'destino') ? ' · el viaje duró ' + x('ruta', 'destino') : '');
+    if (e === 'desc') return '<b>Descargando</b>' + (h('desc') ? ' desde las ' + h('desc') : '') + (x('destino', 'desc') ? ' · esperó ' + x('destino', 'desc') : '');
+    return '<b>Hecho</b>' + (h('hecho') ? ' a las ' + h('hecho') : '');
+  }
+  function marcas(v) {
+    const t = v.tiempos || {}, vu = v.vuelta || {}, notas = v.notas || [];
+    const filas = ORDEN.slice(1).filter(k => t[k] && t[k].f).map(k => [k, t[k]]).concat(['regreso', 'parqueo'].filter(k => vu[k]).map(k => [k, vu[k]]));
+    const sueltas = notas.filter(n => !filas.some(f => f[0] === n.k));
+    if (!filas.length && !sueltas.length) return '';
+    const sube = x => '<span class="sb' + (x.pend ? ' no' : '') + '" title="' + (x.pend ? 'Guardado en el celular: se sube solo' : 'Ya llegó al sistema') + '">' + ic(x.pend ? 'espera' : 'nube', 16) + '</span>';
+    const notasDe = k => notas.filter(n => n.k === k).map(n => '<i>«' + esc(n.t) + '»</i>').join('');
+    return '<div class="marcas">' + filas.map(([k, x]) => '<div class="marca">' + ic(BOT[k][2], 16) + '<div class="tx">' + BOT[k][0] + notasDe(k) + '</div><span class="h">' +
+        esc((x.f !== v.fecha ? cuandoTxt(x.f) + ' ' : '') + (x.h || '')) + '</span>' + sube(x) + '</div>').join('') +
+      sueltas.map(n => '<div class="marca">' + ic('lapiz', 16) + '<div class="tx">Anotación<i>«' + esc(n.t) + '»</i></div><span class="h">' + esc(n.h || '') + '</span>' + sube(n) + '</div>').join('') + '</div>';
+  }
+  /* Los tiquetes del viaje: los que hay y el que falta */
+  function tiquetes(v, todos) {
+    const xs = v.tiquetes || [], fruta = conRacimos(v.tipo), hay = d => xs.some(x => x.donde === d);
+    let h = xs.map(x => '<div class="tq">' + ic('check', 18, 2.6) + '<div><b>Tiquete de ' + (x.donde === 'cargue' ? 'cargue' : 'descargue') + '</b><span>' +
+      esc([x.kg != null ? miles(x.kg) + ' kg' : '', x.racimos != null ? miles(x.racimos) + ' racimos' : '', x.foto ? 'con foto' : 'sin foto', x.pend ? 'guardado en el celular' : ''].filter(Boolean).join(' · ')) +
+      '</span></div></div>').join('');
+    const falta = v.estado === 'hecho' && !hay('descargue') ? 'descargue' : todos && !fruta && ORDEN.indexOf(v.estado) >= ORDEN.indexOf('carg') && !hay('cargue') ? 'cargue' : '';
+    if (falta) h += '<div class="tq falta">' + ic('camera', 18) + '<div><b>Falta el tiquete de ' + falta + '</b><span>Tómele la foto cuando lo tenga</span></div>' +
+      '<button type="button" class="btn-s" data-act="tiquete" data-v="' + esc(v.id) + '" data-d="' + falta + '">Agregar</button></div>';
+    return h;
+  }
+  function tarjeta(v) {
+    const sig = siguiente(v), i = ORDEN.indexOf(v.estado);
+    let h = '<div class="vj">' + cabeza(v) + '<div class="paso">' + ORDEN.slice(1).map((k, j) => '<i class="' + (j < i ? 'on' : '') + '"></i>').join('') + '</div>' +
+      '<p class="est">' + estadoTxt(v) + (v.placa && v.placa !== PLACA ? ' · <span class="placa peq">' + esc(placaTxt(v.placa)) + '</span>' : '') + '</p>';
+    if (sig) {
+      const b = BOT[sig];
+      h += '<button type="button" class="grande" data-act="marcar" data-v="' + esc(v.id) + '" data-k="' + sig + '"><span class="ic">' + ic(b[2], 24, 2.2) + '</span><span><b>' + b[0] + '</b><span>' + b[1] +
+        '</span></span></button><div class="sec"><button type="button" class="btn-s" data-act="nota" data-v="' + esc(v.id) + '">' + ic('lapiz', 16) + 'Anotar algo</button>' +
+        '<button type="button" class="btn-s" data-act="otro" data-v="' + esc(v.id) + '"' + (ORDEN.indexOf(sig) >= ORDEN.length - 1 ? ' disabled' : '') + '>' + ic('lista', 16) + 'Otro estado</button></div>' +
+        (i >= ORDEN.indexOf('carg') ? '<div style="margin-top:10px">' + tiquetes(v, true) + '</div>' : '');
+    } else h += terminado(v);
+    return h + marcas(v) + '</div>';
+  }
+  function terminado(v) {
+    const m = [['Esperó para cargar', entre(v, 'sitio', 'cargando')], ['Cargó en', entre(v, 'cargando', 'carg')], ['El viaje duró', entre(v, 'ruta', 'destino')],
+      ['Esperó para descargar', entre(v, 'destino', 'desc')], ['Descargó en', entre(v, 'desc', 'hecho')]].filter(x => x[1] != null);
+    const vu = v.vuelta || {};
+    return '<div class="fin"><span class="ok">' + ic('check', 20, 2.6) + '</span><div><b>Viaje terminado</b><span>' + (v.tiempos && v.tiempos.hecho && v.tiempos.hecho.pend ? 'Guardado en el celular: se sube solo.' : 'Ya le llegó a SINUGRAVAS. Gracias.') + '</span></div></div>' +
+      (m.length ? '<div class="res">' + m.map(x => '<div><b>' + durTxt(x[1]) + '</b><span>' + x[0] + '</span></div>').join('') + '</div>' : '') + tiquetes(v, true) +
+      '<div class="mas">' + ['regreso', 'parqueo'].map(k => '<button type="button" class="btn-s' + (vu[k] ? ' hecho' : '') + '" data-act="marcar" data-v="' + esc(v.id) + '" data-k="' + k + '"' +
+        (vu[k] ? ' disabled' : '') + '>' + ic(vu[k] ? 'check' : BOT[k][2], 16) + (vu[k] ? (k === 'regreso' ? 'De regreso ' : 'Parqueado ') + esc(vu[k].h) : BOT[k][0]) + '</button>').join('') + '</div>';
+  }
+  /* En las listas: una fila que se abre en una hoja */
+  function fila(v, hecho) {
+    const t = (v.tiempos || {}).hecho, falta = hecho && !(v.tiquetes || []).some(x => x.donde === 'descargue');
+    return '<button type="button" class="fila" data-act="abrir" data-v="' + esc(v.id) + '">' + punto(v.tipo) + '<div><b>' + esc((v.origen || '—') + ' → ' + (v.destino || '—')) + '</b><span>' +
+      esc([v.tipo, v.ton != null ? String(v.ton).replace('.', ',') + ' t' : '', placaTxt(v.placa)].filter(Boolean).join(' · ')) + (falta ? ' · <b style="display:inline;color:var(--aviso)">falta el tiquete</b>' : '') +
+      '</span></div><span class="hr">' + (hecho ? '<span class="ok">Hecho ' + esc(t && t.h ? t.h : '') + '</span>' : esc(v.hora || '—') + '<span>' + esc(cuandoTxt(v.fecha)) + '</span>') + '</span></button>';
+  }
+
+  /* --------------------------------------------------------------------------
+     Las hojas de abajo. Con el botón «atrás» del celular se cierran.
+     -------------------------------------------------------------------------- */
+  function hoja(html, alCerrar) {
+    hojaAbierta = { alCerrar };
+    $('acCapa').innerHTML = '<div class="fondo" data-act="fondo"><div class="hoja" role="dialog"><div class="asa"></div>' + html + '</div></div>';
+    if (!enHistoria) { history.pushState({ hoja: 1 }, ''); enHistoria = true; }
+  }
+  /* desdeAtras: la cerró el botón «atrás»; seguir: enseguida se abre otra (se queda la misma entrada del historial) */
+  function cerrarHoja(desdeAtras, seguir) {
+    if (!hojaAbierta) return;
+    const h = hojaAbierta;
+    hojaAbierta = null;
+    $('acCapa').innerHTML = '';
+    if (desdeAtras) enHistoria = false;
+    else if (!seguir && enHistoria) { enHistoria = false; ignorarAtras = true; history.back(); }
+    if (h.alCerrar) h.alCerrar();
+  }
+  let avisoReloj = null;
+  function aviso(txt, err, acciones) {
+    clearTimeout(avisoReloj);
+    let el = $('acAviso');
+    if (!el) { el = document.createElement('div'); el.id = 'acAviso'; document.body.appendChild(el); }
+    el.className = 'listo' + (err ? ' err' : '');
+    el.innerHTML = ic(err ? 'warn' : 'check', 20, 2.6) + '<div class="tx">' + txt + '</div><div class="acc">' + (acciones || '') + '</div>';
+    el.hidden = false;
+    avisoReloj = setTimeout(() => { el.hidden = true; }, acciones ? 8000 : 4500);
+  }
+  const ocultarAviso = () => { const el = $('acAviso'); if (el) el.hidden = true; };
+  const viaje = id => vista().find(v => v.id === id);
+
+  /* Tocar un botón: queda con la hora del celular. Ocho segundos para deshacer; después se manda */
+  async function marcar(vid, k) {
+    const v = viaje(vid);
+    if (!v) return;
+    const ev = { id: nuevoId(), viaje: vid, que: k, cuando: new Date().toISOString() };
+    const tq = k === 'hecho' || (k === 'carg' && !conRacimos(v.tipo));
+    cerrarHoja(false, tq);
+    const it = { id: ev.id, orden: Date.now(), espera: Date.now() + (tq ? 30 * 60000 : 8000), ev, hecho: 0,
+      pasos: [pasoRpc('conductor_reportar', { p_cedula: CED, p_eventos: [ev] }, { exige: ev.id })] };
+    await Cola.guardar(it);
+    pintar();
+    if (tq) { hojaTiquete(vid, k === 'carg' ? 'cargue' : 'descargue', it); return; }
+    aviso('<b>' + esc(BOT[k][0]) + ' · ' + horaDe(new Date(ev.cuando)) + '</b><span>' + (enLinea ? 'Se manda en unos segundos' : 'Guardado en el celular: se sube solo') + '</span>',
+      false, (ORDEN.includes(k) ? '<button type="button" data-act="nota" data-v="' + esc(vid) + '">' + ic('lapiz', 14) + 'Anotar</button>' : '') +
+      '<button type="button" data-act="deshacer" data-id="' + esc(it.id) + '">' + ic('deshacer', 14) + 'Deshacer</button>');
+    setTimeout(() => Cola.procesar(), 8300);
+    Sw.sync();
+  }
+  async function deshacer(id) {
+    const it = Cola.lista.find(x => x.id === id);
+    ocultarAviso();
+    if (!it || it.hecho) { aviso('Ya se había mandado. Si fue un error, avísele al encargado de la flota.', true); return; }
+    await Cola.quitar(id);
+    pintar();
+  }
+  /* Soltar lo que esperaba (el estado de «Ya cargué» o «Ya descargué» mientras se toma el tiquete) */
+  async function soltar(it) {
+    if (!it || !Cola.lista.includes(it)) return;
+    it.espera = 0;
+    await Cola.guardar(it);
+    Cola.procesar();
+    Sw.sync();
+  }
+  async function agregar(ev, pasos) {
+    const it = { id: ev.id, orden: Date.now(), espera: 0, ev, hecho: 0, pasos };
+    await Cola.guardar(it);
+    pintar();
+    Cola.procesar();
+    Sw.sync();
+  }
+  function hojaNota(vid) {
+    const v = viaje(vid);
+    if (!v) return;
+    ocultarAviso();
+    hoja('<h3>Anotar algo</h3><p class="sub">' + esc(v.estado === 'prog' ? 'Queda en este viaje' : 'Queda con «' + NOMBRE[v.estado] + '»') + ' · ' + esc((v.origen || '') + ' → ' + (v.destino || '')) + '</p>' +
+      '<div class="campo"><label class="lb" for="acNt">Anotación</label><textarea class="area" id="acNt" maxlength="300" placeholder="Ej.: hay 6 carros esperando en la báscula"></textarea>' +
+      '<div class="ayuda">' + ic('mic', 13) + 'Puede dictarla con el micrófono del teclado</div></div>' +
+      '<button type="button" class="btn-p" data-act="guardarNota" data-v="' + esc(vid) + '">Guardar la anotación</button><button type="button" class="btn-t" data-act="cerrar">Cancelar</button>');
+    setTimeout(() => { const t = $('acNt'); if (t) t.focus(); }, 150);
+  }
+  function guardarNota(vid) {
+    const v = viaje(vid), t = ($('acNt').value || '').trim();
+    if (!v) return;
+    if (!t) { $('acNt').focus(); return; }
+    const ev = { id: nuevoId(), viaje: vid, que: 'nota', k: v.estado === 'prog' ? '' : v.estado, nota: t, cuando: new Date().toISOString() };
+    cerrarHoja();
+    agregar(ev, [pasoRpc('conductor_reportar', { p_cedula: CED, p_eventos: [ev] }, { exige: ev.id })]);
+    aviso('<b>Anotación guardada</b><span>' + (enLinea ? 'Ya va para SINUGRAVAS' : 'Guardada en el celular: se sube sola') + '</span>');
+  }
+  function hojaOtro(vid) {
+    const v = viaje(vid), i = v ? ORDEN.indexOf(v.estado) : -1;
+    if (!v) return;
+    hoja('<h3>Otro estado</h3><p class="sub">Si se le pasó marcar uno, toque en el que va ahora. Los que salte quedan sin hora.</p>' +
+      ORDEN.slice(i + 2).map(k => '<button type="button" class="op" data-act="marcar" data-v="' + esc(vid) + '" data-k="' + k + '">' + ic(BOT[k][2], 20) + '<span><b>' + BOT[k][0] + '</b><span>' +
+        NOMBRE[k] + '</span></span></button>').join('') + '<button type="button" class="btn-t" data-act="cerrar">Cancelar</button>');
+  }
+  function hojaViaje(vid) {
+    const v = viaje(vid);
+    if (!v) return;
+    hoja(tarjeta(v) + '<button type="button" class="btn-t" data-act="cerrar">Cerrar</button>');
+  }
+
+  /* El tiquete: la foto (achicada y en grises, como un documento) con el peso neto y, en la fruta, los racimos */
+  let TQ = null;
+  function hojaTiquete(vid, donde, itEstado) {
+    const v = viaje(vid);
+    if (!v) return;
+    ocultarAviso();
+    if (itEstado || !TQ || TQ.vid !== vid || TQ.donde !== donde) TQ = { vid, donde, foto: null, kg: '', rac: '', it: itEstado || null };
+    const rac = donde === 'descargue' && conRacimos(v.tipo), f = TQ.foto, lugar = donde === 'cargue' ? v.origen : v.destino;
+    hoja('<h3>Tiquete de ' + donde + '</h3><p class="sub">' + esc(lugar || '') + ' · tómele una foto al tiquete que le entregaron</p>' +
+      (f ? '<div class="foto-ok"><img src="' + f.url + '" alt="Foto del tiquete"><div><b>Foto lista</b><span>Revise que se lean el peso y la placa</span>' +
+          '<button type="button" class="btn-s" data-act="foto">' + ic('camera', 15) + 'Tomarla otra vez</button></div></div>'
+        : '<button type="button" class="foto" data-act="foto">' + ic('camera', 30, 1.8) + 'Tomar foto del tiquete<span>Se abre la cámara del celular</span></button>') +
+      '<div class="' + (rac ? 'fila2' : '') + '"><div class="campo"><label class="lb" for="acKg">Peso neto (kg)</label><input class="inp num" id="acKg" inputmode="numeric" autocomplete="off" ' +
+        'maxlength="9" placeholder="Ej.: 24.600" value="' + esc(TQ.kg) + '"></div>' + (rac ? '<div class="campo"><label class="lb" for="acRac">Racimos</label><input class="inp num" id="acRac" ' +
+        'inputmode="numeric" autocomplete="off" maxlength="7" placeholder="Ej.: 1.180" value="' + esc(TQ.rac) + '"></div>' : '') + '</div>' +
+      '<div class="ayuda mal" id="acTqAy" hidden></div>' +
+      '<button type="button" class="btn-p" data-act="guardarTq">' + ic('check', 18, 2.4) + 'Guardar el tiquete</button>' +
+      '<button type="button" class="btn-t" data-act="cerrar">Ahora no: lo agrego después</button>' +
+      (TQ.it ? '<button type="button" class="btn-t mal" data-act="deshacerTq">Me equivoqué: deshacer «' + esc(BOT[TQ.it.ev.que][0]) + '»</button>' : ''),
+    () => { const it = TQ && TQ.it; if (TQ) { TQ.it = null; } soltar(it); });
+    ['acKg', 'acRac'].forEach(id => {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        const d = el.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+        el.value = d ? miles(d) : '';
+        TQ[id === 'acKg' ? 'kg' : 'rac'] = el.value;
+      });
+    });
+  }
+  async function achicar(f) {
+    let bmp;
+    try { bmp = await createImageBitmap(f, { imageOrientation: 'from-image' }); } catch (e) { bmp = await createImageBitmap(f); }
+    const k = Math.min(1, 1400 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(bmp.width * k));
+    c.height = Math.max(1, Math.round(bmp.height * k));
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    const im = g.getImageData(0, 0, c.width, c.height), d = im.data;
+    for (let i = 0; i < d.length; i += 4) { const y = Math.round(d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114); d[i] = d[i + 1] = d[i + 2] = y; }
+    g.putImageData(im, 0, 0);
+    const b = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.62));
+    if (!b) throw new Error('no se pudo');
+    return { bytes: await b.arrayBuffer(), tam: b.size, url: URL.createObjectURL(b) };
+  }
+  async function guardarTq() {
+    const v = viaje(TQ.vid), kg = TQ.kg.replace(/\D/g, ''), rac = TQ.rac.replace(/\D/g, ''), ay = $('acTqAy');
+    if (!v) return;
+    if (!TQ.foto && !kg) { ay.hidden = false; ay.textContent = 'Tome la foto del tiquete o escriba el peso.'; return; }
+    const ev = { id: nuevoId(), viaje: TQ.vid, que: 'tiquete', donde: TQ.donde, cuando: new Date().toISOString() };
+    if (kg) ev.kg = kg;
+    if (rac && TQ.donde === 'descargue') ev.racimos = rac;
+    /* El nombre de la foto va en el aviso: sin él, el sistema no deja subirla */
+    if (TQ.foto) ev.archivo = nuevoId('tq');
+    const pasos = [pasoRpc('conductor_reportar', { p_cedula: CED, p_eventos: [ev] }, { exige: ev.id })];
+    if (TQ.foto) {
+      pasos.push({ url: NUBE.url + '/storage/v1/object/' + NUBE.deposito + '/archivo/' + ev.archivo, metodo: 'POST', encabezados: encabezados('image/jpeg'),
+        bytes: TQ.foto.bytes, tipo: 'image/jpeg', okSi: [409], okTexto: 'duplicate|already exists' });
+      pasos.push(pasoRpc('conductor_tiquete', { p_cedula: CED, p_evento: ev.id }, { exigeOk: true }));
+    }
+    const it = TQ.it;
+    TQ = null;
+    cerrarHoja();
+    await soltar(it);
+    await agregar(ev, pasos);
+    aviso('<b>Tiquete guardado</b><span>' + (enLinea ? 'Ya va para SINUGRAVAS' : 'Guardado en el celular: se sube solo') + '</span>');
+  }
+  /* «Agregar» un tiquete después: el que falta (o, si faltan los dos, se escoge) */
+  function elegirTiquete(vid, donde) {
+    TQ = null;
+    hojaTiquete(vid, donde);
+  }
+
+  /* --------------------------------------------------------------------------
+     El sw.js: la app sin señal y lo guardado subiendo en segundo plano. Sin él
+     (si no se subió, o el navegador no lo deja), todo sigue con la app abierta.
+     -------------------------------------------------------------------------- */
+  const Sw = {
+    ok: false,
+    registrar() {
+      if (!('serviceWorker' in navigator) || this._pedido) return;
+      this._pedido = true;
+      navigator.serviceWorker.register('sw.js').then(() => {
+        this.ok = true;
+        const listo = () => this.manifiesto();
+        if (navigator.serviceWorker.controller) listo();
+        else navigator.serviceWorker.addEventListener('controllerchange', listo, { once: true });
+      }).catch(() => { /* sin el sw.js: funciona con la app abierta */ });
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data && e.data.tipo === 'enviado') Cola.cargar().then(() => { pintar(); traer(); });
+      });
+    },
+    /* En segundo plano: cuando vuelva la señal, el navegador despierta el sw.js para que mande lo guardado */
+    sync() {
+      if (!('serviceWorker' in navigator)) return;
+      navigator.serviceWorker.ready.then(r => (r.sync ? r.sync.register('sigf-cola') : null)).catch(() => { /* sin segundo plano */ });
+    },
+    /* Para instalarla como una app, con su ícono: el manifiesto y el ícono quedan guardados y el sw.js los entrega */
+    async manifiesto() {
+      if (this._man || !('caches' in window)) return;
+      this._man = true;
+      try {
+        const base = location.pathname.replace(/[^/]*$/, ''), c = await caches.open('sigf-conductor-v1');
+        const icono = async lado => {
+          const img = await new Promise((ok, mal) => { const i = new Image(); i.onload = () => ok(i); i.onerror = mal; i.src = MARCA.logo; });
+          const b = MARCA.CAJA, cv = document.createElement('canvas'), alto = lado * 0.7, w = b.w * alto / b.h;
+          cv.width = cv.height = lado;
+          const g = cv.getContext('2d');
+          g.fillStyle = '#fff';
+          g.fillRect(0, 0, lado, lado);
+          g.drawImage(img, b.x, b.y, b.w, b.h, (lado - w) / 2, (lado - alto) / 2, w, alto);
+          return new Promise(ok => cv.toBlob(ok, 'image/png'));
+        };
+        const m = { name: 'SINUGRAVAS · Mis viajes', short_name: 'Mis viajes', start_url: base + '?conductor' + (LOCAL ? '&nube=local' : ''), scope: base, display: 'standalone',
+          background_color: '#f3f5f8', theme_color: '#20449a', lang: 'es-CO',
+          icons: [192, 512].map(n => ({ src: base + 'conductor-' + n + '.png', sizes: n + 'x' + n, type: 'image/png', purpose: 'any' })) };
+        await c.put(base + 'conductor.webmanifest', new Response(JSON.stringify(m), { headers: { 'Content-Type': 'application/manifest+json' } }));
+        for (const n of [192, 512]) await c.put(base + 'conductor-' + n + '.png', new Response(await icono(n), { headers: { 'Content-Type': 'image/png' } }));
+        const l = document.createElement('link');
+        l.rel = 'manifest';
+        l.href = base + 'conductor.webmanifest';
+        document.head.appendChild(l);
+      } catch (e) { /* sin instalar: se agrega a la pantalla de inicio desde el menú del navegador */ }
+    }
+  };
+
+  /* Lo que se toca */
+  async function tocar(ev) {
+    const el = ev.target.closest('[data-act]');
+    if (!el || el.disabled) return;
+    const a = el.dataset.act, vid = el.dataset.v;
+    if (a === 'fondo') { if (ev.target === el) cerrarHoja(); return; }
+    if (a === 'cerrar') cerrarHoja();
+    else if (a === 'marcar') marcar(vid, el.dataset.k);
+    else if (a === 'deshacer') deshacer(el.dataset.id);
+    else if (a === 'nota') hojaNota(vid);
+    else if (a === 'guardarNota') guardarNota(vid);
+    else if (a === 'otro') hojaOtro(vid);
+    else if (a === 'abrir') hojaViaje(vid);
+    else if (a === 'tiquete') elegirTiquete(vid, el.dataset.d);
+    else if (a === 'foto') $('acFoto').click();
+    else if (a === 'guardarTq') guardarTq();
+    else if (a === 'deshacerTq') {
+      const it = TQ && TQ.it;
+      if (TQ) TQ.it = null;
+      cerrarHoja();
+      if (it) { await Cola.quitar(it.id); pintar(); }
+    } else if (a === 'quitarError') { await Cola.quitar(el.dataset.id); pintar(); }
+    else if (a === 'salir') {
+      hoja('<h3>¿No es ' + esc(corto(D && D.nombre)) + '?</h3><p class="sub">Salga para entrar con su cédula. Lo que ya se subió queda en SINUGRAVAS.</p>' +
+        '<button type="button" class="btn-p" data-act="salirSi">Salir</button><button type="button" class="btn-t" data-act="cerrar">Cancelar</button>');
+    } else if (a === 'salirSi') salir(false);
+  }
+
+  return {
+    activo: () => new URLSearchParams(location.search).has('conductor'),
+    iniciar() {
+      document.title = 'Mis viajes · SINUGRAVAS';
+      const vp = document.querySelector('meta[name="viewport"]');
+      if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+      /* Solo se ve la app: los estilos de la plataforma se quitan y van los suyos */
+      document.querySelectorAll('style').forEach(s => s.remove());
+      const estilo = document.createElement('style');
+      estilo.textContent = CSS;
+      document.head.appendChild(estilo);
+      const tema = document.createElement('meta');
+      tema.name = 'theme-color';
+      tema.content = '#20449a';
+      document.head.appendChild(tema);
+      document.documentElement.removeAttribute('data-theme');
+      document.body.innerHTML = HTML;
+      MARCA.preparar().then(() => { if (MARCA.emblema) { $('acEmb').src = MARCA.emblema; $('acEmb').hidden = false; } });
+      document.addEventListener('click', tocar);
+      $('acRed').addEventListener('click', () => { Cola.procesar(); traer(); });
+      $('acFoto').addEventListener('change', async e => {
+        const f = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!f || !TQ) return;
+        try {
+          TQ.foto = await achicar(f);
+        } catch (err) {
+          aviso('No se pudo leer esa foto. Tómela otra vez.', true);
+          return;
+        }
+        hojaTiquete(TQ.vid, TQ.donde);
+      });
+      window.addEventListener('popstate', () => {
+        if (ignorarAtras) { ignorarAtras = false; return; }
+        if (hojaAbierta) cerrarHoja(true); else enHistoria = false;
+      });
+      window.addEventListener('online', () => { red(true); Cola.procesar(); traer(); });
+      window.addEventListener('offline', () => red(false));
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) { Cola.procesar(); traer(); } });
+      /* Cada minuto, con la app abierta: lo guardado se sube y llegan los viajes nuevos */
+      reloj = setInterval(() => { if (!document.hidden) { Cola.procesar(); if (!Cola.pendientes().length) traer(); } }, 60000);
+      setInterval(() => { if (Cola.lista.some(x => !x.error && x.espera && x.espera <= Date.now() && !x.hecho)) Cola.procesar(); }, 5000);
+      Cola.cargar().then(async () => {
+        for (const it of Cola.lista) if (it.espera && it.espera > Date.now() + 10000) { it.espera = 0; await Cola.guardar(it); }
+        pintar();
+        if (CED) { Sw.registrar(); traer().then(() => Cola.procesar()); }
+      });
+    }
+  };
+})();
+
+/* ==========================================================================
    §N0  EL PASE DEL PANEL DE CONTROL — en https://panel.sinugravas.com se
         entra una sola vez. Al darle «Entrar» a Flota, el panel la abre en
         otra pestaña con «#pase=…»: un enlace mágico de Supabase que sirve una
@@ -19733,7 +20661,7 @@ h1 { font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
    ========================================================================== */
 const PANEL_URL = 'https://panel.sinugravas.com';
 const PASE = (() => {
-  if (new URLSearchParams(location.search).has('preoperacional')) return null;
+  if (['preoperacional', 'conductor'].some(k => new URLSearchParams(location.search).has(k))) return null;
   const m = /(?:^#|&)pase=([^&]+)/.exec(location.hash);
   if (!m) return null;
   /* Fuera de la barra y del historial; el enrutador ve la dirección limpia */
@@ -20748,6 +21676,9 @@ const Sincro = {
     const filas = await this.traer(avance);
     this.guardarCrudas(filas);
     Mapa.poner(Mapa.aDatos(filas));
+    /* Cómo están los viajes al entrar: de ahí en adelante, lo que marquen los conductores trae un aviso */
+    Rutas._cv = null;
+    Rutas.avisosApp();
     Nube.conocerDeDatos();
     this._fijarTodo();
     this.desde = hora;
@@ -20922,6 +21853,7 @@ const Sincro = {
       Array.from(f[t]).every(([id, par]) => this.ultimo[t].get(id) === par[0]));
     if (igual) return false;
     Mapa.poner(r);
+    Rutas.avisosApp();
     Guardadas.reponer();
     Nube.conocerDeDatos();
     this._fijarTodo();
@@ -21483,6 +22415,95 @@ const Rutas = {
     return o ? [this.placa(v.unidad) + ' ya tiene otro viaje ese día a la misma hora: ' + this.nombre(this.ruta(o.ruta))] : [];
   },
 
+  /* ---- La app de los conductores (Juan, 12/11/2026: «el conductor debería ir informando el estado de su ruta»): cada uno marca desde
+     su celular (ver §G y el SQL 036). Lo que marca llega solo, con su hora; lo suyo lleva «c» (la versión del viaje en que llegó) ---- */
+  APP_TXT: { sitio: 'llegó a cargar', cargando: 'empezaron a cargarlo', carg: 'ya cargó', ruta: 'salió a ruta', destino: 'llegó a descargar',
+    desc: 'empezaron a descargarlo', hecho: 'ya descargó' },
+  /* En el título de la ficha: lo que llegó del celular */
+  appTit(v) {
+    const ti = v.tiempos || {}, ks = this.TI.filter(k => ti[k] && ti[k].c), n = (v.notasC || []).length, q = (v.tiquetes || []).length;
+    if (!ks.length && !n && !q) return '';
+    return ' · Desde el celular del conductor: ' + [ks.map(k => this.ESTADOS[k][0] + ' ' + (ti[k].h || '')).join(', '), n ? n + (n === 1 ? ' anotación' : ' anotaciones') : '',
+      q ? q + (q === 1 ? ' tiquete' : ' tiquetes') : ''].filter(Boolean).join('; ');
+  },
+  /* En la ventana del viaje: sus anotaciones, la vuelta y los tiquetes con su foto, para revisarlos */
+  pintarApp(m, v) {
+    const el = $('#rtApp', m), notas = v.notasC || [], tqs = m._tqs || [], vu = v.vuelta || {};
+    if (!notas.length && !tqs.length && !vu.regreso && !vu.parqueo) { el.innerHTML = ''; return; }
+    const cuando = x => (x.f && x.f !== v.fecha ? this.dia(x.f) + ' ' : '') + (x.h || '');
+    const vuelta = [['regreso', 'Va de regreso', 'back'], ['parqueo', 'Parqueó el carro', 'lock']].filter(x => vu[x[0]]);
+    el.innerHTML = '<div class="rt-bas rt-app"><div class="rt-bas-h">' + Icon('movil', '', 15) + '<b>Desde el celular del conductor</b><span>Lo que anotó y los tiquetes que subió</span></div>' +
+      (notas.length || vuelta.length ? '<div class="rt-app-l">' + notas.map(n => '<div class="rt-app-n">' + Icon('lapiz', '', 13) + '<span><b>«' + esc(n.t) + '»</b>' +
+          (n.k && this.ESTADOS[n.k] ? ' · con «' + esc(this.ESTADOS[n.k][0]) + '»' : '') + '</span><i>' + esc(cuando(n)) + '</i></div>').join('') +
+        vuelta.map(x => '<div class="rt-app-n">' + Icon(x[2], '', 13) + '<span><b>' + x[1] + '</b></span><i>' + esc(cuando(vu[x[0]])) + '</i></div>').join('') + '</div>' : '') +
+      (tqs.length ? '<div class="rt-tqs">' + tqs.map(q => '<div class="rt-tqc">' + Icon('ticket', '', 16) + '<div class="rt-tqc-t"><b>Tiquete de ' + (q.donde === 'cargue' ? 'cargue' : 'descargue') +
+          '</b><span>' + esc([q.kg != null ? this.miles(q.kg) + ' kg' : '', q.racimos != null ? this.racTxt(q.racimos) : '', 'lo subió a las ' + cuando(q)].filter(Boolean).join(' · ')) + '</span>' +
+          (q.archivo ? (q.listo ? '<span class="link" data-act="verArchivo" data-id="' + attr(q.archivo.id) + '" data-nombre="' + attr(q.archivo.nombre || 'tiquete.jpg') + '">' +
+            Icon('image', '', 12) + 'Ver la foto</span>' : '<span>La foto todavía no llega</span>') : '<span>Sin foto</span>') +
+          '</div><label class="rt-rev"><input type="checkbox" data-rev="' + attr(q.id) + '"' + (q.rev ? ' checked' : '') + '>Revisado</label></div>').join('') + '</div>' +
+        '<div class="txt-3 fs12 mt8">El peso real y los racimos salen del tiquete de descargue, si el viaje no los tenía. Márquelo «Revisado» al compararlo con la foto.</div>' : '') + '</div>';
+  },
+  /* Lo que llega de los celulares (se refresca cada 10 s): un aviso pequeño por viaje. La primera vez solo se anota cómo están */
+  _cv: null,
+  avisosApp() {
+    const antes = this._cv;
+    this._cv = new Map((Datos.viajes || []).map(v => [v.id, +v.cv || 0]));
+    if (!antes) return;
+    const nuevos = (Datos.viajes || []).filter(v => (+v.cv || 0) > (antes.get(v.id) || 0));
+    if (nuevos.length > 3) Toast.show(Icon('movil', '', 13) + ' ' + nuevos.length + ' viajes con cambios desde el celular de los conductores.');
+    else nuevos.forEach(v => Toast.show(Icon('movil', '', 13) + ' ' + this.appUltimo(v)));
+  },
+  /* Lo último que llegó del conductor en un viaje: «JYN 162 · Pedro Prueba: ya descargó a las 11:21» */
+  appUltimo(v) {
+    const c = x => (x && +x.c) || 0, ti = v.tiempos || {};
+    let mejor = null;
+    const ver = (x, txt) => { if (c(x) > c(mejor && mejor.x)) mejor = { x, txt }; };
+    this.TI.forEach(k => ti[k] && ver(ti[k], this.APP_TXT[k] + ' a las ' + ti[k].h));
+    (v.notasC || []).forEach(n => ver(n, 'anotó «' + n.t + '»'));
+    (v.tiquetes || []).forEach(q => ver(q, 'subió el tiquete de ' + q.donde + (q.kg != null ? ' (' + this.miles(q.kg) + ' kg)' : '')));
+    Object.keys(v.vuelta || {}).forEach(k => ver(v.vuelta[k], (k === 'regreso' ? 'va de regreso' : 'parqueó el carro') + ' a las ' + v.vuelta[k].h));
+    const cd = this.conductor(v);
+    return '<b>' + esc(this.placa(v.unidad)) + '</b>' + (cd ? ' · ' + esc(this.cortoNombre(cd.nombre)) : '') + ': ' + esc(mejor ? mejor.txt : 'cambió el viaje');
+  },
+  /* El enlace de la app, como el del preoperacional */
+  enlaceApp() {
+    const url = new URL(location.href);
+    url.hash = '';
+    url.pathname = url.pathname.replace(/index\.html$/, '');
+    url.search = '?conductor' + (new URLSearchParams(location.search).get('nube') === 'local' ? '&nube=local' : '');
+    return url.href;
+  },
+  abrirApp() {
+    const url = this.enlaceApp(), ced = x => String(x || '').replace(/\D/g, '');
+    const sinCed = Datos.conductores.filter(c => !ced(c.cedula)), ters = this.camiones().filter(u => Q.tercero(u) && !ced(u.tercero.cedula));
+    Modal.abrir({
+      titulo: 'App de los conductores', sub: 'Para que cada uno marque desde su celular el estado de sus viajes',
+      cuerpo: '<div class="enlace">' + Icon('externo', '', 14) + esc(url.replace(/^https?:\/\//, '')) + '</div>' +
+        '<div class="flex g8 mt12" style="flex-wrap:wrap"><button type="button" class="btn btn-primary btn-sm" data-act="rtAppCopiar">' + Icon('copiar', '', 13) + 'Copiar enlace</button>' +
+          '<a class="btn btn-sm" href="' + attr(url) + '" target="_blank" rel="noopener">' + Icon('externo', '', 13) + 'Abrir</a></div>' +
+        '<ul class="rt-app-ay"><li><b>Entran con su cédula</b>, la de Recursos Humanos. El celular la recuerda.</li>' +
+          '<li><b>Ven sus viajes</b> de hoy y de los dos días siguientes: los que tienen su nombre y los del camión que tienen asignado.</li>' +
+          '<li><b>Cada botón queda con la hora del celular.</b> Usted puede seguir cambiando todo aquí; si los dos marcan el mismo estado, queda la primera hora.</li>' +
+          '<li><b>Al descargar suben el tiquete</b> con el peso neto y, en la fruta, los racimos. El peso real sale de ahí si el viaje no lo tenía.</li>' +
+          '<li><b>Sin señal</b>, lo marcado queda en el celular y se sube solo cuando vuelve.</li>' +
+          '<li><b>Los de los terceros</b> entran con la cédula anotada en su vehículo (Flota → el vehículo → Editar información).</li></ul>' +
+        (sinCed.length || ters.length ? '<div class="alert a-warn mt12">' + Icon('warn') + '<div><b>Todavía no pueden entrar</b><div class="rt-al-l">' +
+          sinCed.map(c => '<span>' + esc(c.nombre) + ': no tiene cédula en Recursos Humanos.</span>').join('') +
+          ters.map(u => '<span>' + esc(UI.placaTxt(u)) + ' (de un tercero' + (u.tercero.quien ? ': ' + esc(u.tercero.quien) : '') + '): falta la cédula de su conductor.</span>').join('') +
+          '</div></div></div>' : ''),
+      pie: '<button type="button" class="btn" data-act="cerrarModal">Cerrar</button>'
+    });
+  },
+  async copiarApp() {
+    const url = this.enlaceApp();
+    try {
+      await navigator.clipboard.writeText(url);
+      Toast.show('Enlace copiado: <b>' + esc(url) + '</b>. Péguelo en el chat de los conductores.');
+    } catch (e) {
+      Toast.show('No se pudo copiar solo. El enlace es: <b>' + esc(url) + '</b>', 'warn');
+    }
+  },
+
   /* ---- La ficha de un viaje ---- */
   ficha(v) {
     const r = this.ruta(v.ruta) || {}, al = this.revisar(v), prog = this.programado(v), fija = this.fija(v);
@@ -21505,13 +22526,14 @@ const Rutas = {
     const tit = this.nombreTMS(r) + ' · ' + (prog ? this.ESTADOS[v.estado][0] : 'por programar') + (esp ? ' (' + esp + ')' : '') +
       (u || v.conductor ? ' · Conductor: ' + (cd ? cd.nombre + (otro ? ' (el del camión es ' + (def ? def.nombre : 'ninguno') + ')' : '') : 'sin asignar') : '') +
       (v.pesoReal != null ? ' · Peso real: ' + this.kgTxt(v.pesoReal) + (v.ton != null ? ' (programadas ' + this.tonTxt(v.ton) + ')' : '') : '') +
-      (v.racimos != null ? ' · ' + this.racTxt(v.racimos) : '') + (v.tiquete ? ' · con tiquete' : '') + (al.length ? ' · Revisar: ' + al.join('; ') : '') +
+      (v.racimos != null ? ' · ' + this.racTxt(v.racimos) : '') + (v.tiquete ? ' · con tiquete' : '') + this.appTit(v) + (al.length ? ' · Revisar: ' + al.join('; ') : '') +
       (fija ? ' · semana liquidada' : ' · arrástrela para moverla');
     /* La imagen del tipo, pequeña arriba a la derecha (Juan, 07/11/2026: «que salga en la tarjetita pequeñito») */
     const img = this.imagen(r.tipo);
     return '<div class="rt-v e-' + v.estado + (fija ? ' fija' : '') + '" role="button" tabindex="0" style="--c:' + this.color(r.tipo) + '" data-act="rtViaje" data-v="' + attr(v.id) +
       '" draggable="' + (fija ? 'false' : 'true') + '" title="' + attr(tit) + '"><b>' + esc(this.nombre(r)) + '</b><span>' + (img ? '<img class="rt-ti" src="' + attr(img) + '" alt="">' : '') + det +
       (al.length ? '<em class="rt-al">' + Icon('warn', '', 11) + '</em>' : '') + (prog && v.estado !== 'prog' ? '<em class="rt-ei">' + this.estIc(v.estado) + '</em>' : '') +
+      (prog && (ti[v.estado] || {}).c ? '<em class="rt-mc" title="Lo marcó el conductor desde su celular">' + Icon('movil', '', 10) + '</em>' : '') +
       '</span>' + (linea ? '<span class="rt-esp">' + Icon('clock', '', 10) + '<i>' + esc(linea) + '</i></span>' : '') +
       (u || v.conductor ? '<span class="rt-cd' + (otro ? ' otro' : cd ? '' : ' sin') + '">' + Icon('user', '', 10) +
         '<i>' + esc(cd ? this.cortoNombre(cd.nombre) : 'Sin conductor') + '</i></span>' : '') + '</div>';
@@ -21522,6 +22544,7 @@ const Rutas = {
       '<span>' + Icon('caja', '', 11) + 'Cargado</span><span>' + Icon('truck', '', 11) + 'En ruta</span><span>' + Icon('pin', '', 11) + 'En destino: llegó a descargar</span>' +
       '<span>' + Icon('download', '', 11) + 'Descargando</span><span>' + Icon('check', '', 11) + 'Hecho</span>' +
       '<span>' + Icon('clock', '', 11) + 'En la ficha, desde qué hora espera y, ya cargando, cuánto esperó</span>' +
+      '<span>' + Icon('movil', '', 11) + 'Lo marcó el conductor desde su celular</span>' +
       '<span>' + Icon('x', '', 11) + 'No se hizo: en gris, y no sale en la imagen ni en el PDF</span>' +
       '<span>' + Icon('warn', '', 11) + 'Revisar antes de salir</span><span><i class="rt-real">' + Icon('check', '', 11) + 'kg</i>Peso real de la báscula</span>' +
       '<span class="rt-ley-sep"></span><span>' + Icon('mover', '', 11) +
@@ -21784,7 +22807,8 @@ const Rutas = {
     const s = UIState.rutas, titulo = 'Rutas', sub = 'Programación de rutas';
     this.logoListo();
     const head = UI.head('Rutas', 'La programación semanal de los viajes y su seguimiento',
-      Sincro.sinRutas ? '' : '<button type="button" class="btn btn-primary" data-act="rtNuevo">' + Icon('plus', '', 14) + 'Programar viaje</button>');
+      Sincro.sinRutas ? '' : '<button type="button" class="btn" data-act="rtApp">' + Icon('movil', '', 14) + 'App de los conductores</button>' +
+        '<button type="button" class="btn btn-primary" data-act="rtNuevo">' + Icon('plus', '', 14) + 'Programar viaje</button>');
     if (Sincro.sinRutas) return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') +
       '<div><b>Todavía no se puede programar.</b> Falta correr en Supabase el SQL 029, que crea dónde guardar las rutas y los viajes.</div></div>' };
     const tabs = '<div class="tabs">' + [['semana', 'Semana', 'calendar'], ['rutas', 'Rutas', 'ruta'], ['historico', 'Histórico', 'list']].map(t => '<div class="tab tab-ic' + (s.tab === t[0] ? ' active' : '') +
@@ -21802,7 +22826,7 @@ const Rutas = {
     return { ruta: $('#rtR', m).value, unidad: $('#rtU', m).value || null, conductor: otro ? null : cs || null, conductorTxt: otro ? $('#rtCx', m).value.trim().replace(/\s+/g, ' ') : '',
       fecha: $('#rtF', m).value || null, hora: $('#rtH', m).value, ton: this.tonLeer($('#rtT', m).value), estado: e ? e.dataset.v : 'prog', nota: $('#rtN', m).value.trim(),
       pesoReal: this.kgLeer($('#rtPR', m).value), racimos: $('#rtRacF', m).hidden ? null : this.racLeer($('#rtRac', m).value), tiquete: m._tq || null,
-      valor: Money.leer($('#rtV', m).value), tiempos: this.tiLeer(m, e ? e.dataset.v : 'prog') };
+      valor: Money.leer($('#rtV', m).value), tiempos: this.tiLeer(m, e ? e.dataset.v : 'prog'), tiquetes: (m._tqs || []).length ? m._tqs : null };
   },
   abrir(id, o) {
     o = o || {};
@@ -21864,6 +22888,8 @@ const Rutas = {
               'autocomplete="off" value="' + attr(v.racimos != null ? this.miles(v.racimos) : '') + '" placeholder="Ej.: 1.270"><div class="hint mt4" id="rtRacd"></div></div></div>' +
           '<div class="field mb0"><label>Tiquete de báscula <span class="txt-3">(opcional)</span></label>' +
             Dz.html('rtTq', this.TQ_TIT, '<span class="solo-web">PDF o foto del tiquete</span>', 'application/pdf,image/*', false) + '</div></div></div>' +
+        /* Lo que llegó del celular del conductor (12/11/2026) */
+        '<div id="rtApp"></div>' +
         /* El valor (Juan, 09/11/2026): el de su ruta, con cómo se sacó, o el escrito aquí si este viaje se pagó distinto */
         '<div class="rt-bas rt-val"><div class="rt-bas-h">' + Icon('pesos', '', 15) + '<b>Valor del viaje</b><span>Lo que pagan por este viaje</span></div>' +
           '<div class="rt-val-v" id="rtVv"></div>' +
@@ -21875,6 +22901,7 @@ const Rutas = {
     m._id = v0 ? v0.id : '';
     m._tq = v.tiquete || null;
     m._ti = JSON.parse(JSON.stringify(v.tiempos || {}));
+    m._tqs = JSON.parse(JSON.stringify(v.tiquetes || []));
     /* La semana liquidada: todo queda quieto menos el peso real y el tiquete */
     if (fija) {
       m.classList.add('rt-fija');
@@ -21955,9 +22982,18 @@ const Rutas = {
       if (!f || !e.target.dataset.ti) return;
       const x = m._ti[f.dataset.k] = Object.assign({ f: '', h: '' }, m._ti[f.dataset.k]);
       x[e.target.dataset.ti] = e.target.value;
+      /* Cambiada aquí, ya no es la del conductor */
+      delete x.c;
       this.tiResumen(m);
     });
     this.pintarTi(m);
+    /* Lo del celular del conductor, con «Revisado» en cada tiquete */
+    this.pintarApp(m, v);
+    $('#rtApp', m).addEventListener('change', e => {
+      const c = e.target.closest('[data-rev]'), x = c && (m._tqs || []).find(q => q.id === c.dataset.rev);
+      if (!x) return;
+      if (c.checked) x.rev = true; else delete x.rev;
+    });
     $('#rtC', m).addEventListener('change', () => { const cx = $('#rtCx', m); cx.hidden = $('#rtC', m).value !== '__otro'; if (!cx.hidden) cx.focus(); });
     ['input', 'change'].forEach(ev => m.addEventListener(ev, () => setTimeout(revisar)));
     pintarTq();
@@ -21966,7 +23002,7 @@ const Rutas = {
      se borran); «No se hizo» se queda con las que tenía, sin contarlas; Programado, sin ninguna */
   tiLeer(m, est) {
     const ti = m._ti || {}, i = est === 'no' ? this.TI.length : this.TI.indexOf(est), out = {};
-    this.TI.forEach((k, j) => { const x = ti[k]; if (j <= i && x && x.f) out[k] = { f: x.f, h: x.h || '' }; });
+    this.TI.forEach((k, j) => { const x = ti[k]; if (j <= i && x && x.f) out[k] = Object.assign({ f: x.f, h: x.h || '' }, x.c ? { c: x.c } : {}); });
     return out;
   },
   /* Las filas de las horas en la ventana: una por estado hasta el escogido, con su fecha y su hora; debajo, la espera */
@@ -21976,7 +23012,8 @@ const Rutas = {
     el.innerHTML = i < 0 ? '' : '<div class="rt-ti-t">Cuándo pasó cada uno: sale con la fecha y la hora de ahora; si fue antes, cámbiela.</div>' +
       this.TI.slice(0, i + 1).map(k => {
         const x = m._ti[k] || {}, n = attr(this.ESTADOS[k][0]);
-        return '<div class="rt-ti-f" data-k="' + k + '"><span>' + Icon(this.EST_IC[k], '', 12) + esc(this.ESTADOS[k][0]) + '</span>' +
+        return '<div class="rt-ti-f" data-k="' + k + '"><span>' + Icon(this.EST_IC[k], '', 12) + esc(this.ESTADOS[k][0]) +
+          (x.c ? '<em class="rt-mc" title="Lo marcó el conductor desde su celular">' + Icon('movil', '', 11) + '</em>' : '') + '</span>' +
           '<input class="inp inp-sm" type="date" data-ti="f" value="' + attr(x.f || '') + '" aria-label="Fecha de «' + n + '»">' +
           '<input class="inp inp-sm" type="time" data-ti="h" value="' + attr(x.h || '') + '" aria-label="Hora de «' + n + '»"></div>';
       }).join('') + '<div class="rt-ti-r" id="rtTiR"></div>';
@@ -22030,16 +23067,20 @@ const Rutas = {
       const soloValor = (v.pesoReal == null ? null : +v.pesoReal) === d.pesoReal && JSON.stringify(v.tiquete || null) === JSON.stringify(d.tiquete || null) &&
         (v.racimos == null ? null : +v.racimos) === d.racimos;
       const valorIgual = (v.valor == null ? null : +v.valor) === (d.valor == null ? null : +d.valor);
+      const revCambio = JSON.stringify(v.tiquetes || null) !== JSON.stringify(d.tiquetes || null);
+      /* El peso, los racimos o el tiquete que puso el conductor, cambiados aquí: ya son de usted */
+      if (!soloValor) delete v.pc;
+      v.tiquetes = d.tiquetes;
       v.pesoReal = d.pesoReal;
       v.racimos = d.racimos;
       v.tiquete = d.tiquete;
       v.valor = d.valor;
       v.tiempos = d.tiempos;
-      ['pesoReal', 'racimos', 'tiquete', 'valor'].forEach(k => { if (v[k] == null) delete v[k]; });
+      ['pesoReal', 'racimos', 'tiquete', 'tiquetes', 'valor'].forEach(k => { if (v[k] == null) delete v[k]; });
       if (!Object.keys(v.tiempos || {}).length) delete v.tiempos;
       Modal.cerrar(m);
       Router.pintar(true);
-      Toast.show((!soloValor ? 'Peso en báscula guardado.' : !valorIgual ? 'Valor del viaje guardado.' : 'Horas del viaje guardadas.') +
+      Toast.show((!soloValor ? 'Peso en báscula guardado.' : !valorIgual ? 'Valor del viaje guardado.' : revCambio ? 'Tiquetes revisados.' : 'Horas del viaje guardadas.') +
         ' <span class="link" data-act="rtDeshacer">Deshacer</span>');
       return;
     }
@@ -22049,8 +23090,10 @@ const Rutas = {
     }
     const antes = v ? JSON.parse(JSON.stringify(v)) : null, notas = antes ? this.diferencias(antes, d) : [];
     if (!v) v = { id: this.nuevoId('v'), cambios: [] };
+    if (antes && ((antes.pesoReal == null ? null : +antes.pesoReal) !== d.pesoReal || (antes.racimos == null ? null : +antes.racimos) !== d.racimos ||
+      JSON.stringify(antes.tiquete || null) !== JSON.stringify(d.tiquete || null))) delete v.pc;
     Object.assign(v, d);
-    ['conductorTxt', 'pesoReal', 'racimos', 'tiquete', 'valor'].forEach(k => { if (v[k] == null || v[k] === '') delete v[k]; });
+    ['conductorTxt', 'pesoReal', 'racimos', 'tiquete', 'tiquetes', 'valor'].forEach(k => { if (v[k] == null || v[k] === '') delete v[k]; });
     if (!Object.keys(v.tiempos || {}).length) delete v.tiempos;
     this.fijarConductor(v);
     if (!antes) {
@@ -22915,6 +23958,8 @@ Object.assign(Acciones, {
   rtViaje(el) { Rutas.abrir(el.dataset.v); },
   rtNuevo(el) { Rutas.abrir('', { u: el.dataset.u || null, f: el.dataset.f }); },
   rtGuardar(el) { Rutas.guardar(el); },
+  rtApp() { Rutas.abrirApp(); },
+  rtAppCopiar() { Rutas.copiarApp(); },
   rtQuitar(el) { Rutas.quitar(el); },
   rtQuitarSi(el) { Rutas.quitarSi(el); },
   rtDeshacer() { Rutas.deshacer(); },
@@ -23066,8 +24111,9 @@ window.addEventListener('hashchange', () => { if ($('#vista')) Router.pintar(); 
 document.documentElement.setAttribute('data-theme', Prefs.get('tema') === 'dark' ? 'dark' : 'light');
 /* Primero se recorta la «S» del logo, que la barra lateral usa al pintarse;
    luego se pide la sesión, se mira el acceso y se traen los datos de la nube */
-/* «?preoperacional» es el formulario de los conductores (§F); si no, la plataforma */
+/* «?preoperacional» es el formulario de los conductores (§F); «?conductor», su app de Rutas (§G); si no, la plataforma */
 if (PreopPublico.activo()) PreopPublico.iniciar();
+else if (AppConductor.activo()) AppConductor.iniciar();
 else MARCA.preparar().then(() => Arranque.iniciar());
 </script>
 </body>
