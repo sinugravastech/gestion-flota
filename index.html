@@ -20051,6 +20051,8 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
       const xs = await this.tx('readonly', st => st.getAll());
       /* Sin IndexedDB se trabaja con lo de la memoria */
       if (xs) this.lista = xs.sort((a, b) => a.orden - b.orden);
+      /* Lo que chocó con el mismo cambio que ya había llegado (antes del SQL 037): ya está en el sistema */
+      for (const it of this.lista.filter(x => /duplicate key|reportes_pkey/i.test(x.error || ''))) await this.quitar(it.id);
     },
     async guardar(it) {
       if (!this.lista.includes(it)) { this.lista = this.lista.filter(x => x.id !== it.id).concat(it).sort((a, b) => a.orden - b.orden); }
@@ -20077,7 +20079,8 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
           red(true);
         } catch (e) {
           if (e.cedula) { await salir(true); return; }
-          if (e.red) { red(false); return; }
+          /* Sin señal: el sw.js lo manda apenas vuelva, aunque cierren la app */
+          if (e.red) { red(false); Sw.sync(); return; }
           if (e.luego) continue;
           it.error = e.message;
           await this.guardar(it);
@@ -20121,6 +20124,8 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
   }
   const encabezados = tipo => ({ apikey: NUBE.llave, Authorization: 'Bearer ' + NUBE.llave, 'Content-Type': tipo || 'application/json' });
   const pasoRpc = (nombre, args, extra) => Object.assign({ url: NUBE.url + '/rest/v1/rpc/' + nombre, metodo: 'POST', encabezados: encabezados(), cuerpo: JSON.stringify(args) }, extra);
+  /* El aviso de un cambio. Si el sistema contesta que ya lo tenía (409: llegó por otro lado), sirve igual */
+  const pasoReporte = ev => pasoRpc('conductor_reportar', { p_cedula: CED, p_eventos: [ev] }, { exige: ev.id, okSi: [409] });
   async function rpc(nombre, args) {
     const ctl = new AbortController(), corte = setTimeout(() => ctl.abort(), 20000);
     let r;
@@ -20379,7 +20384,7 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
     const tq = k === 'hecho' || (k === 'carg' && !conRacimos(v.tipo));
     cerrarHoja(false, tq);
     const it = { id: ev.id, orden: Date.now(), espera: Date.now() + (tq ? 30 * 60000 : 8000), ev, hecho: 0,
-      pasos: [pasoRpc('conductor_reportar', { p_cedula: CED, p_eventos: [ev] }, { exige: ev.id })] };
+      pasos: [pasoReporte(ev)] };
     await Cola.guardar(it);
     pintar();
     if (tq) { hojaTiquete(vid, k === 'carg' ? 'cargue' : 'descargue', it); return; }
@@ -20387,7 +20392,6 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
       false, (ORDEN.includes(k) ? '<button type="button" data-act="nota" data-v="' + esc(vid) + '">' + ic('lapiz', 14) + 'Anotar</button>' : '') +
       '<button type="button" data-act="deshacer" data-id="' + esc(it.id) + '">' + ic('deshacer', 14) + 'Deshacer</button>');
     setTimeout(() => Cola.procesar(), 8300);
-    Sw.sync();
   }
   async function deshacer(id) {
     const it = Cola.lista.find(x => x.id === id);
@@ -20402,14 +20406,12 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
     it.espera = 0;
     await Cola.guardar(it);
     Cola.procesar();
-    Sw.sync();
   }
   async function agregar(ev, pasos) {
     const it = { id: ev.id, orden: Date.now(), espera: 0, ev, hecho: 0, pasos };
     await Cola.guardar(it);
     pintar();
     Cola.procesar();
-    Sw.sync();
   }
   function hojaNota(vid) {
     const v = viaje(vid);
@@ -20427,7 +20429,7 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
     if (!t) { $('acNt').focus(); return; }
     const ev = { id: nuevoId(), viaje: vid, que: 'nota', k: v.estado === 'prog' ? '' : v.estado, nota: t, cuando: new Date().toISOString() };
     cerrarHoja();
-    agregar(ev, [pasoRpc('conductor_reportar', { p_cedula: CED, p_eventos: [ev] }, { exige: ev.id })]);
+    agregar(ev, [pasoReporte(ev)]);
     aviso('<b>Anotación guardada</b><span>' + (enLinea ? 'Ya va para SINUGRAVAS' : 'Guardada en el celular: se sube sola') + '</span>');
   }
   function hojaOtro(vid) {
@@ -20499,7 +20501,7 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
     if (rac && TQ.donde === 'descargue') ev.racimos = rac;
     /* El nombre de la foto va en el aviso: sin él, el sistema no deja subirla */
     if (TQ.foto) ev.archivo = nuevoId('tq');
-    const pasos = [pasoRpc('conductor_reportar', { p_cedula: CED, p_eventos: [ev] }, { exige: ev.id })];
+    const pasos = [pasoReporte(ev)];
     if (TQ.foto) {
       pasos.push({ url: NUBE.url + '/storage/v1/object/' + NUBE.deposito + '/archivo/' + ev.archivo, metodo: 'POST', encabezados: encabezados('image/jpeg'),
         bytes: TQ.foto.bytes, tipo: 'image/jpeg', okSi: [409], okTexto: 'duplicate|already exists' });
@@ -20637,7 +20639,13 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
       });
       window.addEventListener('online', () => { red(true); Cola.procesar(); traer(); });
       window.addEventListener('offline', () => red(false));
-      document.addEventListener('visibilitychange', () => { if (!document.hidden) { Cola.procesar(); traer(); } });
+      document.addEventListener('visibilitychange', async () => {
+        if (!document.hidden) { Cola.procesar(); traer(); return; }
+        /* A segundo plano: lo de los ocho segundos para deshacer ya no espera, y el sw.js queda encargado */
+        const pend = Cola.pendientes();
+        for (const it of pend) if (it.espera && it.espera - Date.now() <= 9000) { it.espera = 0; await Cola.guardar(it); }
+        if (pend.length) Sw.sync();
+      });
       /* Cada minuto, con la app abierta: lo guardado se sube y llegan los viajes nuevos */
       reloj = setInterval(() => { if (!document.hidden) { Cola.procesar(); if (!Cola.pendientes().length) traer(); } }, 60000);
       setInterval(() => { if (Cola.lista.some(x => !x.error && x.espera && x.espera <= Date.now() && !x.hecho)) Cola.procesar(); }, 5000);
