@@ -1801,6 +1801,101 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .rt-rev{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-weight:600;cursor:pointer;white-space:nowrap;font-size:12.5px}
 .rt-rev input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;margin:0}
 .rt-app-ay{margin:14px 0 0 18px;display:grid;gap:6px;font-size:13px;color:var(--text-2);line-height:1.5}
+/* La pestaña «App de los conductores» en Rutas (13/11/2026) */
+.rc-tab{grid-template-columns:150px repeat(7,minmax(128px,1fr));min-width:1046px}
+.rc-c{min-height:54px}
+.rc-v{box-sizing:border-box;display:flex;flex-direction:column;gap:3px;cursor:pointer;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 11%,transparent);border-radius:6px;padding:6px 7px 6px 8px;line-height:1.3;font-size:11px;color:var(--text-2);min-width:0}
+.rc-v:hover,.rc-v:focus-visible{background:color-mix(in srgb,var(--c) 19%,transparent)}
+.rc-v:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.rc-v > b{font-size:11.5px;font-weight:650;color:var(--text);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.rc-v > span{display:flex;align-items:center;gap:4px;min-width:0}
+.rc-v > span > i{font-style:normal;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-v > span > svg{flex:0 0 auto}
+.rc-v .rt-ti{width:15px;height:15px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
+/* Los siete estados del viaje en una barrita que se ajusta al ancho: azul, del conductor; gris, de usted */
+.rc-bar{display:flex;gap:2px;flex:1 1 auto;min-width:28px;margin-left:4px}
+.rc-bar i{flex:1 1 0;height:5px;border-radius:3px;background:color-mix(in srgb,var(--text-3) 20%,transparent)}
+.rc-bar i.p{background:color-mix(in srgb,var(--text-3) 70%,transparent)}
+.rc-bar i.c{background:var(--accent)}
+.rc-bar.rc-bar-l{display:inline-flex;flex:0 0 22px;width:22px;min-width:0;margin:0 2px 0 0}
+.rc-l{font-weight:650;color:var(--text)}
+.rc-l em{font-style:normal;margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700}
+.rc-l.rc-cel svg,.rc-l.rc-cel em{color:var(--accent)}
+.rc-l.nada{font-weight:500;color:var(--text-3)}
+.rc-l.nada.rc-ya{color:var(--warn-500);font-weight:650}
+.rc-l.rc-no{color:var(--text-3);font-weight:500}
+.rc-esp{color:var(--teal-700)}
+.rc-chips{flex-wrap:wrap;gap:3px!important}
+.rc-chip{display:inline-flex;align-items:center;gap:3px;font-style:normal;font-size:10.5px;font-weight:650;padding:0 6px;height:17px;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--text-2)}
+.rc-chip.rc-pe{color:var(--warn-500);border-color:color-mix(in srgb,var(--warn-500) 50%,transparent)}
+.rc-chip.rc-ok{color:var(--ok-700);border-color:color-mix(in srgb,var(--ok-500) 40%,transparent)}
+.rc-chip.rc-cn{color:var(--violet-500);border-color:color-mix(in srgb,var(--violet-500) 40%,transparent)}
+.rc-cd{color:var(--text-2)}
+.rc-v.rc-sinr{background:color-mix(in srgb,var(--text-3) 7%,transparent);border-left-color:color-mix(in srgb,var(--c) 45%,transparent)}
+.rc-v.rc-sinr:hover{background:color-mix(in srgb,var(--text-3) 13%,transparent)}
+.rc-v.e-no{border-left-color:color-mix(in srgb,var(--text-3) 45%,transparent);background:color-mix(in srgb,var(--text-3) 7%,transparent)}
+.rc-v.e-no > b{color:var(--text-3);text-decoration:line-through;font-weight:600}
+.rc-v.e-no .rt-ti{filter:grayscale(1);opacity:.6}
+.rc-seg-n{background:color-mix(in srgb,var(--warn-500) 16%,transparent)!important;color:var(--warn-500)!important}
+/* Lo que va llegando: como la bandeja de «Semana», más ancha */
+.rt-band.rc-feed{flex:0 0 288px;width:288px;max-height:calc(100vh - 92px);overflow:hidden}
+.rt-band.rc-feed.chica{flex-basis:52px;width:52px}
+.rc-fd{display:flex;flex-direction:column;gap:1px;overflow:auto;margin:0 -8px;padding:0 8px;min-height:0;flex:1 1 auto}
+.rc-fd-d{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);padding:8px 2px 3px;position:sticky;top:0;background:var(--surface);z-index:1}
+.rc-fi{display:flex;gap:9px;align-items:flex-start;padding:7px 6px;border-radius:8px;cursor:pointer;position:relative}
+.rc-fi:hover,.rc-fi:focus-visible{background:var(--surface-2)}
+.rc-fi.rc-nuevo{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.rc-fi.rc-nuevo::before{content:'';position:absolute;left:-3px;top:15px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.rc-fi-ic{flex:0 0 26px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 16%,transparent);color:color-mix(in srgb,var(--c) 80%,#000)}
+.rc-fi-t{min-width:0;display:grid;gap:1px;flex:1 1 auto}
+.rc-fi-t b{font-size:12.5px;font-weight:650;color:var(--text);line-height:1.3}
+.rc-fi-t span{font-size:11.5px;color:var(--text-3);line-height:1.35}
+.rc-off{display:inline-flex;align-items:flex-start;gap:4px;color:var(--warn-500)!important;font-weight:600;font-size:11.5px}
+.rc-off svg{flex:0 0 auto;margin-top:2px}
+.rc-fi-h{font-style:normal;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text-2);padding-top:1px}
+.rc-fd-visto{justify-content:center;margin-top:8px;flex:0 0 auto}
+/* Por día: cada viaje con todas sus horas */
+.rc-lista{font-size:12.5px}
+.rc-lista td{vertical-align:top}
+.rc-lista th small{display:block;font-weight:500;text-transform:none;letter-spacing:0;color:var(--text-3);font-size:10.5px}
+.rc-lista tr.rc-sin td{background:color-mix(in srgb,var(--text-3) 4%,transparent)}
+.rc-hc{color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums}
+.rc-hp{color:var(--text);font-variant-numeric:tabular-nums}
+.rc-h0{color:var(--text-3)}
+.rc-tqd{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:12px}
+.rc-tqd.rc-pe{color:var(--warn-500)}
+.rc-tqd.rc-ok{color:var(--ok-700)}
+.rc-tqd b{color:var(--text)}
+.rc-nt{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2)}
+/* Tiquetes y conductores */
+.rc-tq tr.rc-rev td{color:var(--text-3)}
+.rc-tq tr.rc-rev td b{color:var(--text-2)}
+.rc-menos{color:var(--warn-500)}
+.rc-tq .link{display:inline-flex;align-items:center;gap:4px}
+.rc-feed .rt-band-vacia .spin{flex:0 0 auto}
+.rc-av{display:inline-flex;align-items:center;gap:4px;color:var(--warn-500);font-weight:650}
+.rc-enl{display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:14px}
+.rc-enl-ic{flex:0 0 44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.rc-enl-t{min-width:0;flex:1 1 auto;display:grid;gap:4px}
+.rc-enl-t b{font-size:14px}
+.rc-enl-t > span{font-size:12.5px;color:var(--text-2)}
+.rc-enl-t .enlace{margin-top:4px;width:max-content;max-width:100%}
+.rc-enl-b{display:flex;gap:8px;flex:0 0 auto}
+/* La ventana: toque por toque */
+.rc-ve{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-bottom:12px;font-size:12.5px;color:var(--text-2)}
+.rc-ve-m{display:inline-flex;align-items:center;gap:5px}
+.rc-tl{display:grid;position:relative}
+.rc-tl::before{content:'';position:absolute;left:61px;top:12px;bottom:12px;width:2px;background:var(--border)}
+.rc-tl-i{display:grid;grid-template-columns:44px 26px minmax(0,1fr);gap:10px;padding:5px 0;align-items:start;position:relative}
+.rc-tl-h{font-weight:700;font-variant-numeric:tabular-nums;font-size:13px;text-align:right;padding-top:4px;line-height:1.1}
+.rc-tl-h small{display:block;font-size:10.5px;font-weight:500;color:var(--text-3)}
+.rc-tl-p{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);position:relative;z-index:1;box-shadow:0 0 0 3px var(--surface)}
+.rc-tl-t{min-width:0;display:grid;gap:3px;padding-top:4px}
+.rc-tl-t b{font-size:13px}
+.rc-tl-n{font-size:12.5px;color:var(--text-2)}
+.rc-tl-t .rt-tqc{margin-top:4px}
+@media (max-width:600px){ .rc-enl{flex-wrap:wrap} .rc-enl-b{width:100%} .rt-band.rc-feed{max-height:none} }
+.tab .tb-count.rc-tb{background:color-mix(in srgb,var(--warn-500) 16%,transparent);color:var(--warn-500);font-weight:700}
 /* Catálogo: la imagen y el color de cada tipo de operación */
 .cat-op.cat-tipo{align-items:center}
 .cat-img{flex:0 0 auto;width:46px;height:46px;border-radius:10px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;margin-right:12px;cursor:pointer}
@@ -5761,7 +5856,7 @@ const UIState = {
      hoy), por camión o por día, el filtro del maestro, la bandeja «Por
      programar» abierta o chica (se recuerda en este equipo) y los tipos de
      operación que se ven en la semana (null: todos, como al entrar) */
-  rutas: { tab: 'semana', semana: null, vista: 'camion', tipo: 'todas', bandeja: Prefs.get('rutasBandeja') || '', ver: null, hMes: '' }
+  rutas: { tab: 'semana', semana: null, vista: 'camion', tipo: 'todas', bandeja: Prefs.get('rutasBandeja') || '', ver: null, hMes: '', rc: 'camion', rcTq: 'sin', rcFeed: Prefs.get('rutasFeed') || '' }
 };
 
 /* Los proveedores son de Facturación (Juan, 02/11/2026; su SQL 211): Flota
@@ -19856,7 +19951,7 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
 .tq span { color: var(--tinta-2); font-size: 12px; }
 .tq.falta { border-color: var(--aviso-l); background: var(--aviso-bg); }
 .tq.falta > svg { color: var(--aviso); }
-.tq .btn-s { margin-left: auto; min-height: 36px; font-size: 13px; }
+.tq .btn-s { margin-left: auto; min-height: 36px; font-size: 13px; flex: 0 0 auto; white-space: nowrap; }
 .mas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .fila { width: 100%; background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; text-align: left; }
 .fila img, .fila .pto { width: 20px; height: 20px; flex: 0 0 auto; object-fit: contain; }
@@ -19899,6 +19994,9 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
 .foto span { font-size: 12px; font-weight: 400; color: var(--gris); }
 .foto-ok { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
 .foto-ok img { width: 92px; height: 122px; border-radius: 10px; border: 1px solid var(--borde); object-fit: cover; flex: 0 0 auto; background: #e6eaee; }
+.tq-ver { overflow: auto; max-height: 66vh; border-radius: 12px; border: 1px solid var(--borde); background: #e6eaee; margin-bottom: 12px; -webkit-overflow-scrolling: touch; }
+.tq-ver img { display: block; width: 100%; height: auto; }
+.tq-ver.zoom img { width: 230%; max-width: none; }
 .foto-ok b { display: block; font-size: 14px; }
 .foto-ok span { display: block; font-size: 12px; color: var(--gris); margin: 2px 0 8px; }
 .foto-ok .btn-s { min-height: 38px; font-size: 13px; padding: 0 12px; }
@@ -19976,6 +20074,7 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
     deshacer: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
     regreso: '<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>',
     parqueo: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/>',
+    ojo: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
     warn: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
   };
   const ic = (n, s, w) => '<svg width="' + (s || 18) + '" height="' + (s || 18) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 2) +
@@ -20051,8 +20150,9 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
       const xs = await this.tx('readonly', st => st.getAll());
       /* Sin IndexedDB se trabaja con lo de la memoria */
       if (xs) this.lista = xs.sort((a, b) => a.orden - b.orden);
-      /* Lo que chocó con el mismo cambio que ya había llegado (antes del SQL 037): ya está en el sistema */
-      for (const it of this.lista.filter(x => /duplicate key|reportes_pkey/i.test(x.error || ''))) await this.quitar(it.id);
+      /* Lo que chocó con el mismo cambio que ya había llegado (antes del SQL 037): se intenta otra vez. El sistema ya lo da por recibido
+         y, si era un tiquete, sube la foto que faltaba (13/11/2026: antes se quitaba, y esa foto se podía perder) */
+      for (const it of this.lista.filter(x => /duplicate key|reportes_pkey/i.test(x.error || ''))) { it.error = null; it.espera = 0; await this.guardar(it); }
     },
     async guardar(it) {
       if (!this.lista.includes(it)) { this.lista = this.lista.filter(x => x.id !== it.id).concat(it).sort((a, b) => a.orden - b.orden); }
@@ -20304,12 +20404,39 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
         esc((x.f !== v.fecha ? cuandoTxt(x.f) + ' ' : '') + (x.h || '')) + '</span>' + sube(x) + '</div>').join('') +
       sueltas.map(n => '<div class="marca">' + ic('lapiz', 16) + '<div class="tx">Anotación<i>«' + esc(n.t) + '»</i></div><span class="h">' + esc(n.h || '') + '</span>' + sube(n) + '</div>').join('') + '</div>';
   }
+  /* La foto de cada tiquete queda en el celular unos días (Juan, 13/11/2026: «no se me permite ver en el celular»), para verla sin gastar
+     datos y aunque no haya señal. Va en un caché aparte del sw.js («sigf-tiquetes»), con el id del tiquete. El sw.js no se toca */
+  const FOTOS = {
+    CACHE: 'sigf-tiquetes', DIAS: 10, hay: new Set(),
+    clave: id => '/tiquete/' + encodeURIComponent(id),
+    async guardar(id, bytes) {
+      try {
+        const c = await caches.open(this.CACHE);
+        await c.put(this.clave(id), new Response(new Blob([bytes], { type: 'image/jpeg' }), { headers: { 'Content-Type': 'image/jpeg', 'X-Guardada': String(Date.now()) } }));
+        this.hay.add(id);
+      } catch (e) { /* sin caché: la foto igual se sube, solo que no se puede ver después en el celular */ }
+    },
+    async traer(id) {
+      try { const r = await (await caches.open(this.CACHE)).match(this.clave(id)); return r ? await r.blob() : null; } catch (e) { return null; }
+    },
+    /* Al abrir la app: se borran las de hace más de DIAS días y se anota cuáles hay */
+    async iniciar() {
+      try {
+        const c = await caches.open(this.CACHE), viejo = Date.now() - this.DIAS * 864e5;
+        for (const r of await c.keys()) {
+          const x = await c.match(r), id = decodeURIComponent(new URL(r.url).pathname.split('/').pop());
+          if (!x || +(x.headers.get('X-Guardada') || 0) < viejo) await c.delete(r); else this.hay.add(id);
+        }
+      } catch (e) { /* sin caché */ }
+    }
+  };
   /* Los tiquetes del viaje: los que hay y el que falta */
   function tiquetes(v, todos) {
     const xs = v.tiquetes || [], fruta = conRacimos(v.tipo), hay = d => xs.some(x => x.donde === d);
     let h = xs.map(x => '<div class="tq">' + ic('check', 18, 2.6) + '<div><b>Tiquete de ' + (x.donde === 'cargue' ? 'cargue' : 'descargue') + '</b><span>' +
       esc([x.kg != null ? miles(x.kg) + ' kg' : '', x.racimos != null ? miles(x.racimos) + ' racimos' : '', x.foto ? 'con foto' : 'sin foto', x.pend ? 'guardado en el celular' : ''].filter(Boolean).join(' · ')) +
-      '</span></div></div>').join('');
+      '</span></div>' + (x.foto && FOTOS.hay.has(x.id) ? '<button type="button" class="btn-s" data-act="verTq" data-id="' + esc(x.id) + '">' + ic('ojo', 15) + 'Ver la foto</button>' : '') +
+      '</div>').join('');
     const falta = v.estado === 'hecho' && !hay('descargue') ? 'descargue' : todos && !fruta && ORDEN.indexOf(v.estado) >= ORDEN.indexOf('carg') && !hay('cargue') ? 'cargue' : '';
     if (falta) h += '<div class="tq falta">' + ic('camera', 18) + '<div><b>Falta el tiquete de ' + falta + '</b><span>Tómele la foto cuando lo tenga</span></div>' +
       '<button type="button" class="btn-s" data-act="tiquete" data-v="' + esc(v.id) + '" data-d="' + falta + '">Agregar</button></div>';
@@ -20501,6 +20628,7 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
     if (rac && TQ.donde === 'descargue') ev.racimos = rac;
     /* El nombre de la foto va en el aviso: sin él, el sistema no deja subirla */
     if (TQ.foto) ev.archivo = nuevoId('tq');
+    if (TQ.foto) await FOTOS.guardar(ev.id, TQ.foto.bytes);
     const pasos = [pasoReporte(ev)];
     if (TQ.foto) {
       pasos.push({ url: NUBE.url + '/storage/v1/object/' + NUBE.deposito + '/archivo/' + ev.archivo, metodo: 'POST', encabezados: encabezados('image/jpeg'),
@@ -20513,6 +20641,14 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
     await soltar(it);
     await agregar(ev, pasos);
     aviso('<b>Tiquete guardado</b><span>' + (enLinea ? 'Ya va para SINUGRAVAS' : 'Guardado en el celular: se sube solo') + '</span>');
+  }
+  /* La foto de un tiquete, la que quedó en este celular. Al tocarla se acerca (la app no deja pellizcar la pantalla) */
+  async function verTiquete(id) {
+    const b = await FOTOS.traer(id);
+    if (!b) { aviso('<b>Esa foto ya no está en el celular</b><span>Se guarda ' + FOTOS.DIAS + ' días en el celular con el que se tomó</span>', true); return; }
+    const url = URL.createObjectURL(b);
+    hoja('<h3>Foto del tiquete</h3><p class="sub">Así quedó guardada. Toque la foto para acercarla.</p><div class="tq-ver"><img src="' + url + '" alt="Foto del tiquete" data-act="zoomTq"></div>' +
+      '<button type="button" class="btn-t" data-act="cerrar">Cerrar</button>', () => URL.revokeObjectURL(url));
   }
   /* «Agregar» un tiquete después: el que falta (o, si faltan los dos, se escoge) */
   function elegirTiquete(vid, donde) {
@@ -20589,6 +20725,8 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
     else if (a === 'tiquete') elegirTiquete(vid, el.dataset.d);
     else if (a === 'foto') $('acFoto').click();
     else if (a === 'guardarTq') guardarTq();
+    else if (a === 'verTq') verTiquete(el.dataset.id);
+    else if (a === 'zoomTq') el.parentElement.classList.toggle('zoom');
     else if (a === 'deshacerTq') {
       const it = TQ && TQ.it;
       if (TQ) TQ.it = null;
@@ -20650,6 +20788,7 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
       reloj = setInterval(() => { if (!document.hidden) { Cola.procesar(); if (!Cola.pendientes().length) traer(); } }, 60000);
       setInterval(() => { if (Cola.lista.some(x => !x.error && x.espera && x.espera <= Date.now() && !x.hecho)) Cola.procesar(); }, 5000);
       Cola.cargar().then(async () => {
+        await FOTOS.iniciar();
         for (const it of Cola.lista) if (it.espera && it.espera > Date.now() + 10000) { it.espera = 0; await Cola.guardar(it); }
         pintar();
         if (CED) { Sw.registrar(); traer().then(() => Cola.procesar()); }
@@ -22481,27 +22620,6 @@ const Rutas = {
     url.search = '?conductor' + (new URLSearchParams(location.search).get('nube') === 'local' ? '&nube=local' : '');
     return url.href;
   },
-  abrirApp() {
-    const url = this.enlaceApp(), ced = x => String(x || '').replace(/\D/g, '');
-    const sinCed = Datos.conductores.filter(c => !ced(c.cedula)), ters = this.camiones().filter(u => Q.tercero(u) && !ced(u.tercero.cedula));
-    Modal.abrir({
-      titulo: 'App de los conductores', sub: 'Para que cada uno marque desde su celular el estado de sus viajes',
-      cuerpo: '<div class="enlace">' + Icon('externo', '', 14) + esc(url.replace(/^https?:\/\//, '')) + '</div>' +
-        '<div class="flex g8 mt12" style="flex-wrap:wrap"><button type="button" class="btn btn-primary btn-sm" data-act="rtAppCopiar">' + Icon('copiar', '', 13) + 'Copiar enlace</button>' +
-          '<a class="btn btn-sm" href="' + attr(url) + '" target="_blank" rel="noopener">' + Icon('externo', '', 13) + 'Abrir</a></div>' +
-        '<ul class="rt-app-ay"><li><b>Entran con su cédula</b>, la de Recursos Humanos. El celular la recuerda.</li>' +
-          '<li><b>Ven sus viajes</b> de hoy y de los dos días siguientes: los que tienen su nombre y los del camión que tienen asignado.</li>' +
-          '<li><b>Cada botón queda con la hora del celular.</b> Usted puede seguir cambiando todo aquí; si los dos marcan el mismo estado, queda la primera hora.</li>' +
-          '<li><b>Al descargar suben el tiquete</b> con el peso neto y, en la fruta, los racimos. El peso real sale de ahí si el viaje no lo tenía.</li>' +
-          '<li><b>Sin señal</b>, lo marcado queda en el celular y se sube solo cuando vuelve.</li>' +
-          '<li><b>Los de los terceros</b> entran con la cédula anotada en su vehículo (Flota → el vehículo → Editar información).</li></ul>' +
-        (sinCed.length || ters.length ? '<div class="alert a-warn mt12">' + Icon('warn') + '<div><b>Todavía no pueden entrar</b><div class="rt-al-l">' +
-          sinCed.map(c => '<span>' + esc(c.nombre) + ': no tiene cédula en Recursos Humanos.</span>').join('') +
-          ters.map(u => '<span>' + esc(UI.placaTxt(u)) + ' (de un tercero' + (u.tercero.quien ? ': ' + esc(u.tercero.quien) : '') + '): falta la cédula de su conductor.</span>').join('') +
-          '</div></div></div>' : ''),
-      pie: '<button type="button" class="btn" data-act="cerrarModal">Cerrar</button>'
-    });
-  },
   async copiarApp() {
     const url = this.enlaceApp();
     try {
@@ -22815,15 +22933,15 @@ const Rutas = {
     const s = UIState.rutas, titulo = 'Rutas', sub = 'Programación de rutas';
     this.logoListo();
     const head = UI.head('Rutas', 'La programación semanal de los viajes y su seguimiento',
-      Sincro.sinRutas ? '' : '<button type="button" class="btn" data-act="rtApp">' + Icon('movil', '', 14) + 'App de los conductores</button>' +
-        '<button type="button" class="btn btn-primary" data-act="rtNuevo">' + Icon('plus', '', 14) + 'Programar viaje</button>');
+      Sincro.sinRutas ? '' : '<button type="button" class="btn btn-primary" data-act="rtNuevo">' + Icon('plus', '', 14) + 'Programar viaje</button>');
     if (Sincro.sinRutas) return { titulo, sub, html: head + '<div class="alert a-warn">' + Icon('warn') +
       '<div><b>Todavía no se puede programar.</b> Falta correr en Supabase el SQL 029, que crea dónde guardar las rutas y los viajes.</div></div>' };
-    const tabs = '<div class="tabs">' + [['semana', 'Semana', 'calendar'], ['rutas', 'Rutas', 'ruta'], ['historico', 'Histórico', 'list']].map(t => '<div class="tab tab-ic' + (s.tab === t[0] ? ' active' : '') +
+    const tabs = '<div class="tabs">' + [['semana', 'Semana', 'calendar'], ['app', 'App de los conductores', 'movil'], ['rutas', 'Rutas', 'ruta'], ['historico', 'Histórico', 'list']].map(t => '<div class="tab tab-ic' + (s.tab === t[0] ? ' active' : '') +
       '" data-act="rtTab" data-v="' + t[0] + '">' + Icon(t[2], '', 14) + t[1] +
-      (t[0] === 'rutas' ? '<span class="tb-count">' + Datos.rutas.filter(r => r.activa !== false).length + '</span>' : '') + '</div>').join('') + '</div>';
-    return { titulo, sub, html: head + tabs + (s.tab === 'rutas' ? this.maestro() : s.tab === 'historico' ? this.historico() : this.semanaHtml()),
-      despues: () => this.arrastre() };
+      (t[0] === 'rutas' ? '<span class="tb-count">' + Datos.rutas.filter(r => r.activa !== false).length + '</span>' : '') +
+      (t[0] === 'app' && this.rcPendientes() ? '<span class="tb-count rc-tb" title="Tiquetes por revisar">' + this.rcPendientes() + '</span>' : '') + '</div>').join('') + '</div>';
+    return { titulo, sub, html: head + tabs + (s.tab === 'rutas' ? this.maestro() : s.tab === 'historico' ? this.historico() : s.tab === 'app' ? this.rcHtml() : this.semanaHtml()),
+      despues: () => { this.arrastre(); this.rcDespues(); } };
   },
 
   /* ---- La ventana de un viaje: todo lo suyo, lo que hay que revisar y su
@@ -23958,6 +24076,355 @@ const Rutas = {
   }
 };
 Vistas.rutas = () => Rutas.vista();
+/* ---- La pestaña «App de los conductores» (Juan, 13/11/2026: «un apartado bastante completo donde veamos todas las respuestas de
+   los conductores de forma bien organizada y limpia. Quiero tener control absoluto de todo eso. Que nuestro referente sea la vista
+   del apartado de semana»). Lo que llega de los celulares, por semana: el tablero por camión, la lista por día con todas las horas,
+   los tiquetes para revisar y los conductores con la app. A la derecha del tablero, lo que va llegando ---- */
+Object.assign(Rutas, {
+  /* Lo que llega de los celulares, toque por toque (flota.reportes): { id, viaje, que, conductor, quien, cuando, recibido, nota, datos } */
+  reportes: [],
+  /* Se traen de la nube los de la semana que se ve: al entrar a la pestaña y cada vez que un conductor manda algo (cambia la versión del
+     viaje, extra.cv). _rcFirma dice de qué viajes y versiones son; _rcDe, de qué semana. De a 60 viajes por pedido */
+  _rcFirma: '', _rcDe: '', _rcTrayendo: null, _rcError: '', _rcOtra: 0, _rcScroll: 0,
+  rcCargar(l) {
+    const vs = this.deSemana(l), firma = l + '|' + vs.map(v => v.id + ':' + (+v.cv || 0)).sort().join(',');
+    if (firma === this._rcFirma || this._rcTrayendo || Date.now() < this._rcOtra) return;
+    const ids = vs.map(v => v.id), lotes = [];
+    for (let i = 0; i < ids.length; i += 60) lotes.push(ids.slice(i, i + 60));
+    const leer = async lote => {
+      const out = [];
+      for (let desde = 0; ; desde += 1000) {
+        const xs = (await Nube.pedir('reportes?select=*&viaje_id=in.(' + lote.join(',') + ')&order=cuando&limit=1000&offset=' + desde)) || [];
+        out.push.apply(out, xs);
+        if (xs.length < 1000) return out;
+      }
+    };
+    const repintar = () => { if (Router.actual().vista === 'rutas' && UIState.rutas.tab === 'app') Router.pintar(true); };
+    this._rcTrayendo = Promise.all(lotes.map(leer)).then(partes => {
+      this.reportes = [].concat(...partes).map(x => ({ id: x.id, viaje: x.viaje_id, que: x.que, conductor: x.conductor_id || null, quien: x.quien || '',
+        cuando: x.cuando, recibido: x.recibido, nota: x.nota || '', datos: x.datos || {} }));
+      this._rcFirma = firma; this._rcDe = l; this._rcError = '';
+    }).catch(e => {
+      /* Sin conexión (o sin el SQL 036): se intenta otra vez en medio minuto */
+      this._rcError = (e && e.message) || 'Sin conexión';
+      this._rcOtra = Date.now() + 30000;
+      setTimeout(repintar, 30500);
+    }).finally(() => { this._rcTrayendo = null; repintar(); });
+  },
+  rcListo() { return this._rcDe === this.semana(); },
+  /* Después de pintar: lo que va llegando se queda donde estaba (se pinta otra vez cada vez que llega algo) */
+  rcDespues() {
+    const fd = $('.rc-fd');
+    if (!fd) return;
+    fd.scrollTop = this._rcScroll || 0;
+    fd.addEventListener('scroll', () => { this._rcScroll = fd.scrollTop; }, { passive: true });
+  },
+  RC_QUE: {
+    sitio: ['Llegó a cargar', 'clock'], cargando: ['Empezaron a cargar', 'upload'], carg: ['Ya cargó', 'caja'], ruta: ['Salió a ruta', 'truck'],
+    destino: ['Llegó a descargar', 'pin'], desc: ['Empezaron a descargar', 'download'], hecho: ['Ya descargó', 'check'],
+    regreso: ['Va de regreso', 'back'], parqueo: ['Parqueó el carro', 'lock'], nota: ['Anotó', 'lapiz'], tiquete: ['Subió el tiquete', 'ticket']
+  },
+  /* La hora y el día en Colombia de una marca de tiempo */
+  rcHora: t => new Date(t).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'America/Bogota' }),
+  rcDia: t => new Date(t).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
+  rcHace(t) {
+    const m = Math.round((Date.now() - new Date(t)) / 6e4);
+    return m < 1 ? 'ahora' : m < 60 ? 'hace ' + m + ' min' : m < 720 ? 'hace ' + Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + m % 60 + ' min' : '') : 'a las ' + this.rcHora(t);
+  },
+  /* «hoy 10:41», «ayer 18:20», «mié 11 nov 06:35» */
+  rcCuando(t) {
+    const d = this.rcDia(t);
+    return (d === hoyISO ? 'hoy' : d === this.mas(hoyISO, -1) ? 'ayer' : this.diaSem(d).slice(0, 3).toLowerCase() + ' ' + this.dia(d)) + ' ' + this.rcHora(t);
+  },
+  /* Las horas se comparan como horas: la nube las escribe con su zona (-05:00 o +00:00) */
+  rcT: t => Date.parse(t) || 0,
+  /* Llegó tarde: más de 10 minutos entre que lo tocó y que llegó (estaba sin señal) */
+  rcTarde: r => Boolean(r.recibido && new Date(r.recibido) - new Date(r.cuando) > 10 * 6e4),
+  /* Los de unos viajes, del más nuevo al más viejo */
+  rcDe(vs) {
+    const ids = new Set(vs.map(v => v.id));
+    return (this.reportes || []).filter(r => ids.has(r.viaje)).sort((a, b) => this.rcT(b.cuando) - this.rcT(a.cuando));
+  },
+  /* Si el viaje tiene algo del conductor: una hora que marcó, una anotación, un tiquete o la vuelta */
+  rcTiene(v) {
+    const ti = v.tiempos || {}, vu = v.vuelta || {};
+    return this.TI.some(k => ti[k] && ti[k].c) || (v.notasC || []).length > 0 || (v.tiquetes || []).length > 0 || ['regreso', 'parqueo'].some(k => vu[k] && vu[k].c);
+  },
+  /* Lo último del viaje, para la ficha: { k, h, c } */
+  rcUltimo(v) {
+    const vu = v.vuelta || {}, ti = v.tiempos || {};
+    for (const k of ['parqueo', 'regreso']) if (vu[k] && vu[k].h) return { k, h: vu[k].h, c: Boolean(vu[k].c) };
+    return ti[v.estado] && ti[v.estado].h ? { k: v.estado, h: ti[v.estado].h, c: Boolean(ti[v.estado].c) } : null;
+  },
+  /* Ya pasó la hora del viaje (o su día): si no hay nada del conductor, se avisa */
+  rcYa(v) { return v.fecha < hoyISO || (v.fecha === hoyISO && (v.hora || '00:00') <= this.rcHora(Date.now())); },
+  /* Lo nuevo: lo que llegó después de la última vez que usted marcó «Ya lo vi» en este equipo */
+  rcVisto() { return Prefs.get('rutasVisto') || ''; },
+  rcNuevo(r) { const v = this.rcVisto(); return Boolean(v && this.rcT(r.recibido || r.cuando) > this.rcT(v)); },
+  /* Los tiquetes sin revisar de todos los viajes: el número de la pestaña */
+  rcPendientes() { return (Datos.viajes || []).reduce((s, v) => s + (v.tiquetes || []).filter(q => !q.rev).length, 0); },
+
+  rcHtml() {
+    const s = UIState.rutas, l = this.semana(), vs = this.vistos(l), rs = this.rcDe(vs), vista = s.rc || 'camion';
+    this.rcCargar(l);
+    /* La primera vez en este equipo, lo de antes cuenta como visto: de ahí en adelante, lo que llegue sale como nuevo */
+    if (!this.rcVisto()) Prefs.set('rutasVisto', new Date().toISOString());
+    const enHoy = l <= hoyISO && hoyISO <= this.mas(l, 6), tq = [].concat(...vs.map(v => v.tiquetes || [])).filter(q => !q.rev).length;
+    const barra = '<div class="toolbar rt-tool"><div class="rt-sem"><button type="button" class="btn btn-sm btn-icon" data-act="rtSemana" data-v="-1" title="Semana anterior" aria-label="Semana anterior">' +
+        Icon('back', '', 14) + '</button><b>' + esc('Semana ' + this.semanaTxt(l)) + '</b><button type="button" class="btn btn-sm btn-icon" data-act="rtSemana" data-v="1" title="Semana siguiente" aria-label="Semana siguiente">' +
+        Icon('chevR', '', 14) + '</button>' + (enHoy ? '' : '<button type="button" class="btn btn-sm" data-act="rtSemana" data-v="0">Esta semana</button>') + '</div>' +
+      '<div class="seg">' + [['camion', 'Por camión'], ['dia', 'Por día'], ['tiquetes', 'Tiquetes', tq], ['conductores', 'Conductores']].map(o => '<button type="button" class="' +
+        (vista === o[0] ? 'on' : '') + '" data-act="rcVista" data-v="' + o[0] + '">' + o[1] + (o[2] ? ' <span class="seg-n rc-seg-n">' + o[2] + '</span>' : '') + '</button>').join('') + '</div>' +
+      '<span class="tb-sp"></span><button type="button" class="btn" data-act="rtAppCopiar" title="Para mandarlo al chat de los conductores">' + Icon('copiar', '', 14) + 'Copiar el enlace de la app</button></div>';
+    const cab = vista === 'conductores' ? '' : '<div class="rt-cab"><h2 class="rt-titulo">' + (vista === 'tiquetes' ? 'Los tiquetes que subieron' : 'Lo que reportan los conductores') + '</h2>' + this.verHtml() + '</div>';
+    const cuerpo = vista === 'dia' ? this.rcPorDia(l, vs) : vista === 'tiquetes' ? this.rcTiquetes(vs) : vista === 'conductores' ? this.rcConductores(vs) : this.rcTablero(l, vs, rs);
+    return this.rcKpis(vs, rs) + barra + cab + cuerpo + (vista === 'conductores' ? '' : this.rcLeyenda());
+  },
+
+  /* ---- Los cinco números de arriba, como en «Semana» ---- */
+  rcKpis(vs, rs) {
+    const pasados = vs.filter(v => this.rcYa(v) && v.estado !== 'no'), con = pasados.filter(v => this.rcTiene(v)).length, sin = pasados.length - con;
+    const deHoy = rs.filter(r => this.rcDia(r.cuando) === hoyISO), ult = rs.slice().sort((a, b) => this.rcT(b.recibido || b.cuando) - this.rcT(a.recibido || a.cuando))[0];
+    const tqs = [].concat(...vs.map(v => v.tiquetes || [])), sinRev = tqs.filter(q => !q.rev).length;
+    const notas = [].concat(...vs.map(v => v.notasC || [])).sort((a, b) => ((b.f || '') + (b.h || '') > (a.f || '') + (a.h || '') ? 1 : -1));
+    const cs = this.rcConductoresLista(vs), pueden = cs.filter(c => c.ced).length, usan = cs.filter(c => c.rs.length).length;
+    const corto = t => (t.length > 30 ? t.slice(0, 29) + '…' : t), listo = this.rcListo();
+    return '<div class="kpis4 kpis5 mb16">' +
+      UI.kpi({ label: 'Viajes con reporte', valor: con + '<small> de ' + pasados.length + '</small>', icono: 'movil',
+        meta: !pasados.length ? 'Todavía no hay viajes que reportar' : sin ? sin + (sin === 1 ? ' viaje sin nada del conductor' : ' viajes sin nada del conductor') : 'Todos tienen algo del conductor' }) +
+      UI.kpi({ label: 'Llegó hoy', valor: listo ? deHoy.length + '<small>' + (deHoy.length === 1 ? ' marca' : ' marcas') + '</small>' : '…', icono: 'clock', color: 'var(--teal-500)',
+        meta: !listo ? 'Trayendo lo que mandaron los celulares…' : ult ? 'Lo último, ' + esc(this.rcHace(ult.recibido || ult.cuando)) + ' · ' + esc(this.cortoNombre(ult.quien)) : 'Nada todavía' }) +
+      UI.kpi({ label: 'Tiquetes por revisar', valor: sinRev + '<small> de ' + tqs.length + '</small>', icono: 'ticket', color: 'var(--warn-500)', vcolor: sinRev ? 'var(--warn-500)' : '',
+        meta: !tqs.length ? 'Todavía no suben tiquetes' : sinRev ? 'Compárelos con la foto y márquelos' : 'Todos revisados' }) +
+      UI.kpi({ label: 'Anotaciones', valor: notas.length, icono: 'lapiz', color: 'var(--violet-500)', meta: notas[0] ? 'La última: «' + esc(corto(notas[0].t)) + '»' : 'Sin anotaciones esta semana' }) +
+      UI.kpi({ label: 'Conductores con la app', valor: (listo ? usan : '…') + '<small> de ' + cs.length + '</small>', icono: 'user', color: 'var(--ok-500)',
+        meta: cs.length - pueden ? (cs.length - pueden) + ' sin cédula: no pueden entrar' : 'Todos pueden entrar' }) + '</div>';
+  },
+
+  /* ---- Por camión: el tablero de la semana con lo que marcó cada conductor ---- */
+  rcTablero(l, vs, rs) {
+    const fs = this.fechas(l), con = new Set(vs.map(v => v.unidad));
+    const us = this.camiones().filter(u => con.has(u.id)).concat([...con].map(id => Q.unidad(id)).filter(u => u && u.tipo !== 'carga'));
+    const tablero = us.length ? '<div class="rt-wrap"><div class="rt-tab rc-tab"><div class="rt-h rt-hu">Camión</div>' +
+      fs.map(f => '<div class="rt-h' + (f === hoyISO ? ' hoy' : '') + '"><b>' + this.diaSem(f) + '</b><span>' + this.dia(f) + (f === hoyISO ? ' · hoy' : '') + '</span></div>').join('') +
+      us.map(u => '<div class="rt-u">' + UI.thumb(u) + '<div><b class="mono">' + esc(UI.placaTxt(u)) + '</b>' +
+          (Q.tercero(u) ? '<span class="rt-ter" title="' + attr(Q.terceroTxt(u)) + '">Tercero' + (u.tercero.quien ? ' · ' + esc(u.tercero.quien) : '') + '</span>' : '') + '</div></div>' +
+        fs.map(f => '<div class="rt-c rc-c' + (f === hoyISO ? ' hoy' : '') + '">' + vs.filter(v => v.unidad === u.id && v.fecha === f).sort(this.enOrden).map(v => this.rcFicha(v)).join('') + '</div>').join('')).join('') +
+      '</div></div>'
+      : '<div class="card">' + UI.empty('movil', 'No hay viajes esta semana', 'Cuando programe viajes en «Semana», aquí sale lo que marque cada conductor.') + '</div>';
+    return '<div class="rt-zona rc-zona">' + tablero + this.rcFeed(rs) + '</div>';
+  },
+  /* La ficha del viaje: la ruta, los siete puntos de los estados (azul: lo marcó el conductor; gris: usted), lo último con su hora,
+     la espera, los tiquetes y las anotaciones, y el conductor. Se abre con todo lo que mandó, toque por toque */
+  rcFicha(v) {
+    const r = this.ruta(v.ruta) || {}, ti = v.tiempos || {}, img = this.imagen(r.tipo), cd = this.conductor(v), ult = this.rcUltimo(v), tiene = this.rcTiene(v), ya = this.rcYa(v);
+    const barra = '<span class="rc-bar" aria-hidden="true">' + this.TI.map(k => '<i class="' + (ti[k] && ti[k].c ? 'c' : ti[k] && ti[k].h ? 'p' : '') + '"></i>').join('') + '</span>';
+    /* En la ficha, el nombre corto del estado, como en «Semana» */
+    const est = k => (k === 'parqueo' ? 'Parqueó' : k === 'regreso' ? 'De regreso' : this.ESTADOS[k][0]);
+    let linea;
+    if (v.estado === 'no') linea = '<span class="rc-l rc-no">' + Icon('x', '', 11) + '<i>No se hizo</i></span>';
+    else if (ult) linea = '<span class="rc-l' + (ult.c ? ' rc-cel' : '') + '">' + Icon(this.RC_QUE[ult.k][1], '', 11) + '<i>' + esc(est(ult.k)) + '</i><em>' + esc(ult.h) + '</em></span>';
+    /* Con algo del conductor (una anotación o un tiquete) pero sin ningún estado marcado: no es «Sin reporte» */
+    else if (tiene) linea = '<span class="rc-l nada">' + Icon('movil', '', 11) + '<i>Sin estados marcados</i></span>';
+    else linea = '<span class="rc-l nada' + (ya ? ' rc-ya' : '') + '">' + Icon(ya ? 'warn' : 'clock', '', 11) + '<i>' + (ya ? 'Sin reporte' : 'Sale a las ' + esc(v.hora || '—')) + '</i></span>';
+    const aqui = (v.estado === 'sitio' || v.estado === 'destino') && ti[v.estado] && ti[v.estado].h ? ti[v.estado].h : '';
+    const eC = this.medir(v, 'espC'), eD = this.medir(v, 'espD');
+    const esp = aqui ? ['Espera desde ' + aqui, 'Esperando desde las ' + aqui] : eD != null && eD >= 30 ? ['Esperó ' + this.durTxt(eD), 'Esperó ' + this.durTxt(eD) + ' para descargar']
+      : eC != null && eC >= 30 ? ['Esperó ' + this.durTxt(eC), 'Esperó ' + this.durTxt(eC) + ' para cargar'] : null;
+    const tqs = v.tiquetes || [], notas = v.notasC || [];
+    const chips = tqs.map(q => '<em class="rc-chip ' + (q.rev ? 'rc-ok' : 'rc-pe') + '" title="' + attr('Tiquete de ' + q.donde + (q.kg != null ? ': ' + this.miles(q.kg) + ' kg' : '') + (q.rev ? ' · revisado' : ' · sin revisar')) + '">' +
+        Icon('ticket', '', 10) + (q.kg != null ? esc(this.miles(q.kg)) : q.donde === 'cargue' ? 'cargue' : 'descargue') + (q.rev ? Icon('check', '', 9) : '') + '</em>').join('') +
+      (notas.length ? '<em class="rc-chip rc-cn" title="' + attr(notas.map(n => '«' + n.t + '»').join(' · ')) + '">' + Icon('lapiz', '', 10) + notas.length + '</em>' : '');
+    const tit = this.nombreTMS(r) + ' · ' + (cd ? cd.nombre : 'sin conductor') + (tiene ? '' : ' · Nada desde el celular del conductor') + ' · Clic para ver todo lo que mandó';
+    return '<div class="rc-v e-' + v.estado + (tiene ? '' : ' rc-sinr') + '" role="button" tabindex="0" style="--c:' + this.color(r.tipo) + '" data-act="rcVer" data-v="' + attr(v.id) + '" title="' + attr(tit) + '">' +
+      '<b>' + esc(this.nombre(r)) + '</b><span class="rc-cab">' + (img ? '<img class="rt-ti" src="' + attr(img) + '" alt="">' : '') + '<i>' + esc(v.hora || '') + '</i>' + barra + '</span>' + linea +
+      (esp ? '<span class="rc-esp" title="' + attr(esp[1]) + '">' + Icon('clock', '', 10) + '<i>' + esc(esp[0]) + '</i></span>' : '') + (chips ? '<span class="rc-chips">' + chips + '</span>' : '') +
+      '<span class="rc-cd">' + Icon('user', '', 10) + '<i>' + esc(cd ? this.cortoNombre(cd.nombre) : 'Sin conductor') + '</i></span></div>';
+  },
+  /* Lo que va llegando, a la derecha del tablero: cada toque, del más nuevo al más viejo; lo nuevo, marcado. Se achica como la bandeja */
+  rcFeed(rs) {
+    const abierta = UIState.rutas.rcFeed !== 'chica', orden = rs.slice().sort((a, b) => this.rcT(b.recibido || b.cuando) - this.rcT(a.recibido || a.cuando));
+    const nuevos = orden.filter(r => this.rcNuevo(r)).length;
+    let dia = '';
+    const items = orden.slice(0, 80).map(r => {
+      const v = this.viaje(r.viaje) || {}, ru = this.ruta(v.ruta) || {}, q = this.RC_QUE[r.que] || [r.que, 'movil'], d = this.rcDia(r.recibido || r.cuando), dt = r.datos || {};
+      const cab = d !== dia ? '<div class="rc-fd-d">' + esc(d === hoyISO ? 'Hoy' : d === this.mas(hoyISO, -1) ? 'Ayer' : this.diaSem(d) + ' ' + this.dia(d)) + '</div>' : '';
+      dia = d;
+      const que = r.que === 'nota' ? 'Anotó «' + r.nota + '»'
+        : r.que === 'tiquete' ? 'Subió el tiquete de ' + (dt.donde === 'cargue' ? 'cargue' : 'descargue') + (dt.kg != null ? ': ' + this.miles(dt.kg) + ' kg' : '') + (dt.racimos != null ? ', ' + this.racTxt(dt.racimos) : '')
+          : q[0] + (r.nota ? ': «' + r.nota + '»' : '');
+      return cab + '<div class="rc-fi' + (this.rcNuevo(r) ? ' rc-nuevo' : '') + '" role="button" tabindex="0" data-act="rcVer" data-v="' + attr(r.viaje) + '" style="--c:' + this.color(ru.tipo) + '">' +
+        '<span class="rc-fi-ic">' + Icon(q[1], '', 13) + '</span><div class="rc-fi-t"><b>' + esc(que) + '</b>' +
+        '<span>' + esc([this.placa(v.unidad), this.cortoNombre(r.quien)].filter(Boolean).join(' · ')) + ' · ' + esc(this.nombre(ru)) + '</span>' +
+        (this.rcTarde(r) ? '<span class="rc-off">' + Icon('warn', '', 10) + 'Lo marcó a las ' + esc(this.rcHora(r.cuando)) + '; llegó a las ' + esc(this.rcHora(r.recibido)) + ' (sin señal)</span>' : '') +
+        '</div><i class="rc-fi-h">' + esc(this.rcHora(r.cuando)) + '</i></div>';
+    }).join('');
+    return '<aside class="rt-band rc-feed' + (abierta ? '' : ' chica') + '"><div class="rt-band-h">' + (abierta ? '<b>Lo que va llegando</b>' : '') +
+        (nuevos ? '<span class="rt-band-n" title="Nuevos desde la última vez">' + nuevos + (abierta ? (nuevos === 1 ? ' nuevo' : ' nuevos') : '') + '</span>' : '') +
+        '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-act="rcFeed" title="' + (abierta ? 'Achicar' : 'Abrir lo que va llegando') + '">' + Icon(abierta ? 'chevR' : 'back', '', 14) + '</button></div>' +
+      (abierta && !this.rcListo() ? '<div class="rt-band-vacia">' + (this._rcError ? Icon('warn', '', 14) + 'No se pudo traer lo que mandaron los celulares (' + esc(this._rcError) +
+          '). Se intenta otra vez sola en medio minuto.' : '<span class="spin"></span>Trayendo lo que mandaron los celulares…') + '</div>'
+        : abierta ? (orden.length ? '<div class="rc-fd">' + items + '</div>' +
+          (nuevos ? '<button type="button" class="btn btn-sm rc-fd-visto" data-act="rcVisto">' + Icon('check', '', 12) + 'Ya lo vi todo</button>' : '')
+          : '<div class="rt-band-vacia">' + Icon('movil', '', 14) + 'Aquí sale cada cosa que marquen los conductores, con su hora</div>')
+        : '<div class="rt-band-v">Lo que va llegando</div>') + '</aside>';
+  },
+
+  /* ---- Por día: cada viaje en una fila, con todas sus horas ---- */
+  rcPorDia(l, vs) {
+    const ds0 = this.fechas(l).filter(f => vs.some(v => v.fecha === f));
+    if (!ds0.length) return '<div class="card">' + UI.empty('calendar', 'No hay viajes esta semana', 'Cuando programe viajes en «Semana», aquí salen con todas sus horas.') + '</div>';
+    const t = (v, k) => { const x = (v.tiempos || {})[k]; return x && x.h ? '<span class="' + (x.c ? 'rc-hc' : 'rc-hp') + '">' + esc(x.h) + '</span>' : '<span class="rc-h0">—</span>'; };
+    const w = (v, k) => { const x = (v.vuelta || {})[k]; return x && x.h ? '<span class="' + (x.c ? 'rc-hc' : 'rc-hp') + '">' + esc(x.h) + '</span>' : '<span class="rc-h0">—</span>'; };
+    const dur = (v, k, txt) => { const m = this.medir(v, k); return m != null ? txt + ' ' + this.durTxt(m) : ''; };
+    return ds0.map(f => {
+      const ds = vs.filter(v => v.fecha === f).sort(this.enOrden), con = ds.filter(v => this.rcTiene(v)).length;
+      return '<div class="rt-dia"><div class="rt-dia-h"><b>' + esc(this.diaSem(f) + ' ' + this.dia(f)) + (f === hoyISO ? ' · hoy' : '') + '</b><span>' +
+          ds.length + (ds.length === 1 ? ' viaje' : ' viajes') + ' · ' + con + ' con reporte del conductor</span></div>' +
+        '<div class="tbl-wrap"><table class="tbl rc-lista"><thead><tr><th>Hora</th><th>Ruta</th><th>Camión y conductor</th>' +
+          '<th>Cargue<small>llegó · empezó · cargó</small></th><th>Viaje<small>salió → llegó</small></th><th>Descargue<small>empezó → descargó</small></th>' +
+          '<th>Vuelta<small>regreso · parqueo</small></th><th>Tiquetes</th><th>Anotaciones</th><th>Estado</th></tr></thead><tbody>' +
+        ds.map(v => {
+          const r = this.ruta(v.ruta) || {}, c = this.conductor(v), notas = v.notasC || [], tqs = v.tiquetes || [];
+          return '<tr class="row-click' + (v.estado === 'no' ? ' rt-no' : '') + (this.rcTiene(v) ? '' : ' rc-sin') + '" data-act="rcVer" data-v="' + attr(v.id) + '">' +
+            '<td class="mono">' + esc(v.hora || '—') + '</td><td>' + this.punto(r.tipo) + '<b>' + esc(this.nombre(r)) + '</b></td>' +
+            '<td><b class="mono">' + esc(this.placa(v.unidad)) + '</b><div class="dias">' + esc(c ? this.cortoNombre(c.nombre) : 'Sin conductor') + '</div></td>' +
+            '<td class="nowrap">' + t(v, 'sitio') + ' · ' + t(v, 'cargando') + ' · ' + t(v, 'carg') + '<div class="dias">' + esc([dur(v, 'espC', 'esperó'), dur(v, 'cargue', 'cargó en')].filter(Boolean).join(' · ')) + '</div></td>' +
+            '<td class="nowrap">' + t(v, 'ruta') + ' → ' + t(v, 'destino') + '<div class="dias">' + esc(dur(v, 'viaje', '')) + '</div></td>' +
+            '<td class="nowrap">' + t(v, 'desc') + ' → ' + t(v, 'hecho') + '<div class="dias">' + esc([dur(v, 'espD', 'esperó'), dur(v, 'descargue', 'descargó en')].filter(Boolean).join(' · ')) + '</div></td>' +
+            '<td class="nowrap">' + w(v, 'regreso') + ' · ' + w(v, 'parqueo') + '</td>' +
+            '<td>' + (tqs.length ? tqs.map(q => '<div class="rc-tqd ' + (q.rev ? 'rc-ok' : 'rc-pe') + '">' + Icon('ticket', '', 11) + (q.donde === 'cargue' ? 'Cargue ' : 'Descargue ') +
+              '<b>' + (q.kg != null ? esc(this.miles(q.kg)) + ' kg' : '') + '</b>' + (q.rev ? Icon('check', '', 10) : '') + '</div>').join('') : '<span class="rc-h0">—</span>') + '</td>' +
+            '<td>' + (notas.length ? '<div class="rc-nt">«' + esc(notas[notas.length - 1].t) + '»</div>' + (notas.length > 1 ? '<div class="dias">y ' + (notas.length - 1) + ' más</div>' : '') : '<span class="rc-h0">—</span>') + '</td>' +
+            '<td>' + UI.pill(this.ESTADOS[v.estado][1], this.ESTADOS[v.estado][0]) + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+    }).join('');
+  },
+
+  /* ---- Los tiquetes de la semana, para revisarlos uno por uno con su foto ---- */
+  rcTiquetes(vs) {
+    const todos = [].concat(...vs.map(v => (v.tiquetes || []).map(q => ({ v, q })))).sort((a, b) => ((b.q.f || '') + (b.q.h || '') > (a.q.f || '') + (a.q.h || '') ? 1 : -1));
+    const filtro = UIState.rutas.rcTq || 'sin', sin = todos.filter(x => !x.q.rev), lista = filtro === 'sin' ? sin : todos;
+    const seg = '<div class="toolbar"><div class="seg">' + [['sin', 'Sin revisar', sin.length], ['todos', 'Todos', todos.length]].map(o => '<button type="button" class="' + (filtro === o[0] ? 'on' : '') +
+      '" data-act="rcTq" data-v="' + o[0] + '">' + o[1] + ' <span class="seg-n">' + o[2] + '</span></button>').join('') + '</div></div>';
+    if (!lista.length) return seg + '<div class="card">' + UI.empty('ticket', todos.length ? 'Todo revisado' : 'Todavía no hay tiquetes esta semana',
+      todos.length ? 'Los ' + todos.length + ' tiquetes de la semana ya están revisados.' : 'Los conductores los suben con «Ya cargué» y «Ya descargué».') + '</div>';
+    return seg + '<div class="card"><div class="tbl-wrap"><table class="tbl rc-tq"><thead><tr><th>Subido</th><th>Camión y conductor</th><th>Ruta</th><th>Tiquete</th>' +
+        '<th class="num">Peso neto</th><th class="num">Racimos</th><th class="num">Programado</th><th class="num">Diferencia</th><th>Foto</th><th>Revisado</th></tr></thead><tbody>' +
+      lista.map(({ v, q }) => {
+        const r = this.ruta(v.ruta) || {}, c = this.conductor(v), f = q.f || v.fecha, dif = q.kg != null && v.ton != null ? q.kg - Math.round(v.ton * 1000) : null;
+        return '<tr' + (q.rev ? ' class="rc-rev"' : '') + '><td class="nowrap">' + esc(this.diaSem(f).slice(0, 3) + ' ' + this.dia(f)) + '<div class="dias">' + esc(q.h || '') + '</div></td>' +
+          '<td><b class="mono">' + esc(this.placa(v.unidad)) + '</b><div class="dias">' + esc(c ? this.cortoNombre(c.nombre) : '—') + '</div></td>' +
+          '<td>' + this.punto(r.tipo) + esc(this.nombre(r)) + '</td><td class="nowrap">' + (q.donde === 'cargue' ? 'De cargue' : 'De descargue') + '</td>' +
+          '<td class="num nowrap"><b>' + (q.kg != null ? esc(this.miles(q.kg)) + ' kg' : '—') + '</b></td><td class="num">' + (q.racimos != null ? esc(this.miles(q.racimos)) : '—') + '</td>' +
+          '<td class="num nowrap">' + (v.ton != null ? esc(this.tonTxt(v.ton)) : '—') + '</td>' +
+          '<td class="num nowrap' + (dif != null && dif < 0 ? ' rc-menos' : '') + '">' + (dif != null ? (dif > 0 ? '+' : dif < 0 ? '−' : '') + esc(this.miles(dif)) + ' kg' : '—') + '</td>' +
+          '<td class="nowrap">' + (q.archivo ? (q.listo ? '<span class="link" data-act="verArchivo" data-id="' + attr(q.archivo.id) + '" data-nombre="' + attr(q.archivo.nombre || 'tiquete.jpg') + '">' +
+            Icon('image', '', 12) + 'Ver la foto</span>' : '<span class="txt-3">Todavía no llega</span>') : '<span class="txt-3">Sin foto</span>') + '</td>' +
+          '<td><label class="rt-rev"><input type="checkbox" data-act="rcRev" data-v="' + attr(v.id) + '" data-q="' + attr(q.id) + '"' + (q.rev ? ' checked' : '') + '>Revisado</label></td></tr>';
+      }).join('') + '</tbody></table></div></div>' +
+      '<div class="txt-3 fs12 mt8">El peso real del viaje sale del tiquete de descargue. Márquelo «Revisado» cuando lo compare con la foto; queda guardado enseguida.</div>';
+  },
+
+  /* ---- Los conductores con la app: quién puede entrar, quién la usa y lo último que mandó ---- */
+  rcConductoresLista(vs) {
+    const ced = x => String(x || '').replace(/\D/g, ''), rs = this.reportes || [], ids = new Set((vs || []).map(v => v.id));
+    const deCam = new Set(this.camiones().map(u => u.conductor).filter(Boolean));
+    const ordenar = xs => xs.sort((a, b) => this.rcT(b.cuando) - this.rcT(a.cuando));
+    const out = Datos.conductores.filter(c => deCam.has(c.id) || (vs || []).some(v => v.conductor === c.id)).map(c => ({
+      id: c.id, nombre: c.nombre, ced: ced(c.cedula), unidades: Q.unidadesDe(c.id).filter(u => u.tipo === 'carga'),
+      rs: ordenar(rs.filter(r => r.conductor === c.id)), sem: rs.filter(r => r.conductor === c.id && ids.has(r.viaje)).length }));
+    this.camiones().filter(u => Q.tercero(u)).forEach(u => {
+      const mios = rs.filter(r => !r.conductor && (this.viaje(r.viaje) || {}).unidad === u.id);
+      out.push({ id: 'ter:' + u.id, nombre: String(u.tercero.conductor || '').trim() || 'Conductor de ' + UI.placaTxt(u), ced: ced(u.tercero.cedula), unidades: [u],
+        tercero: u.tercero.quien || 'un tercero', rs: ordenar(mios), sem: mios.filter(r => ids.has(r.viaje)).length });
+    });
+    return out.sort((a, b) => a.nombre.localeCompare(b.nombre));
+  },
+  rcConductores(vs) {
+    const url = this.enlaceApp(), cs = this.rcConductoresLista(vs);
+    const enlace = '<div class="card rc-enl"><div class="rc-enl-ic">' + Icon('movil', '', 22) + '</div><div class="rc-enl-t"><b>El enlace de la app</b>' +
+        '<span>Mándelo una vez al chat de los conductores. Entran con su cédula y el celular la recuerda; sin señal, lo que marquen se sube solo cuando vuelve.</span>' +
+        '<div class="enlace">' + Icon('externo', '', 14) + esc(url.replace(/^https?:\/\//, '')) + '</div></div>' +
+      '<div class="rc-enl-b"><button type="button" class="btn btn-primary btn-sm" data-act="rtAppCopiar">' + Icon('copiar', '', 13) + 'Copiar enlace</button>' +
+        '<a class="btn btn-sm" href="' + attr(url) + '" target="_blank" rel="noopener">' + Icon('externo', '', 13) + 'Abrir</a></div></div>';
+    const filas = cs.map(c => {
+      const ult = c.rs[0], mis = vs.filter(v => this.rcYa(v) && v.estado !== 'no' && (c.tercero ? c.unidades.some(u => u.id === v.unidad) && !v.conductor : (this.conductor(v) || {}).id === c.id));
+      const sinNada = mis.filter(v => !this.rcTiene(v)).length;
+      return '<tr><td><b>' + esc(c.nombre) + '</b>' + (c.tercero ? '<div class="dias">Tercero · ' + esc(c.tercero) + '</div>' : '') + '</td>' +
+        '<td class="mono nowrap">' + (c.ced ? esc(this.miles(c.ced)) : '<span class="rc-av">' + Icon('warn', '', 11) + 'Falta</span>') + '</td>' +
+        '<td class="mono nowrap">' + esc(c.unidades.map(u => UI.placaTxt(u)).join(', ') || '—') + '</td>' +
+        '<td>' + (!c.ced ? UI.pill('warn', 'No puede entrar') : c.rs.length ? UI.pill('ok', 'La usa') : UI.pill('nr', 'Todavía no la usa')) + '</td>' +
+        '<td>' + (!this.rcListo() ? '<span class="rc-h0">…</span>' : ult ? esc(this.rcCuando(ult.cuando)) + '<div class="dias">' + esc((this.RC_QUE[ult.que] || [ult.que])[0]) + '</div>'
+          : '<span class="rc-h0">—</span>') + '</td>' +
+        '<td class="num">' + (c.sem || '—') + '</td>' +
+        '<td class="num">' + (mis.length ? (sinNada ? '<span class="rc-av">' + sinNada + ' de ' + mis.length + '</span>' : '0 de ' + mis.length) : '—') + '</td></tr>';
+    }).join('');
+    return enlace + '<div class="card"><div class="tbl-wrap"><table class="tbl rc-cs"><thead><tr><th>Conductor</th><th>Cédula</th><th>Camión</th><th>La app</th>' +
+        '<th>Lo último que mandó</th><th class="num">Marcas esta semana</th><th class="num">Viajes sin reporte</th></tr></thead><tbody>' + filas + '</tbody></table></div></div>' +
+      '<div class="txt-3 fs12 mt8">La cédula es la de Recursos Humanos. La del conductor de un tercero se anota en su vehículo (Flota → el vehículo → Editar información).</div>';
+  },
+
+  /* ---- La ventana de un viaje: todo lo que mandó el celular, toque por toque, con la hora en que lo tocó y la hora en que llegó ---- */
+  rcVer(id) {
+    const v = this.viaje(id);
+    if (!v) return;
+    const r = this.ruta(v.ruta) || {}, c = this.conductor(v), rs = (this.reportes || []).filter(x => x.viaje === id).sort((a, b) => this.rcT(a.cuando) - this.rcT(b.cuando));
+    const fila = x => {
+      const q = this.RC_QUE[x.que] || [x.que, 'movil'], dt = x.datos || {};
+      let det = '';
+      if (x.que === 'tiquete') {
+        const t = (v.tiquetes || []).find(y => y.id === x.id) || {};
+        det = '<div class="rt-tqc">' + Icon('ticket', '', 16) + '<div class="rt-tqc-t"><b>Tiquete de ' + (dt.donde === 'cargue' ? 'cargue' : 'descargue') + '</b><span>' +
+          esc([dt.kg != null ? this.miles(dt.kg) + ' kg' : '', dt.racimos != null ? this.racTxt(dt.racimos) : ''].filter(Boolean).join(' · ') || 'Sin peso') + '</span>' +
+          (t.archivo ? (t.listo ? '<span class="link" data-act="verArchivo" data-id="' + attr(t.archivo.id) + '" data-nombre="' + attr(t.archivo.nombre || 'tiquete.jpg') + '">' + Icon('image', '', 12) + 'Ver la foto</span>'
+            : '<span>La foto todavía no llega</span>') : '<span>Sin foto</span>') + '</div>' +
+          '<label class="rt-rev"><input type="checkbox" data-act="rcRev" data-v="' + attr(v.id) + '" data-q="' + attr(x.id) + '"' + (t.rev ? ' checked' : '') + '>Revisado</label></div>';
+      }
+      const txt = x.que === 'nota' ? 'Anotó' : q[0];
+      return '<div class="rc-tl-i"><span class="rc-tl-h">' + esc(this.rcHora(x.cuando)) + (this.rcDia(x.cuando) !== v.fecha ? '<small>' + esc(this.dia(this.rcDia(x.cuando))) + '</small>' : '') + '</span>' +
+        '<span class="rc-tl-p">' + Icon(q[1], '', 12) + '</span><div class="rc-tl-t"><b>' + esc(txt) + '</b>' + (x.nota ? '<span class="rc-tl-n">«' + esc(x.nota) + '»</span>' : '') +
+        (this.rcTarde(x) ? '<span class="rc-off">' + Icon('warn', '', 10) + 'Llegó a las ' + esc(this.rcHora(x.recibido)) + ': el celular estaba sin señal</span>' : '') + det + '</div></div>';
+    };
+    const med = this.medidas(v), ti = v.tiempos || {}, deUsted = this.TI.filter(k => ti[k] && ti[k].h && !ti[k].c);
+    Modal.abrir({
+      titulo: 'Lo que mandó el celular', ancho: 'wide', sinFoco: true,
+      sub: esc([this.nombre(r), this.diaSem(v.fecha) + ' ' + this.dia(v.fecha) + (v.hora ? ' · ' + v.hora : ''), this.placa(v.unidad), c ? c.nombre : 'Sin conductor'].join(' · ')),
+      cuerpo: '<div class="rc-ve"><span>' + UI.pill(this.ESTADOS[v.estado][1], this.ESTADOS[v.estado][0]) + '</span>' +
+          (med.length ? med.map(m => '<span class="rc-ve-m">' + Icon(this.MED[m.k].ic, '', 12) + esc(m.txt) + '</span>').join('') : '') + '</div>' +
+        (!this.rcListo() ? '<div class="flex aic g8 txt-2" style="justify-content:center;padding:32px 16px"><span class="spin"></span>Trayendo lo que mandó el celular…</div>'
+          : rs.length ? '<div class="rc-tl">' + rs.map(fila).join('') + '</div>' : UI.empty('movil', 'Nada desde el celular', 'El conductor todavía no ha marcado nada en este viaje.')) +
+        (deUsted.length ? '<div class="txt-3 fs12 mt12">' + Icon('info', '', 12) + ' Marcadas por usted en la plataforma: ' + esc(deUsted.map(k => this.ESTADOS[k][0] + ' ' + ti[k].h).join(', ')) + '.</div>' : ''),
+      pie: '<button type="button" class="btn" data-act="cerrarModal">Cerrar</button><button type="button" class="btn btn-primary" data-act="rcAbrirViaje" data-v="' + attr(v.id) + '">' +
+        Icon('edit', '', 14) + 'Abrir el viaje</button>'
+    });
+  },
+  /* «Revisado» se guarda enseguida (como el resto de la plataforma, sin botón) */
+  rcRevisar(el) {
+    const v = this.viaje(el.dataset.v), q = v && (v.tiquetes || []).find(t => t.id === el.dataset.q);
+    if (!q) return;
+    if (el.checked) q.rev = true; else delete q.rev;
+    Sincro.tocar();
+    Toast.show(el.checked ? 'Tiquete revisado.' : 'El tiquete quedó otra vez sin revisar.');
+    Router.pintar(true);
+  },
+  rcLeyenda() {
+    return '<div class="rt-ley"><span><span class="rc-bar rc-bar-l"><i class="c"></i></span>Lo marcó el conductor desde su celular</span><span><span class="rc-bar rc-bar-l"><i class="p"></i></span>Lo marcó usted</span>' +
+      '<span><span class="rc-bar rc-bar-l"><i></i></span>Todavía no (la barra son los siete estados del viaje)</span><span class="rt-ley-sep"></span>' +
+      '<span><em class="rc-chip rc-pe">' + Icon('ticket', '', 10) + 'kg</em>Tiquete sin revisar</span><span><em class="rc-chip rc-ok">' + Icon('ticket', '', 10) + 'kg' + Icon('check', '', 9) + '</em>Revisado</span>' +
+      '<span><em class="rc-chip rc-cn">' + Icon('lapiz', '', 10) + '1</em>Anotaciones</span><span class="rt-ley-sep"></span>' +
+      '<span>' + Icon('warn', '', 11) + 'Sin reporte: ya pasó la hora y no hay nada del conductor</span><span>' + Icon('clock', '', 11) + 'Las esperas de más de 30 min</span></div>';
+  }
+});
+Object.assign(Acciones, {
+  rcVista(el) { UIState.rutas.rc = el.dataset.v; Router.pintar(true); },
+  rcVer(el) { Rutas.rcVer(el.dataset.v); },
+  rcAbrirViaje(el) { Modal.cerrarTodo(); Rutas.abrir(el.dataset.v); },
+  rcFeed() { UIState.rutas.rcFeed = UIState.rutas.rcFeed === 'chica' ? '' : 'chica'; Prefs.set('rutasFeed', UIState.rutas.rcFeed); Router.pintar(true); },
+  rcVisto() { Prefs.set('rutasVisto', new Date().toISOString()); Router.pintar(true); },
+  rcTq(el) { UIState.rutas.rcTq = el.dataset.v; Router.pintar(true); },
+  rcRev(el) { Rutas.rcRevisar(el); }
+});
 Object.assign(Acciones, {
   rtTab(el) { UIState.rutas.tab = el.dataset.v; Router.pintar(true); },
   rtVista(el) { UIState.rutas.vista = el.dataset.v; Router.pintar(true); },
@@ -23966,7 +24433,6 @@ Object.assign(Acciones, {
   rtViaje(el) { Rutas.abrir(el.dataset.v); },
   rtNuevo(el) { Rutas.abrir('', { u: el.dataset.u || null, f: el.dataset.f }); },
   rtGuardar(el) { Rutas.guardar(el); },
-  rtApp() { Rutas.abrirApp(); },
   rtAppCopiar() { Rutas.copiarApp(); },
   rtQuitar(el) { Rutas.quitar(el); },
   rtQuitarSi(el) { Rutas.quitarSi(el); },
