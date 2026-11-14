@@ -1738,6 +1738,73 @@ html[data-theme="dark"] .nov-ab.grave{color:var(--dang-500)}
 .rt-u .rt-cdu svg{flex:0 0 auto;color:var(--text-3)}
 .rt-u .rt-cdu i{font-style:normal;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rt-u .rt-cdu.rt-cdu0{color:var(--text-3)}
+/* Vencimientos y garantías (13/11/2026): el área, la pestaña de la ficha y sus ventanas */
+.vc-tbl th,.vc-gtbl th{white-space:nowrap}
+.vc-tbl th small,.vc-gtbl th small{display:block;font-weight:500;text-transform:none;letter-spacing:0;color:var(--text-3);font-size:10.5px}
+.vc-tbl th svg{vertical-align:-2px;margin-right:4px}
+.vc-tbl td{vertical-align:middle}
+.vc-u{display:flex;align-items:center;gap:9px;min-width:170px;cursor:pointer}
+.vc-u b{display:block;font-size:13px}
+.vc-u span{display:block;font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.vc-c{display:grid;gap:1px;padding:5px 9px;border-radius:8px;border-left:3px solid var(--border);cursor:pointer;min-width:140px;margin:2px 0}
+.vc-c:hover,.vc-c:focus-visible{filter:brightness(.97)}
+.vc-c b{font-size:12.5px}
+.vc-c span{font-size:11px;color:var(--text-3)}
+.vc-c.vc-bad{border-left-color:var(--dang-500);background:color-mix(in srgb,var(--dang-500) 9%,transparent)}
+.vc-c.vc-bad b{color:var(--dang-500)}
+.vc-c.vc-warn{border-left-color:var(--warn-500);background:color-mix(in srgb,var(--warn-500) 11%,transparent)}
+.vc-c.vc-warn b{color:var(--warn-500)}
+.vc-c.vc-ok{border-left-color:var(--ok-500);background:color-mix(in srgb,var(--ok-500) 7%,transparent)}
+.vc-reg{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-3);border:1.5px dashed var(--border);border-radius:8px;padding:6px 10px;cursor:pointer}
+.vc-reg:hover,.vc-reg:focus-visible{color:var(--accent);border-color:var(--accent)}
+.vc-reg.vc-op{opacity:.7}
+.vc-g{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;margin:2px 4px 2px 0;border:1px solid var(--border);cursor:pointer}
+.vc-g.vc-ok{color:var(--ok-700);border-color:color-mix(in srgb,var(--ok-500) 40%,transparent)}
+.vc-g.vc-warn{color:var(--warn-500);border-color:color-mix(in srgb,var(--warn-500) 55%,transparent)}
+.vc-p{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:2px}
+.vc-p.vc-bad{background:var(--dang-500)}
+.vc-p.vc-warn{background:var(--warn-500)}
+.vc-p.vc-ok{background:var(--ok-500)}
+.vc-gt{display:flex;gap:8px;align-items:flex-start}
+.vc-gt svg{flex:0 0 auto;margin-top:2px;color:var(--accent)}
+.vc-gt b{display:block}
+.vc-gt span{display:block;font-size:12px;color:var(--text-3)}
+tr.vc-ven td{color:var(--text-3)}
+tr.vc-ven .vc-gt svg{color:var(--text-3)}
+.vc-fl{display:grid}
+.vc-fg{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-bottom:1px solid var(--border)}
+.vc-fg:last-child{border-bottom:0}
+.vc-fg-ic{flex:0 0 38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.vc-fg-ic.vc-ic-bad{background:color-mix(in srgb,var(--dang-500) 12%,transparent);color:var(--dang-500)}
+.vc-fg-ic.vc-ic-warn{background:color-mix(in srgb,var(--warn-500) 14%,transparent);color:var(--warn-500)}
+.vc-fg-ic.vc-ic-ok{background:color-mix(in srgb,var(--ok-500) 12%,transparent);color:var(--ok-700)}
+.vc-fg-t{min-width:0;flex:1 1 auto;display:grid;gap:3px}
+.vc-fg-t b{font-size:14px}
+.vc-fg-t b span{font-weight:500;color:var(--text-2)}
+.vc-fg-t > span{font-size:12.5px;color:var(--text-2)}
+.vc-fg-t > .vc-fg-m{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--text-3)}
+.vc-fg-m > *{display:inline-flex;align-items:center;gap:4px}
+.vc-fg-t > .vc-fg-n{font-size:12px;color:var(--text-3);font-style:italic}
+.vc-fg-e{flex:0 0 auto;display:grid;justify-items:end;gap:4px;text-align:right}
+.vc-fg-e > span{font-size:11.5px;color:var(--text-3)}
+.vc-fg-b{display:flex;gap:4px;align-items:center}
+.vc-fg.vc-ven{opacity:.62}
+.vc-fg.vc-falta .vc-fg-ic{background:var(--surface-2);color:var(--text-3)}
+.vc-fg.vc-falta .vc-fg-t b{color:var(--text-2)}
+.vc-fg.vc-falta .vc-fg-t > span{color:var(--text-3)}
+.vc-fl-sep{padding:8px 16px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);background:var(--surface-2);border-bottom:1px solid var(--border)}
+.vc-dur{display:flex;gap:6px}
+.vc-dur .inp:first-child{width:80px;flex:0 0 80px}
+.vc-dt svg{vertical-align:-2px;margin-right:4px;color:var(--text-3)}
+.vc-hist{display:grid;gap:8px}
+.vc-h{display:grid;gap:2px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius)}
+.vc-h.ahora{border-color:var(--accent);background:var(--accent-soft)}
+.vc-h b{font-size:13px}
+.vc-h span{font-size:12px;color:var(--text-3)}
+.vc-h .link{font-size:12px;width:max-content}
+.cat-mes{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);white-space:nowrap}
+.cat-mes .inp{width:64px;padding:4px 6px;height:30px}
+@media (max-width:600px){ .vc-fg{flex-wrap:wrap} .vc-fg-e{width:100%;justify-items:start;text-align:left;grid-auto-flow:column;align-items:center;justify-content:start} }
 .rt-c{padding:6px;border-bottom:1px solid var(--border);border-left:1px solid var(--border);display:flex;flex-direction:column;gap:5px;min-height:62px}
 /* Que la ficha se deje arrastrar siempre (Juan, 07/11/2026: «a veces sirve lo de arrastrar, a veces no»). «all:unset» le quitaba lo que
    trae draggable: arrastrar el elemento y no seleccionar su texto. Así, el primer intento seleccionaba el texto, y el arrastre solo
@@ -3390,6 +3457,9 @@ const Icon = (() => {
     moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
     fuel: '<path d="M3 22h12V4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v18z"/><path d="M3 10h12"/><path d="M18 8l3 3v8a2 2 0 0 1-4 0v-9"/>',
     disc: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>',
+    bateria: '<rect x="2" y="7" width="20" height="13" rx="2"/><path d="M6 7V5h3v2M15 7V5h3v2M5.5 13.5h4M7.5 11.5v4M14.5 13.5h4"/>',
+    extintor: '<rect x="8" y="8" width="8" height="14" rx="3"/><path d="M12 8V5M10 5h7l2 2.5M11 2.5h2"/>',
+    botiquin: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2M12 10.5v6M9 13.5h6"/>',
     truck: '<rect x="1" y="4" width="15" height="12" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
     excav: '<rect x="2" y="16" width="12" height="5" rx="2.5"/><path d="M4 16v-4h7v4"/><path d="M11 12l4-7 5 6"/><path d="M20 11l2 3-3 1z"/>',
     trailer: '<rect x="2" y="7" width="15" height="9" rx="1.5"/><path d="M17 13h5"/><circle cx="6" cy="18.5" r="2"/><circle cx="11.5" cy="18.5" r="2"/>',
@@ -3722,6 +3792,8 @@ const Config = {
   /* Las semanas liquidadas de Rutas (Juan, 08/11/2026; ver Rutas.liquidar): el lunes de cada una → { f: cuándo se liquidó }. La
      semana liquidada ya no se mueve ni se le agrega nada; el peso real y el tiquete se pueden poner todavía */
   rutasLiq: {},
+  /* Lo de cada elemento con vencimiento (13/11/2026; ver Venc.ajustes): clave → { meses, opcional: 'si' | 'no' } */
+  vencEl: {},
   req: { carga: ['soat', 'tecno', 'tarjeta', 'vin', 'poliza'], maquinaria: ['tarjeta'], remolque: ['registro'], canoa: ['patente'] },
   comparendos: ['carga'],
   /* Los planos de mantenimiento: solo lo que se cambió en Configuración (el
@@ -3811,7 +3883,10 @@ const Catalogo = {
     { id: 'rutas.tipos', titulo: 'Tipos de operación', ruta: 'tipo', inicial: ['Fruta de palma', 'Almendra', 'Aceite', 'Fertilizante', 'Nutricomplemento'] },
     { id: 'rutas.internos', titulo: 'Tipos internos de ruta', ruta: 'interno', inicial: ['Finca a extractora', 'Despacho de almendra', 'Despacho de aceite', 'Ruta adicional'] },
     /* Lo que se escribe en «¿Qué pasó?» y los componentes que sugiere (Juan, 06/11/2026; ver Sintomas) */
-    { id: 'sintomas', titulo: 'Síntomas del taller', sintomas: true, inicial: () => Sintomas.INICIAL }
+    { id: 'sintomas', titulo: 'Síntomas del taller', sintomas: true, inicial: () => Sintomas.INICIAL },
+    /* Vencimientos y garantías (Juan, 13/11/2026; ver Venc): lo que vence en cada vehículo y de qué es cada garantía */
+    { id: 'venc.elementos', titulo: 'Elementos con vencimiento', venc: 'el', inicial: ['Extintor', 'Botiquín', 'Kit de derrames'] },
+    { id: 'garantias.tipos', titulo: 'Clases de garantía', venc: 'ga', inicial: ['Vehículo nuevo', 'Batería', 'Llantas', 'Motor', 'Otro'] }
   ],
   def(id) { return this.LISTAS.find(l => l.id === id) || null; },
   inicial(l) { return (l.tipo ? TIPOS[l.tipo].clases : typeof l.inicial === 'function' ? l.inicial() : l.inicial).slice(); },
@@ -3826,19 +3901,28 @@ const Catalogo = {
       : l.tipo ? 'La clase al crear una unidad y en su hoja de vida (' + TIPOS[l.tipo].plural.toLowerCase() + ')'
       : l.ruta === 'tipo' ? 'El tipo de operación de cada ruta, con la imagen y el color de sus fichas en Rutas'
       : l.ruta ? 'El tipo interno de cada ruta, como en el Excel de la programación'
+      : l.venc === 'el' ? 'Lo que vence en cada vehículo (Vencimientos y la ficha), con cuánto dura y si lo llevan todos'
+      : l.venc === 'ga' ? 'De qué es cada garantía, en la ficha del vehículo'
       : 'La categoría al registrar un conductor y en el formulario del preoperacional';
   },
   /* Cuántos registros tienen una opción */
   usos(l, valor) {
     return l.tipo ? Datos.unidades.filter(u => u.tipo === l.tipo && u.clase === valor).length
       : l.ruta ? Datos.rutas.filter(r => r[l.ruta] === valor).length
+      : l.venc === 'el' ? Datos.unidades.filter(u => (u.vencen || []).some(x => x.tipo === valor)).length
+      : l.venc === 'ga' ? Datos.unidades.reduce((s, u) => s + (u.garantias || []).filter(x => x.tipo === valor).length, 0)
       : Datos.conductores.filter(c => c.cat === valor).length;
   },
-  usosTxt(l, n) { return n + ' ' + (l.tipo ? (n === 1 ? 'unidad' : 'unidades') : l.ruta ? (n === 1 ? 'ruta' : 'rutas') : (n === 1 ? 'conductor' : 'conductores')); },
+  usosTxt(l, n) {
+    return n + ' ' + (l.tipo ? (n === 1 ? 'unidad' : 'unidades') : l.ruta ? (n === 1 ? 'ruta' : 'rutas') : l.venc === 'el' ? (n === 1 ? 'vehículo' : 'vehículos')
+      : l.venc === 'ga' ? (n === 1 ? 'garantía' : 'garantías') : (n === 1 ? 'conductor' : 'conductores'));
+  },
   /* «las 3 unidades que la tienen»; con «conserva», «Las 3 unidades que la tienen la conservan» */
   quienes(l, n, conserva) {
     const t = l.tipo ? (n === 1 ? 'la unidad que la tiene' : 'las ' + n + ' unidades que la tienen')
       : l.ruta ? (n === 1 ? 'la ruta que la tiene' : 'las ' + n + ' rutas que la tienen')
+      : l.venc === 'el' ? (n === 1 ? 'el vehículo que la tiene' : 'los ' + n + ' vehículos que la tienen')
+      : l.venc === 'ga' ? (n === 1 ? 'la garantía que la tiene' : 'las ' + n + ' garantías que la tienen')
       : (n === 1 ? 'el conductor que la tiene' : 'los ' + n + ' conductores que la tienen');
     return conserva ? t.charAt(0).toUpperCase() + t.slice(1) + (n === 1 ? ' la conserva' : ' la conservan') : t;
   },
@@ -3851,9 +3935,12 @@ const Catalogo = {
     /* La imagen y el color de un tipo de operación siguen con su nombre nuevo */
     const kv = this.clave(viejo), kn = this.clave(nuevo), est = l.id === 'rutas.tipos' && (Config.tiposRuta || {})[kv];
     if (est && kv !== kn) { const todos = Object.assign({}, Config.tiposRuta); todos[kn] = est; delete todos[kv]; Config.tiposRuta = todos; }
+    /* Y lo que dura un elemento con vencimiento */
+    if (l.venc === 'el' && kv !== kn && (Config.vencEl || {})[kv]) { const t2 = Object.assign({}, Config.vencEl); t2[kn] = t2[kv]; delete t2[kv]; Config.vencEl = t2; }
     if (enRegistros) {
       if (l.tipo) Datos.unidades.forEach(u => { if (u.tipo === l.tipo && u.clase === viejo) { u.clase = nuevo; n++; } });
       else if (l.ruta) Datos.rutas.forEach(r => { if (r[l.ruta] === viejo) { r[l.ruta] = nuevo; n++; } });
+      else if (l.venc) Datos.unidades.forEach(u => ((l.venc === 'el' ? u.vencen : u.garantias) || []).forEach(x => { if (x.tipo === viejo) { x.tipo = nuevo; n++; } }));
       else Datos.conductores.forEach(c => { if (c.cat === viejo) { c.cat = nuevo; n++; } });
     }
     const dib = l.tipo && (Config.planos || {}).dibujo, a = l.tipo + '|' + viejo, b = l.tipo + '|' + nuevo;
@@ -5469,6 +5556,11 @@ const Persistencia = {
     (Datos.viajes || []).forEach(v => v.tiquete && ver(v.tiquete.id));
     /* Y las fotos de los tiquetes que suben los conductores desde su app (12/11/2026) */
     (Datos.viajes || []).forEach(v => (v.tiquetes || []).forEach(q => q && q.archivo && ver(q.archivo.id)));
+    /* Los soportes de lo que vence (con su historial) y de las garantías (13/11/2026; ver Venc) */
+    Datos.unidades.forEach(u => {
+      (u.vencen || []).forEach(x => { if (x.archivo) ver(x.archivo.id); (x.antes || []).forEach(a => a && a.archivo && ver(a.archivo.id)); });
+      (u.garantias || []).forEach(g => g && g.archivo && ver(g.archivo.id));
+    });
     if (Firma.datos().firma) usados.add(Firma.CLAVE);
     return usados;
   },
@@ -5771,6 +5863,7 @@ const NAV = [
   { id: 'flota', icono: 'truck', txt: 'Flota', badge: 'unidades' },
   { id: 'rutas', icono: 'ruta', txt: 'Rutas' },
   { id: 'documentos', icono: 'shield', txt: 'Documentos', badge: 'docs', alerta: true },
+  { id: 'vencimientos', icono: 'calendar', txt: 'Vencimientos', badge: 'venc', alerta: true },
   { id: 'mantenimientos', icono: 'tool', txt: 'Mantenimientos', badge: 'taller', alerta: true },
   { id: 'llantas', icono: 'disc', txt: 'Llantas' },
   { id: 'aceite', icono: 'gota', txt: 'Cambios de aceite', badge: 'aceite', alerta: true },
@@ -10983,14 +11076,8 @@ const Vistas = {
         ' datos de mantenimiento (ni de Flota, ni de Facturación, ni del ' + Historico.ETIQUETA.toLowerCase() + '): lo que se ve ahí es solo combustible' +
         (Peajes.meses.length ? ' y peajes' : '') + '.') + '</div>' : '');
 
-    /* Lo que vence: primero lo vencido, luego lo que vence pronto */
-    const proximos = venc.concat(porv).sort((a, b) => Fecha.hasta(a.d.vence) - Fecha.hasta(b.d.vence));
-    const vence = proximos.length ? proximos.slice(0, 6).map(x =>
-        '<div class="vrow" ' + (x.quien === 'u' ? 'data-act="irUnidad" data-u="' + x.ref.id + '" data-tab="docs"' : 'data-act="verConductor" data-c="' + x.ref.id + '"') + '>' +
-          '<span class="' + (x.quien === 'u' ? 'mono ' : '') + 'fs12 trunc" style="font-weight:600">' + esc(x.quien === 'u' ? UI.placaTxt(x.ref) : x.ref.corto || x.ref.nombre) + '</span>' +
-          '<div style="min-width:0"><b class="trunc">' + esc(DOC_TIPOS[x.t].nombre) + '</b><span class="d">' + esc(x.e.det) + '</span></div>' +
-          UI.pill(x.e.k, x.e.txt) + '</div>').join('')
-      : UI.empty('shieldOk', 'Todo al día', 'Ningún documento vence en los próximos ' + Config.diasAviso + ' días.');
+    /* Lo que vence: los documentos, el extintor, el botiquín y lo demás, y las garantías por vencer (Juan, 13/11/2026; ver Venc.dashFilas) */
+    const lv = Venc.dashFilas(venc, porv), vence = lv.html;
 
     /* Lo que va del mes */
     const inspOk = u.filter(x => Est.insp(x).k === 'ok').length;
@@ -11172,8 +11259,9 @@ const Vistas = {
         UI.card('Gasto por mes', columnas, { sub: p === 'anio' ? 'Los meses de ' + y : 'Últimos seis meses', act: '<span class="link fs12" data-ir="compras">Ver compras</span>' }) +
       '</div>' +
       '<div class="grid g3 mb16">' +
-        UI.card('Documentos que vencen', vence, { flush: true, sub: 'Vencidos y en ' + Config.diasAviso + ' días',
-          act: '<span class="link fs12" data-ir="documentos">Ver todos' + (proximos.length > 6 ? ' (' + proximos.length + ')' : '') + '</span>' }) +
+        UI.card('Lo que vence', vence, { flush: true, sub: 'Documentos, extintores y garantías · vencidos y en ' + Config.diasAviso + ' días',
+          act: '<span class="link fs12" data-ir="documentos">Documentos</span><span class="link fs12" data-ir="vencimientos" style="margin-left:12px">Vencimientos' +
+            (lv.n > 7 ? ' (' + lv.n + ')' : '') + '</span>' }) +
         UI.card('Cambios de aceite', cambios, { flush: true, sub: 'Los más urgentes', act: '<span class="link fs12" data-ir="aceite">Ver todos</span>',
           pie: kmRaros ? Icon('warn', '', 13) + '<span>' + (kmRaros === 1 ? 'Un kilometraje' : kmRaros + ' kilometrajes') + ' del preoperacional para revisar. ' +
             '<span class="link" data-ir="aceite">Revisar</span></span>' : '' }) +
@@ -11336,7 +11424,7 @@ const Vistas = {
     else { compV = 'Sin revisar'; compS = 'Se revisa a comienzo de mes'; compK = 'warn'; }
     /* El documento junto a la foto, en los cuatro tipos (ver DocFoto) */
     const docTit = DocFoto.titulo(u), tieneDoc = DocFoto.tiene(u);
-    const tabs = [['info', 'Información'], ['actividad', 'Actividad', Actividad.de(u).length], ['docs', 'Documentos', alertas], ['mant', 'Mantenimientos', mants.length]]
+    const tabs = [['info', 'Información'], ['actividad', 'Actividad', Actividad.de(u).length], ['docs', 'Documentos', alertas]].concat(Venc.conGarantias(u) ? [['venc', 'Vencimientos y garantías', Venc.avisosDe(u)]] : [], [['mant', 'Mantenimientos', mants.length]])
       .concat(Preop.aplica(u) ? [['preop', 'Preoperacionales']] : [])
       .concat([['insp', 'Inspecciones'], ['comp', 'Comparendos y accidentes'], ['oc', 'Compras', compras.length]])
       .concat(Tanqueos.de(u).length ? [['comb', 'Combustible', Tanqueos.de(u).length]] : [])
@@ -14085,7 +14173,7 @@ Object.assign(Vistas, {
       const rac = !conEstilo ? '' : '<label class="cat-rac" title="' + (puede ? 'Marcado: sus viajes llevan el número de racimos, junto al peso en báscula'
           : 'Si sus viajes llevan los racimos') + '"><input type="checkbox" data-tipo-rac="' + i + '"' + (Rutas.racimos(v) ? ' checked' : '') + (puede ? '' : ' disabled') + '>Racimos</label>';
       return '<div class="cat-op' + (conEstilo ? ' cat-tipo' : '') + '" data-k="' + attr(Catalogo.clave(v)) + '">' + estilo + '<div class="cat-v"><b>' + esc(v) + '</b><span>' +
-        (n ? Catalogo.usosTxt(l, n) : 'Sin uso') + '</span></div>' + rac + color +
+        (n ? Catalogo.usosTxt(l, n) : 'Sin uso') + '</span></div>' + rac + color + Venc.catExtras(l, v, i, puede) +
         (puede ? '<div class="cat-acc">' + (img ? btn('catTipoSinImg', 'x', 'Quitar la imagen', i) : '') +
           (propio ? btn('catTipoColorBase', 'refresh', 'Volver al color de siempre', i) : '') + btn('catSubir', 'arriba', 'Subir', i, i ? '' : ' disabled') + btn('catBajar', 'abajo', 'Bajar', i, i < items.length - 1 ? '' : ' disabled') +
           btn('catRenombrar', 'lapiz', 'Cambiar el nombre', i) + btn('catQuitar', 'trash', 'Quitar', i, items.length > 1 ? '' : ' disabled') + '</div>' : '') + '</div>';
@@ -14097,7 +14185,8 @@ Object.assign(Vistas, {
       nuevo + '<div id="catOps">' + filas + '</div><div class="cat-vacio txt-3 fs12" id="catNada" hidden>Ninguna opción coincide con la búsqueda.</div>',
       { flush: true, sub: esc(Catalogo.usoTxt(l)),
         pie: puede && cambiada ? '<button type="button" class="btn btn-sm btn-ghost" data-act="catRestaurar" data-l="' + l.id + '">' + Icon('refresh', '', 12) + 'Restaurar los valores iniciales</button>'
-          : Icon('info', '', 13) + '<span>' + (puede && conEstilo ? 'La imagen y el color de cada tipo salen en sus fichas de Rutas. Haga clic en el cuadro o arrastre una imagen encima: se recorta y se achica sola. ' +
+          : Icon('info', '', 13) + '<span>' + (puede && l.venc === 'el' ? 'Cuánto dura cada elemento pone la fecha hasta al registrarlo o renovarlo. Con «Solo algunos», no todos los vehículos ' +
+            'lo llevan y no sale como faltante.' : puede && conEstilo ? 'La imagen y el color de cada tipo salen en sus fichas de Rutas. Haga clic en el cuadro o arrastre una imagen encima: se recorta y se achica sola. ' +
             'Con «Racimos» marcado, sus viajes llevan el número de racimos junto al peso en báscula.'
             : puede ? 'Lo que agregue aquí sale enseguida en las listas desplegables, en todos los equipos.'
             : 'Solo quien puede configurar cambia el catálogo. Usted puede verlo.') + '</span>' });
@@ -14127,6 +14216,8 @@ Object.assign(Vistas, {
           if (v) Toast.show(c.checked ? 'Listo: los viajes de <b>' + esc(v) + '</b> llevan los racimos, junto al peso en báscula.'
             : 'Los viajes de <b>' + esc(v) + '</b> ya no llevan los racimos.');
         }));
+        /* Cuánto dura cada elemento con vencimiento y si lo llevan solo algunos */
+        Venc.catBind();
         const nueva = $('#catNuevo');
         if (nueva) {
           nueva.focus();
@@ -15934,6 +16025,7 @@ Object.assign(Acciones, {
       (o ? ' La nota quedó también en <b>' + esc(UI.placaTxt(Q.unidad(o.unidad))) + '</b>.' : '') + MantRemolque.sigue(r) +
       ' <span class="link" data-act="deshacerCierre">Deshacer</span>');
     Router.pintar(true);
+    Venc.trasArreglo(r);
   },
   /* «Deshacer» del último «Terminar arreglo» desde el caso: queda como estaba, y el otro ingreso sin la nota copiada */
   deshacerCierre() {
@@ -16252,6 +16344,7 @@ Object.assign(Acciones, {
     Modal.cerrar(m);
     Toast.show('Arreglo terminado: <b>' + esc(UI.placaTxt(u)) + '</b> salió del taller el ' + esc(Fecha.larga(salida)) + '.' + MantRemolque.sigue(r));
     Router.pintar(true);
+    Venc.trasArreglo(r);
   },
   /* Una novedad que se revisó y no hubo que arreglar: deja de salir hasta que el conductor la vuelva a reportar */
   revisarNovedad(el) {
@@ -16532,6 +16625,7 @@ Object.assign(Acciones, {
       (d.novedades.length ? '<br>' + (d.novedades.length === 1 ? 'La novedad pasó a «Abiertas»' : 'Las novedades pasaron a «Abiertas»') + '; el caso está en «Taller SINUGRAVAS».' : '') +
       (x ? '<br>' + MantRemolque.aviso(x) : ''));
     Router.pintar(true);
+    Venc.trasArreglo(r);
   },
   /* PDF de un correctivo ya registrado. Los de ejemplo no tienen fotos reales:
      se ve dónde irían. */
@@ -21659,6 +21753,7 @@ const Mapa = {
     if (Object.keys(config.histProv || {}).length) poner('configuracion', { clave: 'historico_proveedores', valor: config.histProv });
     if (Object.keys(config.tiposRuta || {}).length) poner('configuracion', { clave: 'rutas_tipos', valor: config.tiposRuta });
     if (Object.keys(config.rutasLiq || {}).length) poner('configuracion', { clave: 'rutas_liquidadas', valor: config.rutasLiq });
+    if (Object.keys(config.vencEl || {}).length) poner('configuracion', { clave: 'venc_elementos', valor: config.vencEl });
     poner('configuracion', { clave: 'documentos_obligatorios', valor: config.req });
     poner('configuracion', { clave: 'comparendos', valor: config.comparendos });
     poner('configuracion', { clave: 'planos', valor: config.planos || {} });
@@ -21740,6 +21835,7 @@ const Mapa = {
       histProv: cfg.historico_proveedores && typeof cfg.historico_proveedores === 'object' ? cfg.historico_proveedores : {},
       tiposRuta: cfg.rutas_tipos && typeof cfg.rutas_tipos === 'object' ? cfg.rutas_tipos : {},
       rutasLiq: cfg.rutas_liquidadas && typeof cfg.rutas_liquidadas === 'object' ? cfg.rutas_liquidadas : {},
+      vencEl: cfg.venc_elementos && typeof cfg.venc_elementos === 'object' ? cfg.venc_elementos : {},
       /* Lo guardado en la nube manda sobre los valores de siempre */
       gps: Object.assign({}, Config.gps, cfg.gps && typeof cfg.gps === 'object' ? cfg.gps : {}),
       req: cfg.documentos_obligatorios || Config.req,
@@ -24107,6 +24203,440 @@ const Rutas = {
   }
 };
 Vistas.rutas = () => Rutas.vista();
+/* ==========================================================================
+   §VC  VENCIMIENTOS Y GARANTÍAS (Juan, 13/11/2026: «en las alertas necesito que pongas lo que es cambio de baterías… un apartado más
+        en la ficha del vehículo que se llame garantías… y un apartado nuevo… el vencimiento de los extintores de los vehículos, fecha
+        desde hasta, que podamos crear las alertas y que también se muestren en el dashboard»; y «en la ficha… no puedo ver los
+        extintores cuando se vencen o cuánto le queda»). Aprobado con la maqueta: «Sí, constrúyelo».
+   En cada vehículo, en extra (sin SQL):
+   - u.vencen: el extintor, el botiquín y lo demás que vence: [{ id, tipo, detalle, desde, hasta, archivo, nota, antes: [lo de antes] }]
+   - u.garantias: [{ id, tipo, detalle, desde, hasta, hastaKm, proveedor, orden, arreglo, arregloNum, archivo, nota }]
+   Los elementos y las clases de garantía son listas de Catálogo; cuánto dura cada elemento y si lo llevan todos, Config.vencEl. Avisa
+   con los mismos días de los documentos (Config.diasAviso). Los vehículos de terceros no entran (como en mantenimiento y combustible)
+   ========================================================================== */
+const Venc = {
+  /* Cuánto dura cada elemento si no se ha cambiado en Catálogo, y los que no lleva todo vehículo */
+  INICIAL: { extintor: { meses: 12 }, botiquin: { meses: 12 }, 'kit de derrames': { meses: 12, opcional: 'si' } },
+  ajustes(t) { const k = Catalogo.clave(t); return Object.assign({}, this.INICIAL[k], (Config.vencEl || {})[k]); },
+  elementos() {
+    return Catalogo.lista('venc.elementos').map(t => {
+      const c = this.ajustes(t);
+      return { t, meses: +c.meses > 0 ? Math.round(+c.meses) : 12, opcional: c.opcional === 'si', ic: this.icE(t) };
+    });
+  },
+  /* Las columnas del área: los de la lista y los que tengan los vehículos con un nombre de antes */
+  columnas() {
+    const els = this.elementos(), ks = new Set(els.map(e => Catalogo.clave(e.t)));
+    this.unidades().forEach(u => (u.vencen || []).forEach(x => {
+      if (!ks.has(Catalogo.clave(x.tipo))) { ks.add(Catalogo.clave(x.tipo)); els.push({ t: x.tipo, meses: 12, opcional: true, ic: this.icE(x.tipo), fuera: true }); }
+    }));
+    return els;
+  },
+  clases: () => Catalogo.lista('garantias.tipos'),
+  icE(t) { const k = sinTildes(t); return /extint/.test(k) ? 'extintor' : /botiq/.test(k) ? 'botiquin' : /derram|kit/.test(k) ? 'gota' : 'calendar'; },
+  icG(t) { const k = sinTildes(t); return /bater/.test(k) ? 'bateria' : /llant/.test(k) ? 'disc' : /motor|caja|transm/.test(k) ? 'tool' : /vehic|nuevo|camion/.test(k) ? 'truck' : 'shieldOk'; },
+  /* Las unidades con extintor, botiquín…: las de carga y la maquinaria, sin las de terceros */
+  unidades() { return Datos.unidades.filter(u => HojaVida.conDotacion(u) && !Q.tercero(u)).sort((a, b) => String(a.placa).localeCompare(String(b.placa))); },
+  /* Las que pueden tener garantías: todas menos las de terceros */
+  conGarantias: u => Boolean(u) && !Q.tercero(u),
+  mas(f, meses) { const d = Fecha.parse(f || hoyISO), dia = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + meses); d.setDate(Math.min(dia, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); return Fecha.iso(d); },
+  faltaTxt(d) { const m = Math.round(d / 30.4); return d < 60 ? 'faltan ' + d + ' días' : m < 24 ? 'faltan ' + m + ' meses' : 'faltan ' + (m / 12).toFixed(m % 12 ? 1 : 0).replace('.', ',') + ' años'; },
+  /* El estado: vencido (en las garantías, «venció», en gris: ya no cubre, pero no es una falta), vence pronto o al día */
+  est(x, garantia) {
+    if (!x.hasta) return { k: 'nr', txt: 'Sin fecha', det: 'Falta la fecha hasta' };
+    const d = Fecha.hasta(x.hasta);
+    if (d < 0) return garantia ? { k: 'nr', txt: 'Venció', det: 'Sin garantía desde el ' + Fecha.corta(x.hasta) } : { k: 'bad', txt: 'Vencido', det: 'Venció el ' + Fecha.corta(x.hasta) };
+    if (d <= Config.diasAviso) return { k: 'warn', txt: d === 0 ? 'Vence hoy' : 'Vence en ' + d + (d === 1 ? ' día' : ' días'), det: 'Hasta el ' + Fecha.corta(x.hasta) };
+    return { k: 'ok', txt: garantia ? 'Vigente' : 'Al día', det: 'Hasta el ' + Fecha.corta(x.hasta) + ' · ' + this.faltaTxt(d) };
+  },
+  elementosTodos() { return [].concat(...this.unidades().map(u => (u.vencen || []).map(x => ({ u, x, e: this.est(x) })))); },
+  garantiasTodas() { return [].concat(...Datos.unidades.filter(u => this.conGarantias(u)).map(u => (u.garantias || []).map(x => ({ u, x, e: this.est(x, true), g: true })))); },
+  /* Lo que avisa: los elementos vencidos o por vencer y las garantías por vencer */
+  alertas() { return this.elementosTodos().filter(y => y.e.k === 'bad' || y.e.k === 'warn').concat(this.garantiasTodas().filter(y => y.e.k === 'warn')); },
+  avisosDe(u) {
+    return (this.unidades().includes(u) ? (u.vencen || []).filter(x => ['bad', 'warn'].includes(this.est(x).k)).length : 0) +
+      (this.conGarantias(u) ? (u.garantias || []).filter(x => this.est(x, true).k === 'warn').length : 0);
+  },
+  /* Lo que falta anotar: solo lo que lleva todo vehículo (lo de «Solo algunos», no) */
+  faltan(u) { return this.elementos().filter(el => !el.opcional && !(u.vencen || []).some(x => Catalogo.clave(x.tipo) === Catalogo.clave(el.t))); },
+  arregloTxt(x) { const r = x.arreglo && Datos.mantenimientos.find(m => m.id === x.arreglo); return r ? r.numero || r.id : x.arregloNum || ''; },
+  limpio(o) { Object.keys(o).forEach(k => { if (o[k] == null || o[k] === '') delete o[k]; }); return o; },
+  nuevoId: p => p + marca().toString(36) + Math.random().toString(36).slice(2, 5),
+
+  /* ---- El área ---- */
+  vista() {
+    const tab = UIState.venc || 'vehiculos', els = this.elementosTodos(), gas = this.garantiasTodas();
+    const n = k => els.filter(y => y.e.k === k).length, gPor = gas.filter(y => y.e.k === 'warn').length, faltan = this.unidades().reduce((s, u) => s + this.faltan(u).length, 0);
+    const req = this.elementos().filter(e => !e.opcional).map(e => e.t.toLowerCase());
+    const head = UI.head('Vencimientos', 'Extintores, botiquines, garantías y lo demás que vence en cada vehículo. Los documentos siguen en Documentos',
+      '<button type="button" class="btn" data-act="vcGarantia">' + Icon('shieldOk', '', 14) + 'Agregar garantía</button>' +
+      '<button type="button" class="btn btn-primary" data-act="vcElemento">' + Icon('plus', '', 14) + 'Registrar vencimiento</button>');
+    const kpis = '<div class="grid g4 mb16">' +
+      UI.kpi({ label: 'Vencidos', valor: n('bad'), icono: 'warn', color: 'var(--dang-500)', vcolor: n('bad') ? 'var(--dang-500)' : '', meta: n('bad') ? 'Para renovar ya' : 'Nada vencido' }) +
+      UI.kpi({ label: 'Vencen en ' + Config.diasAviso + ' días', valor: n('warn') + gPor, icono: 'clock', color: 'var(--warn-500)', vcolor: n('warn') + gPor ? 'var(--warn-500)' : '',
+        meta: [n('warn') ? n('warn') + (n('warn') === 1 ? ' elemento' : ' elementos') : '', gPor ? gPor + (gPor === 1 ? ' garantía' : ' garantías') : ''].filter(Boolean).join(' y ') || 'Nada en los próximos días' }) +
+      UI.kpi({ label: 'Al día', valor: n('ok'), icono: 'check', color: 'var(--ok-500)', meta: gas.filter(y => y.e.k === 'ok').length + ' ' + (gas.filter(y => y.e.k === 'ok').length === 1 ? 'garantía vigente' : 'garantías vigentes') }) +
+      UI.kpi({ label: 'Sin registrar', valor: faltan, icono: 'info', color: 'var(--ink-300)', meta: req.length ? (req.length > 1 ? req.slice(0, -1).join(', ') + ' o ' + req[req.length - 1] : req[0]) + ' sin anotar' : 'Nada obligatorio' }) + '</div>';
+    const tabs = '<div class="tabs">' + [['vehiculos', 'Por vehículo', 'truck'], ['garantias', 'Garantías', 'shieldOk', gas.filter(y => y.e.k !== 'nr').length]].map(t =>
+      '<div class="tab tab-ic' + (tab === t[0] ? ' active' : '') + '" data-act="vcTab" data-v="' + t[0] + '">' + Icon(t[2], '', 14) + t[1] + (t[3] ? '<span class="tb-count">' + t[3] + '</span>' : '') + '</div>').join('') + '</div>';
+    return { titulo: 'Vencimientos', sub: 'Extintores, botiquines y garantías', html: head + kpis + tabs + (tab === 'garantias' ? this.tablaGarantias(gas) : this.porVehiculo()) };
+  },
+  /* Una fila por vehículo y una columna por elemento; la última, sus garantías. Un clic en lo registrado abre su ficha, donde se renueva */
+  porVehiculo() {
+    const us = this.unidades(), cols = this.columnas();
+    if (!us.length) return '<div class="card">' + UI.empty('truck', 'No hay vehículos de carga ni maquinaria', 'Salen aquí cuando estén registrados en Flota.') + '</div>';
+    const celda = (u, el) => {
+      const xs = (u.vencen || []).filter(x => Catalogo.clave(x.tipo) === Catalogo.clave(el.t)).sort((a, b) => String(a.hasta).localeCompare(String(b.hasta)));
+      if (!xs.length) return '<td><button type="button" class="vc-reg' + (el.opcional ? ' vc-op' : '') + '" data-act="vcElemento" data-u="' + attr(u.id) + '" data-t="' + attr(el.t) + '">' +
+        Icon('plus', '', 12) + 'Registrar</button></td>';
+      return '<td>' + xs.map(x => { const e = this.est(x);
+        return '<div class="vc-c vc-' + e.k + '" role="button" tabindex="0" data-act="irUnidad" data-u="' + attr(u.id) + '" data-tab="venc" title="' + attr(e.det + (x.detalle ? ' · ' + x.detalle : '') + ' · Clic para verlo en su ficha') + '">' +
+          '<b>' + esc(e.k === 'ok' ? Fecha.corta(x.hasta) : e.txt) + '</b><span>' + esc([x.detalle, e.k === 'ok' ? '' : Fecha.corta(x.hasta)].filter(Boolean).join(' · ') || ' ') + '</span></div>'; }).join('') + '</td>';
+    };
+    const garCelda = u => {
+      const gs = (u.garantias || []).map(x => ({ x, e: this.est(x, true) })).filter(y => y.e.k !== 'nr');
+      return '<td>' + (gs.length ? gs.map(y => '<span class="vc-g vc-' + y.e.k + '" role="button" data-act="irUnidad" data-u="' + attr(u.id) + '" data-tab="venc" title="' + attr(y.x.tipo + ': ' + y.e.det) + '">' +
+        Icon(this.icG(y.x.tipo), '', 11) + esc(y.x.tipo) + '</span>').join('') : '<span class="txt-3 fs12">—</span>') + '</td>';
+    };
+    return '<div class="card"><div class="tbl-wrap"><table class="tbl vc-tbl"><thead><tr><th>Vehículo</th>' + cols.map(el => '<th>' + Icon(el.ic, '', 12) + esc(el.t) +
+        '<small>' + (el.fuera ? 'ya no está en Catálogo' : 'cada ' + el.meses + (el.meses === 1 ? ' mes' : ' meses') + (el.opcional ? ' · solo algunos' : '')) + '</small></th>').join('') +
+        '<th>' + Icon('shieldOk', '', 12) + 'Garantías<small>vigentes</small></th></tr></thead><tbody>' +
+      us.map(u => '<tr><td><div class="vc-u" role="button" data-act="irUnidad" data-u="' + attr(u.id) + '" data-tab="venc">' + UI.thumb(u) + '<div><b class="mono">' + esc(UI.placaTxt(u)) + '</b><span>' +
+          esc(UI.nombre(u) || TIPOS[u.tipo].nombre) + '</span></div></div></td>' + cols.map(el => celda(u, el)).join('') + garCelda(u) + '</tr>').join('') + '</tbody></table></div></div>' +
+      '<div class="rt-ley mt8"><span><i class="vc-p vc-bad"></i>Vencido</span><span><i class="vc-p vc-warn"></i>Vence en ' + Config.diasAviso + ' días o menos (avisa en el dashboard)</span>' +
+      '<span><i class="vc-p vc-ok"></i>Al día, con la fecha hasta</span><span>' + Icon('plus', '', 11) + 'Sin registrar</span><span class="rt-ley-sep"></span>' +
+      '<span>Clic en una fecha para renovarla en la ficha del vehículo · los elementos y cuánto dura cada uno se cambian en <span class="link" data-ir="catalogo">Catálogo</span></span></div>';
+  },
+  tablaGarantias(gas) {
+    const orden = gas.slice().sort((a, b) => (a.e.k === 'nr') - (b.e.k === 'nr') || String(a.x.hasta).localeCompare(String(b.x.hasta)));
+    if (!orden.length) return '<div class="card">' + UI.empty('shieldOk', 'Sin garantías registradas', 'Se agregan con «Agregar garantía» o en la ficha de cada vehículo. Al terminar un cambio de batería, la plataforma la pregunta.') + '</div>';
+    return '<div class="card"><div class="tbl-wrap"><table class="tbl vc-gtbl"><thead><tr><th>Vehículo</th><th>Garantía</th><th>Desde</th><th>Hasta</th><th>Estado</th><th>De dónde</th><th>Soporte</th><th></th></tr></thead><tbody>' +
+      orden.map(({ u, x, e }) => '<tr' + (e.k === 'nr' ? ' class="vc-ven"' : '') + '><td><b class="mono link" data-act="irUnidad" data-u="' + attr(u.id) + '" data-tab="venc">' + esc(UI.placaTxt(u)) + '</b></td>' +
+        '<td><div class="vc-gt">' + Icon(this.icG(x.tipo), '', 14) + '<div><b>' + esc(x.tipo) + '</b><span>' + esc(x.detalle || '') + '</span></div></div></td>' +
+        '<td class="nowrap">' + esc(x.desde ? Fecha.corta(x.desde) : '—') + '</td><td class="nowrap">' + esc(x.hasta ? Fecha.corta(x.hasta) : '—') +
+          (x.hastaKm ? '<div class="dias">o ' + esc(Number(x.hastaKm).toLocaleString('es-CO')) + ' km</div>' : '') + '</td>' +
+        '<td>' + UI.pill(e.k, e.txt) + '<div class="dias">' + esc(e.k === 'ok' ? this.faltaTxt(Fecha.hasta(x.hasta)) : e.k === 'nr' && x.hasta ? 'Ya no cubre' : '') + '</div></td>' +
+        '<td class="fs12">' + esc([x.proveedor, x.orden].filter(Boolean).join(' · ') || '—') +
+          (this.arregloTxt(x) ? '<div><span class="link" data-act="vcArreglo" data-m="' + attr(x.arreglo || '') + '">' + Icon('tool', '', 11) + ' ' + esc(this.arregloTxt(x)) + '</span></div>' : '') + '</td>' +
+        '<td>' + this.soporteLink(x.archivo, 'Ver') + '</td>' +
+        '<td class="tr"><button type="button" class="btn btn-sm" data-act="vcGarantia" data-u="' + attr(u.id) + '" data-x="' + attr(x.id) + '">' + Icon('edit', '', 12) + 'Editar</button></td></tr>').join('') +
+      '</tbody></table></div></div>';
+  },
+  soporteLink(a, txt) {
+    return a ? '<span class="link" data-act="verArchivo" data-id="' + attr(a.id) + '" data-nombre="' + attr(a.nombre || 'soporte') + '">' + Icon(/\.pdf$/i.test(a.nombre || '') ? 'pdf' : 'file', '', 12) + ' ' + esc(txt) + '</span>'
+      : '<span class="txt-3 fs12">Sin adjunto</span>';
+  },
+
+  /* ---- En la ficha del vehículo: «Vencimientos y garantías». Arriba, el extintor y lo demás (solo los que llevan dotación); abajo, las garantías ---- */
+  tabFicha(u) {
+    return (this.unidades().includes(u) ? this.tarjetaElementos(u) : '') + this.tarjetaGarantias(u, this.unidades().includes(u));
+  },
+  tarjetaElementos(u) {
+    const xs = (u.vencen || []).map(x => ({ x, e: this.est(x) })).sort((a, b) => String(a.x.hasta).localeCompare(String(b.x.hasta))), falta = this.faltan(u);
+    const d = x => Fecha.hasta(x.hasta);
+    const fila = ({ x, e }) => '<div class="vc-fg"><span class="vc-fg-ic vc-ic-' + e.k + '">' + Icon(this.icE(x.tipo), '', 18) + '</span>' +
+      '<div class="vc-fg-t"><b>' + esc(x.tipo) + (x.detalle ? ' · <span>' + esc(x.detalle) + '</span>' : '') + '</b>' +
+        '<span>' + (x.desde ? 'Desde el ' + esc(Fecha.corta(x.desde)) + ' hasta el ' : 'Hasta el ') + esc(Fecha.corta(x.hasta)) + '</span>' +
+        '<span class="vc-fg-m">' + (x.archivo ? this.soporteLink(x.archivo, 'Ver la foto o el certificado') : '<span>Sin foto de la etiqueta</span>') +
+          ((x.antes || []).length ? '<span class="link" data-act="vcHistorial" data-u="' + attr(u.id) + '" data-x="' + attr(x.id) + '">' + Icon('clock', '', 11) + 'Historial (' + x.antes.length + ')</span>' : '') + '</span>' +
+        (x.nota ? '<span class="vc-fg-n">' + esc(x.nota) + '</span>' : '') + '</div>' +
+      '<div class="vc-fg-e">' + UI.pill(e.k, e.txt) + '<span>' + esc(e.k === 'bad' ? 'hace ' + -d(x) + (d(x) === -1 ? ' día' : ' días') : e.k === 'ok' ? this.faltaTxt(d(x)) : e.k === 'warn' ? 'quedan ' + d(x) + (d(x) === 1 ? ' día' : ' días') : '') + '</span>' +
+        '<div class="vc-fg-b"><button type="button" class="btn btn-sm btn-ghost btn-icon" data-act="vcElemento" data-u="' + attr(u.id) + '" data-x="' + attr(x.id) + '" data-modo="corregir" title="Corregir (sin renovar)" aria-label="Corregir">' +
+          Icon('lapiz', '', 13) + '</button><button type="button" class="btn btn-sm' + (e.k === 'ok' ? '' : ' btn-primary') + '" data-act="vcElemento" data-u="' + attr(u.id) + '" data-x="' + attr(x.id) + '" data-modo="renovar">' +
+          Icon('refresh', '', 12) + 'Renovar</button></div></div></div>';
+    const vacio = el => '<div class="vc-fg vc-falta"><span class="vc-fg-ic">' + Icon(el.ic, '', 18) + '</span><div class="vc-fg-t"><b>' + esc(el.t) + '</b><span>Sin registrar: no se sabe cuándo vence</span></div>' +
+      '<div class="vc-fg-e"><button type="button" class="btn btn-sm" data-act="vcElemento" data-u="' + attr(u.id) + '" data-t="' + attr(el.t) + '">' + Icon('plus', '', 12) + 'Registrar</button></div></div>';
+    const malos = xs.filter(y => y.e.k === 'bad').length, pronto = xs.filter(y => y.e.k === 'warn').length;
+    return UI.card('Extintor, botiquín y demás', xs.length || falta.length ? '<div class="vc-fl">' + xs.map(fila).join('') + falta.map(vacio).join('') + '</div>'
+        : UI.empty('extintor', 'Nada registrado', 'Registre el extintor, el botiquín o lo que tenga fecha de vencimiento.'),
+      { flush: true, sub: [malos ? malos + (malos === 1 ? ' vencido' : ' vencidos') : '', pronto ? pronto + (pronto === 1 ? ' vence pronto' : ' vencen pronto') : '',
+          !malos && !pronto && xs.length ? 'Todo al día' : ''].filter(Boolean).concat(['avisa en el dashboard ' + Config.diasAviso + ' días antes']).join(' · '),
+        act: '<button class="btn btn-sm" data-act="vcElemento" data-u="' + attr(u.id) + '">' + Icon('plus', '', 12) + 'Registrar otro</button>' });
+  },
+  tarjetaGarantias(u, conMargen) {
+    const gs = (u.garantias || []).map(x => ({ x, e: this.est(x, true) })).sort((a, b) => (a.e.k === 'nr') - (b.e.k === 'nr') || String(a.x.hasta).localeCompare(String(b.x.hasta)));
+    const vig = gs.filter(y => y.e.k !== 'nr'), ven = gs.filter(y => y.e.k === 'nr');
+    const fila = ({ x, e }) => '<div class="vc-fg' + (e.k === 'nr' ? ' vc-ven' : '') + '"><span class="vc-fg-ic">' + Icon(this.icG(x.tipo), '', 18) + '</span>' +
+      '<div class="vc-fg-t"><b>' + esc(x.tipo) + (x.detalle ? ' · <span>' + esc(x.detalle) + '</span>' : '') + '</b>' +
+        '<span>' + (x.desde ? 'Desde el ' + esc(Fecha.corta(x.desde)) + ' hasta el ' : 'Hasta el ') + esc(x.hasta ? Fecha.corta(x.hasta) : '—') +
+          (x.hastaKm ? ' o ' + esc(Number(x.hastaKm).toLocaleString('es-CO')) + ' km, lo que llegue primero' : '') + '</span>' +
+        '<span class="vc-fg-m">' + [x.proveedor ? '<span>' + Icon('briefcase', '', 11) + esc(x.proveedor) + '</span>' : '', x.orden ? '<span>' + Icon('cart', '', 11) + esc(x.orden) + '</span>' : '',
+          this.arregloTxt(x) ? '<span class="link" data-act="vcArreglo" data-m="' + attr(x.arreglo || '') + '">' + Icon('tool', '', 11) + esc(this.arregloTxt(x)) + '</span>' : '',
+          x.archivo ? this.soporteLink(x.archivo, 'Ver el soporte') : ''].filter(Boolean).join('') + '</span>' +
+        (x.nota ? '<span class="vc-fg-n">' + esc(x.nota) + '</span>' : '') + '</div>' +
+      '<div class="vc-fg-e">' + UI.pill(e.k, e.txt) + '<span>' + esc(e.k === 'ok' ? this.faltaTxt(Fecha.hasta(x.hasta)) : e.k === 'warn' ? e.det : x.hasta ? 'Ya no cubre' : '') + '</span>' +
+        '<button type="button" class="btn btn-sm btn-ghost" data-act="vcGarantia" data-u="' + attr(u.id) + '" data-x="' + attr(x.id) + '">' + Icon('edit', '', 12) + 'Editar</button></div></div>';
+    return UI.card('Garantías', gs.length ? '<div class="vc-fl">' + vig.map(fila).join('') + (ven.length ? '<div class="vc-fl-sep">Ya vencieron</div>' + ven.map(fila).join('') : '') + '</div>'
+        : UI.empty('shieldOk', 'Sin garantías registradas', 'Anote la del vehículo nuevo, la de la batería o la de cualquier repuesto, con su fecha hasta.'),
+      { flush: true, cls: conMargen ? 'mt16' : '', sub: vig.length + (vig.length === 1 ? ' vigente' : ' vigentes') + ' · avisa en el dashboard ' + Config.diasAviso + ' días antes de vencer',
+        act: '<button class="btn btn-sm btn-primary" data-act="vcGarantia" data-u="' + attr(u.id) + '">' + Icon('plus', '', 12) + 'Agregar garantía</button>' }) +
+      '<div class="alert a-info mt16">' + Icon('info') + '<div><b>El cambio de batería trae su garantía.</b> Al terminar un arreglo con el componente «Baterías», la plataforma pregunta hasta cuándo es la garantía ' +
+        'y la deja aquí, con el proveedor y la orden del arreglo.</div></div>';
+  },
+  /* Lo de antes de un elemento: cada vez que se renovó */
+  historial(u, x) {
+    const l = [{ desde: x.desde, hasta: x.hasta, detalle: x.detalle, archivo: x.archivo, nota: x.nota, ahora: true }].concat(x.antes || []);
+    Modal.abrir({
+      titulo: 'Historial: ' + x.tipo.toLowerCase(), sub: esc(UI.placaTxt(u)), sinFoco: true,
+      cuerpo: '<div class="vc-hist">' + l.map(a => '<div class="vc-h' + (a.ahora ? ' ahora' : '') + '"><b>' + esc((a.desde ? Fecha.corta(a.desde) + ' → ' : 'Hasta ') + Fecha.corta(a.hasta)) + '</b>' +
+        '<span>' + esc([a.ahora ? 'El de ahora' : 'Renovado después', a.detalle, a.nota].filter(Boolean).join(' · ')) + '</span>' + (a.archivo ? this.soporteLink(a.archivo, 'Ver el soporte') : '') + '</div>').join('') + '</div>',
+      pie: '<button type="button" class="btn btn-primary" data-act="cerrarModal">Cerrar</button>'
+    });
+  },
+
+  /* ---- Registrar, renovar o corregir un elemento ---- */
+  ventanaElemento(o) {
+    const u = o.u || null, x0 = u && o.x ? (u.vencen || []).find(y => y.id === o.x) : null, modo = x0 ? (o.modo === 'corregir' ? 'corregir' : 'renovar') : 'nuevo';
+    const els = this.columnas(), tipo0 = x0 ? x0.tipo : o.t || (els[0] || {}).t || '';
+    const dura = t => (els.find(e => Catalogo.clave(e.t) === Catalogo.clave(t)) || { meses: 12 }).meses;
+    const desde0 = modo === 'corregir' ? x0.desde || '' : hoyISO, hasta0 = modo === 'corregir' ? x0.hasta || '' : this.mas(desde0, dura(tipo0));
+    const us = this.unidades(), nom = t => String(t || '').toLowerCase();
+    const m = Modal.abrir({
+      titulo: modo === 'renovar' ? 'Renovar: ' + nom(tipo0) : modo === 'corregir' ? 'Corregir: ' + nom(tipo0) : 'Registrar vencimiento', sinFoco: true,
+      sub: u ? esc(UI.placaTxt(u) + ' · ' + (UI.nombre(u) || TIPOS[u.tipo].nombre)) : 'El extintor, el botiquín o lo que tenga fecha de vencimiento',
+      cuerpo: (modo === 'renovar' ? '<div class="alert a-info mb16">' + Icon('refresh') + '<div>El de ahora (hasta el ' + esc(Fecha.corta(x0.hasta)) + ') queda en su historial.</div></div>'
+          : modo === 'corregir' ? '<div class="alert a-info mb16">' + Icon('lapiz') + '<div>Para arreglar un dato mal escrito. Si se recargó o se cambió, use «Renovar»: así queda el historial.</div></div>' : '') +
+        '<div class="grid g2">' +
+          (u ? '' : '<div class="field"><label>Vehículo</label><select class="inp" id="vcU"><option value="">Escoja el vehículo</option>' +
+            us.map(v => '<option value="' + attr(v.id) + '">' + esc(UI.placaTxt(v) + (UI.nombre(v) ? ' · ' + UI.nombre(v) : '')) + '</option>').join('') + '</select></div>') +
+          '<div class="field"><label>Elemento</label><select class="inp" id="vcT"' + (x0 ? ' disabled' : '') + '>' +
+            els.filter(e => !e.fuera || Catalogo.clave(e.t) === Catalogo.clave(tipo0)).map(e => '<option' + (Catalogo.clave(e.t) === Catalogo.clave(tipo0) ? ' selected' : '') + '>' + esc(e.t) + '</option>').join('') + '</select></div>' +
+          '<div class="field"><label>Detalle <span class="txt-3">(opcional)</span></label><input class="inp" id="vcD" maxlength="80" placeholder="Ej.: 20 lb · ABC · cabina" value="' + attr(x0 ? x0.detalle || '' : '') + '"></div>' +
+          '<div class="field"><label>Desde <span class="txt-3">(la recarga o la compra)</span></label><input class="inp" type="date" id="vcDe" value="' + attr(desde0) + '"></div>' +
+          '<div class="field"><label>Hasta</label><input class="inp" type="date" id="vcHa" value="' + attr(hasta0) + '"><div class="hint" id="vcHaN"></div></div>' +
+        '</div>' +
+        '<div class="field"><label>Foto de la etiqueta o certificado <span class="txt-3">(opcional)</span></label>' +
+          Dz.html('vcF', 'Suelte aquí la foto o el PDF', '<span class="solo-web">o haga clic para escogerlo</span>', 'application/pdf,image/*', false) + '</div>' +
+        '<div class="field mb0"><label>Nota <span class="txt-3">(opcional)</span></label><input class="inp" id="vcN" maxlength="200" placeholder="Ej.: recargado en Extintores del Sinú" value="' +
+          attr(modo === 'corregir' ? x0.nota || '' : '') + '"></div>',
+      pie: (modo === 'corregir' ? '<button type="button" class="btn btn-ghost btn-del mf-left" data-act="vcQuitar" data-u="' + attr(u.id) + '" data-x="' + attr(x0.id) + '" data-que="el">' +
+          Icon('trash', '', 14) + 'Quitar</button>' : '') +
+        '<button type="button" class="btn" data-act="cerrarModal">Cancelar</button><button type="button" class="btn btn-primary" id="vcG" data-act="vcGuardarEl" data-u="' + attr(u ? u.id : '') +
+          '" data-x="' + attr(x0 ? x0.id : '') + '" data-modo="' + modo + '" disabled>' + Icon('check', '', 14) + 'Guardar</button>'
+    });
+    m._sop = modo === 'corregir' ? x0.archivo || null : null;
+    const t = $('#vcT', m), de = $('#vcDe', m), ha = $('#vcHa', m), g = $('#vcG', m);
+    let aMano = modo === 'corregir';
+    const firma = () => JSON.stringify([($('#vcU', m) || {}).value || '', t.value, $('#vcD', m).value.trim(), de.value, ha.value, $('#vcN', m).value.trim(), m._sop && m._sop.id]);
+    /* Al renovar, la fecha de hoy y lo que dura ya sirven: se puede guardar sin cambiar nada. Al corregir, solo si algo cambió */
+    const antes = modo === 'corregir' ? firma() : '';
+    const revisar = () => {
+      const meses = dura(t.value);
+      $('#vcHaN', m).textContent = de.value && ha.value && ha.value < de.value ? 'Queda antes de la fecha desde' : de.value && !aMano ? 'Con lo que dura: ' + meses + (meses === 1 ? ' mes' : ' meses') + ' (se cambia en Catálogo)' : '';
+      g.disabled = Boolean(m._cargando) || !ha.value || ($('#vcU', m) && !$('#vcU', m).value) || firma() === antes;
+    };
+    const ponerHasta = () => { if (!aMano && de.value) ha.value = this.mas(de.value, dura(t.value)); revisar(); };
+    t.addEventListener('change', ponerHasta);
+    de.addEventListener('change', ponerHasta);
+    de.addEventListener('input', ponerHasta);
+    ha.addEventListener('input', () => { aMano = true; revisar(); });
+    ['#vcD', '#vcN', '#vcU'].forEach(s => { const el = $(s, m); if (el) { el.addEventListener('input', revisar); el.addEventListener('change', revisar); } });
+    this.soporte(m, 'vcF', revisar);
+    revisar();
+  },
+  /* La zona del soporte: se arrastra o se escoge; se ve con la lupa tocando su nombre; uno solo (el nuevo reemplaza) */
+  soporte(m, id, revisar) {
+    const pintar = () => {
+      const a = m._sop;
+      $('#' + id + 'F', m).innerHTML = m._cargando ? '<div class="dz-file"><span class="spin"></span><span class="f1">Preparando el archivo…</span></div>'
+        : a ? '<div class="dz-file">' + Icon(/\.pdf$/i.test(a.nombre || '') ? 'pdf' : 'image', '', 15) + '<span class="f1 trunc link" data-act="verArchivo" data-nombre="' + attr(a.nombre || 'soporte') +
+          '" data-id="' + attr(a.id) + '">' + esc(a.nombre || 'Soporte') + '</span>' + (a.tam ? '<span class="txt-3 fs11 nowrap">' + esc(Peso.foto(a.tam, a.antes)) + '</span>' : '') +
+          '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-sop-quitar title="Quitar" aria-label="Quitar">' + Icon('x', '', 12) + '</button></div>' : '';
+      revisar();
+    };
+    $('#' + id, m).classList.add('dz-sm');
+    $('#' + id + 'F', m).addEventListener('click', e => { if (e.target.closest('[data-sop-quitar]')) { m._sop = null; pintar(); } });
+    Dz.bind(id, files => {
+      m._cargando = true;
+      pintar();
+      Archivos.preparar(files[0]).then(a => { m._sop = Adjuntos.dato(a); }, () => Toast.show('No se pudo leer el archivo.', 'err')).then(() => { m._cargando = false; pintar(); });
+    });
+    pintar();
+  },
+  guardarElemento(el) {
+    const m = el.closest('.modal-bd'), modo = el.dataset.modo, u = Q.unidad(el.dataset.u || ($('#vcU', m) || {}).value);
+    if (!u) { Toast.show('Escoja el vehículo.', 'err'); return; }
+    const tipo = $('#vcT', m).value, desde = $('#vcDe', m).value, hasta = $('#vcHa', m).value;
+    if (!hasta) { Toast.show('Escriba hasta cuándo.', 'err'); $('#vcHa', m).focus(); return; }
+    if (desde && hasta < desde) { Toast.show('La fecha hasta queda antes de la fecha desde.', 'err'); $('#vcHa', m).focus(); return; }
+    const d = { detalle: $('#vcD', m).value.trim(), desde, hasta, nota: $('#vcN', m).value.trim(), archivo: m._sop || null };
+    u.vencen = u.vencen || [];
+    const x = el.dataset.x ? u.vencen.find(y => y.id === el.dataset.x) : null;
+    if (x && modo === 'renovar') {
+      x.antes = [this.limpio({ desde: x.desde, hasta: x.hasta, detalle: x.detalle, archivo: x.archivo, nota: x.nota, renovado: hoyISO })].concat(x.antes || []);
+      ['desde', 'hasta', 'detalle', 'archivo', 'nota'].forEach(k => { delete x[k]; });
+      Object.assign(x, this.limpio(d));
+    } else if (x) {
+      ['desde', 'hasta', 'detalle', 'archivo', 'nota'].forEach(k => { delete x[k]; });
+      Object.assign(x, this.limpio(d));
+    } else u.vencen.push(Object.assign({ id: this.nuevoId('ve'), tipo }, this.limpio(d)));
+    Modal.cerrar(m);
+    Toast.show((modo === 'renovar' ? 'Renovado: ' : modo === 'corregir' ? 'Corregido: ' : 'Registrado: ') + '<b>' + esc(x ? x.tipo : tipo) + '</b> de <b>' + esc(UI.placaTxt(u)) + '</b>, hasta el ' +
+      esc(Fecha.larga(hasta)) + '.');
+    Router.pintar(true);
+  },
+
+  /* ---- Agregar o editar una garantía (con «arreglo», la de la batería que viene de un arreglo terminado) ---- */
+  ventanaGarantia(o) {
+    const u = o.u || null, x0 = u && o.x ? (u.garantias || []).find(y => y.id === o.x) : null, r = o.arreglo || null, pre = o.pre || {};
+    const clases = this.clases(), tipo0 = x0 ? x0.tipo : pre.tipo || clases[0] || '';
+    if (x0 && !clases.some(c => Catalogo.clave(c) === Catalogo.clave(tipo0))) clases.push(tipo0);
+    const desde0 = x0 ? x0.desde || '' : pre.desde || hoyISO, meses0 = x0 ? '' : pre.meses || '', hasta0 = x0 ? x0.hasta || '' : meses0 ? this.mas(desde0, +meses0) : '';
+    const us = Datos.unidades.filter(v => this.conGarantias(v)).sort((a, b) => String(a.placa).localeCompare(String(b.placa)));
+    ProvFact.traer();
+    const provs = [...new Set((ProvFact.lista || []).map(p => p.nombre).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const m = Modal.abrir({
+      titulo: x0 ? 'Editar garantía' : 'Agregar garantía', sinFoco: true,
+      sub: u ? esc(UI.placaTxt(u) + ' · ' + (UI.nombre(u) || TIPOS[u.tipo].nombre)) : 'El vehículo nuevo, la batería o cualquier repuesto con garantía',
+      cuerpo: (r ? '<div class="alert a-info mb16">' + Icon('tool') + '<div><b>Viene del arreglo ' + esc(r.numero || r.id) + '</b> · ' + esc(Comp.texto(Comp.de(r)) || 'Cambio de batería') +
+          ', terminado el ' + esc(Fecha.corta(r.salida || hoyISO)) + '. Proveedor y orden tomados del arreglo. Si la batería no tiene garantía, cierre esta ventana.</div></div>' : '') +
+        '<div class="grid g2">' +
+          (u ? '' : '<div class="field"><label>Vehículo</label><select class="inp" id="vgU"><option value="">Escoja el vehículo</option>' +
+            us.map(v => '<option value="' + attr(v.id) + '">' + esc(UI.placaTxt(v) + (UI.nombre(v) ? ' · ' + UI.nombre(v) : '')) + '</option>').join('') + '</select></div>') +
+          '<div class="field"><label>Garantía de</label><select class="inp" id="vgT">' + clases.map(c => '<option' + (Catalogo.clave(c) === Catalogo.clave(tipo0) ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select></div>' +
+          '<div class="field"><label>Detalle <span class="txt-3">(marca, referencia o serial)</span></label><input class="inp" id="vgD" maxlength="100" placeholder="Ej.: MAC Silver 1100 · 2 baterías" value="' + attr(x0 ? x0.detalle || '' : pre.detalle || '') + '"></div>' +
+          '<div class="field"><label>Desde</label><input class="inp" type="date" id="vgDe" value="' + attr(desde0) + '"></div>' +
+          '<div class="field"><label>Cuánto dura <span class="txt-3">(opcional)</span></label><div class="vc-dur"><input class="inp" id="vgN" inputmode="numeric" maxlength="3" placeholder="12" value="' + attr(meses0) + '">' +
+            '<select class="inp" id="vgUd"><option value="1">meses</option><option value="12">años</option></select></div></div>' +
+          '<div class="field"><label>Hasta</label><input class="inp" type="date" id="vgHa" value="' + attr(hasta0) + '"><div class="hint">Se calcula con lo que dura; también se puede escribir</div></div>' +
+          '<div class="field"><label>O hasta los km <span class="txt-3">(opcional)</span></label><input class="inp" id="vgK" inputmode="numeric" maxlength="9" placeholder="Ej.: 150.000" value="' +
+            attr(x0 && x0.hastaKm ? Number(x0.hastaKm).toLocaleString('es-CO') : '') + '"><div class="hint">Para la garantía del vehículo o del motor</div></div>' +
+          '<div class="field"><label>Proveedor <span class="txt-3">(opcional)</span></label><input class="inp" id="vgP" list="vgPl" maxlength="100" placeholder="Escriba o escoja" value="' + attr(x0 ? x0.proveedor || '' : pre.proveedor || '') + '">' +
+            '<datalist id="vgPl">' + provs.map(p => '<option value="' + attr(p) + '">').join('') + '</datalist></div>' +
+          '<div class="field"><label>Orden <span class="txt-3">(opcional)</span></label><input class="inp" id="vgO" maxlength="60" placeholder="Ej.: OC-0567" value="' + attr(x0 ? x0.orden || '' : pre.orden || '') + '"></div>' +
+        '</div>' +
+        '<div class="field"><label>Soporte <span class="txt-3">(la factura o el certificado de garantía)</span></label>' +
+          Dz.html('vgF', 'Suelte aquí el archivo', '<span class="solo-web">o haga clic para escogerlo · PDF o foto</span>', 'application/pdf,image/*', false) + '</div>' +
+        '<div class="field mb0"><label>Nota <span class="txt-3">(opcional)</span></label><input class="inp" id="vgNo" maxlength="200" placeholder="Ej.: se reclama en la sede de Montería" value="' + attr(x0 ? x0.nota || '' : '') + '"></div>',
+      pie: (x0 ? '<button type="button" class="btn btn-ghost btn-del mf-left" data-act="vcQuitar" data-u="' + attr(u.id) + '" data-x="' + attr(x0.id) + '" data-que="ga">' + Icon('trash', '', 14) + 'Quitar</button>' : '') +
+        '<button type="button" class="btn" data-act="cerrarModal">' + (r ? 'No tiene garantía' : 'Cancelar') + '</button><button type="button" class="btn btn-primary" id="vgG" data-act="vcGuardarGa" data-u="' + attr(u ? u.id : '') +
+          '" data-x="' + attr(x0 ? x0.id : '') + '" data-m="' + attr(r ? r.id : '') + '" disabled>' + Icon('check', '', 14) + 'Guardar garantía</button>'
+    });
+    m._sop = x0 ? x0.archivo || null : null;
+    const de = $('#vgDe', m), n = $('#vgN', m), ud = $('#vgUd', m), ha = $('#vgHa', m), k = $('#vgK', m), g = $('#vgG', m);
+    const firma = () => JSON.stringify([($('#vgU', m) || {}).value || '', $('#vgT', m).value, $('#vgD', m).value.trim(), de.value, ha.value, k.value, $('#vgP', m).value.trim(), $('#vgO', m).value.trim(),
+      $('#vgNo', m).value.trim(), m._sop && m._sop.id]);
+    const antes = x0 ? firma() : '';
+    const revisar = () => { g.disabled = Boolean(m._cargando) || !ha.value || ($('#vgU', m) && !$('#vgU', m).value) || firma() === antes; };
+    const ponerHasta = () => { const v = +String(n.value).replace(/\D/g, ''); if (v && de.value) ha.value = this.mas(de.value, v * +ud.value); revisar(); };
+    n.addEventListener('input', () => { const d = n.value.replace(/\D/g, ''); if (d !== n.value) n.value = d; ponerHasta(); });
+    ud.addEventListener('change', ponerHasta);
+    de.addEventListener('change', ponerHasta);
+    de.addEventListener('input', ponerHasta);
+    k.addEventListener('input', () => { const d = k.value.replace(/\D/g, ''); k.value = d ? Number(d).toLocaleString('es-CO') : ''; revisar(); });
+    ['#vgT', '#vgD', '#vgHa', '#vgP', '#vgO', '#vgNo', '#vgU'].forEach(s => { const el = $(s, m); if (el) { el.addEventListener('input', revisar); el.addEventListener('change', revisar); } });
+    this.soporte(m, 'vgF', revisar);
+    revisar();
+  },
+  guardarGarantia(el) {
+    const m = el.closest('.modal-bd'), u = Q.unidad(el.dataset.u || ($('#vgU', m) || {}).value), r = el.dataset.m ? Datos.mantenimientos.find(x => x.id === el.dataset.m) : null;
+    if (!u) { Toast.show('Escoja el vehículo.', 'err'); return; }
+    const desde = $('#vgDe', m).value, hasta = $('#vgHa', m).value;
+    if (!hasta) { Toast.show('Escriba hasta cuándo es la garantía.', 'err'); $('#vgHa', m).focus(); return; }
+    if (desde && hasta < desde) { Toast.show('La fecha hasta queda antes de la fecha desde.', 'err'); $('#vgHa', m).focus(); return; }
+    const km = +$('#vgK', m).value.replace(/\D/g, '');
+    const d = this.limpio({ tipo: $('#vgT', m).value, detalle: $('#vgD', m).value.trim(), desde, hasta, hastaKm: km || null, proveedor: $('#vgP', m).value.trim(), orden: $('#vgO', m).value.trim(),
+      nota: $('#vgNo', m).value.trim(), archivo: m._sop || null });
+    u.garantias = u.garantias || [];
+    const x = el.dataset.x ? u.garantias.find(y => y.id === el.dataset.x) : null;
+    if (x) {
+      ['tipo', 'detalle', 'desde', 'hasta', 'hastaKm', 'proveedor', 'orden', 'nota', 'archivo'].forEach(k2 => { delete x[k2]; });
+      Object.assign(x, d);
+    } else u.garantias.push(Object.assign({ id: this.nuevoId('ga') }, d, r ? { arreglo: r.id, arregloNum: r.numero || r.id } : {}));
+    Modal.cerrar(m);
+    Toast.show('Garantía ' + (x ? 'guardada' : 'registrada') + ': <b>' + esc(d.tipo) + '</b> de <b>' + esc(UI.placaTxt(u)) + '</b>, hasta el ' + esc(Fecha.larga(hasta)) + '.');
+    Router.pintar(true);
+  },
+  /* Quitar un elemento o una garantía mal registrados, después de preguntar */
+  quitar(el) {
+    const u = Q.unidad(el.dataset.u), ga = el.dataset.que === 'ga', l = u && (ga ? u.garantias : u.vencen), x = l && l.find(y => y.id === el.dataset.x);
+    if (!x) return;
+    Modal.abrir({
+      titulo: ga ? 'Quitar la garantía' : 'Quitar ' + x.tipo.toLowerCase(), sub: esc(UI.placaTxt(u)), ancho: 'm-hoja',
+      cuerpo: '<p class="txt-2" style="font-size:13px;line-height:1.5">' + (ga ? 'La garantía de <b>' + esc(x.tipo.toLowerCase()) + '</b>' : '<b>' + esc(x.tipo) + '</b>' + (x.detalle ? ' (' + esc(x.detalle) + ')' : '')) +
+        ' sale de la ficha y de las alertas' + ((x.antes || []).length ? ', con su historial' : '') + '. Sirve si se registró por error' + (ga ? '' : ' o si el vehículo ya no lo lleva') + '.</p>',
+      pie: '<button type="button" class="btn" data-act="cerrarModal">Cancelar</button><button type="button" class="btn btn-danger" data-act="vcQuitarSi" data-u="' + attr(u.id) + '" data-x="' + attr(x.id) +
+        '" data-que="' + (ga ? 'ga' : 'el') + '">' + Icon('trash', '', 14) + 'Quitar</button>'
+    });
+  },
+  quitarSi(el) {
+    const u = Q.unidad(el.dataset.u), ga = el.dataset.que === 'ga';
+    if (!u) return;
+    if (ga) u.garantias = (u.garantias || []).filter(y => y.id !== el.dataset.x); else u.vencen = (u.vencen || []).filter(y => y.id !== el.dataset.x);
+    Modal.cerrarTodo();
+    Persistencia.limpiar();
+    Toast.show('Listo: se quitó de <b>' + esc(UI.placaTxt(u)) + '</b>.');
+    Router.pintar(true);
+  },
+  /* Al terminar un arreglo con el componente «Baterías», la garantía de la batería nueva (si no se anotó ya) */
+  trasArreglo(r) {
+    const u = r && Q.unidad(r.unidad);
+    if (!u || !this.conGarantias(u) || r.estado !== 'cerrado' || !Comp.de(r).some(c => /bater/.test(sinTildes(c)))) return;
+    if ((u.garantias || []).some(g => g.arreglo === r.id)) return;
+    const tipo = this.clases().find(c => /bater/.test(sinTildes(c))) || this.clases()[0];
+    const p = Q.repDe(r) || Q.provDe(r), os = (r.ordenes || []).map(id => Compras.porId(id)).filter(Boolean).map(o => o.codigo).filter(Boolean);
+    setTimeout(() => this.ventanaGarantia({ u, arreglo: r, pre: { tipo, desde: r.salida || hoyISO, meses: 12, proveedor: p && p.nombre && p.nombre !== '—' ? p.nombre : '', orden: os.join(', ') } }), 300);
+  },
+
+  /* ---- El dashboard: «Lo que vence», con los documentos, los elementos y las garantías ---- */
+  dashFilas(venc, porv) {
+    const docs = venc.concat(porv).map(x => ({ dias: Fecha.hasta(x.d.vence), pl: x.quien === 'u' ? UI.placaTxt(x.ref) : x.ref.corto || x.ref.nombre, mono: x.quien === 'u', ic: 'shield',
+      t: DOC_TIPOS[x.t].nombre, det: x.e.det, pill: UI.pill(x.e.k, x.e.txt), act: x.quien === 'u' ? 'data-act="irUnidad" data-u="' + x.ref.id + '" data-tab="docs"' : 'data-act="verConductor" data-c="' + x.ref.id + '"' }));
+    const otros = this.alertas().map(({ u, x, e, g }) => ({ dias: Fecha.hasta(x.hasta), pl: UI.placaTxt(u), mono: true, ic: g ? this.icG(x.tipo) : this.icE(x.tipo),
+      t: g ? 'Garantía: ' + x.tipo.toLowerCase() : x.tipo + (x.detalle ? ' · ' + x.detalle : ''), det: e.det, pill: UI.pill(e.k, e.txt), act: 'data-act="irUnidad" data-u="' + attr(u.id) + '" data-tab="venc"' }));
+    const l = docs.concat(otros).sort((a, b) => a.dias - b.dias);
+    return { n: l.length, html: l.length ? l.slice(0, 7).map(r => '<div class="vrow" ' + r.act + '><span class="' + (r.mono ? 'mono ' : '') + 'fs12 trunc" style="font-weight:600">' + esc(r.pl) + '</span>' +
+        '<div style="min-width:0"><b class="trunc vc-dt">' + Icon(r.ic, '', 12) + esc(r.t) + '</b><span class="d">' + esc(r.det) + '</span></div>' + r.pill + '</div>').join('')
+      : UI.empty('shieldOk', 'Todo al día', 'Nada vence en los próximos ' + Config.diasAviso + ' días.') };
+  },
+
+  /* ---- En Catálogo: cuánto dura cada elemento y si lo llevan solo algunos vehículos ---- */
+  catExtras(l, v, i, puede) {
+    if (l.venc !== 'el') return '';
+    const c = this.ajustes(v), meses = +c.meses > 0 ? Math.round(+c.meses) : 12;
+    return '<label class="cat-mes" title="Cuánto dura: pone la fecha hasta al registrarlo o renovarlo">Dura<input type="number" min="1" max="120" class="inp" value="' + meses + '" data-el-meses="' + i + '"' +
+        (puede ? '' : ' disabled') + '>meses</label>' +
+      '<label class="cat-rac" title="Marcado: no todos los vehículos lo llevan, así que no sale como faltante"><input type="checkbox" data-el-opc="' + i + '"' + (c.opcional === 'si' ? ' checked' : '') +
+        (puede ? '' : ' disabled') + '>Solo algunos</label>';
+  },
+  catBind() {
+    $$('[data-el-meses]').forEach(c => c.addEventListener('change', () => {
+      const n = Math.round(+c.value);
+      if (!(n >= 1 && n <= 120)) { Toast.show('Escriba cuántos meses dura: de 1 a 120.', 'err'); return; }
+      const v = this.ajustar(+c.dataset.elMeses, { meses: n });
+      if (v) Toast.show('Listo: <b>' + esc(v) + '</b> dura ' + n + (n === 1 ? ' mes' : ' meses') + '. Se usa al registrarlo o renovarlo.');
+    }));
+    $$('[data-el-opc]').forEach(c => c.addEventListener('change', () => {
+      const v = this.ajustar(+c.dataset.elOpc, { opcional: c.checked ? 'si' : 'no' });
+      if (v) Toast.show(c.checked ? 'Listo: <b>' + esc(v) + '</b> lo llevan solo algunos vehículos; ya no sale como faltante.' : 'Listo: <b>' + esc(v) + '</b> lo debe llevar todo vehículo de carga y maquinaria.');
+    }));
+  },
+  ajustar(i, cambio) {
+    const v = Catalogo.lista('venc.elementos')[i];
+    if (v == null) return null;
+    const k = Catalogo.clave(v), todos = Object.assign({}, Config.vencEl), e = Object.assign({}, todos[k], cambio);
+    todos[k] = e;
+    Config.vencEl = todos;
+    Sincro.tocar();
+    Router.pintar(true);
+    return v;
+  }
+};
+Vistas.vencimientos = () => Venc.vista();
+Vistas.tab_venc = u => Venc.tabFicha(u);
+/* El número rojo del menú: lo que avisa */
+(() => { const c = Q.conteos; Q.conteos = function () { return Object.assign(c.call(this), { venc: Venc.alertas().length }); }; })();
+Object.assign(Acciones, {
+  vcTab(el) { UIState.venc = el.dataset.v; Router.pintar(true); },
+  vcElemento(el) { Venc.ventanaElemento({ u: el.dataset.u ? Q.unidad(el.dataset.u) : null, x: el.dataset.x || '', t: el.dataset.t || '', modo: el.dataset.modo || '' }); },
+  vcGuardarEl(el) { Venc.guardarElemento(el); },
+  vcGarantia(el) { Venc.ventanaGarantia({ u: el.dataset.u ? Q.unidad(el.dataset.u) : null, x: el.dataset.x || '' }); },
+  vcGuardarGa(el) { Venc.guardarGarantia(el); },
+  vcQuitar(el) { Venc.quitar(el); },
+  vcQuitarSi(el) { Venc.quitarSi(el); },
+  vcHistorial(el) { const u = Q.unidad(el.dataset.u), x = u && (u.vencen || []).find(y => y.id === el.dataset.x); if (x) Venc.historial(u, x); },
+  vcArreglo(el) { const r = Datos.mantenimientos.find(x => x.id === el.dataset.m); if (r) Ventanas.caso(r); else Toast.show('Ese arreglo ya no está en Mantenimientos.', 'warn'); }
+});
 /* ---- La pestaña «App de los conductores» (Juan, 13/11/2026: «un apartado bastante completo donde veamos todas las respuestas de
    los conductores de forma bien organizada y limpia. Quiero tener control absoluto de todo eso. Que nuestro referente sea la vista
    del apartado de semana»). Lo que llega de los celulares, por semana: el tablero por camión, la lista por día con todas las horas,
