@@ -1817,6 +1817,52 @@ tr.vc-ven .vc-gt svg{color:var(--text-3)}
 .vc-fg.vc-falta .vc-fg-t > span{color:var(--text-3)}
 .vc-fl-sep{padding:8px 16px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);background:var(--surface-2);border-bottom:1px solid var(--border)}
 .vc-dur{display:flex;gap:6px}
+/* Periódicos (18/11/2026; ver Periodicos): los periódicos arriba, la tabla vehículos × periodos y su ventana */
+.per-tareas{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;margin:4px 0 16px}
+.per-t{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border-strong);border-radius:12px;background:var(--surface);text-align:left;
+  font:inherit;color:inherit;cursor:pointer;min-width:250px}
+.per-t:hover{border-color:var(--brand-400)}
+.per-t.on{border-color:var(--brand-500);box-shadow:0 0 0 3px var(--brand-100)}
+html[data-theme="dark"] .per-t.on{box-shadow:0 0 0 3px var(--accent-soft)}
+.per-t b{display:block;font-size:13.5px;color:var(--text)}
+.per-t span span{display:block;font-size:12px;color:var(--text-3)}
+.per-ic{flex:0 0 34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.per-t .tb-count{margin-left:auto}
+.per-nuevo{align-self:center;font-size:12.5px}
+.per-tbl th.per-s{text-align:center;white-space:nowrap}
+.per-tbl th.per-s span{display:block;font-weight:500;font-size:11px;color:var(--text-3);text-transform:none;letter-spacing:0}
+.per-tbl th.hoy{color:var(--brand-700)}
+html[data-theme="dark"] .per-tbl th.hoy{color:var(--brand-300)}
+.per-tbl td.per-s{text-align:center}
+.per-tbl td.hoy{background:color-mix(in srgb,var(--brand-500) 5%,transparent)}
+.per-c{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:7px;border:1px solid transparent;font:inherit;font-size:12px;font-weight:600;
+  white-space:nowrap;cursor:pointer;background:none}
+.per-c.ok{background:color-mix(in srgb,var(--ok-500) 13%,transparent);color:var(--ok-700)}
+.per-c.no{background:color-mix(in srgb,var(--dang-500) 11%,transparent);color:var(--dang-500)}
+.per-c.falta{border-style:dashed;border-color:var(--warn-500);color:var(--warn-700);background:var(--warn-50)}
+.per-c.mano{background:var(--surface-3);color:var(--text-2)}
+.per-c.antes{color:var(--text-3);font-weight:400;min-width:34px;justify-content:center}
+.per-c.sug{border-style:dashed;border-color:var(--ok-500);color:var(--ok-700);font-weight:500}
+html[data-theme="dark"] .per-c.ok,html[data-theme="dark"] .per-c.sug{color:var(--ok-500)}
+html[data-theme="dark"] .per-c.falta{color:var(--warn-500);background:transparent}
+.per-ley{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--text-3);padding:10px 16px;border-top:1px solid var(--border)}
+.per-ley .per-c{cursor:default}
+.per-fuera{margin-top:10px}
+.per-fuera > span{white-space:nowrap}
+.per-sec{font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 2px}
+.per-sec:first-child{margin-top:0}
+.per-rel{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-top:8px}
+.per-rel.sug{border-color:var(--ok-500);background:color-mix(in srgb,var(--ok-500) 6%,transparent)}
+.per-rel.hecho{background:var(--surface-2)}
+.per-rel .t{flex:1;min-width:0;font-size:13px}
+.per-rel .t > span{display:block;font-size:12px;color:var(--text-3)}
+.per-rel .sugt{display:inline-flex;align-items:center;gap:4px;margin-top:3px;font-size:11px;font-weight:700;color:var(--ok-700)}
+.per-mano{margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}
+.per-f{display:flex;align-items:center;gap:4px;color:var(--accent)}
+.cat-op.cat-per{flex-wrap:wrap}
+.cat-per .cat-per-x{order:2;flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:2px 0 2px}
+.cat-mes select.inp{width:auto;min-width:104px;padding:4px 6px;height:30px}
+.cat-mes .inp.cat-per-c{width:170px}
 /* La foto de la garantía, como la de un perfil (Juan, 18/11/2026): pequeña en las listas; con un clic, en grande */
 .vc-foto{display:grid;place-items:center;flex:0 0 auto;width:38px;height:38px;padding:0;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);
   color:var(--text-3);overflow:hidden;cursor:zoom-in}
@@ -3548,6 +3594,7 @@ const Icon = (() => {
     image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
     idcard: '<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h5M13 14h3"/>',
     tarjeta: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
+    nieve: '<path d="M12 2v20M4.9 6.5l14.2 11M19.1 6.5l-14.2 11M9 4l3 2 3-2M9 20l3-2 3 2"/>',
     checkSquare: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
     send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>',
     pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
@@ -3868,6 +3915,8 @@ const Config = {
   rutasLiq: {},
   /* Lo de cada elemento con vencimiento (13/11/2026; ver Venc.ajustes): clave → { meses, opcional: 'si' | 'no' } */
   vencEl: {},
+  /* Lo de cada periódico (18/11/2026; ver Periodicos.ajustes): clave → { cada, por, tipos, comp, fuera } */
+  periodicos: {},
   req: { carga: ['soat', 'tecno', 'tarjeta', 'vin', 'poliza'], maquinaria: ['tarjeta'], remolque: ['registro'], canoa: ['patente'] },
   comparendos: ['carga'],
   /* Los planos de mantenimiento: solo lo que se cambió en Configuración (el
@@ -3960,7 +4009,9 @@ const Catalogo = {
     { id: 'sintomas', titulo: 'Síntomas del taller', sintomas: true, inicial: () => Sintomas.INICIAL },
     /* Vencimientos y garantías (Juan, 13/11/2026; ver Venc): lo que vence en cada vehículo y de qué es cada garantía */
     { id: 'venc.elementos', titulo: 'Elementos con vencimiento', venc: 'el', inicial: ['Extintor', 'Botiquín', 'Kit de derrames'] },
-    { id: 'garantias.tipos', titulo: 'Clases de garantía', venc: 'ga', inicial: ['Vehículo nuevo', 'Batería', 'Llantas', 'Motor', 'Otro'] }
+    { id: 'garantias.tipos', titulo: 'Clases de garantía', venc: 'ga', inicial: ['Vehículo nuevo', 'Batería', 'Llantas', 'Motor', 'Otro'] },
+    /* Lo que se hace cada semana o cada mes a cada vehículo (Juan, 18/11/2026; ver Periodicos) */
+    { id: 'periodicos', titulo: 'Periódicos', per: true, inicial: ['Engrase general', 'Aire acondicionado'] }
   ],
   def(id) { return this.LISTAS.find(l => l.id === id) || null; },
   inicial(l) { return (l.tipo ? TIPOS[l.tipo].clases : typeof l.inicial === 'function' ? l.inicial() : l.inicial).slice(); },
@@ -3977,6 +4028,7 @@ const Catalogo = {
       : l.ruta ? 'El tipo interno de cada ruta, como en el Excel de la programación'
       : l.venc === 'el' ? 'Lo que vence en cada vehículo (Vencimientos y la ficha), con cuánto dura y si lo llevan todos'
       : l.venc === 'ga' ? 'De qué es cada garantía, en la ficha del vehículo'
+      : l.per ? 'Lo que se hace cada semana o cada mes a cada vehículo (Mantenimientos → Periódicos): cada cuánto, a qué vehículos y el componente que lo reconoce'
       : 'La categoría al registrar un conductor y en el formulario del preoperacional';
   },
   /* Cuántos registros tienen una opción */
@@ -3985,11 +4037,12 @@ const Catalogo = {
       : l.ruta ? Datos.rutas.filter(r => r[l.ruta] === valor).length
       : l.venc === 'el' ? Datos.unidades.filter(u => (u.vencen || []).some(x => x.tipo === valor)).length
       : l.venc === 'ga' ? Datos.unidades.reduce((s, u) => s + (u.garantias || []).filter(x => x.tipo === valor).length, 0)
+      : l.per ? Periodicos.usos(valor)
       : Datos.conductores.filter(c => c.cat === valor).length;
   },
   usosTxt(l, n) {
     return n + ' ' + (l.tipo ? (n === 1 ? 'unidad' : 'unidades') : l.ruta ? (n === 1 ? 'ruta' : 'rutas') : l.venc === 'el' ? (n === 1 ? 'vehículo' : 'vehículos')
-      : l.venc === 'ga' ? (n === 1 ? 'garantía' : 'garantías') : (n === 1 ? 'conductor' : 'conductores'));
+      : l.venc === 'ga' ? (n === 1 ? 'garantía' : 'garantías') : l.per ? (n === 1 ? 'vez registrado' : 'veces registrado') : (n === 1 ? 'conductor' : 'conductores'));
   },
   /* «las 3 unidades que la tienen»; con «conserva», «Las 3 unidades que la tienen la conservan» */
   quienes(l, n, conserva) {
@@ -3997,6 +4050,7 @@ const Catalogo = {
       : l.ruta ? (n === 1 ? 'la ruta que la tiene' : 'las ' + n + ' rutas que la tienen')
       : l.venc === 'el' ? (n === 1 ? 'el vehículo que la tiene' : 'los ' + n + ' vehículos que la tienen')
       : l.venc === 'ga' ? (n === 1 ? 'la garantía que la tiene' : 'las ' + n + ' garantías que la tienen')
+      : l.per ? (n === 1 ? 'el registro que lo tiene' : 'los ' + n + ' registros que lo tienen')
       : (n === 1 ? 'el conductor que la tiene' : 'los ' + n + ' conductores que la tienen');
     return conserva ? t.charAt(0).toUpperCase() + t.slice(1) + (n === 1 ? ' la conserva' : ' la conservan') : t;
   },
@@ -4011,9 +4065,12 @@ const Catalogo = {
     if (est && kv !== kn) { const todos = Object.assign({}, Config.tiposRuta); todos[kn] = est; delete todos[kv]; Config.tiposRuta = todos; }
     /* Y lo que dura un elemento con vencimiento */
     if (l.venc === 'el' && kv !== kn && (Config.vencEl || {})[kv]) { const t2 = Object.assign({}, Config.vencEl); t2[kn] = t2[kv]; delete t2[kv]; Config.vencEl = t2; }
+    /* Y lo de cada periódico (ver Periodicos) */
+    if (l.per && kv !== kn && (Config.periodicos || {})[kv]) { const t3 = Object.assign({}, Config.periodicos); t3[kn] = t3[kv]; delete t3[kv]; Config.periodicos = t3; }
     if (enRegistros) {
       if (l.tipo) Datos.unidades.forEach(u => { if (u.tipo === l.tipo && u.clase === viejo) { u.clase = nuevo; n++; } });
       else if (l.ruta) Datos.rutas.forEach(r => { if (r[l.ruta] === viejo) { r[l.ruta] = nuevo; n++; } });
+      else if (l.per) n = Periodicos.renombrar(viejo, nuevo);
       else if (l.venc) Datos.unidades.forEach(u => ((l.venc === 'el' ? u.vencen : u.garantias) || []).forEach(x => { if (x.tipo === viejo) { x.tipo = nuevo; n++; } }));
       else Datos.conductores.forEach(c => { if (c.cat === viejo) { c.cat = nuevo; n++; } });
     }
@@ -6564,7 +6621,7 @@ const Compras = {
      de fecha más cercana primero. Si todavía no han llegado, se piden y la
      lista se pinta cuando lleguen. */
   /* tipos: solo las de esos tipos (ver TallerRep); vacia: lo que se dice si no hay */
-  escoger(caja, u, fecha, r, tipos, vacia) {
+  escoger(caja, u, fecha, r, tipos, vacia, op) {
     if (!caja || !u) return;
     const dibujar = fin => {
       if (!document.body.contains(caja)) return;
@@ -6581,12 +6638,14 @@ const Compras = {
          libres. Se pueden marcar igual: al guardar pasan a este (ver ponerOrdenes) */
       const li = this.de(u).filter(o => !tipos || tipos.includes(o.tipo)), arriba = caja.scrollTop;
       caja.innerHTML = li.length ? li.map(o => {
-        const otro = this.arregloDe(o, r), f = otro ? Fecha.num(otro.fecha) : '';
-        const ya = !otro ? '' : otro.tipo === 'preventivo' ? 'Ya está en el preventivo del ' + f : 'Ya está en ' + (otro.numero ? otro.numero + ' · ' + f : 'el arreglo del ' + f);
-        return '<label class="oc-op' + (otro ? ' ya' : '') + '"' + (otro ? ' title="' + attr(ya + '. Si la marca aquí, al guardar pasa a este.') + '"' : '') + '>' +
+        /* Con «op» (la garantía, ver Venc.ordenesOp): dónde más está, sin que al marcarla salga de allá */
+        const otro = op ? null : this.arregloDe(o, r), f = otro ? Fecha.num(otro.fecha) : '';
+        const ya = op ? op.ya(o) : !otro ? '' : otro.tipo === 'preventivo' ? 'Ya está en el preventivo del ' + f : 'Ya está en ' + (otro.numero ? otro.numero + ' · ' + f : 'el arreglo del ' + f);
+        const pasa = op ? op.pasa : 'Al guardar, pasa a este.';
+        return '<label class="oc-op' + (ya ? ' ya' : '') + '"' + (ya ? ' title="' + attr(ya + '. ' + (op ? op.titulo : 'Si la marca aquí, al guardar pasa a este.')) + '"' : '') + '>' +
           '<input type="checkbox" value="' + attr(o.orden_id) + '"' + (marcadas.includes(o.orden_id) ? ' checked' : '') + '>' +
           '<span class="t"><span><b class="mono">' + esc(o.codigo) + '</b> · ' + esc(o.fecha ? Fecha.num(o.fecha) : 'sin fecha') + ' · ' + esc(o.proveedor || this.resumen(o)) + '</span>' +
-          (otro ? '<span class="ya-n"><span class="ya-tag">' + esc(ya) + '</span><span class="ya-pasa">Al guardar, pasa a este.</span></span>' : '') + '</span>' +
+          (ya ? '<span class="ya-n"><span class="ya-tag">' + esc(ya) + '</span>' + (pasa ? '<span class="ya-pasa">' + esc(pasa) + '</span>' : '') + '</span>' : '') + '</span>' +
           '<span class="v">' + esc(Money.format(o.valor)) + '</span>' + this.pill(o) +
           '<button type="button" class="btn btn-sm btn-ghost btn-icon oc-ver" data-act="verOrden" data-o="' + attr(o.orden_id) + '" title="Ver la orden: lo que dice en Facturación" aria-label="Ver la orden">' +
             Icon('eye', '', 14) + '</button></label>';
@@ -7187,7 +7246,7 @@ const ExcelMant = {
     const items = os.filter(o => o.tipo !== 'SERVICIO').reduce((t, o) => t.concat(o.items), [])
       .map(x => x.descripcion + (x.cantidad > 1 ? ' × ' + x.cantidad : '')).filter(x => x.trim());
     const nota = [l.partido || !v.total ? '' : 'Taller y repuestos en un solo valor', prog ? 'Cita: ' + Programado.txt(Programado.de(m), true) : '',
-      Cubre.excel(m), Pendiente.de(m).map(k => Pendiente.NOMBRE[k]).join(', '),
+      Cubre.excel(m), Periodicos.excel(m), Pendiente.de(m).map(k => Pendiente.NOMBRE[k]).join(', '),
       Compras.malas(m) ? 'Tiene una orden que ya no está en Facturación o es de otro vehículo' : ''];
     return [m.numero || m.id, this.FLOTA, m.tipo === 'preventivo' ? 'Preventivo' : 'Correctivo', this.ESTADOS[m.estado] || m.estado,
       u ? this.vehiculo(u) : '(sin vehículo)', u ? u.clase || '' : '', m.fecha, m.horaEntrada || (prog && m.programado ? m.programado.h : '') || '',
@@ -11764,7 +11823,7 @@ const Vistas = {
             '<span class="link" data-ir="aceite">Revisar</span></span>' : '' }) +
         UI.card('Cumplimiento del mes', cum('Inspecciones visuales al día', inspOk, u.length, 'inspecciones') +
           cum('Revisión de comparendos de ' + mesTxt, compRev, compU.length, 'comparendos') +
-          cum('Dotación revisada en ' + mesTxt, dotOk, conDot.length, 'flota'), { flush: true, sub: Fecha.mes() }) +
+          cum('Dotación revisada en ' + mesTxt, dotOk, conDot.length, 'flota') + Periodicos.dash(), { flush: true, sub: Fecha.mes() }) +
       '</div>' +
       '<div class="mb16">' + historicoC + '</div>' +
       '<div class="grid g2 mb16">' + consumo + rendimiento + '</div>' +
@@ -13626,10 +13685,13 @@ Object.assign(Vistas, {
       '<button class="btn btn-primary" data-act="nuevoCorrectivo">' + Icon('camera', '', 14) + 'Correctivo</button>');
     /* «Novedades», con cuántas faltan por atender (Juan, 04/11/2026) */
     Novedades.pedir();
-    const nPend = Novedades.listo() ? NovLista.pendientes().length : 0;
-    const tabs = '<div class="tabs">' + [['vehiculos', 'Por vehículo', 'truck'], ['novedades', 'Novedades', 'warn'], ['historial', 'Taller SINUGRAVAS', 'tool']].map(t => '<div class="tab tab-ic' +
+    const nPend = Novedades.listo() ? NovLista.pendientes().length : 0, nPer = Periodicos.faltanTodos();
+    const tabs = '<div class="tabs">' + [['vehiculos', 'Por vehículo', 'truck'], ['novedades', 'Novedades', 'warn'], ['historial', 'Taller SINUGRAVAS', 'tool'], ['periodicos', 'Periódicos', 'calendar']].map(t => '<div class="tab tab-ic' +
       (UIState.mantTab === t[0] ? ' active' : '') + '" data-act="tabMant" data-v="' + t[0] + '">' + Icon(t[2], '', 14) + t[1] +
-      (t[0] === 'novedades' && nPend ? '<span class="tb-count">' + nPend + '</span>' : '') + '</div>').join('') + '</div>';
+      (t[0] === 'novedades' && nPend ? '<span class="tb-count">' + nPend + '</span>' : '') +
+      /* Los que faltan este periodo, de todos los periódicos (ver Periodicos) */
+      (t[0] === 'periodicos' && nPer ? '<span class="tb-count">' + nPer + '</span>' : '') + '</div>').join('') + '</div>';
+    if (UIState.mantTab === 'periodicos') return { titulo: 'Mantenimientos', sub: 'Lo que se hace cada semana o cada mes', html: head + tabs + Periodicos.vista() };
     if (UIState.mantTab === 'novedades') return { titulo: 'Mantenimientos', sub: 'Las novedades de todos los vehículos', html: head + tabs + NovLista.vista(),
       despues: () => NovLista.despues() };
     if (UIState.mantTab !== 'historial') return { titulo: 'Mantenimientos', sub: 'Por vehículo, con el plano de cada uno', html: head + tabs + Plano.vistaFlota(),
@@ -13768,7 +13830,7 @@ Object.assign(Vistas, {
             '<td class="m-uni" data-act="verVehiculo" data-u="' + attr(u.id) + '" title="Ver el vehículo, su conductor y su remolque">' +
               UI.unidadCelda(u, (cd => '<span class="who-c' + (cd ? '' : ' sin') + '">' + Icon('user', '', 11) + esc(cd ? cd.nombre : 'Sin conductor') + '</span>')(Q.conductorDe(u)),
                 MantRemolque.junto(m)) + '</td>' +
-            '<td>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + '</td>' +
+            '<td>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + Periodicos.fila(m) + '</td>' +
             '<td title="' + attr([m.falla ? 'Qué pasó: ' + m.falla : Avances.titulo(m), como, m.lectura, partes.join(', ')].concat(novs).filter(Boolean).join('\n')) + '">' +
               '<div class="m-trab m-que">' + esc(que) + '</div>' + (abajo ? '<div class="dias m-1l m-trab">' + esc(abajo) + '</div>' : '') + '</td>' +
             /* Si el de repuestos es el taller de su OS, «Pasarlo al taller» (ver RepTaller) */
@@ -14672,8 +14734,8 @@ Object.assign(Vistas, {
       /* Si sus viajes llevan los racimos, junto al peso en báscula (Juan, 10/11/2026); sin marcar nada, los que dicen fruta o racimo */
       const rac = !conEstilo ? '' : '<label class="cat-rac" title="' + (puede ? 'Marcado: sus viajes llevan el número de racimos, junto al peso en báscula'
           : 'Si sus viajes llevan los racimos') + '"><input type="checkbox" data-tipo-rac="' + i + '"' + (Rutas.racimos(v) ? ' checked' : '') + (puede ? '' : ' disabled') + '>Racimos</label>';
-      return '<div class="cat-op' + (conEstilo ? ' cat-tipo' : '') + '" data-k="' + attr(Catalogo.clave(v)) + '">' + estilo + '<div class="cat-v"><b>' + esc(v) + '</b><span>' +
-        (n ? Catalogo.usosTxt(l, n) : 'Sin uso') + '</span></div>' + rac + color + Venc.catExtras(l, v, i, puede) +
+      return '<div class="cat-op' + (conEstilo ? ' cat-tipo' : '') + (l.per ? ' cat-per' : '') + '" data-k="' + attr(Catalogo.clave(v)) + '">' + estilo + '<div class="cat-v"><b>' + esc(v) + '</b><span>' +
+        (n ? Catalogo.usosTxt(l, n) : 'Sin uso') + '</span></div>' + rac + color + Venc.catExtras(l, v, i, puede) + Periodicos.catExtras(l, v, i, puede) +
         (puede ? '<div class="cat-acc">' + (img ? btn('catTipoSinImg', 'x', 'Quitar la imagen', i) : '') +
           (propio ? btn('catTipoColorBase', 'refresh', 'Volver al color de siempre', i) : '') + btn('catSubir', 'arriba', 'Subir', i, i ? '' : ' disabled') + btn('catBajar', 'abajo', 'Bajar', i, i < items.length - 1 ? '' : ' disabled') +
           btn('catRenombrar', 'lapiz', 'Cambiar el nombre', i) + btn('catQuitar', 'trash', 'Quitar', i, items.length > 1 ? '' : ' disabled') + '</div>' : '') + '</div>';
@@ -14685,7 +14747,9 @@ Object.assign(Vistas, {
       nuevo + '<div id="catOps">' + filas + '</div><div class="cat-vacio txt-3 fs12" id="catNada" hidden>Ninguna opción coincide con la búsqueda.</div>',
       { flush: true, sub: esc(Catalogo.usoTxt(l)),
         pie: puede && cambiada ? '<button type="button" class="btn btn-sm btn-ghost" data-act="catRestaurar" data-l="' + l.id + '">' + Icon('refresh', '', 12) + 'Restaurar los valores iniciales</button>'
-          : Icon('info', '', 13) + '<span>' + (puede && l.venc === 'el' ? 'Cuánto dura cada elemento pone la fecha hasta al registrarlo o renovarlo. Con «Solo algunos», no todos los vehículos ' +
+          : Icon('info', '', 13) + '<span>' + (puede && l.per ? 'Cada periódico se cumple con una entrada al taller relacionada (o hecha sin entrada) en esa semana o ese mes. ' +
+            'Las entradas con su componente se sugieren para relacionarlas. «Cada 2 semanas» o «cada 3 meses» cuentan por bloques de ese tamaño.'
+            : puede && l.venc === 'el' ? 'Cuánto dura cada elemento pone la fecha hasta al registrarlo o renovarlo. Con «Solo algunos», no todos los vehículos ' +
             'lo llevan y no sale como faltante.' : puede && conEstilo ? 'La imagen y el color de cada tipo salen en sus fichas de Rutas. Haga clic en el cuadro o arrastre una imagen encima: se recorta y se achica sola. ' +
             'Con «Racimos» marcado, sus viajes llevan el número de racimos junto al peso en báscula.'
             : puede ? 'Lo que agregue aquí sale enseguida en las listas desplegables, en todos los equipos.'
@@ -14718,6 +14782,8 @@ Object.assign(Vistas, {
         }));
         /* Cuánto dura cada elemento con vencimiento y si lo llevan solo algunos */
         Venc.catBind();
+        /* Cada cuánto, a qué vehículos y el componente de cada periódico */
+        Periodicos.catBind();
         const nueva = $('#catNuevo');
         if (nueva) {
           nueva.focus();
@@ -15195,6 +15261,8 @@ Object.assign(Ventanas, {
     PlanoForm.poner(m, u0, { partes: [o.p || (nov && nov.parte)].filter(Boolean), llantas: o.pos ? [o.pos] : [], novs: nov ? [nov] : [] });
     /* Desde «Cambiar llanta» (área Llantas): el cambio ya escogido */
     LlantaForm.poner(m, u0, o.cambio);
+    /* Desde Periódicos: el vehículo, la fecha, el componente y el último taller que lo hizo (ver Periodicos.alAbrirForm) */
+    if (o.periodico) Periodicos.alAbrirForm(m, u0, o.periodico);
     if (o.cambio) { Comp.poner(m, ['Llantas']); $('#mcT', m).value = 'Cambio de llanta'; }
     if (nov) {
       /* Lo que trae la novedad va en «¿Qué pasó?»; los componentes se escogen (ver Comp) */
@@ -15527,6 +15595,8 @@ Object.assign(Ventanas, {
       '<div class="cs-d"><span class="l">Componentes</span>' + (comps.length ? '<div class="cs-tags">' + comps.map(x => '<span class="ctag">' + esc(x) + '</span>').join('') + '</div>'
         : '<div class="txt-3 fs12">Todavía sin componentes</div>') +
         '<span class="link fs12" data-act="casoComps" data-m="' + attr(r.id) + '">' + (comps.length ? 'Agregar o quitar' : '+ Agregar') + '</span></div>' +
+      /* Si cuenta para un periódico (ver Periodicos) */
+      dato('Periódico', Periodicos.casoTxt(r)) +
       dato('Taller', prov !== '—' ? esc(prov) + Cubre.porGarantia(r) + RepTaller.caso(r) : '') +
       /* El que no se paga desde Flota (ver Cubre): en vez de las órdenes y el valor, cómo se pagó */
       (Cubre.de(r) ? Cubre.caso(r, c) : '<div class="cs-d"><span class="l">Órdenes de Facturación</span>' + (c.esta.length ? c.esta.map(o => '<div class="cs-oc"><b class="mono">' + esc(o.codigo) + '</b>' +
@@ -17274,6 +17344,7 @@ Object.assign(Acciones, {
     TallerRep.poner(r, d);
     Compras.ponerOrdenes(r, d.ordenes);
     Cubre.guardar(r, d);
+    Periodicos.alGuardar(r, m);
     Datos.mantenimientos.push(r);
     /* Y el ingreso del remolque, enlazado (ver MantRemolque) */
     const x = d.remolque && Q.unidad(d.remolque) ? MantRemolque.crear(r, d.remolque) : null;
@@ -22441,6 +22512,7 @@ const Mapa = {
     if (Object.keys(config.tiposRuta || {}).length) poner('configuracion', { clave: 'rutas_tipos', valor: config.tiposRuta });
     if (Object.keys(config.rutasLiq || {}).length) poner('configuracion', { clave: 'rutas_liquidadas', valor: config.rutasLiq });
     if (Object.keys(config.vencEl || {}).length) poner('configuracion', { clave: 'venc_elementos', valor: config.vencEl });
+    if (Object.keys(config.periodicos || {}).length) poner('configuracion', { clave: 'periodicos', valor: config.periodicos });
     poner('configuracion', { clave: 'documentos_obligatorios', valor: config.req });
     poner('configuracion', { clave: 'comparendos', valor: config.comparendos });
     poner('configuracion', { clave: 'planos', valor: config.planos || {} });
@@ -22523,6 +22595,7 @@ const Mapa = {
       tiposRuta: cfg.rutas_tipos && typeof cfg.rutas_tipos === 'object' ? cfg.rutas_tipos : {},
       rutasLiq: cfg.rutas_liquidadas && typeof cfg.rutas_liquidadas === 'object' ? cfg.rutas_liquidadas : {},
       vencEl: cfg.venc_elementos && typeof cfg.venc_elementos === 'object' ? cfg.venc_elementos : {},
+      periodicos: cfg.periodicos && typeof cfg.periodicos === 'object' ? cfg.periodicos : {},
       /* Lo guardado en la nube manda sobre los valores de siempre */
       gps: Object.assign({}, Config.gps, cfg.gps && typeof cfg.gps === 'object' ? cfg.gps : {}),
       req: cfg.documentos_obligatorios || Config.req,
@@ -25262,11 +25335,12 @@ const Venc = {
     });
     m._sops = x0 ? (x0.archivos || (x0.archivo ? [x0.archivo] : [])).map(a => Object.assign({}, a)) : [];
     m._foto = x0 && x0.foto ? Object.assign({}, x0.foto) : null;
-    m._ords = new Set(x0 ? x0.ordenes || [] : pre.ordenes || []);
+    /* Las órdenes con la lista de los mantenimientos (ver pintarOrdenes); m._rOrd: las que tenía al abrir */
+    m._rOrd = { id: '', ordenes: (x0 ? x0.ordenes || [] : pre.ordenes || []).slice() };
     m._sin = sin0;
     const de = $('#vgDe', m), n = $('#vgN', m), ud = $('#vgUd', m), ha = $('#vgHa', m), k = $('#vgK', m), g = $('#vgG', m), p = $('#vgP', m);
     const firma = () => JSON.stringify([($('#vgU', m) || {}).value || '', $('#vgT', m).value, $('#vgD', m).value.trim(), de.value, m._sin ? '' : ha.value, m._sin ? '' : k.value,
-      Boolean(m._sin), this.provNombre(p.value), [...m._ords].sort(), $('#vgO', m).value.trim(), $('#vgNo', m).value.trim(), m._sops.map(a => a.id), m._foto && m._foto.id]);
+      Boolean(m._sin), this.provNombre(p.value), this.ordsDe(m).slice().sort(), $('#vgO', m).value.trim(), $('#vgNo', m).value.trim(), m._sops.map(a => a.id), m._foto && m._foto.id]);
     const revisar = () => {
       if (document.body.contains(m)) g.disabled = Boolean(m._cargando) || Boolean(m._fotoCargando) || (!m._sin && !ha.value) || ($('#vgU', m) && !$('#vgU', m).value) || firma() === m._antes;
     };
@@ -25309,14 +25383,12 @@ const Venc = {
     caja.addEventListener('change', e => {
       const i = e.target.closest('input[type="checkbox"]');
       if (!i) return;
-      if (i.checked) m._ords.add(i.value); else m._ords.delete(i.value);
       const x = i.checked && !p.value ? ProvFact.deOrden(Compras.porId(i.value)) : null;
       if (x && [...p.options].some(op => op.value === 'f:' + x.id)) { p.value = 'f:' + x.id; p.dataset.antes = p.value; }
       revisar();
     });
-    if ($('#vgU', m)) $('#vgU', m).addEventListener('change', () => { m._ords.clear(); this.pintarOrdenes(m); revisar(); });
+    if ($('#vgU', m)) $('#vgU', m).addEventListener('change', () => { m._rOrd.ordenes = []; caja.innerHTML = ''; this.pintarOrdenes(m); revisar(); });
     this.pintarOrdenes(m);
-    if (Compras.estado !== 'listo') Compras.traer(true).then(() => { if (document.body.contains(m)) { this.pintarOrdenes(m); revisar(); } });
     /* La foto: se escoge, se arrastra o se cambia */
     const fo = $('#vgFo', m);
     const poner = f => {
@@ -25352,33 +25424,49 @@ const Venc = {
     if (v.startsWith('v:')) return (Q.proveedor(v.slice(2)) || {}).nombre || '';
     return v.startsWith('t:') ? v.slice(2) : '';
   },
-  /* Las órdenes del vehículo para marcar. La primera vez que llegan, las del texto de antes («OC-0567, OS-0123») quedan marcadas y en el
-     campo de abajo solo lo que no está en la lista */
+  /* Las órdenes del vehículo para marcar, con la misma lista de los mantenimientos (Juan, 18/11/2026: «que me muestran en grises las que
+     ya se han escogido para otras cosas… Utilicemos el mismo sistema»): la más reciente arriba, en su cuadro con su barra; las que ya están
+     en un arreglo o en otra garantía, en gris con dónde están. Se pueden marcar igual: de allá no salen. La primera vez que llegan, las del
+     texto de antes («OC-0567, OS-0123») quedan marcadas y en el campo de abajo solo lo que no está en la lista */
   pintarOrdenes(m) {
     const caja = $('#vgOl', m), u = Q.unidad(($('#vgG', m) || {}).dataset.u || ($('#vgU', m) || {}).value);
     if (!caja) return;
     if (!u) { caja.innerHTML = '<div class="oc-vacia">Escoja el vehículo para ver sus órdenes.</div>'; return; }
-    if (Compras.estado !== 'listo') {
-      caja.innerHTML = '<div class="oc-vacia">' + (Compras.estado === 'error' ? Icon('warn', '', 14) + 'No se pudieron traer las órdenes de Facturación. Escriba el número abajo.'
-        : '<span class="spin"></span>Trayendo las órdenes de Facturación…') + '</div>';
-      return;
-    }
-    const li = Compras.de(u).slice().sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')));
+    caja._alPintar = () => this.alPintarOrdenes(m);
+    Compras.escoger(caja, u, '', m._rOrd, null, 'Este vehículo no tiene órdenes en Facturación. Si tiene el número, escríbalo abajo.', this.ordenesOp(m));
+  },
+  alPintarOrdenes(m) {
+    const caja = $('#vgOl', m);
+    if (!caja || !caja.querySelector('input')) return;
     if (!m._ordListas) {
       m._ordListas = true;
-      const txt = $('#vgO', m), cods = txt.value.split(',').map(s => s.trim()).filter(Boolean), quedan = [];
-      cods.forEach(c => { const o = li.find(y => String(y.codigo || '').toUpperCase() === c.toUpperCase()); if (o) m._ords.add(o.orden_id); else quedan.push(c); });
-      li.forEach(o => { if (m._ords.has(o.orden_id)) { const i = quedan.findIndex(c => c.toUpperCase() === String(o.codigo || '').toUpperCase()); if (i >= 0) quedan.splice(i, 1); } });
+      const txt = $('#vgO', m), quedan = [];
+      txt.value.split(',').map(s => s.trim()).filter(Boolean).forEach(c => {
+        const i = $$('input', caja).find(x => String((Compras.porId(x.value) || {}).codigo || '').toUpperCase() === c.toUpperCase());
+        if (i) i.checked = true; else quedan.push(c);
+      });
       txt.value = quedan.join(', ');
       /* Lo de antes, ya marcado, no es un cambio: Guardar sigue apagado */
       if (!m._tocado && m._antes && m._firma) m._antes = m._firma();
     }
-    caja.innerHTML = li.length ? li.map(o => '<label class="oc-op"><input type="checkbox" value="' + attr(o.orden_id) + '"' + (m._ords.has(o.orden_id) ? ' checked' : '') + '>' +
-        '<span class="t"><span><b class="mono">' + esc(o.codigo) + '</b> · ' + esc(o.fecha ? Fecha.num(o.fecha) : 'sin fecha') + ' · ' + esc(o.proveedor || Compras.resumen(o)) + '</span></span>' +
-        '<span class="v">' + esc(Money.format(o.valor)) + '</span>' + Compras.pill(o) +
-        '<button type="button" class="btn btn-sm btn-ghost btn-icon oc-ver" data-act="verOrden" data-o="' + attr(o.orden_id) + '" title="Ver la orden: lo que dice en Facturación" aria-label="Ver la orden">' +
-          Icon('eye', '', 14) + '</button></label>').join('')
-      : '<div class="oc-vacia">Este vehículo no tiene órdenes en Facturación. Si tiene el número, escríbalo abajo.</div>';
+    if (m._alCambiar) m._alCambiar();
+  },
+  /* Lo marcado: lo de la lista y lo que tenía que no salió en ella */
+  ordsDe(m) { const c = $('#vgOl', m); return c ? Compras.leer(c, m._rOrd) : m._rOrd.ordenes.slice(); },
+  /* Dónde más está cada orden: en otra garantía (de cualquier vehículo) o en un arreglo */
+  ordenesOp(m) {
+    const xid = ($('#vgG', m) || {}).dataset.x || '';
+    return {
+      pasa: '', titulo: 'Si la marca aquí, también queda en esta garantía; de allá no sale',
+      ya: o => {
+        for (const v of Datos.unidades) {
+          const g = (v.garantias || []).find(y => y.id !== xid && (y.ordenes || []).includes(o.orden_id));
+          if (g) return 'Ya está en la garantía de ' + String(g.tipo || 'otra cosa').toLowerCase() + (v.id !== o.flota_id ? ' · ' + UI.placaTxt(v) : '');
+        }
+        const a = Compras.arregloDe(o, null), f = a ? Fecha.num(a.fecha) : '';
+        return !a ? '' : a.tipo === 'preventivo' ? 'Ya está en el preventivo del ' + f : 'Ya está en ' + (a.numero ? a.numero + ' · ' + f : 'el arreglo del ' + f);
+      }
+    };
   },
   /* La foto de la ventana, como la de un perfil */
   pintarFoto(m) {
@@ -25396,7 +25484,7 @@ const Venc = {
     if (!sin && !hasta) { Toast.show('Escriba hasta cuándo es la garantía.', 'err'); $('#vgHa', m).focus(); return; }
     if (!sin && desde && hasta < desde) { Toast.show('La fecha hasta queda antes de la fecha desde.', 'err'); $('#vgHa', m).focus(); return; }
     const km = sin ? 0 : +$('#vgK', m).value.replace(/\D/g, '');
-    const ids = [...m._ords], cods = ids.map(id => Compras.porId(id)).filter(Boolean).map(o => o.codigo).filter(Boolean), escrita = $('#vgO', m).value.trim();
+    const ids = this.ordsDe(m), cods = ids.map(id => Compras.porId(id)).filter(Boolean).map(o => o.codigo).filter(Boolean), escrita = $('#vgO', m).value.trim();
     const d = this.limpio({ tipo: $('#vgT', m).value, detalle: $('#vgD', m).value.trim(), desde, hasta: hasta || null, hastaKm: km || null,
       sinGarantia: sin || null, motivo: sin ? 'Garantía sobre garantía' : null, proveedor: this.provNombre($('#vgP', m).value),
       orden: cods.concat(escrita ? [escrita] : []).join(', '), ordenes: ids.length ? ids : null, nota: $('#vgNo', m).value.trim(),
@@ -25489,6 +25577,420 @@ const Venc = {
     return v;
   }
 };
+/* Periódicos (Juan, 18/11/2026: «a los vehículos hay que engrasarlos cada semana, una vez a la semana mínimo… así como… los
+   mantenimientos mes a mes… de aire acondicionado… van saliendo más cosas periódicas»). Cada periódico es una opción de la lista
+   «Periódicos» del Catálogo, con lo suyo en Config.periodicos (clave → { cada, por: 'semana' | 'mes', tipos, comp, fuera }). Se cumple
+   con una entrada al taller relacionada (r.periodicos, con el nombre, como los demás registros del Catálogo) o, a veces, sin entrada
+   (u.periodicos: { id, p, f, nota }). La semana va de lunes a domingo, como en Rutas; el mes, el del calendario; «cada 2 semanas» o «cada
+   3 meses», bloques seguidos de ese tamaño. Los vehículos de terceros no cuentan. Las entradas que tienen su componente (o lo dicen) se
+   sugieren, pero cuenta solo lo relacionado */
+const Periodicos = {
+  INICIAL: {
+    'engrase general': { cada: 1, por: 'semana', tipos: ['carga', 'remolque', 'maquinaria'], comp: 'Engrase' },
+    'aire acondicionado': { cada: 1, por: 'mes', tipos: ['carga'], comp: 'Aire acondicionado' }
+  },
+  /* Cuántos periodos se ven: el de ahora y los anteriores */
+  N: 6,
+  TIPOS: [['carga', 'Carga'], ['remolque', 'Remolques'], ['maquinaria', 'Maquinaria'], ['canoa', 'Canoas']],
+  ORDEN: { carga: 0, remolque: 1, maquinaria: 2, canoa: 3 },
+  MESES: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
+  MESES_L: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+  DIAS: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
+  lista() { return Catalogo.lista('periodicos'); },
+  ajustes(p) {
+    const k = Catalogo.clave(p), c = Object.assign({ cada: 1, por: 'semana', tipos: ['carga'], comp: p, fuera: [] }, this.INICIAL[k], (Config.periodicos || {})[k]);
+    c.cada = Math.min(12, Math.max(1, Math.round(+c.cada) || 1));
+    if (c.por !== 'mes') c.por = 'semana';
+    if (!Array.isArray(c.tipos)) c.tipos = ['carga'];
+    if (!Array.isArray(c.fuera)) c.fuera = [];
+    if (!String(c.comp || '').trim()) c.comp = p;
+    return c;
+  },
+  ajustar(p, cambio) {
+    const k = Catalogo.clave(p), todos = Object.assign({}, Config.periodicos);
+    todos[k] = Object.assign({}, (Config.periodicos || {})[k], typeof cambio === 'function' ? cambio(this.ajustes(p)) : cambio);
+    Config.periodicos = todos;
+    Sincro.tocar();
+    Router.pintar(true);
+  },
+  /* El que se ve: el escogido o el primero */
+  actual() { const l = this.lista(); return l.includes(UIState.perK) ? UIState.perK : l[0] || ''; },
+  icono(p) { const k = Catalogo.clave(p); return /aire|clima/.test(k) ? 'nieve' : /engras|grasa|lubric/.test(k) ? 'gota' : 'calendar'; },
+  cadaTxt: c => (c.cada === 1 ? (c.por === 'mes' ? 'Cada mes' : 'Cada semana') : 'Cada ' + c.cada + (c.por === 'mes' ? ' meses' : ' semanas')),
+  tiposTxt(c) { const l = this.TIPOS.filter(t => c.tipos.includes(t[0])).map(t => t[1].toLowerCase()); return l.length ? Cubre.lista(l) : 'ningún vehículo'; },
+  ahoraTxt: c => (c.por === 'mes' ? (c.cada === 1 ? 'este mes' : 'este periodo') : c.cada === 1 ? 'esta semana' : 'este periodo'),
+  /* ---- Los periodos ---- */
+  periodo(c, f) {
+    const d = Fecha.parse(f);
+    if (c.por === 'mes') {
+      const m0 = d.getMonth() - (d.getMonth() % c.cada);
+      return { ini: Fecha.iso(new Date(d.getFullYear(), m0, 1)), fin: Fecha.iso(new Date(d.getFullYear(), m0 + c.cada, 0)) };
+    }
+    /* Las semanas, desde el lunes 5 de enero de 2026: con «cada 2», bloques de dos semanas seguidas */
+    const l = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7)), sem = Math.round((l - new Date(2026, 0, 5)) / 6048e5);
+    const s0 = sem - (((sem % c.cada) + c.cada) % c.cada);
+    return { ini: Fecha.iso(new Date(2026, 0, 5 + s0 * 7)), fin: Fecha.iso(new Date(2026, 0, 5 + s0 * 7 + c.cada * 7 - 1)) };
+  },
+  /* Los últimos N, el de ahora al final */
+  periodos(c) {
+    const out = [];
+    let f = hoyISO;
+    for (let i = 0; i < this.N; i++) {
+      const per = this.periodo(c, f);
+      out.unshift(per);
+      const d = Fecha.parse(per.ini);
+      d.setDate(d.getDate() - 1);
+      f = Fecha.iso(d);
+    }
+    return out;
+  },
+  esHoy: per => per.ini <= hoyISO && hoyISO <= per.fin,
+  /* «16 – 22 nov», «26 oct – 1 nov», «noviembre», «oct – dic» */
+  perTxt(c, per) {
+    const a = Fecha.parse(per.ini), b = Fecha.parse(per.fin), M = this.MESES, anio = a.getFullYear() !== HOY.getFullYear() ? ' ' + a.getFullYear() : '';
+    if (c.por === 'mes') return c.cada === 1 ? this.MESES_L[a.getMonth()] + anio : M[a.getMonth()] + ' – ' + M[b.getMonth()] + anio;
+    return a.getMonth() === b.getMonth() ? a.getDate() + ' – ' + b.getDate() + ' ' + M[b.getMonth()] : a.getDate() + ' ' + M[a.getMonth()] + ' – ' + b.getDate() + ' ' + M[b.getMonth()];
+  },
+  /* «la semana del 16 al 22 de noviembre», «noviembre de 2026» */
+  perLargo(c, per) {
+    const a = Fecha.parse(per.ini), b = Fecha.parse(per.fin), L = this.MESES_L;
+    if (c.por === 'mes') return c.cada === 1 ? L[a.getMonth()] + ' de ' + a.getFullYear() : 'de ' + L[a.getMonth()] + ' a ' + L[b.getMonth()] + ' de ' + b.getFullYear();
+    return (c.cada === 1 ? 'la semana del ' : 'las semanas del ') + a.getDate() + (a.getMonth() === b.getMonth() ? '' : ' de ' + L[a.getMonth()]) + ' al ' + b.getDate() + ' de ' + L[b.getMonth()];
+  },
+  diaTxt(c, f) { const d = Fecha.parse(f); return c.por === 'mes' ? d.getDate() + ' ' + this.MESES[d.getMonth()] : this.DIAS[d.getDay()] + ' ' + d.getDate(); },
+  diaLargo(f) { const d = Fecha.parse(f); return this.DIAS[d.getDay()] + ' ' + d.getDate() + ' ' + this.MESES[d.getMonth()]; },
+  /* El día para una entrada nueva o lo hecho a mano: hoy, si cae en el periodo; si ya pasó, su último día */
+  fechaDe: per => (per.ini <= hoyISO && hoyISO <= per.fin ? hoyISO : per.fin < hoyISO ? per.fin : per.ini),
+  /* ---- Los vehículos y lo hecho ---- */
+  unidades(p) {
+    const c = this.ajustes(p), fuera = new Set(c.fuera);
+    return Datos.unidades.filter(u => c.tipos.includes(u.tipo) && !Q.tercero(u) && !fuera.has(u.id))
+      .sort((a, b) => (this.ORDEN[a.tipo] - this.ORDEN[b.tipo]) || String(a.placa || '').localeCompare(String(b.placa || '')));
+  },
+  fuera(p) { const c = this.ajustes(p); return c.fuera.map(id => Q.unidad(id)).filter(u => u && c.tipos.includes(u.tipo) && !Q.tercero(u)); },
+  es: (l, p) => (l || []).some(x => Catalogo.clave(x) === Catalogo.clave(p)),
+  /* Lo que cumple un periodo: las entradas al taller relacionadas y lo hecho sin entrada */
+  hechos(p, u, per) {
+    const es = Datos.mantenimientos.filter(r => r.unidad === u.id && r.estado !== 'programado' && this.es(r.periodicos, p) && r.fecha >= per.ini && r.fecha <= per.fin)
+      .map(r => ({ r, f: r.fecha }));
+    const ma = (u.periodicos || []).filter(x => x && Catalogo.clave(x.p) === Catalogo.clave(p) && x.f >= per.ini && x.f <= per.fin).map(x => ({ x, f: x.f }));
+    return es.concat(ma).sort((a, b) => a.f.localeCompare(b.f));
+  },
+  /* Si una entrada parece de ese periódico: su componente, o lo que dice qué pasó o qué se hizo */
+  parece(r, c) {
+    const k = Catalogo.clave(c.comp);
+    return Boolean(k) && (Comp.de(r).some(x => Catalogo.clave(x).includes(k)) || Catalogo.clave((r.falla || '') + ' ' + (r.trabajo || '')).includes(k));
+  },
+  /* Las entradas al taller de ese vehículo en ese periodo que todavía no son de este periódico; las que parecen, primero */
+  entradas(p, u, per) {
+    const c = this.ajustes(p);
+    return Datos.mantenimientos.filter(r => r.unidad === u.id && r.estado !== 'programado' && r.fecha >= per.ini && r.fecha <= per.fin && !this.es(r.periodicos, p))
+      .map(r => ({ r, s: this.parece(r, c) })).sort((a, b) => (b.s - a.s) || b.r.fecha.localeCompare(a.r.fecha));
+  },
+  /* Las que parecen y no están relacionadas, en los periodos sin nada (las del «¿lun 16?») */
+  sugeridas(p, pers, us) {
+    const out = [];
+    pers.forEach(per => us.forEach(u => { if (!this.hechos(p, u, per).length) { const e = this.entradas(p, u, per).find(x => x.s); if (e) out.push(e.r); } }));
+    return out;
+  },
+  /* Desde cuándo se lleva: el periodo del primer registro de ese periódico (relacionado o a mano); sin ninguno, el de ahora. Lo de antes
+     sale «—» y no cuenta en el cumplimiento, para que lo que no se llevaba no salga como «No se hizo» */
+  inicio(p) {
+    const c = this.ajustes(p), k = Catalogo.clave(p);
+    let f = '';
+    Datos.mantenimientos.forEach(r => { if (r.estado !== 'programado' && this.es(r.periodicos, p) && (!f || r.fecha < f)) f = r.fecha; });
+    Datos.unidades.forEach(u => (u.periodicos || []).forEach(x => { if (x && Catalogo.clave(x.p) === k && (!f || x.f < f)) f = x.f; }));
+    return this.periodo(c, f || hoyISO).ini;
+  },
+  faltan(p) { const c = this.ajustes(p), per = this.periodo(c, hoyISO); return this.unidades(p).filter(u => !this.hechos(p, u, per).length); },
+  faltanTodos() { return this.lista().reduce((s, p) => s + this.faltan(p).length, 0); },
+  usos(p) {
+    return Datos.mantenimientos.filter(r => this.es(r.periodicos, p)).length +
+      Datos.unidades.reduce((s, u) => s + (u.periodicos || []).filter(x => x && Catalogo.clave(x.p) === Catalogo.clave(p)).length, 0);
+  },
+  renombrar(viejo, nuevo) {
+    let n = 0;
+    const kv = Catalogo.clave(viejo);
+    Datos.mantenimientos.forEach(r => { if (this.es(r.periodicos, viejo)) { r.periodicos = r.periodicos.map(x => (Catalogo.clave(x) === kv ? nuevo : x)); n++; } });
+    Datos.unidades.forEach(u => (u.periodicos || []).forEach(x => { if (x && Catalogo.clave(x.p) === kv) { x.p = nuevo; n++; } }));
+    return n;
+  },
+  /* ---- La pestaña ---- */
+  celda(p, c, u, per, i, ini) {
+    const h = this.hechos(p, u, per), dat = ' data-act="perCelda" data-u="' + attr(u.id) + '" data-i="' + i + '"';
+    if (h.length) {
+      const a = h[0], mas = h.length > 1 ? ' +' + (h.length - 1) : '';
+      const tit = a.r ? [a.r.numero, UI.provTxt(a.r) !== '—' ? UI.provTxt(a.r) : '', TallerRep.codigos(a.r)].filter(Boolean).join(' · ') + '. Clic para verla o quitarla'
+        : 'Sin entrada al taller' + (a.x.nota ? ': ' + a.x.nota : '');
+      return '<button type="button" class="per-c ' + (a.r ? 'ok' : 'mano') + '"' + dat + ' title="' + attr(tit) + '">' + Icon('check', '', 11) +
+        esc(this.diaTxt(c, a.f) + (a.r ? '' : ' · a mano') + mas) + '</button>';
+    }
+    const sug = this.entradas(p, u, per).find(e => e.s);
+    if (sug) return '<button type="button" class="per-c sug"' + dat + ' title="' + attr('Tiene una entrada con «' + c.comp + '» (' + (sug.r.numero || 'sin número') + '). Clic para relacionarla') + '">¿' +
+      esc(this.diaTxt(c, sug.r.fecha)) + '?</button>';
+    if (this.esHoy(per)) return '<button type="button" class="per-c falta"' + dat + '>' + Icon('plus', '', 11) + 'Registrar</button>';
+    if (per.fin < ini) return '<button type="button" class="per-c antes"' + dat + ' title="Antes de empezar a llevarlo. Clic para relacionar una entrada de esas fechas">—</button>';
+    return '<button type="button" class="per-c no"' + dat + ' title="Clic para relacionar una entrada de esas fechas">No se hizo</button>';
+  },
+  vista() {
+    const ps = this.lista();
+    if (!ps.length) return '<div class="card">' + UI.empty('calendar', 'Sin periódicos', 'Se agregan en Catálogo → Periódicos.') + '</div>';
+    const p = this.actual(), c = this.ajustes(p), pers = this.periodos(c), us = this.unidades(p), ahora = pers[pers.length - 1];
+    const chips = '<div class="per-tareas">' + ps.map(x => {
+      const cx = this.ajustes(x), n = this.faltan(x).length;
+      return '<button type="button" class="per-t' + (x === p ? ' on' : '') + '" data-act="perTarea" data-v="' + attr(x) + '"><span class="per-ic">' + Icon(this.icono(x), '', 17) + '</span>' +
+        '<span><b>' + esc(x) + '</b><span>' + esc(this.cadaTxt(cx) + ' · ' + this.tiposTxt(cx)) + '</span></span>' + (n ? '<span class="tb-count">' + n + '</span>' : '') + '</button>';
+    }).join('') + '<span class="link per-nuevo" data-act="perCatalogo">' + Icon('plus', '', 12) + ' Otro periódico, o cambiar cada cuánto (en Catálogo)</span></div>';
+    if (!us.length) return chips + '<div class="card">' + UI.empty(this.icono(p), 'Ningún vehículo', 'Este periódico no le aplica a ningún vehículo: escoja a cuáles en Catálogo.') + '</div>' + this.fueraHtml(p);
+    const hechos = us.filter(u => this.hechos(p, u, ahora).length), faltan = us.filter(u => !hechos.includes(u)), ini = this.inicio(p);
+    const antes = pers.slice(0, -1).filter(per => per.fin >= ini), sinU = [];
+    let ok = 0, sin = 0;
+    antes.forEach(per => us.forEach(u => { if (this.hechos(p, u, per).length) ok++; else { sin++; if (!sinU.includes(u)) sinU.push(u); } }));
+    const pct = ok + sin ? Math.round(ok * 100 / (ok + sin)) : 100;
+    const placas = l => l.slice(0, 6).map(u => UI.placaTxt(u)).join(', ') + (l.length > 6 ? ' y ' + (l.length - 6) + ' más' : '');
+    const kpis = '<div class="kpis4" style="grid-template-columns:repeat(3,minmax(0,1fr))">' +
+      UI.kpi({ label: this.ahoraTxt(c).replace(/^./, x => x.toUpperCase()) + ' · ' + this.perTxt(c, ahora), valor: hechos.length + ' de ' + us.length, icono: this.icono(p), color: 'var(--accent)',
+        meta: faltan.length ? 'Faltan ' + faltan.length + ': ' + esc(placas(faltan)) : 'Todos al día' }) +
+      (antes.length ? UI.kpi({ label: antes.length === 1 ? 'El anterior' : 'Los ' + antes.length + ' anteriores', valor: pct + ' %', icono: 'check',
+        color: pct >= 90 ? 'var(--ok-500)' : 'var(--warn-500)', meta: sin ? sin + (sin === 1 ? ' vez' : ' veces') + ' sin hacer: ' + esc(placas(sinU)) : 'Ninguno quedó sin hacer' })
+        : UI.kpi({ label: 'Los anteriores', valor: '—', icono: 'check', color: 'var(--text-3)', meta: 'Se cuentan desde la primera vez que se registra uno' })) +
+      UI.kpi({ label: 'Cómo se cuenta', valor: this.cadaTxt(c), icono: 'calendar', color: 'var(--violet-500)', meta: esc(this.tiposTxt(c).replace(/^./, x => x.toUpperCase()) + ' · lo reconoce «' + c.comp + '»') }) + '</div>';
+    const sugs = this.sugeridas(p, pers, us);
+    const aviso = sugs.length ? '<div class="alert a-info mb16">' + Icon('info') + '<div><b>' + (sugs.length === 1 ? 'Una entrada al taller tiene' : sugs.length + ' entradas al taller tienen') +
+      ' «' + esc(c.comp) + '»</b> y todavía no cuenta' + (sugs.length === 1 ? '' : 'n') + ': salen con «¿…?». Revíselas con un clic en cada una, o ' +
+      '<span class="link" data-act="perTodas">relacionar ' + (sugs.length === 1 ? 'esa' : 'las ' + sugs.length) + ' de una vez</span>.</div></div>' : '';
+    const tabla = '<div class="card"><div class="tbl-wrap"><table class="tbl per-tbl"><thead><tr><th>Vehículo</th>' +
+        pers.map(per => '<th class="per-s' + (this.esHoy(per) ? ' hoy' : '') + '">' + esc(this.perTxt(c, per)) + '<span>' + (this.esHoy(per) ? this.ahoraTxt(c) : c.por === 'mes' ? 'mes' : 'semana') + '</span></th>').join('') +
+        '<th></th></tr></thead><tbody>' +
+        us.map(u => '<tr><td>' + UI.unidadCelda(u) + '</td>' + pers.map((per, i) => '<td class="per-s' + (this.esHoy(per) ? ' hoy' : '') + '">' + this.celda(p, c, u, per, i, ini) + '</td>').join('') +
+          '<td class="tr"><button type="button" class="btn btn-sm btn-ghost btn-icon" data-act="perFuera" data-u="' + attr(u.id) + '" title="' + attr('No aplica a este vehículo: quitarlo de ' + p) +
+          '" aria-label="No aplica">' + Icon('x', '', 12) + '</button></td></tr>').join('') +
+      '</tbody></table></div>' +
+      '<div class="per-ley"><span class="per-c ok">' + Icon('check', '', 11) + 'lun 16</span>el día que entró al taller, relacionado' +
+        '<span class="per-c sug">¿lun 16?</span>tiene «' + esc(c.comp) + '» y falta relacionarlo' +
+        '<span class="per-c falta">' + Icon('plus', '', 11) + 'Registrar</span>falta ' + esc(this.ahoraTxt(c)) +
+        '<span class="per-c no">No se hizo</span>ese periodo no tuvo' +
+        '<span class="per-c mano">' + Icon('check', '', 11) + 'a mano</span>sin entrada al taller' +
+        '<span class="per-c antes">—</span>antes de empezar a llevarlo</div></div>';
+    return chips + kpis + aviso + tabla + this.fueraHtml(p);
+  },
+  fueraHtml(p) {
+    const l = this.fuera(p);
+    return l.length ? '<div class="per-fuera txt-3 fs12">No aplica a: ' + l.map(u => '<span>' + esc(UI.placaTxt(u)) + ' (<span class="link" data-act="perDentro" data-k="' + attr(p) +
+      '" data-u="' + attr(u.id) + '">ponerlo otra vez</span>)</span>').join(' · ') + '</div>' : '';
+  },
+  /* ---- La ventana de una celda: lo que cuenta, las entradas de esas fechas para relacionar, abrir una o hacerlo sin entrada ---- */
+  ventana(uid, i) {
+    const p = this.actual(), c = this.ajustes(p), u = Q.unidad(uid), per = this.periodos(c)[+i];
+    if (!u || !per) return;
+    const h = this.hechos(p, u, per), es = this.entradas(p, u, per), mes = c.por === 'mes', ese = mes ? (c.cada === 1 ? 'ese mes' : 'ese periodo') : c.cada === 1 ? 'esa semana' : 'ese periodo';
+    const dat = ' data-u="' + attr(u.id) + '" data-i="' + i + '"';
+    const fila = (r, cls, btn, sug) => {
+      const val = Compras.deArreglo(r).valor;
+      return '<div class="per-rel' + cls + '"><div class="t"><b>' + esc([r.numero, this.diaLargo(r.fecha), UI.provTxt(r) !== '—' ? UI.provTxt(r) : ''].filter(Boolean).join(' · ')) + '</b>' +
+        '<span>' + esc([Comp.texto(Comp.de(r)) || r.falla || r.trabajo || (r.tipo === 'preventivo' ? 'Preventivo' : 'Correctivo'), TallerRep.codigos(r), val ? Money.format(val) : ''].filter(Boolean).join(' · ')) + '</span>' +
+        (sug ? '<span class="sugt">' + Icon('check', '', 11) + 'Tiene «' + esc(c.comp) + '»</span>' : '') + '</div>' + btn + '</div>';
+    };
+    const cuerpo = (h.length ? '<div class="per-sec">Lo que cuenta</div>' + h.map(a => (a.r
+        ? fila(a.r, ' hecho', '<div class="flex g6"><button type="button" class="btn btn-sm" data-act="perVer" data-m="' + attr(a.r.id) + '">' + Icon('eye', '', 13) + 'Ver</button>' +
+          '<button type="button" class="btn btn-sm btn-ghost btn-del" data-act="perQuitar" data-m="' + attr(a.r.id) + '">' + Icon('x', '', 12) + 'Quitar</button></div>')
+        : '<div class="per-rel hecho"><div class="t"><b>' + esc(this.diaLargo(a.x.f)) + ' · sin entrada al taller</b><span>' + esc(a.x.nota || 'Sin nota') + '</span></div>' +
+          '<button type="button" class="btn btn-sm btn-ghost btn-del" data-act="perQuitarMano" data-u="' + attr(u.id) + '" data-x="' + attr(a.x.id) + '">' + Icon('x', '', 12) + 'Quitar</button></div>')).join('') : '') +
+      '<div class="per-sec">' + (h.length ? 'Otras entradas al taller de ' + ese : 'Las entradas al taller de ' + ese) + '</div>' +
+      (h.length ? '' : '<p class="txt-2" style="font-size:13px;line-height:1.5;margin:4px 0 0">Escoja la que fue ' + esc(p.toLowerCase()) + ': queda relacionada, aquí sale hecho y en el taller dice «' + esc(p) + '».</p>') +
+      (es.length ? es.map(e => fila(e.r, e.s ? ' sug' : '', '<button type="button" class="btn btn-sm' + (e.s ? ' btn-primary' : '') + '" data-act="perRelacionar" data-m="' + attr(e.r.id) + '">' +
+          Icon('check', '', 13) + 'Relacionar</button>', e.s)).join('')
+        : '<div class="txt-3 fs12 mt8">' + esc(UI.placaTxt(u)) + ' no tiene ' + (h.length ? 'otras entradas' : 'entradas') + ' al taller ' + ese + '.</div>') +
+      '<div class="hint mt12">¿No está? Ábrala desde aquí: sale con el vehículo, la fecha, «' + esc(c.comp) + '» y el último taller que lo hizo.</div>' +
+      '<div class="flex g8 mt8" style="flex-wrap:wrap"><button type="button" class="btn btn-sm" data-act="perAbrir"' + dat + '>' + Icon('plus', '', 13) + 'Abrir la entrada al taller</button>' +
+        '<button type="button" class="btn btn-sm btn-ghost" data-act="perMano">' + Icon('check', '', 13) + 'Se hizo sin entrada al taller</button></div>' +
+      '<div class="per-mano hidden" id="perMano"><div class="grid g2"><div class="field"><label for="perManoF">¿Qué día?</label><input class="inp" type="date" id="perManoF" min="' + per.ini +
+        '" max="' + (per.fin < hoyISO ? per.fin : hoyISO) + '" value="' + this.fechaDe(per) + '"></div>' +
+        '<div class="field"><label for="perManoN">Nota <span class="txt-3">(opcional)</span></label><input class="inp" id="perManoN" maxlength="160" placeholder="Ej.: lo engrasó el conductor"></div></div>' +
+        '<button type="button" class="btn btn-sm btn-primary" data-act="perManoSi"' + dat + '>' + Icon('save', '', 13) + 'Guardar</button></div>';
+    Modal.abrir({ titulo: p + ' · ' + UI.placaTxt(u), ancho: 'm-hoja', sinFoco: true,
+      sub: esc(this.perLargo(c, per).replace(/^./, x => x.toUpperCase()) + ' · ' + (h.length ? 'hecho' : this.esHoy(per) ? 'todavía no tiene' : 'no se hizo')),
+      cuerpo, pie: '<button type="button" class="btn" data-act="cerrarModal">Cerrar</button>' });
+  },
+  /* ---- En el taller ---- */
+  fila(m) { const l = m.periodicos || []; return l.length ? '<div class="dias m-1l per-f" title="Cuenta como periódico">' + Icon(this.icono(l[0]), '', 10) + esc(l.join(', ')) + '</div>' : ''; },
+  casoTxt(r) {
+    const l = r.periodicos || [];
+    if (!l.length) return '';
+    return '<div class="cs-tags">' + l.map(p => { const c = this.ajustes(p); return '<span class="ctag" title="' + attr('Cuenta para ' + this.perLargo(c, this.periodo(c, r.fecha))) + '">' + esc(p) + '</span>'; }).join('') +
+      '</div><span class="link fs12" data-act="irPeriodicos" data-k="' + attr(l[0]) + '">Ver en Periódicos</span>';
+  },
+  excel: m => ((m.periodicos || []).length ? 'Periódico: ' + m.periodicos.join(', ') : ''),
+  /* El dashboard: en «Cumplimiento del mes», cada periódico en lo de ahora */
+  dash() {
+    return this.lista().map(p => {
+      const c = this.ajustes(p), us = this.unidades(p);
+      if (!us.length) return '';
+      const per = this.periodo(c, hoyISO), n = us.filter(u => this.hechos(p, u, per).length).length;
+      return '<div class="cum" data-act="irPeriodicos" data-k="' + attr(p) + '"><div class="cum-t"><span>' + esc(p + ' · ' + this.ahoraTxt(c)) + '</span><b>' + n + ' de ' + us.length + '</b></div>' +
+        UI.barra(n, us.length) + '</div>';
+    }).join('');
+  },
+  /* «Abrir la entrada al taller» desde la ventana: el formulario sale con el vehículo, la fecha, el componente, qué pasó y el último taller;
+     al guardar, queda relacionada (ver alGuardar) */
+  ultima(p, uid) {
+    return Datos.mantenimientos.filter(r => this.es(r.periodicos, p) && (!uid || r.unidad === uid) && (r.provFact || r.prov))
+      .sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.ts || 0) - (a.ts || 0))[0] || null;
+  },
+  alAbrirForm(m, u, o) {
+    const c = this.ajustes(o.p);
+    m._periodico = o.p;
+    Comp.poner(m, [c.comp]);
+    const f = $('#mcF', m);
+    if (f && !f.value) f.value = o.p + (o.txt ? ' de ' + o.txt : '') + '.';
+    const e = $('#mcE', m);
+    if (e && o.f) { e.value = o.f; e.dispatchEvent(new Event('input', { bubbles: true })); }
+    const ult = this.ultima(o.p, u.id) || this.ultima(o.p), v = ult ? ProvFact.valor(ult) : '', s = $('#mcP', m);
+    if (v && s) {
+      ProvFact.alAbrir(m, 'mcP', () => v);
+      if ([...s.options].some(x => x.value === v)) { s.value = v; s.dataset.antes = v; }
+    }
+    const reg = $('.reg', m);
+    if (reg) reg.insertAdjacentHTML('beforebegin', '<div class="alert a-info mb12">' + Icon(this.icono(o.p)) + '<div>Al guardar, queda como <b>' + esc(o.p) + '</b>' +
+      (o.txt ? ' de ' + esc(o.txt) : '') + ' en Periódicos.</div></div>');
+  },
+  alGuardar(r, m) {
+    if (!m || !m._periodico) return;
+    r.periodicos = [m._periodico];
+    const c = this.ajustes(m._periodico);
+    setTimeout(() => Toast.show('Quedó como <b>' + esc(m._periodico) + '</b> de ' + esc(this.perLargo(c, this.periodo(c, r.fecha))) + ' en Periódicos.'), 400);
+  },
+  /* ---- Catálogo: cada cuánto, a qué vehículos y el componente que lo reconoce ---- */
+  catExtras(l, v, i, puede) {
+    if (!l.per) return '';
+    const c = this.ajustes(v), dis = puede ? '' : ' disabled';
+    return '<div class="cat-per-x"><label class="cat-mes" title="Cada cuánto se tiene que hacer">Cada<input type="number" min="1" max="12" class="inp" value="' + c.cada +
+        '" data-per-cada="' + i + '"' + dis + '><select class="inp" data-per-por="' + i + '"' + dis + '><option value="semana"' + (c.por === 'semana' ? ' selected' : '') + '>' +
+        (c.cada === 1 ? 'semana' : 'semanas') + '</option><option value="mes"' + (c.por === 'mes' ? ' selected' : '') + '>' + (c.cada === 1 ? 'mes' : 'meses') + '</option></select></label>' +
+      this.TIPOS.map(t => '<label class="cat-rac" title="' + attr('Le aplica a ' + t[1].toLowerCase()) + '"><input type="checkbox" data-per-tipo="' + i + '" value="' + t[0] + '"' +
+        (c.tipos.includes(t[0]) ? ' checked' : '') + dis + '>' + t[1] + '</label>').join('') +
+      '<label class="cat-mes" title="Las entradas al taller con este componente (o que lo dicen) se sugieren para relacionarlas">Lo reconoce<input class="inp cat-per-c" maxlength="40" value="' +
+        attr(c.comp) + '" data-per-comp="' + i + '"' + dis + '></label></div>';
+  },
+  catBind() {
+    const item = i => this.lista()[+i];
+    $$('[data-per-cada]').forEach(x => x.addEventListener('change', () => {
+      const n = Math.round(+x.value), v = item(x.dataset.perCada);
+      if (!(n >= 1 && n <= 12)) { Toast.show('Escriba cada cuánto: de 1 a 12.', 'err'); return; }
+      if (!v) return;
+      this.ajustar(v, { cada: n });
+      Toast.show('Listo: <b>' + esc(v) + '</b> va ' + esc(this.cadaTxt(this.ajustes(v)).toLowerCase()) + '.');
+    }));
+    $$('[data-per-por]').forEach(x => x.addEventListener('change', () => {
+      const v = item(x.dataset.perPor);
+      if (!v) return;
+      this.ajustar(v, { por: x.value });
+      Toast.show('Listo: <b>' + esc(v) + '</b> va ' + esc(this.cadaTxt(this.ajustes(v)).toLowerCase()) + '.');
+    }));
+    $$('[data-per-tipo]').forEach(x => x.addEventListener('change', () => {
+      const v = item(x.dataset.perTipo);
+      if (!v) return;
+      const tipos = $$('[data-per-tipo="' + x.dataset.perTipo + '"]').filter(y => y.checked).map(y => y.value);
+      this.ajustar(v, { tipos });
+      Toast.show(tipos.length ? 'Listo: <b>' + esc(v) + '</b> le aplica a ' + esc(this.tiposTxt(this.ajustes(v))) + '.' : '<b>' + esc(v) + '</b> ya no le aplica a ningún vehículo.', tipos.length ? '' : 'warn');
+    }));
+    $$('[data-per-comp]').forEach(x => x.addEventListener('change', () => {
+      const v = item(x.dataset.perComp), t = x.value.trim().replace(/\s+/g, ' ');
+      if (!v) return;
+      if (!t) { Toast.show('Escriba el componente que lo reconoce, por ejemplo «Engrase».', 'err'); x.value = this.ajustes(v).comp; return; }
+      this.ajustar(v, { comp: t });
+      Toast.show('Listo: las entradas al taller con «' + esc(t) + '» se sugieren para <b>' + esc(v) + '</b>.');
+    }));
+  },
+  limpio(o) { Object.keys(o).forEach(k => { if (o[k] == null || o[k] === '') delete o[k]; }); return o; },
+  nuevoId: () => 'pe' + marca().toString(36) + Math.random().toString(36).slice(2, 5)
+};
+Object.assign(Acciones, {
+  perTarea(el) { UIState.perK = el.dataset.v; Router.pintar(true); },
+  perCatalogo() { Object.assign(UIState.catalogo, { lista: 'periodicos', q: '', agregando: false }); Router.ir('catalogo'); },
+  perCelda(el) { Periodicos.ventana(el.dataset.u, el.dataset.i); },
+  /* Relacionar una entrada al taller con el periódico que se ve */
+  perRelacionar(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), p = Periodicos.actual();
+    if (!r || !p) return;
+    r.periodicos = (r.periodicos || []).filter(x => Catalogo.clave(x) !== Catalogo.clave(p)).concat([p]);
+    const c = Periodicos.ajustes(p);
+    Modal.cerrar(el.closest('.modal-bd'));
+    Toast.show('Listo: <b>' + esc(r.numero || 'la entrada') + '</b> quedó como ' + esc(p) + ' de ' + esc(Periodicos.perLargo(c, Periodicos.periodo(c, r.fecha))) + '.');
+    Router.pintar(true);
+  },
+  perQuitar(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), p = Periodicos.actual();
+    if (!r || !p) return;
+    r.periodicos = (r.periodicos || []).filter(x => Catalogo.clave(x) !== Catalogo.clave(p));
+    if (!r.periodicos.length) delete r.periodicos;
+    Modal.cerrar(el.closest('.modal-bd'));
+    Toast.show('Listo: <b>' + esc(r.numero || 'la entrada') + '</b> ya no cuenta como ' + esc(p) + '. Sigue en el taller como estaba.');
+    Router.pintar(true);
+  },
+  perVer(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
+    Modal.cerrar(el.closest('.modal-bd'));
+    if (r) { if (r.tipo === 'preventivo') Ventanas.preventivo({ editar: r.id }); else Ventanas.caso(r); }
+  },
+  perAbrir(el) {
+    const p = Periodicos.actual(), c = Periodicos.ajustes(p), per = Periodicos.periodos(c)[+el.dataset.i];
+    if (!per) return;
+    Modal.cerrar(el.closest('.modal-bd'));
+    Ventanas.correctivo({ u: el.dataset.u, fijo: true, periodico: { p, f: Periodicos.fechaDe(per), txt: Periodicos.perLargo(c, per) } });
+  },
+  perMano(el) {
+    const b = $('#perMano', el.closest('.modal-bd'));
+    b.classList.toggle('hidden');
+    if (!b.classList.contains('hidden')) $('#perManoN', b).focus();
+  },
+  perManoSi(el) {
+    const m = el.closest('.modal-bd'), u = Q.unidad(el.dataset.u), p = Periodicos.actual(), c = Periodicos.ajustes(p), per = Periodicos.periodos(c)[+el.dataset.i], f = $('#perManoF', m).value;
+    if (!u || !per) return;
+    if (!f || f < per.ini || f > per.fin) { Toast.show('Escoja un día de ' + esc(Periodicos.perLargo(c, per)) + '.', 'err'); return; }
+    if (f > hoyISO) { Toast.show('Ese día todavía no ha llegado.', 'err'); return; }
+    u.periodicos = (u.periodicos || []).concat([Periodicos.limpio({ id: Periodicos.nuevoId(), p, f, nota: $('#perManoN', m).value.trim() })]);
+    Modal.cerrar(m);
+    Toast.show('Listo: ' + esc(p) + ' de <b>' + esc(UI.placaTxt(u)) + '</b> quedó hecho el ' + esc(Fecha.larga(f)) + ', sin entrada al taller.');
+    Router.pintar(true);
+  },
+  perQuitarMano(el) {
+    const u = Q.unidad(el.dataset.u);
+    if (!u) return;
+    u.periodicos = (u.periodicos || []).filter(x => x && x.id !== el.dataset.x);
+    if (!u.periodicos.length) delete u.periodicos;
+    Modal.cerrar(el.closest('.modal-bd'));
+    Toast.show('Listo: se quitó lo hecho sin entrada al taller de <b>' + esc(UI.placaTxt(u)) + '</b>.');
+    Router.pintar(true);
+  },
+  /* «No aplica» a un vehículo (y deshacerlo) */
+  perFuera(el) {
+    const u = Q.unidad(el.dataset.u), p = Periodicos.actual();
+    if (!u || !p) return;
+    Periodicos.ajustar(p, c => ({ fuera: c.fuera.filter(id => id !== u.id).concat([u.id]) }));
+    Toast.show('Listo: ' + esc(p) + ' ya no le aplica a <b>' + esc(UI.placaTxt(u)) + '</b>. <span class="link" data-act="perDentro" data-k="' + attr(p) + '" data-u="' + attr(u.id) + '">Deshacer</span>');
+  },
+  perDentro(el) {
+    const u = Q.unidad(el.dataset.u), p = el.dataset.k || Periodicos.actual();
+    if (!u || !p) return;
+    Periodicos.ajustar(p, c => ({ fuera: c.fuera.filter(id => id !== u.id) }));
+    Toast.show('Listo: ' + esc(p) + ' le aplica otra vez a <b>' + esc(UI.placaTxt(u)) + '</b>.');
+  },
+  /* Relacionar de una vez las que tienen el componente y faltaban */
+  perTodas() {
+    const p = Periodicos.actual(), c = Periodicos.ajustes(p), l = Periodicos.sugeridas(p, Periodicos.periodos(c), Periodicos.unidades(p));
+    if (!l.length) return;
+    l.forEach(r => { r.periodicos = (r.periodicos || []).filter(x => Catalogo.clave(x) !== Catalogo.clave(p)).concat([p]); });
+    Toast.show('Listo: ' + (l.length === 1 ? 'una entrada al taller quedó' : l.length + ' entradas al taller quedaron') + ' como ' + esc(p) + '.');
+    Router.pintar(true);
+  },
+  irPeriodicos(el) {
+    Modal.cerrarTodo();
+    UIState.mantTab = 'periodicos';
+    if (el.dataset.k) UIState.perK = el.dataset.k;
+    Router.ir('mantenimientos');
+  }
+});
 Vistas.vencimientos = () => Venc.vista();
 Vistas.tab_venc = u => Venc.tabFicha(u);
 /* El número rojo del menú: lo que avisa */
