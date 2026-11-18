@@ -1817,6 +1817,23 @@ tr.vc-ven .vc-gt svg{color:var(--text-3)}
 .vc-fg.vc-falta .vc-fg-t > span{color:var(--text-3)}
 .vc-fl-sep{padding:8px 16px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);background:var(--surface-2);border-bottom:1px solid var(--border)}
 .vc-dur{display:flex;gap:6px}
+/* La foto de la garantía, como la de un perfil (Juan, 18/11/2026): pequeña en las listas; con un clic, en grande */
+.vc-foto{display:grid;place-items:center;flex:0 0 auto;width:38px;height:38px;padding:0;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);
+  color:var(--text-3);overflow:hidden;cursor:zoom-in}
+.vc-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.vc-foto-s{width:30px;height:30px;border-radius:8px}
+.vc-foto-g{width:76px;height:76px;border-radius:14px}
+.vc-foto-0{cursor:pointer;border-style:dashed}
+.vc-foto-0:hover,.vc-per-f.over .vc-foto{border-color:var(--brand-400);color:var(--brand-600)}
+.vc-per{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.vc-per-f{flex:0 0 auto;display:grid;place-items:center;width:76px;height:76px}
+.vc-per-t{font-size:13px;line-height:1.4;min-width:0}
+.vc-per-b{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.vc-sin{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.vc-sin .zchip.on{background:var(--brand-50);border-color:var(--brand-400);color:var(--brand-700);font-weight:600}
+html[data-theme="dark"] .vc-sin .zchip.on{background:var(--accent-soft);color:var(--brand-300)}
+.vg-sin .vg-x{display:none}
+.vc-ol{max-height:210px}
 .vc-dur .inp:first-child{width:80px;flex:0 0 80px}
 .vc-dt svg{vertical-align:-2px;margin-right:4px;color:var(--text-3)}
 .vc-hist{display:grid;gap:8px}
@@ -2270,6 +2287,26 @@ span.chip-adj{color:var(--text-3)}
 .cs-oc .v{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--text-2)}
 .cs-acc{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
 .cs-pt{margin-top:8px;padding:9px 11px;font-size:12px;line-height:1.45}
+/* El arreglo que no se paga desde Flota (ver Cubre): los dos botones, el recuadro gris y la marca */
+.cs-pago-b{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.cs-pago-b .btn{gap:5px}
+.cs-pago{margin-top:5px;padding:10px 11px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}
+.cs-pago-t{display:flex;align-items:center;gap:6px;font-weight:650;font-size:13px;color:var(--text)}
+.cs-pago-t svg{color:var(--text-2);flex:0 0 auto}
+.cs-pago > .txt-3{margin-top:3px;line-height:1.45}
+.cs-pago .field{margin:9px 0 0}
+.cs-pago .field label{font-size:11.5px;margin-bottom:3px}
+.cs-cq{display:flex;gap:6px;align-items:center}
+.cs-cq .inp{flex:1;min-width:0}
+.cs-cb > .txt-3{margin-top:5px;line-height:1.45}
+.cs-cb > .link{display:inline-block;margin-top:6px}
+.chip-pago{background:var(--surface-3);border-color:transparent;color:var(--text-2)}
+.chip-pago svg{color:var(--text-2)}
+.cb-form .cs-pago{margin-top:8px}
+.cb-form .zchip.on{background:var(--brand-50);border-color:var(--brand-400);color:var(--brand-700);font-weight:600}
+html[data-theme="dark"] .cb-form .zchip.on{background:var(--accent-soft);color:var(--brand-300)}
+.cb-tarjeta #mcTB,.cb-tarjeta #mcRC,.cb-tarjeta #mcTot,.cb-tarjeta #mcTh,.cb-garantia #mcRC,.cb-garantia #mcTot,.cb-garantia #mcTh,
+.cb-garantia #mcMismo,.cb-garantia #mcTB .tr-vf,.cb-garantia #mcTB .tr-of{display:none}
 @media(max-width:860px){.cs{grid-template-columns:minmax(0,1fr)} .cs-lado{border-left:0;padding-left:0;border-top:1px solid var(--border);padding-top:16px}}
 /* Terminar arreglo: lo que pasó, en una línea suave */
 .ta-paso{font-size:12.5px;color:var(--text-2);background:var(--surface-2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;line-height:1.45}
@@ -3510,6 +3547,7 @@ const Icon = (() => {
     camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
     image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
     idcard: '<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h5M13 14h3"/>',
+    tarjeta: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
     checkSquare: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
     send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>',
     pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
@@ -5595,7 +5633,13 @@ const Persistencia = {
     /* Los soportes de lo que vence (con su historial) y de las garantías (13/11/2026; ver Venc) */
     Datos.unidades.forEach(u => {
       (u.vencen || []).forEach(x => { if (x.archivo) ver(x.archivo.id); (x.antes || []).forEach(a => a && a.archivo && ver(a.archivo.id)); });
-      (u.garantias || []).forEach(g => g && g.archivo && ver(g.archivo.id));
+      (u.garantias || []).forEach(g => {
+        if (!g) return;
+        if (g.archivo) ver(g.archivo.id);
+        /* Varios soportes y la foto (18/11/2026) */
+        (g.archivos || []).forEach(a => a && ver(a.id));
+        if (g.foto) ver(g.foto.id);
+      });
     });
     if (Firma.datos().firma) usados.add(Firma.CLAVE);
     return usados;
@@ -7143,7 +7187,8 @@ const ExcelMant = {
     const items = os.filter(o => o.tipo !== 'SERVICIO').reduce((t, o) => t.concat(o.items), [])
       .map(x => x.descripcion + (x.cantidad > 1 ? ' × ' + x.cantidad : '')).filter(x => x.trim());
     const nota = [l.partido || !v.total ? '' : 'Taller y repuestos en un solo valor', prog ? 'Cita: ' + Programado.txt(Programado.de(m), true) : '',
-      Pendiente.de(m).map(k => Pendiente.NOMBRE[k]).join(', '), Compras.malas(m) ? 'Tiene una orden que ya no está en Facturación o es de otro vehículo' : ''];
+      Cubre.excel(m), Pendiente.de(m).map(k => Pendiente.NOMBRE[k]).join(', '),
+      Compras.malas(m) ? 'Tiene una orden que ya no está en Facturación o es de otro vehículo' : ''];
     return [m.numero || m.id, this.FLOTA, m.tipo === 'preventivo' ? 'Preventivo' : 'Correctivo', this.ESTADOS[m.estado] || m.estado,
       u ? this.vehiculo(u) : '(sin vehículo)', u ? u.clase || '' : '', m.fecha, m.horaEntrada || (prog && m.programado ? m.programado.h : '') || '',
       m.estado === 'cerrado' ? m.salida || '' : '', { fx: 'IF(OR(G' + i + '="",I' + i + '=""),"",I' + i + '-G' + i + ')' }, this.km(m.lectura),
@@ -9410,7 +9455,7 @@ const Llantas = {
     return ns.length ? ns.reduce((s, n) => s + +n.llValor, 0) : null;
   },
   /* En el caso se pregunta cuánto costó si el arreglo no es de «Llantas y rines» (si lo es, todo su valor ya cuenta en llantas) */
-  preguntaValor: r => !(r.partes || []).some(p => p.k === 'llantas'),
+  preguntaValor: r => !Cubre.de(r) && !(r.partes || []).some(p => p.k === 'llantas'),
   /* « · $ 30.000», para la etiqueta de la llanta de un avance */
   valorTxt: n => (+n.llValor > 0 ? ' · ' + Money.format(n.llValor) : ''),
   /* Cuántos registros tiene cada posición */
@@ -9696,7 +9741,7 @@ const Avances = {
    van en m.adjuntos; en el preventivo, su PDF de Navitrans (adjuntoId). El PDF
    del arreglo no es un adjunto: se arma cuando se pide, con «Ver PDF» */
 const Adjuntos = {
-  de: m => (m.adjuntoId ? [{ id: m.adjuntoId, nombre: m.adjunto || 'Adjunto' }] : []).concat(m.adjuntos || []),
+  de: m => (m.adjuntoId && m.adjuntoId !== 'null' ? [{ id: m.adjuntoId, nombre: m.adjunto || 'Adjunto' }] : []).concat(m.adjuntos || []),
   /* Lo que se guarda de cada uno: su archivo, su nombre y lo que pesaba y pesa (ver Peso.foto) */
   /* y, si llegó con un avance del caso, ese avance (av) */
   dato: a => Object.assign({ id: a.id, nombre: a.nombre }, a.tam ? { tam: a.tam } : {}, a.antes > a.tam ? { antes: a.antes } : {}, a.av ? { av: a.av } : {}),
@@ -9947,9 +9992,9 @@ const TallerRep = {
         '<div class="field"><label>Taller</label>' + sel('P', 'Sin taller registrado', r ? ProvFact.valor(r) : '') +
           '<div class="hint prov-nota" id="' + pre + 'Pn"></div>' +
           '<button type="button" class="zchip mt8" id="' + pre + 'Mismo" aria-pressed="false"></button></div>' +
-        '<div class="field"><label id="' + pre + 'VTl"></label><input class="inp tr-valor" id="' + pre + 'VT" inputmode="numeric" placeholder="Ej.: 380.000">' +
+        '<div class="field tr-vf"><label id="' + pre + 'VTl"></label><input class="inp tr-valor" id="' + pre + 'VT" inputmode="numeric" placeholder="Ej.: 380.000">' +
           '<div class="hint" id="' + pre + 'VTn"></div></div>' +
-        '<div class="field"><label>Orden de servicio <span class="txt-3">(OS)</span></label><div class="oc-lista" id="' + pre + 'OT"></div></div>' +
+        '<div class="field tr-of"><label>Orden de servicio <span class="txt-3">(OS)</span></label><div class="oc-lista" id="' + pre + 'OT"></div></div>' +
       '</div>' +
       '<div class="tr-bloque" id="' + pre + 'RC"><h5>Repuestos · el proveedor</h5>' +
         '<div class="field"><label>Proveedor de repuestos</label>' + sel('R', 'Sin proveedor de repuestos', r ? ProvFact.valor(r, true) : '') +
@@ -9959,7 +10004,7 @@ const TallerRep = {
         '<div class="field" id="' + pre + 'ORC"><label></label><div class="oc-lista" id="' + pre + 'OR"></div></div>' +
       '</div>' +
       '<div class="tr-tot" id="' + pre + 'Tot"></div>' +
-      '<div class="hint mb12">Al marcar una orden, el valor se pone solo con el de la orden (lo trae de Facturación) y se puede cambiar; sin orden, se escribe. ' +
+      '<div class="hint mb12" id="' + pre + 'Th">Al marcar una orden, el valor se pone solo con el de la orden (lo trae de Facturación) y se puede cambiar; sin orden, se escribe. ' +
         'Cuenta en el gasto hasta que la orden pase a contabilidad; desde ahí cuenta la orden.</div>';
   },
   montar(m, pre, r) {
@@ -10092,7 +10137,9 @@ const TallerRep = {
     const os = (x.ordenes || []).map(id => Compras.porId(id)).filter(o => o && o.flota_id === uid);
     /* Con órdenes, lo de ellas, salvo que se haya escrito otro a mano: ese cuenta mientras ninguna sea gasto */
     const a = x.aMano || {};
-    const lado = (l, escrito, mano) => (!l.length ? { orden: false, valor: escrito || 0, espera: escrito || 0 }
+    /* El que no se paga desde Flota (ver Cubre): lo escrito no cuenta, para no sumarlo dos veces */
+    const sinEscrito = Boolean(Cubre.de(x));
+    const lado = (l, escrito, mano) => (!l.length ? { orden: false, valor: sinEscrito ? 0 : escrito || 0, espera: sinEscrito ? 0 : escrito || 0 }
       : mano ? { orden: true, mano: true, valor: escrito || 0, espera: l.some(o => o.es_gasto) ? 0 : escrito || 0 }
       : { orden: true, valor: Compras.suma(l), espera: Compras.suma(l.filter(o => !o.es_gasto)) });
     if (!this.lados(x).partido) { const u = lado(os, x.valor, a.v); return { t: u, r: null, total: u.valor, espera: u.espera }; }
@@ -10105,6 +10152,8 @@ const TallerRep = {
   },
   /* En el PDF: cada uno con su valor y su orden, y el total; si es el mismo, un valor y sus órdenes */
   campos(d) {
+    const cb = Cubre.campos(d);
+    if (cb) return cb;
     const l = this.lados(d), v = this.valores(d), plata = n => (n > 0 ? Money.format(n) : 'Por completar');
     if (!l.partido) return [['Valor', plata(v.total)], ['Órdenes', this.codigos(d) || '—']];
     return [['Valor del taller', plata(v.t.valor)], ['Orden de servicio', this.codigos(d, ['SERVICIO']) || '—']]
@@ -10166,14 +10215,237 @@ const Pendiente = {
      TallerRep.valores). Una orden que todavía no llega de Facturación no se
      sabe de qué lado es ni cuánto vale: no se avisa por ella */
   de(m) {
-    if (m.tipo !== 'correctivo' || m.estado === 'programado') return [];
+    if (m.tipo !== 'correctivo' || m.estado === 'programado' || Cubre.de(m)) return [];
     const l = TallerRep.lados(m), v = TallerRep.valores(m), o = TallerRep.ordenesDe(m);
     if (!l.partido || (!l.conT && !l.conR)) return [v.total > 0 || o.dudosas ? '' : 'valor', (m.ordenes || []).length ? '' : 'orden'].filter(Boolean);
     return [l.conT && !(v.t.valor > 0) && !o.dudosas && 'valorTaller', l.conT && !o.t && !o.dudosas && 'osTaller',
       l.conR && !(v.r.valor > 0) && !o.dudosas && 'valorRep', l.conR && !o.r && !o.dudosas && 'ocRep'].filter(Boolean);
   },
   chips(m, tam) {
+    /* El que no se paga desde Flota: en gris, en vez de lo que falta (ver Cubre) */
+    if (Cubre.de(m)) return Cubre.chip(m, tam);
     return this.de(m).map(k => '<span class="chip chip-falta" title="' + this.TITULO[k] + '">' + Icon('warn', '', tam) + this.NOMBRE[k] + '</span>').join('');
+  }
+};
+
+/* El arreglo que no se paga desde Flota (Juan, 18/11/2026). «Lo pagó la tarjeta»: lo arregló alguien que no está registrado (sin RUT)
+   y el conductor le pagó con la tarjeta; esos gastos los lleva otra área (Contabilidad) y, si se ponían aquí, al pedirle a esa área
+   los movimientos de la tarjeta quedaban dobles. «Es garantía»: lo cubre el mecánico de un arreglo anterior y no se paga nada. Con
+   cualquiera de los dos no se pide taller, orden ni valor (ver Pendiente), no suma en el gasto y sí cuenta como arreglo. Va en el
+   extra: r.cubre ('tarjeta' o 'garantia'), r.cubreQuien (quién lo arregló, escrito, con la tarjeta) y r.garantiaDe (el arreglo de
+   la garantía). Se marca en el caso (Ventanas.caso) y en «Editar todo» (Ventanas.correctivo) */
+const Cubre = {
+  TIPOS: {
+    tarjeta: { boton: 'Lo pagó la tarjeta', corto: 'Tarjeta', icono: 'tarjeta', linea: 'lo lleva Contabilidad',
+      txt: 'El valor lo lleva Contabilidad. Aquí no se pide taller, orden ni valor, y no suma en el gasto.' },
+    garantia: { boton: 'Es garantía', titulo: 'Garantía · sin costo', corto: 'Garantía', icono: 'shieldOk', linea: 'sin costo',
+      txt: 'Lo cubre el mecánico. No se pide orden ni valor y no suma en el gasto.' }
+  },
+  /* 'tarjeta', 'garantia' o '' (un preventivo no la lleva) */
+  de: m => (m && m.tipo !== 'preventivo' && Cubre.TIPOS[m.cubre] ? m.cubre : ''),
+  titulo(k) { return this.TIPOS[k].titulo || this.TIPOS[k].boton; },
+  lista: l => (l.length > 1 ? l.slice(0, -1).join(', ') + ' y ' + l[l.length - 1] : l[0] || ''),
+  /* El arreglo de la garantía */
+  origen: m => (m && m.garantiaDe ? Datos.mantenimientos.find(x => x.id === m.garantiaDe) || null : null),
+  /* Los arreglos anteriores del vehículo, el más nuevo primero, para escoger el de la garantía */
+  previos(r) {
+    const u = r.unidad && typeof r.unidad === 'object' ? r.unidad.id : r.unidad;
+    return Datos.mantenimientos.filter(x => x.unidad === u && x.id !== r.id && x.tipo === 'correctivo' && x.estado !== 'programado' && (!r.fecha || x.fecha <= r.fecha))
+      .sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.ts || 0) - (a.ts || 0));
+  },
+  opcion(x) {
+    const t = [x.numero, Fecha.num(x.fecha), Comp.de(x).join(', ') || x.trabajo || x.falla].filter(Boolean).join(' · ');
+    return t.length > 80 ? t.slice(0, 79) + '…' : t;
+  },
+  opciones(lista, ya) {
+    const o = ya ? Datos.mantenimientos.find(x => x.id === ya) : null;
+    return '<option value="">' + (lista.length ? 'Sin escoger' : 'No tiene arreglos anteriores') + '</option>' +
+      lista.map(x => '<option value="' + attr(x.id) + '"' + (x.id === ya ? ' selected' : '') + '>' + esc(this.opcion(x)) + '</option>').join('') +
+      (o && !lista.includes(o) ? '<option value="' + attr(o.id) + '" selected>' + esc(this.opcion(o)) + '</option>' : '');
+  },
+  /* El taller de un arreglo, para ponerlo en otro (ver ProvFact.poner) */
+  tallerDe: x => (!x ? null : x.provFact ? { id: x.provFact, nombre: x.provNombre || '', nit: x.provNit || '', fact: true } : x.prov ? { id: x.prov, fact: false } : null),
+  mismoTaller: (a, b) => Boolean((a.provFact && a.provFact === b.provFact) || (a.prov && a.prov === b.prov)),
+  /* En gris, donde iría lo que falta (ver Pendiente.chips) */
+  chip(m, tam) {
+    const k = this.de(m);
+    return '<span class="chip chip-pago" title="' + attr(this.titulo(k) + ': ' + this.linea(m)) + '">' + Icon(this.TIPOS[k].icono, '', tam) + this.TIPOS[k].corto + '</span>';
+  },
+  linea(m) {
+    const k = this.de(m), o = k === 'garantia' && this.origen(m);
+    return o ? 'de ' + (o.numero || 'otro arreglo') : this.TIPOS[k].linea;
+  },
+  /* La columna «Valor» de Taller SINUGRAVAS. Si aun así tiene una orden (relacionada desde la orden), se avisa */
+  celda(m, c) {
+    return this.chip(m, 11) + '<div class="dias m-1l m-val">' + esc(this.linea(m)) + '</div>' +
+      (c.esta.length ? '<div class="dias d-warn m-1l m-val">Tiene ' + esc(c.esta.map(o => o.codigo).join(', ')) + '</div>' : '');
+  },
+  /* La columna del taller: con la tarjeta y sin taller, quién lo arregló, si se escribió */
+  sinRegistrar(m) { return this.de(m) === 'tarjeta' && Boolean(m.cubreQuien) && UI.provTxt(m) === '—'; },
+  tallerTxt(m) { return esc(this.sinRegistrar(m) ? m.cubreQuien : UI.provTxt(m)); },
+  bajoTaller(m) { return this.sinRegistrar(m) ? '<div class="dias m-1l">sin registrar</div>' : ''; },
+  /* En el caso, debajo del taller */
+  porGarantia(r) { return this.de(r) === 'garantia' ? '<div class="txt-3 fs12">Por garantía</div>' : ''; },
+  /* En el caso, sin órdenes: los dos botones */
+  pregunta(r, c) {
+    if (r.tipo === 'preventivo' || c.esta.length || (r.ordenes || []).length) return '';
+    const b = k => '<button type="button" class="btn btn-sm" data-act="casoCubre" data-k="' + k + '" data-m="' + attr(r.id) + '">' + Icon(this.TIPOS[k].icono, '', 13) +
+      esc(this.TIPOS[k].boton) + '</button>';
+    return '<div class="cs-d cs-cb"><span class="l">¿No lleva orden?</span><div class="cs-pago-b">' + b('tarjeta') + b('garantia') + '</div>' +
+      '<div class="txt-3 fs12">Con alguno de los dos, no se le pide taller, orden ni valor, y no suma en el gasto.</div></div>';
+  },
+  /* En el caso, marcado: en vez de las órdenes y el valor */
+  caso(r, c) {
+    const k = this.de(r), T = this.TIPOS[k], id = attr(r.id);
+    const mas = k === 'tarjeta'
+      ? '<div class="field"><label for="csCq">¿Quién lo arregló? <span class="txt-3">(si quiere)</span></label><div class="cs-cq">' +
+        '<input class="inp" id="csCq" maxlength="120" placeholder="Ej.: un mecánico de la zona" value="' + attr(r.cubreQuien || '') + '">' +
+        '<button type="button" class="btn btn-sm" data-act="casoCubreQuien" data-m="' + id + '" disabled>' + Icon('save', '', 13) + 'Guardar</button></div></div>'
+      : '<div class="field"><label for="csGd">¿De qué arreglo es la garantía?</label><select class="inp" id="csGd" data-m="' + id + '">' +
+        this.opciones(this.previos(r), r.garantiaDe || '') + '</select></div>' + this.notaTaller(r);
+    return '<div class="cs-d cs-cb"><span class="l">Pago</span><div class="cs-pago"><div class="cs-pago-t">' + Icon(T.icono, '', 14) + esc(this.titulo(k)) + '</div>' +
+      '<div class="txt-3 fs12">' + esc(T.txt) + '</div>' + mas + '</div>' +
+      (c.esta.length ? '<div class="alert a-warn cs-pt">' + Icon('warn') + '<div>Tiene ' + esc(c.esta.map(o => o.codigo).join(', ')) +
+        ', y su valor cuenta en el gasto. Si sí lleva orden, toque «Quitar».</div></div>' : '') +
+      '<span class="link fs12" data-act="casoCubreQuitar" data-m="' + id + '">Quitar: sí lleva orden</span></div>';
+  },
+  /* Quién cubre la garantía: el taller del arreglo escogido */
+  notaTaller(r) {
+    const o = this.origen(r), t = o && Q.provDe(o);
+    if (!o) return '';
+    if (!t) return '<div class="txt-3 fs12 mt8">Ese arreglo no tiene taller.</div>';
+    return this.mismoTaller(o, r) ? '<div class="txt-3 fs12 mt8">La cubre <b>' + esc(t.nombre) + '</b>, el taller de ese arreglo.</div>'
+      : '<div class="txt-3 fs12 mt8">Ese arreglo lo hizo <b>' + esc(t.nombre) + '</b>. <span class="link" data-act="casoGarantiaTaller" data-m="' + attr(r.id) + '">Ponerlo de taller</span></div>';
+  },
+  /* Lo que tiene y se quita al marcarlo, para no contarlo dos veces */
+  habia(r, k) {
+    const t = Q.provDe(r), rep = r.repMismo ? null : Q.repDe(r), v = TallerRep.valores(r).total, os = Compras.deArreglo(r).esta;
+    return [k === 'tarjeta' && t ? 'el taller ' + t.nombre : '', rep ? 'los repuestos de ' + rep.nombre : '', v > 0 ? 'el valor de ' + Money.format(v) : '',
+      os.length ? os.map(o => o.codigo).join(', ') : ''].filter(Boolean);
+  },
+  limpiar(r, k) {
+    if (k === 'tarjeta') ProvFact.poner(r, null);
+    ProvFact.ponerRep(r, null, false);
+    ['valor', 'valorTaller', 'valorRep', 'aMano'].forEach(x => { delete r[x]; });
+    Compras.ponerOrdenes(r, []);
+  },
+  marcar(r, k) {
+    r.cubre = k;
+    if (k !== 'tarjeta') delete r.cubreQuien;
+    if (k !== 'garantia') delete r.garantiaDe;
+    this.limpiar(r, k);
+  },
+  quitar(r) { delete r.cubre; delete r.cubreQuien; delete r.garantiaDe; },
+  /* Las cajas del caso: «Guardar» de quién lo arregló, apagado sin cambios; el arreglo de la garantía, al escogerlo */
+  montar(m, r) {
+    const q = $('#csCq', m), g = q && $('[data-act="casoCubreQuien"]', m);
+    if (g) {
+      const antes = r.cubreQuien || '', revisar = () => { g.disabled = q.value.trim().replace(/\s+/g, ' ') === antes; };
+      q.addEventListener('input', revisar);
+      q.addEventListener('keydown', e => { if (e.key === 'Enter' && !g.disabled) { e.preventDefault(); g.click(); } });
+    }
+    const s = $('#csGd', m);
+    if (s) s.addEventListener('change', () => Acciones.casoGarantiaDe(s));
+  },
+  /* En el PDF, donde va el valor */
+  campos(d) {
+    const k = this.de(d);
+    if (!k) return null;
+    if (k === 'tarjeta') return [['Pago', 'Lo pagó la tarjeta: el valor lo lleva Contabilidad'], ['Órdenes', 'No lleva']];
+    const o = this.origen(d);
+    return [['Pago', 'Garantía: sin costo'], ['Garantía de', o ? (o.numero || 'Otro arreglo') + ' del ' + Fecha.num(o.fecha) : 'Sin escoger']];
+  },
+  quienPdf(d) { return this.de(d) === 'tarjeta' && d.cubreQuien ? d.cubreQuien + ' (sin registrar)' : '—'; },
+  excel(m) {
+    const k = this.de(m), o = k === 'garantia' && this.origen(m);
+    return k === 'tarjeta' ? 'Lo pagó la tarjeta: el valor lo lleva Contabilidad' + (m.cubreQuien ? ' · Lo arregló: ' + m.cubreQuien : '')
+      : k === 'garantia' ? 'Garantía: sin costo' + (o ? ' · de ' + (o.numero || 'otro arreglo') : '') : '';
+  },
+  /* En «Terminar arreglo» de las llantas: lo del taller no se pide */
+  nota(r) {
+    const k = this.de(r);
+    return '<div class="cs-pago mb12"><div class="cs-pago-t">' + Icon(this.TIPOS[k].icono, '', 14) + esc(this.titulo(k)) + '</div><div class="txt-3 fs12">' +
+      esc(this.TIPOS[k].txt) + ' Se cambia en el caso o en «Editar todo».</div></div>';
+  },
+  /* «Editar todo» (Ventanas.correctivo): los dos botones encima del taller; con uno, lo que no va se esconde (cb-tarjeta, cb-garantia) */
+  form() {
+    const b = k => '<button type="button" class="zchip" data-cb="' + k + '" aria-pressed="false">' + Icon(this.TIPOS[k].icono, '', 13) + esc(this.TIPOS[k].boton) + '</button>';
+    const caja = (k, id, mas) => '<div class="cs-pago hidden" id="' + id + '"><div class="cs-pago-t">' + Icon(this.TIPOS[k].icono, '', 14) + esc(this.titulo(k)) + '</div>' +
+      '<div class="txt-3 fs12">' + esc(this.TIPOS[k].txt) + '</div>' + mas + '</div>';
+    return '<div class="field cb-form" id="mcCb"><label>¿No lleva orden?</label><div class="cs-pago-b">' + b('tarjeta') + b('garantia') + '</div>' +
+      caja('tarjeta', 'mcCbT', '<div class="field"><label for="mcCbQ">¿Quién lo arregló? <span class="txt-3">(si quiere)</span></label>' +
+        '<input class="inp" id="mcCbQ" maxlength="120" placeholder="Ej.: un mecánico de la zona"></div>') +
+      caja('garantia', 'mcCbG', '<div class="field"><label for="mcCbD">¿De qué arreglo es la garantía?</label><select class="inp" id="mcCbD"></select></div>' +
+        '<div class="txt-3 fs12 mt8" id="mcCbDn"></div>') +
+      '<div class="alert a-warn cs-pt hidden" id="mcCbA"></div></div>';
+  },
+  montarForm(m) {
+    m._cubre = '';
+    m._garantiaDe = '';
+    $$('#mcCb [data-cb]', m).forEach(b => b.addEventListener('click', () => { m._cubre = m._cubre === b.dataset.cb ? '' : b.dataset.cb; this.pintarForm(m); }));
+    $('#mcCbD', m).addEventListener('change', () => this.tallerForm(m, true));
+    /* Lo que se quitaría cambia con lo que se escoja abajo (el taller, el valor, las órdenes) */
+    ['change', 'input'].forEach(t => $('.reg-or', m).addEventListener(t, e => { if (m._cubre && !e.target.closest('#mcCb')) this.avisoForm(m); }));
+    this.pintarForm(m);
+  },
+  ponerForm(m, r) {
+    m._cubre = this.de(r);
+    m._garantiaDe = r.garantiaDe || '';
+    $('#mcCbQ', m).value = r.cubreQuien || '';
+    this.pintarForm(m);
+  },
+  pintarForm(m) {
+    const k = m._cubre || '';
+    $$('#mcCb [data-cb]', m).forEach(b => { const on = b.dataset.cb === k; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+    $('#mcCbT', m).classList.toggle('hidden', k !== 'tarjeta');
+    $('#mcCbG', m).classList.toggle('hidden', k !== 'garantia');
+    m.classList.toggle('cb-tarjeta', k === 'tarjeta');
+    m.classList.toggle('cb-garantia', k === 'garantia');
+    if (k === 'garantia') this.opcionesForm(m);
+    this.avisoForm(m);
+  },
+  opcionesForm(m) {
+    const s = $('#mcCbD', m), u = PlanoForm.u(m);
+    const lista = u ? this.previos({ id: m._editar || '', unidad: u.id, fecha: ($('#mcE', m) || {}).value || '' }) : [];
+    s.innerHTML = this.opciones(lista, m._garantiaDe);
+    this.tallerForm(m, false);
+  },
+  /* Al escoger el arreglo de la garantía, si no hay taller, el de ese arreglo */
+  tallerForm(m, escogido) {
+    const s = $('#mcCbD', m), p = $('#mcP', m), n = $('#mcCbDn', m), o = s.value ? Datos.mantenimientos.find(x => x.id === s.value) : null;
+    m._garantiaDe = s.value;
+    const t = o && Q.provDe(o), v = o ? ProvFact.valor(o) : '';
+    if (escogido && v && p && !p.value && [...p.options].some(x => x.value === v)) { p.value = v; p.dispatchEvent(new Event('change', { bubbles: true })); }
+    n.innerHTML = !o ? '' : !t ? 'Ese arreglo no tiene taller.' : p && p.value === v ? 'La cubre <b>' + esc(t.nombre) + '</b>, el taller de ese arreglo.'
+      : 'Ese arreglo lo hizo <b>' + esc(t.nombre) + '</b>.';
+  },
+  avisoForm(m) {
+    const a = $('#mcCbA', m), k = m._cubre || '';
+    const r0 = m._editar ? Datos.mantenimientos.find(x => x.id === m._editar) : null, tr = k ? TallerRep.leer(m, 'mc', r0) : null;
+    const quita = !k ? [] : [k === 'tarjeta' && tr.prov ? 'el taller ' + tr.prov.nombre : '', tr.rep ? 'los repuestos de ' + tr.rep.nombre : '',
+      tr.valor > 0 ? 'el valor de ' + Money.format(tr.valor) : '',
+      tr.ordenes.length ? (tr.ordenes.length === 1 ? 'la orden marcada' : 'las ' + tr.ordenes.length + ' órdenes marcadas') : ''].filter(Boolean);
+    a.classList.toggle('hidden', !quita.length);
+    a.innerHTML = quita.length ? Icon('warn') + '<div>Al guardar se ' + (quita.length > 1 ? 'quitan ' : 'quita ') + esc(this.lista(quita)) + ': con «' +
+      esc(this.TIPOS[k].boton) + '» no van aquí, para no contarlos dos veces.</div>' : '';
+  },
+  /* Lo que lee «Editar todo» (ver Leer.correctivo): con la marca, sin órdenes, valor ni repuestos; con la tarjeta, sin taller */
+  leer(m, tr) {
+    const k = m._cubre || '';
+    return !k ? tr : Object.assign({}, tr, { prov: k === 'tarjeta' ? null : tr.prov, rep: null, repMismo: false, valorTaller: 0, valorRep: 0, valor: 0, aMano: null, ordenes: [] });
+  },
+  datosForm(m) {
+    const k = m._cubre || '', q = $('#mcCbQ', m), s = $('#mcCbD', m);
+    return { cubre: k, cubreQuien: k === 'tarjeta' && q ? q.value.trim().replace(/\s+/g, ' ') : '', garantiaDe: k === 'garantia' && s ? s.value || '' : '' };
+  },
+  /* Al guardar «Editar todo» o un correctivo nuevo */
+  guardar(r, d) {
+    const k = this.TIPOS[d.cubre] ? d.cubre : '';
+    if (!k) { this.quitar(r); return; }
+    r.cubre = k;
+    if (k === 'tarjeta' && d.cubreQuien) r.cubreQuien = d.cubreQuien; else delete r.cubreQuien;
+    if (k === 'garantia' && d.garantiaDe) r.garantiaDe = d.garantiaDe; else delete r.garantiaDe;
+    this.limpiar(r, k);
   }
 };
 
@@ -10185,7 +10457,7 @@ const Pendiente = {
 const RepTaller = {
   /* { x: el de repuestos, os: sus órdenes de servicio en el arreglo, mismo: si ya es el taller } o null */
   de(m) {
-    if (!m || m.repMismo || !m.repFact || m.prov || ProvFact.estado !== 'listo') return null;
+    if (!m || Cubre.de(m) || m.repMismo || !m.repFact || m.prov || ProvFact.estado !== 'listo') return null;
     const x = ProvFact.porId(m.repFact), c = Compras.deArreglo(m);
     if (!x || !c.fiable) return null;
     const suya = o => { const p = ProvFact.deOrden(o); return Boolean(p) && p.id === x.id; };
@@ -10534,6 +10806,8 @@ const EditarArreglo = {
     /* Sus valores y sus órdenes de Facturación (ver TallerRep) */
     TallerRep.cargar(m, 'mc', r);
     TallerRep.ordenes(m, 'mc', u, r.fecha, r);
+    /* Si no se paga desde Flota (ver Cubre) */
+    Cubre.ponerForm(m, r);
     /* Las fotos sin avance (las de cómo llegó, o todas si no tuvo avances) y los
        avances, cada uno con las suyas; si sigue en el taller, uno nuevo al final */
     const src = f => (f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : f.src || '');
@@ -10584,7 +10858,7 @@ const EditarArreglo = {
   firma(m) {
     const d = Leer.correctivo(m);
     return JSON.stringify([d.entrada, d.horaEntrada, d.programado ? d.programado.h : '', d.salida, d.horaSalida, d.trabajo, d.componente, d.falla, d.lectura, d.valor, d.partes.map(p => p.k), d.llantas, d.llanta, d.repMismo,
-      d.notas.map(n => [n.id, n.f, n.h, n.t, n.llValor || 0]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort(), d.adjuntos.map(a => a.id), d.valorTaller, d.valorRep, d.aMano || null]);
+      d.notas.map(n => [n.id, n.f, n.h, n.t, n.llValor || 0]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort(), d.adjuntos.map(a => a.id), d.valorTaller, d.valorRep, d.aMano || null, d.cubre, d.cubreQuien, d.garantiaDe]);
   },
   /* Guardar, apagado hasta que algo cambie */
   vigilar(m, r) {
@@ -10635,6 +10909,7 @@ const EditarArreglo = {
     if (ProvFact.cambio(m, 'mcP')) ProvFact.poner(r, d.prov);
     if (ProvFact.cambio(m, 'mcR') || Boolean(d.repMismo) !== Boolean(r.repMismo)) ProvFact.ponerRep(r, d.rep, d.repMismo);
     Compras.ponerOrdenes(r, d.ordenes);
+    Cubre.guardar(r, d);
     Modal.cerrar(m);
     Toast.show(r.estado !== 'cerrado'
       ? 'Arreglo de <b>' + esc(UI.placaTxt(u)) + '</b> guardado' + (nuevos ? ', con ' + nuevos + (nuevos === 1 ? ' avance nuevo' : ' avances nuevos') : '') + '.'
@@ -13161,7 +13436,7 @@ const Formatos = {
           'Correctivo N.º ' + d.numero]) +
       this.sec('Unidad', this.campos([[conPlaca ? 'Placa' : 'Código', UI.placaTxt(u)], ['Tipo', TIPOS[u.tipo].nombre + ' · ' + u.clase],
         ['Marca y línea', UI.nombre(u) || '—'], ['Conductor', c ? c.nombre : 'Sin asignar']])) +
-      this.sec('Taller', this.campos([['Taller', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'],
+      this.sec('Taller', this.campos([['Taller', p ? p.nombre : Cubre.quienPdf(d)], ['NIT', p && p.nit ? p.nit : Cubre.de(d) ? '—' : 'Por completar'],
         /* Quien puso los repuestos (Juan, 03/11/2026) */
         ['Repuestos', d.repMismo ? 'Los puso el mismo taller' : d.rep ? d.rep.nombre + (d.rep.nit ? ' · NIT ' + d.rep.nit : '') : '—'],
         ...(d.estado === 'programado' ? [['Programado para', Programado.txt(d.programado || { f: d.entrada })], ['Estado', 'Todavía no ingresa al taller']]
@@ -13497,11 +13772,12 @@ Object.assign(Vistas, {
             '<td title="' + attr([m.falla ? 'Qué pasó: ' + m.falla : Avances.titulo(m), como, m.lectura, partes.join(', ')].concat(novs).filter(Boolean).join('\n')) + '">' +
               '<div class="m-trab m-que">' + esc(que) + '</div>' + (abajo ? '<div class="dias m-1l m-trab">' + esc(abajo) + '</div>' : '') + '</td>' +
             /* Si el de repuestos es el taller de su OS, «Pasarlo al taller» (ver RepTaller) */
-            '<td>' + (pt => '<div class="m-2l" title="' + attr(UI.provTxt(m) + (pt ? '\n' + RepTaller.txt(pt) : '')) + '">' + esc(UI.provTxt(m)) + '</div>' +
+            '<td>' + (pt => '<div class="m-2l" title="' + attr(UI.provTxt(m) + (pt ? '\n' + RepTaller.txt(pt) : '')) + '">' + Cubre.tallerTxt(m) + '</div>' + Cubre.bajoTaller(m) +
               (pt ? RepTaller.fila(m, pt) : ''))(RepTaller.de(m)) + '</td>' +
             '<td class="num"' + (ordenesTodo.length || avisosTodo.length ? ' title="' + attr(ordenesTodo.concat(avisosTodo).join('\n')) + '"' : '') + '>' +
-              (c.valor ? Money.format(c.valor) : m.oc ? '<span class="txt-3">' + esc(m.oc) + '</span>' : '—') +
-              (ordenes.length ? '<div class="dias m-1l m-val">' + esc(ordenes.join(' · ')) + '</div>' : '') +
+              /* El que no se paga desde Flota: en gris, en vez del valor (ver Cubre) */
+              (Cubre.de(m) ? Cubre.celda(m, c) : (c.valor ? Money.format(c.valor) : m.oc ? '<span class="txt-3">' + esc(m.oc) + '</span>' : '—') +
+              (ordenes.length ? '<div class="dias m-1l m-val">' + esc(ordenes.join(' · ')) + '</div>' : '')) +
               (avisos.length ? '<div class="dias d-warn m-1l m-val">' + esc(avisos.join(' · ')) + '</div>' : '') + '</td>' +
             '<td><div class="m-pila"><div class="flex aic g6">' + UI.clip(m, 12) +
               (m.fotos ? '<span class="chip" title="Fotos del taller">' + Icon('image', '', 12) + m.fotos + '</span>' : '') + '</div>' +
@@ -14881,7 +15157,7 @@ Object.assign(Ventanas, {
            espacio del lado izquierdo»): el taller y los repuestos, cada uno con
            su valor y su orden (ver TallerRep), y los adjuntos. En el celular
            van al final */
-        '<div class="reg-or">' + TallerRep.html('mc', null) +
+        '<div class="reg-or">' + Cubre.form() + TallerRep.html('mc', null) +
           /* Los adjuntos: documentos, aparte de las fotos (ver Adjuntos) */
           '<div class="field mb0"><label>Adjuntos <span class="txt-3">(opcional)</span></label>' +
             Dz.html('mcAdj', '<span class="solo-web">Factura, cotización o informe del taller</span><span class="solo-cel">Escoger el archivo</span>',
@@ -14903,6 +15179,7 @@ Object.assign(Ventanas, {
     /* Al corregir la entrada, el aviso de los avances que quedan antes (ver AvancesForm.revisarEntrada) */
     ['#mcE', '#mcEH'].forEach(x => $(x, m).addEventListener('input', () => AvancesForm.revisarEntrada(m)));
     TallerRep.montar(m, 'mc', null);
+    Cubre.montarForm(m);
     /* En el registro corto, el taller va a la derecha, antes de las fotos */
     if (rapido) {
       const tf = $('#mcP', m).closest('.field');
@@ -15250,16 +15527,17 @@ Object.assign(Ventanas, {
       '<div class="cs-d"><span class="l">Componentes</span>' + (comps.length ? '<div class="cs-tags">' + comps.map(x => '<span class="ctag">' + esc(x) + '</span>').join('') + '</div>'
         : '<div class="txt-3 fs12">Todavía sin componentes</div>') +
         '<span class="link fs12" data-act="casoComps" data-m="' + attr(r.id) + '">' + (comps.length ? 'Agregar o quitar' : '+ Agregar') + '</span></div>' +
-      dato('Taller', prov !== '—' ? esc(prov) + RepTaller.caso(r) : '') +
-      '<div class="cs-d"><span class="l">Órdenes de Facturación</span>' + (c.esta.length ? c.esta.map(o => '<div class="cs-oc"><b class="mono">' + esc(o.codigo) + '</b>' +
+      dato('Taller', prov !== '—' ? esc(prov) + Cubre.porGarantia(r) + RepTaller.caso(r) : '') +
+      /* El que no se paga desde Flota (ver Cubre): en vez de las órdenes y el valor, cómo se pagó */
+      (Cubre.de(r) ? Cubre.caso(r, c) : '<div class="cs-d"><span class="l">Órdenes de Facturación</span>' + (c.esta.length ? c.esta.map(o => '<div class="cs-oc"><b class="mono">' + esc(o.codigo) + '</b>' +
           '<span class="txt-3">' + (o.tipo === 'SERVICIO' ? 'Taller' : 'Repuestos') + '</span><span class="v">' + esc(Money.format(o.valor)) + '</span>' +
           '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-act="verOrden" data-o="' + attr(o.orden_id) + '" title="Ver la orden" aria-label="Ver la orden">' +
           Icon('eye', '', 14) + '</button></div>').join('') : '<div class="txt-3 fs12">Todavía sin órdenes</div>') +
         '<span class="link fs12" data-act="casoOrdenes" data-m="' + attr(r.id) + '">' + (c.esta.length ? 'Relacionar o quitar órdenes' : '+ Relacionar una orden') +
-          '</span></div>' +
-      dato(fin ? 'Valor' : 'Valor hasta hoy', c.valor ? '<b>' + esc(Money.format(c.valor)) + '</b>' : '') +
+          '</span></div>' + Cubre.pregunta(r, c) +
+      dato(fin ? 'Valor' : 'Valor hasta hoy', c.valor ? '<b>' + esc(Money.format(c.valor)) + '</b>' : '')) +
       /* Lo que costó lo de las llantas, escrito en los avances: sale de ese valor (ver Plano.reparto) */
-      (Llantas.valorEscrito(r) != null && (!(r.partes || []).length || (r.partes || []).some(x => x.k !== 'llantas'))
+      (!Cubre.de(r) && Llantas.valorEscrito(r) != null && (!(r.partes || []).length || (r.partes || []).some(x => x.k !== 'llantas'))
         ? dato('En llantas', '<b>' + esc(Money.format(Plano.costo(r) ? Llantas.costo(r) : Llantas.valorEscrito(r))) + '</b><div class="txt-3 fs12">' +
           (Plano.costo(r) ? 'Sale de ese valor' : 'Cuenta cuando el arreglo tenga su valor') + '</div>') : '') +
       (Adjuntos.de(r).length ? '<div class="cs-d"><span class="l">Adjuntos</span>' + UI.clip(r, 13) + '</div>' : '') +
@@ -15267,6 +15545,7 @@ Object.assign(Ventanas, {
         /* «Terminar arreglo» va abajo del recuadro de los avances (Juan, 08/11/2026) */
         (prog ? '<button class="btn btn-primary btn-sm" data-act="casoIngreso" data-m="' + attr(r.id) + '">' + Icon('check', '', 13) + 'Ingresó</button>' : '') + '</div>' +
       MantRemolque.abrirDespues(r, u);
+    Cubre.montar(m, r);
   },
 
   /* Los componentes del caso (Juan, 05/11/2026: «como si fueran hashtags… y
@@ -15990,8 +16269,8 @@ const Leer = {
     const u = PlanoForm.u(m), taller = m._estado !== 'cerrado', entrada = (m._estado === 'programado' ? $('#mcEP', m).value : $('#mcE', m).value) || hoyISO;
     /* Si sigue en el taller (o al corregir uno que los tuvo), los avances, cada uno con sus fotos (ver AvancesForm); las fotos de abajo son las de cómo llegó */
     const av = taller || m._conAvances ? AvancesForm.leer(m) : [], notas = av.map(a => a.n);
-    const r0 = m._editar ? Datos.mantenimientos.find(x => x.id === m._editar) : null, tr = TallerRep.leer(m, 'mc', r0);
-    return {
+    const r0 = m._editar ? Datos.mantenimientos.find(x => x.id === m._editar) : null, tr = Cubre.leer(m, TallerRep.leer(m, 'mc', r0));
+    return Object.assign({
       numero: (r0 && r0.numero) || Num.mc(), unidad: u, prov: tr.prov, rep: tr.rep, repMismo: tr.repMismo, taller, notas,
       entrada, horaEntrada: m._estado === 'programado' ? '' : ($('#mcEH', m) || {}).value || '', salida: taller ? '' : $('#mcS', m).value || entrada, horaSalida: taller ? '' : ($('#mcSH', m) || {}).value || '',
       programado: m._estado === 'programado' ? { f: entrada, h: $('#mcH', m).value } : null,
@@ -16005,7 +16284,7 @@ const Leer = {
       novedades: m._novs.map(n => ({ i: n.i, f: n.fecha, p: n.preop, t: n.texto })),
       /* El remolque escogido al crearlo y, al corregirlo, el ingreso enlazado (ver MantRemolque) */
       remolque: MantRemolque.leer(m, 'mc'), enlace: (r0 && r0.enlace) || undefined
-    };
+    }, Cubre.datosForm(m));
   },
   /* «$ 850.000», «850.000» o «850000»: solo cuentan los dígitos */
   pesos: v => +String(v || '').replace(/[^\d]/g, '') || 0,
@@ -16382,6 +16661,72 @@ Object.assign(Acciones, {
       (rep ? '<br>En repuestos quedó ' + esc(rep.nombre) + ', de la ' + esc(oc.codigo) + '.' : ''));
     Router.pintar(true);
   },
+  /* El arreglo que no se paga desde Flota (ver Cubre), desde el caso. Si tiene algo que con la marca no va (el valor, los repuestos
+     o, con la tarjeta, el taller), se pregunta antes de quitarlo */
+  casoCubre(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), k = el.dataset.k;
+    if (!r || !Cubre.TIPOS[k]) return;
+    const quita = Cubre.habia(r, k);
+    if (!quita.length) { Acciones.casoCubreSi(el); return; }
+    Modal.abrir({
+      titulo: Cubre.TIPOS[k].boton, sub: esc([r.numero, UI.placaTxt(Q.unidad(r.unidad))].filter(Boolean).join(' · ')), ancho: 'm-hoja', sinFoco: true,
+      cuerpo: '<p class="txt-2" style="font-size:13px;line-height:1.5;margin:0">Este arreglo tiene ' + esc(Cubre.lista(quita)) + '. Con «' + esc(Cubre.TIPOS[k].boton) +
+        '» no van aquí, para no contarlos dos veces: se quitan.</p>',
+      pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="casoCubreSi" data-k="' + k + '" data-m="' + attr(r.id) + '">' +
+        Icon('check', '', 14) + (quita.length > 1 ? 'Marcar y quitarlos' : 'Marcar y quitarlo') + '</button>'
+    });
+  },
+  casoCubreSi(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), k = el.dataset.k;
+    if (!r || !Cubre.TIPOS[k]) return;
+    const quita = Cubre.habia(r, k), aqui = el.closest('.modal-bd');
+    Cubre.marcar(r, k);
+    if (aqui && !aqui._pintarCaso) Modal.cerrar(aqui);
+    const m = $$('#modals .modal-bd').filter(x => x._pintarCaso).pop();
+    if (m) m._pintarCaso();
+    Toast.show('Listo: ' + (r.numero ? '<b>' + esc(r.numero) + '</b>' : 'el arreglo') + ' quedó con «' + esc(Cubre.TIPOS[k].boton) + '». No pide taller, orden ni valor, y no suma en el gasto.' +
+      (quita.length ? '<br>Se quitó ' + esc(Cubre.lista(quita)) + '.' : ''));
+    Router.pintar(true);
+  },
+  casoCubreQuitar(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), k = Cubre.de(r);
+    if (!k) return;
+    Cubre.quitar(r);
+    const m = el.closest('.modal-bd');
+    if (m && m._pintarCaso) m._pintarCaso();
+    Toast.show('Listo: ' + (r.numero ? '<b>' + esc(r.numero) + '</b>' : 'el arreglo') + ' ya no dice «' + esc(Cubre.TIPOS[k].boton) + '»: vuelve a pedir el taller, la orden y el valor.');
+    Router.pintar(true);
+  },
+  casoCubreQuien(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), m = el.closest('.modal-bd'), q = m && $('#csCq', m);
+    if (!r || !q) return;
+    const t = q.value.trim().replace(/\s+/g, ' ');
+    if (t) r.cubreQuien = t; else delete r.cubreQuien;
+    if (m._pintarCaso) m._pintarCaso();
+    Toast.show(t ? 'Quedó anotado quién lo arregló: <b>' + esc(t) + '</b>.' : 'Se borró quién lo arregló.');
+    Router.pintar(true);
+  },
+  /* El arreglo de la garantía: si el caso no tiene taller, queda el de ese arreglo */
+  casoGarantiaDe(s) {
+    const r = Datos.mantenimientos.find(x => x.id === s.dataset.m), m = s.closest('.modal-bd');
+    if (!r) return;
+    if (s.value) r.garantiaDe = s.value; else delete r.garantiaDe;
+    const o = Cubre.origen(r), t = o && Cubre.tallerDe(o), puso = Boolean(t && !Q.provDe(r)), n = o && Q.provDe(o);
+    if (puso) ProvFact.poner(r, t);
+    if (m && m._pintarCaso) m._pintarCaso();
+    Toast.show(o ? 'Listo: la garantía es de <b>' + esc(o.numero || 'ese arreglo') + '</b>' + (puso && n ? '; la cubre <b>' + esc(n.nombre) + '</b>, que quedó de taller.' : '.')
+      : 'Listo: la garantía quedó sin arreglo escogido.');
+    Router.pintar(true);
+  },
+  casoGarantiaTaller(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), o = Cubre.origen(r), t = Cubre.tallerDe(o);
+    if (!r || !t) return;
+    ProvFact.poner(r, t);
+    const m = el.closest('.modal-bd');
+    if (m && m._pintarCaso) m._pintarCaso();
+    Toast.show('Listo: <b>' + esc((Q.provDe(r) || {}).nombre || 'ese taller') + '</b> quedó de taller, el de ' + esc(o.numero || 'ese arreglo') + '.');
+    Router.pintar(true);
+  },
   /* Del ingreso de un vehículo al del otro (ver MantRemolque.banda): desde el caso se cambia; desde «Editar», se abre encima */
   verEnlace(el) {
     const o = Datos.mantenimientos.find(x => x.id === el.dataset.m), m = el.closest('.modal-bd');
@@ -16568,7 +16913,7 @@ Object.assign(Acciones, {
         '<div class="field"><label>Componentes <span class="txt-3">(opcional · toque varios)</span></label>' + Comp.html('Buscar o escribir: turbo, radiador…') + '</div>' +
         '<div id="mcLlantas"></div><div id="mcLlNueva"></div>' +
         /* El taller y los repuestos, cada uno con su valor y su orden (ver TallerRep) */
-        TallerRep.html('ta', r) +
+        (Cubre.de(r) ? Cubre.nota(r) + '<div class="hidden">' + TallerRep.html('ta', r) + '</div>' : TallerRep.html('ta', r)) +
         '<div class="field mb0"><label>Fotos de cómo quedó <span class="txt-3">(opcional)</span></label>' +
           Dz.camara('taDz') + Dz.html('taDz', '<span class="solo-web">Agregar fotos</span><span class="solo-cel">Escoger de la galería</span>',
             '<span class="solo-web">Arrastre aquí las fotos o haga clic; a cada una se le escribe qué muestra</span>', 'image/*', true) +
@@ -16617,12 +16962,15 @@ Object.assign(Acciones, {
     /* La salida no puede quedar antes de lo último que pasó (ver Avances.salidaAntes); si sale hoy, con la hora de ahora */
     const mal = Avances.salidaAntes(r, salida, salida === hoyISO ? ahora() : '');
     if (mal) { $('#taAviso', m).innerHTML = '<div class="alert a-err mb12">' + Icon('warn') + '<div>' + esc(mal) + '</div></div>'; return; }
-    const tr = TallerRep.leer(m, 'ta', r);
-    Compras.ponerOrdenes(r, tr.ordenes);
-    /* Solo si se cambiaron: así un arreglo con un proveedor de antes de Flota no lo pierde */
-    if (ProvFact.cambio(m, 'taP')) ProvFact.poner(r, tr.prov);
-    if (ProvFact.cambio(m, 'taR') || tr.repMismo !== Boolean(r.repMismo)) ProvFact.ponerRep(r, tr.rep, tr.repMismo);
-    TallerRep.poner(r, tr);
+    /* Con la marca de la tarjeta o la garantía (ver Cubre), lo del taller no se pidió: queda como está */
+    if (!Cubre.de(r)) {
+      const tr = TallerRep.leer(m, 'ta', r);
+      Compras.ponerOrdenes(r, tr.ordenes);
+      /* Solo si se cambiaron: así un arreglo con un proveedor de antes de Flota no lo pierde */
+      if (ProvFact.cambio(m, 'taP')) ProvFact.poner(r, tr.prov);
+      if (ProvFact.cambio(m, 'taR') || tr.repMismo !== Boolean(r.repMismo)) ProvFact.ponerRep(r, tr.rep, tr.repMismo);
+      TallerRep.poner(r, tr);
+    }
     /* El componente, la parte (si al escoger el componente se marcó otra) y las llantas */
     const comps = Comp.leer(m), partes = PlanoForm.escogidas(m);
     if (comps.length) { r.componentes = comps; r.componente = Comp.texto(comps); } else { delete r.componentes; delete r.componente; }
@@ -16925,6 +17273,7 @@ Object.assign(Acciones, {
     ProvFact.ponerRep(r, d.rep, d.repMismo);
     TallerRep.poner(r, d);
     Compras.ponerOrdenes(r, d.ordenes);
+    Cubre.guardar(r, d);
     Datos.mantenimientos.push(r);
     /* Y el ingreso del remolque, enlazado (ver MantRemolque) */
     const x = d.remolque && Q.unidad(d.remolque) ? MantRemolque.crear(r, d.remolque) : null;
@@ -16971,6 +17320,8 @@ Object.assign(Acciones, {
       partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [], llanta: r.llanta, notas: r.notas || [],
       valor: r.valor, valorTaller: r.valorTaller, valorRep: r.valorRep, aMano: r.aMano, ordenes: r.ordenes || [], estado: r.estado, programado: r.programado,
       enlace: r.enlace,
+      /* Si no se paga desde Flota (ver Cubre) */
+      cubre: r.cubre, cubreQuien: r.cubreQuien, garantiaDe: r.garantiaDe,
       /* Sus adjuntos, seguidos al final (ver AdjImpresos) */
       adjuntos: Adjuntos.de(r).map(a => Object.assign({}, a)) };
     const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d));
@@ -21924,8 +22275,9 @@ const Fila = {
 const aNulo = v => (v === '' || v == null ? null : v);
 const aTexto = v => (v == null ? '' : String(v));
 const aNumero = v => (v === '' || v == null || !isFinite(+v) ? null : +v);
-const rutaDeId = id => Nube.rutaDe(Nube.claveDe(id));
-const idDeRuta = r => (r == null ? r : r.startsWith('archivo/') ? r.slice(8) : r.replace(/\//g, ':'));
+/* Sin archivo, la columna queda vacía; antes quedaba «archivo/null» y al volver parecía un adjunto (18/11/2026) */
+const rutaDeId = id => (id == null || id === '' ? null : Nube.rutaDe(Nube.claveDe(id)));
+const idDeRuta = r => (r == null || r === 'archivo/null' ? null : r.startsWith('archivo/') ? r.slice(8) : r.replace(/\//g, ':'));
 /* JSON con las llaves en orden, para comparar sin que importe cómo vinieron */
 const estable = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)
   ? Object.keys(x).sort().reduce((o, c) => { o[c] = x[c]; return o; }, {}) : x));
@@ -24592,6 +24944,7 @@ const Venc = {
   faltaTxt(d) { const m = Math.round(d / 30.4); return d < 60 ? 'faltan ' + d + ' días' : m < 24 ? 'faltan ' + m + ' meses' : 'faltan ' + (m / 12).toFixed(m % 12 ? 1 : 0).replace('.', ',') + ' años'; },
   /* El estado: vencido (en las garantías, «venció», en gris: ya no cubre, pero no es una falta), vence pronto o al día */
   est(x, garantia) {
+    if (x.sinGarantia) return { k: 'nr', txt: 'Sin garantía', det: this.motivoTxt(x) };
     if (!x.hasta) return { k: 'nr', txt: 'Sin fecha', det: 'Falta la fecha hasta' };
     const d = Fecha.hasta(x.hasta);
     if (d < 0) return garantia ? { k: 'nr', txt: 'Venció', det: 'Sin garantía desde el ' + Fecha.corta(x.hasta) } : { k: 'bad', txt: 'Vencido', det: 'Venció el ' + Fecha.corta(x.hasta) };
@@ -24661,15 +25014,39 @@ const Venc = {
     if (!orden.length) return '<div class="card">' + UI.empty('shieldOk', 'Sin garantías registradas', 'Se agregan con «Agregar garantía» o en la ficha de cada vehículo. Al terminar un cambio de batería, la plataforma la pregunta.') + '</div>';
     return '<div class="card"><div class="tbl-wrap"><table class="tbl vc-gtbl"><thead><tr><th>Vehículo</th><th>Garantía</th><th>Desde</th><th>Hasta</th><th>Estado</th><th>De dónde</th><th>Soporte</th><th></th></tr></thead><tbody>' +
       orden.map(({ u, x, e }) => '<tr' + (e.k === 'nr' ? ' class="vc-ven"' : '') + '><td><b class="mono link" data-act="irUnidad" data-u="' + attr(u.id) + '" data-tab="venc">' + esc(UI.placaTxt(u)) + '</b></td>' +
-        '<td><div class="vc-gt">' + Icon(this.icG(x.tipo), '', 14) + '<div><b>' + esc(x.tipo) + '</b><span>' + esc(x.detalle || '') + '</span></div></div></td>' +
+        '<td><div class="vc-gt">' + (x.foto ? this.fotoHtml(x.foto, 'vc-foto-s') : Icon(this.icG(x.tipo), '', 14)) + '<div><b>' + esc(x.tipo) + '</b><span>' + esc(x.detalle || '') + '</span></div></div></td>' +
         '<td class="nowrap">' + esc(x.desde ? Fecha.corta(x.desde) : '—') + '</td><td class="nowrap">' + esc(x.hasta ? Fecha.corta(x.hasta) : '—') +
           (x.hastaKm ? '<div class="dias">o ' + esc(Number(x.hastaKm).toLocaleString('es-CO')) + ' km</div>' : '') + '</td>' +
-        '<td>' + UI.pill(e.k, e.txt) + '<div class="dias">' + esc(e.k === 'ok' ? this.faltaTxt(Fecha.hasta(x.hasta)) : e.k === 'nr' && x.hasta ? 'Ya no cubre' : '') + '</div></td>' +
+        '<td>' + UI.pill(e.k, e.txt) + '<div class="dias">' + esc(x.sinGarantia ? this.motivoTxt(x) : e.k === 'ok' ? this.faltaTxt(Fecha.hasta(x.hasta)) : e.k === 'nr' && x.hasta ? 'Ya no cubre' : '') + '</div></td>' +
         '<td class="fs12">' + esc([x.proveedor, x.orden].filter(Boolean).join(' · ') || '—') +
           (this.arregloTxt(x) ? '<div><span class="link" data-act="vcArreglo" data-m="' + attr(x.arreglo || '') + '">' + Icon('tool', '', 11) + ' ' + esc(this.arregloTxt(x)) + '</span></div>' : '') + '</td>' +
-        '<td>' + this.soporteLink(x.archivo, 'Ver') + '</td>' +
+        '<td>' + this.soportes(x, 'Ver') + '</td>' +
         '<td class="tr"><button type="button" class="btn btn-sm" data-act="vcGarantia" data-u="' + attr(u.id) + '" data-x="' + attr(x.id) + '">' + Icon('edit', '', 12) + 'Editar</button></td></tr>').join('') +
       '</tbody></table></div></div>';
+  },
+  /* Los soportes de una garantía: varios (x.archivos) o el de antes (x.archivo) */
+  soportes(x, txt, nada) {
+    const l = x.archivos || (x.archivo ? [x.archivo] : []);
+    if (!l.length) return nada === undefined ? this.soporteLink(null) : nada;
+    return l.length === 1 ? this.soporteLink(l[0], txt) : l.map((a, i) => this.soporteLink(a, (txt === 'Ver' ? 'Ver ' : 'Soporte ') + (i + 1))).join(' ');
+  },
+  motivoTxt: x => (x.motivo || 'Garantía sobre garantía').replace(/^./, c => c.toLowerCase()),
+  /* La foto: si ya se bajó, se ve de una; si no, se baja y se pone donde esté (data-vcf) */
+  _bajando: new Set(),
+  fotoHtml(f, cls) {
+    const v = Archivos.vistos.get(f.id);
+    if (!v) this.traerFoto(f);
+    return '<button type="button" class="vc-foto ' + (cls || '') + '" data-act="verArchivo" data-id="' + attr(f.id) + '" data-nombre="' + attr(f.nombre || 'Foto') +
+      '" data-vcf="' + attr(f.id) + '" title="Ver la foto en grande" aria-label="Ver la foto en grande">' + (v ? '<img src="' + attr(v.url) + '" alt="">' : Icon('image', '', 16)) + '</button>';
+  },
+  traerFoto(f) {
+    if (this._bajando.has(f.id)) return;
+    this._bajando.add(f.id);
+    Archivos.traer(Nube.claveDe(f.id)).then(b => {
+      if (!b) return;
+      const url = Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : Archivos.registrar(f.id, b, f.nombre, f.antes);
+      $$('[data-vcf="' + f.id + '"]').forEach(el => { el.innerHTML = '<img src="' + attr(url) + '" alt="">'; });
+    }).catch(() => {}).then(() => this._bajando.delete(f.id));
   },
   soporteLink(a, txt) {
     return a ? '<span class="link" data-act="verArchivo" data-id="' + attr(a.id) + '" data-nombre="' + attr(a.nombre || 'soporte') + '">' + Icon(/\.pdf$/i.test(a.nombre || '') ? 'pdf' : 'file', '', 12) + ' ' + esc(txt) + '</span>'
@@ -24704,18 +25081,21 @@ const Venc = {
   },
   tarjetaGarantias(u, conMargen) {
     const gs = (u.garantias || []).map(x => ({ x, e: this.est(x, true) })).sort((a, b) => (a.e.k === 'nr') - (b.e.k === 'nr') || String(a.x.hasta).localeCompare(String(b.x.hasta)));
-    const vig = gs.filter(y => y.e.k !== 'nr'), ven = gs.filter(y => y.e.k === 'nr');
-    const fila = ({ x, e }) => '<div class="vc-fg' + (e.k === 'nr' ? ' vc-ven' : '') + '"><span class="vc-fg-ic">' + Icon(this.icG(x.tipo), '', 18) + '</span>' +
+    const vig = gs.filter(y => y.e.k !== 'nr'), ven = gs.filter(y => y.e.k === 'nr' && !y.x.sinGarantia), sin = gs.filter(y => y.x.sinGarantia);
+    const fila = ({ x, e }) => '<div class="vc-fg' + (e.k === 'nr' ? ' vc-ven' : '') + '">' +
+      (x.foto ? this.fotoHtml(x.foto) : '<span class="vc-fg-ic">' + Icon(this.icG(x.tipo), '', 18) + '</span>') +
       '<div class="vc-fg-t"><b>' + esc(x.tipo) + (x.detalle ? ' · <span>' + esc(x.detalle) + '</span>' : '') + '</b>' +
-        '<span>' + (x.desde ? 'Desde el ' + esc(Fecha.corta(x.desde)) + ' hasta el ' : 'Hasta el ') + esc(x.hasta ? Fecha.corta(x.hasta) : '—') +
-          (x.hastaKm ? ' o ' + esc(Number(x.hastaKm).toLocaleString('es-CO')) + ' km, lo que llegue primero' : '') + '</span>' +
+        '<span>' + (x.sinGarantia ? (x.desde ? 'Se cambió el ' + esc(Fecha.corta(x.desde)) + ' · ' : '') + 'no trae garantía'
+          : (x.desde ? 'Desde el ' + esc(Fecha.corta(x.desde)) + ' hasta el ' : 'Hasta el ') + esc(x.hasta ? Fecha.corta(x.hasta) : '—') +
+          (x.hastaKm ? ' o ' + esc(Number(x.hastaKm).toLocaleString('es-CO')) + ' km, lo que llegue primero' : '')) + '</span>' +
         '<span class="vc-fg-m">' + [x.proveedor ? '<span>' + Icon('briefcase', '', 11) + esc(x.proveedor) + '</span>' : '', x.orden ? '<span>' + Icon('cart', '', 11) + esc(x.orden) + '</span>' : '',
           this.arregloTxt(x) ? '<span class="link" data-act="vcArreglo" data-m="' + attr(x.arreglo || '') + '">' + Icon('tool', '', 11) + esc(this.arregloTxt(x)) + '</span>' : '',
-          x.archivo ? this.soporteLink(x.archivo, 'Ver el soporte') : ''].filter(Boolean).join('') + '</span>' +
+          this.soportes(x, 'Ver el soporte', '')].filter(Boolean).join('') + '</span>' +
         (x.nota ? '<span class="vc-fg-n">' + esc(x.nota) + '</span>' : '') + '</div>' +
-      '<div class="vc-fg-e">' + UI.pill(e.k, e.txt) + '<span>' + esc(e.k === 'ok' ? this.faltaTxt(Fecha.hasta(x.hasta)) : e.k === 'warn' ? e.det : x.hasta ? 'Ya no cubre' : '') + '</span>' +
+      '<div class="vc-fg-e">' + UI.pill(e.k, e.txt) + '<span>' + esc(x.sinGarantia ? this.motivoTxt(x) : e.k === 'ok' ? this.faltaTxt(Fecha.hasta(x.hasta)) : e.k === 'warn' ? e.det : x.hasta ? 'Ya no cubre' : '') + '</span>' +
         '<button type="button" class="btn btn-sm btn-ghost" data-act="vcGarantia" data-u="' + attr(u.id) + '" data-x="' + attr(x.id) + '">' + Icon('edit', '', 12) + 'Editar</button></div></div>';
-    return UI.card('Garantías', gs.length ? '<div class="vc-fl">' + vig.map(fila).join('') + (ven.length ? '<div class="vc-fl-sep">Ya vencieron</div>' + ven.map(fila).join('') : '') + '</div>'
+    return UI.card('Garantías', gs.length ? '<div class="vc-fl">' + vig.map(fila).join('') + (ven.length ? '<div class="vc-fl-sep">Ya vencieron</div>' + ven.map(fila).join('') : '') +
+        (sin.length ? '<div class="vc-fl-sep">Sin garantía</div>' + sin.map(fila).join('') : '') + '</div>'
         : UI.empty('shieldOk', 'Sin garantías registradas', 'Anote la del vehículo nuevo, la de la batería o la de cualquier repuesto, con su fecha hasta.'),
       { flush: true, cls: conMargen ? 'mt16' : '', sub: vig.length + (vig.length === 1 ? ' vigente' : ' vigentes') + ' · avisa en el dashboard ' + Config.diasAviso + ' días antes de vencer',
         act: '<button class="btn btn-sm btn-primary" data-act="vcGarantia" data-u="' + attr(u.id) + '">' + Icon('plus', '', 12) + 'Agregar garantía</button>' }) +
@@ -24783,22 +25163,31 @@ const Venc = {
     this.soporte(m, 'vcF', revisar);
     revisar();
   },
-  /* La zona del soporte: se arrastra o se escoge; se ve con la lupa tocando su nombre; uno solo (el nuevo reemplaza) */
-  soporte(m, id, revisar) {
+  /* La zona del soporte: se arrastra o se escoge; se ve con la lupa tocando su nombre. Uno solo (el nuevo reemplaza, en m._sop) o, con
+     «varios» (la garantía: Juan, 18/11/2026, «no permite más de un solo adjunto»), los que se quieran, en m._sops */
+  soporte(m, id, revisar, varios) {
+    const fila = (a, i) => '<div class="dz-file">' + Icon(/\.pdf$/i.test(a.nombre || '') ? 'pdf' : 'image', '', 15) + '<span class="f1 trunc link" data-act="verArchivo" data-nombre="' +
+      attr(a.nombre || 'soporte') + '" data-id="' + attr(a.id) + '">' + esc(a.nombre || 'Soporte') + '</span>' + (a.tam ? '<span class="txt-3 fs11 nowrap">' + esc(Peso.foto(a.tam, a.antes)) + '</span>' : '') +
+      '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-sop-quitar="' + i + '" title="Quitar" aria-label="Quitar">' + Icon('x', '', 12) + '</button></div>';
     const pintar = () => {
-      const a = m._sop;
-      $('#' + id + 'F', m).innerHTML = m._cargando ? '<div class="dz-file"><span class="spin"></span><span class="f1">Preparando el archivo…</span></div>'
-        : a ? '<div class="dz-file">' + Icon(/\.pdf$/i.test(a.nombre || '') ? 'pdf' : 'image', '', 15) + '<span class="f1 trunc link" data-act="verArchivo" data-nombre="' + attr(a.nombre || 'soporte') +
-          '" data-id="' + attr(a.id) + '">' + esc(a.nombre || 'Soporte') + '</span>' + (a.tam ? '<span class="txt-3 fs11 nowrap">' + esc(Peso.foto(a.tam, a.antes)) + '</span>' : '') +
-          '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-sop-quitar title="Quitar" aria-label="Quitar">' + Icon('x', '', 12) + '</button></div>' : '';
+      const l = varios ? m._sops : m._sop ? [m._sop] : [];
+      $('#' + id + 'F', m).innerHTML = l.map(fila).join('') + (m._cargando ? '<div class="dz-file"><span class="spin"></span><span class="f1">Preparando ' +
+        (m._cargando > 1 ? m._cargando + ' archivos' : 'el archivo') + '…</span></div>' : '');
       revisar();
     };
     $('#' + id, m).classList.add('dz-sm');
-    $('#' + id + 'F', m).addEventListener('click', e => { if (e.target.closest('[data-sop-quitar]')) { m._sop = null; pintar(); } });
-    Dz.bind(id, files => {
-      m._cargando = true;
+    $('#' + id + 'F', m).addEventListener('click', e => {
+      const b = e.target.closest('[data-sop-quitar]');
+      if (!b) return;
+      if (varios) m._sops.splice(+b.dataset.sopQuitar, 1); else m._sop = null;
       pintar();
-      Archivos.preparar(files[0]).then(a => { m._sop = Adjuntos.dato(a); }, () => Toast.show('No se pudo leer el archivo.', 'err')).then(() => { m._cargando = false; pintar(); });
+    });
+    Dz.bind(id, files => {
+      const l = varios ? files : files.slice(0, 1);
+      m._cargando = (m._cargando || 0) + l.length;
+      pintar();
+      l.forEach(f => Archivos.preparar(f).then(a => { if (varios) m._sops.push(Adjuntos.dato(a)); else m._sop = Adjuntos.dato(a); },
+        () => Toast.show('No se pudo leer «' + esc(f.name || 'el archivo') + '».', 'err')).then(() => { m._cargando--; pintar(); }));
     });
     pintar();
   },
@@ -24826,74 +25215,201 @@ const Venc = {
   },
 
   /* ---- Agregar o editar una garantía (con «arreglo», la de la batería que viene de un arreglo terminado) ---- */
+  /* Juan, 18/11/2026: el proveedor con la lista que se busca escribiendo (antes salía la del navegador), las órdenes del vehículo para
+     marcar (de servicio, de compra o de pedido; antes era un texto y parecía solo de compra), varios soportes, la foto («como si fuera un
+     perfil») y «Garantía sobre garantía: no tiene», que la deja anotada sin garantía */
   ventanaGarantia(o) {
     const u = o.u || null, x0 = u && o.x ? (u.garantias || []).find(y => y.id === o.x) : null, r = o.arreglo || null, pre = o.pre || {};
     const clases = this.clases(), tipo0 = x0 ? x0.tipo : pre.tipo || clases[0] || '';
     if (x0 && !clases.some(c => Catalogo.clave(c) === Catalogo.clave(tipo0))) clases.push(tipo0);
-    const desde0 = x0 ? x0.desde || '' : pre.desde || hoyISO, meses0 = x0 ? '' : pre.meses || '', hasta0 = x0 ? x0.hasta || '' : meses0 ? this.mas(desde0, +meses0) : '';
+    const sin0 = x0 ? Boolean(x0.sinGarantia) : Boolean(pre.sin);
+    const desde0 = x0 ? x0.desde || '' : pre.desde || hoyISO, meses0 = x0 || sin0 ? '' : pre.meses || '', hasta0 = x0 ? x0.hasta || '' : meses0 ? this.mas(desde0, +meses0) : '';
     const us = Datos.unidades.filter(v => this.conGarantias(v)).sort((a, b) => String(a.placa).localeCompare(String(b.placa)));
+    const prov0 = x0 ? x0.proveedor || '' : pre.proveedor || '';
     ProvFact.traer();
-    const provs = [...new Set((ProvFact.lista || []).map(p => p.nombre).filter(Boolean))].sort((a, b) => a.localeCompare(b));
     const m = Modal.abrir({
       titulo: x0 ? 'Editar garantía' : 'Agregar garantía', sinFoco: true,
       sub: u ? esc(UI.placaTxt(u) + ' · ' + (UI.nombre(u) || TIPOS[u.tipo].nombre)) : 'El vehículo nuevo, la batería o cualquier repuesto con garantía',
       cuerpo: (r ? '<div class="alert a-info mb16">' + Icon('tool') + '<div><b>Viene del arreglo ' + esc(r.numero || r.id) + '</b> · ' + esc(Comp.texto(Comp.de(r)) || 'Cambio de batería') +
-          ', terminado el ' + esc(Fecha.corta(r.salida || hoyISO)) + '. Proveedor y orden tomados del arreglo. Si la batería no tiene garantía, cierre esta ventana.</div></div>' : '') +
+          ', terminado el ' + esc(Fecha.corta(r.salida || hoyISO)) + '. Proveedor y órdenes tomados del arreglo. Si la batería no trae garantía porque fue garantía sobre garantía, ' +
+          'márquelo abajo y guarde: queda anotado.</div></div>' : '') +
+        /* La foto, como la de un perfil: se toca y se ve en grande */
+        '<div class="vc-per"><div class="vc-per-f" id="vgFo"></div><div class="vc-per-t"><b>Foto</b> <span class="txt-3">(opcional)</span>' +
+          '<div class="txt-3 fs12">La batería o el repuesto, para reconocerlo después. Toque la foto para verla en grande.</div><div class="vc-per-b" id="vgFoB"></div></div></div>' +
+        '<div class="vc-sin"><button type="button" class="zchip" id="vgSin" aria-pressed="false">' + Icon('shield', '', 13) + 'Garantía sobre garantía: no tiene</button>' +
+          '<span class="txt-3 fs12" id="vgSinT"></span></div>' +
         '<div class="grid g2">' +
           (u ? '' : '<div class="field"><label>Vehículo</label><select class="inp" id="vgU"><option value="">Escoja el vehículo</option>' +
             us.map(v => '<option value="' + attr(v.id) + '">' + esc(UI.placaTxt(v) + (UI.nombre(v) ? ' · ' + UI.nombre(v) : '')) + '</option>').join('') + '</select></div>') +
           '<div class="field"><label>Garantía de</label><select class="inp" id="vgT">' + clases.map(c => '<option' + (Catalogo.clave(c) === Catalogo.clave(tipo0) ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select></div>' +
           '<div class="field"><label>Detalle <span class="txt-3">(marca, referencia o serial)</span></label><input class="inp" id="vgD" maxlength="100" placeholder="Ej.: MAC Silver 1100 · 2 baterías" value="' + attr(x0 ? x0.detalle || '' : pre.detalle || '') + '"></div>' +
-          '<div class="field"><label>Desde</label><input class="inp" type="date" id="vgDe" value="' + attr(desde0) + '"></div>' +
-          '<div class="field"><label>Cuánto dura <span class="txt-3">(opcional)</span></label><div class="vc-dur"><input class="inp" id="vgN" inputmode="numeric" maxlength="3" placeholder="12" value="' + attr(meses0) + '">' +
+          '<div class="field"><label id="vgDeL">Desde</label><input class="inp" type="date" id="vgDe" value="' + attr(desde0) + '"></div>' +
+          '<div class="field vg-x"><label>Cuánto dura <span class="txt-3">(opcional)</span></label><div class="vc-dur"><input class="inp" id="vgN" inputmode="numeric" maxlength="3" placeholder="12" value="' + attr(meses0) + '">' +
             '<select class="inp" id="vgUd"><option value="1">meses</option><option value="12">años</option></select></div></div>' +
-          '<div class="field"><label>Hasta</label><input class="inp" type="date" id="vgHa" value="' + attr(hasta0) + '"><div class="hint">Se calcula con lo que dura; también se puede escribir</div></div>' +
-          '<div class="field"><label>O hasta los km <span class="txt-3">(opcional)</span></label><input class="inp" id="vgK" inputmode="numeric" maxlength="9" placeholder="Ej.: 150.000" value="' +
+          '<div class="field vg-x"><label>Hasta</label><input class="inp" type="date" id="vgHa" value="' + attr(hasta0) + '"><div class="hint">Se calcula con lo que dura; también se puede escribir</div></div>' +
+          '<div class="field vg-x"><label>O hasta los km <span class="txt-3">(opcional)</span></label><input class="inp" id="vgK" inputmode="numeric" maxlength="9" placeholder="Ej.: 150.000" value="' +
             attr(x0 && x0.hastaKm ? Number(x0.hastaKm).toLocaleString('es-CO') : '') + '"><div class="hint">Para la garantía del vehículo o del motor</div></div>' +
-          '<div class="field"><label>Proveedor <span class="txt-3">(opcional)</span></label><input class="inp" id="vgP" list="vgPl" maxlength="100" placeholder="Escriba o escoja" value="' + attr(x0 ? x0.proveedor || '' : pre.proveedor || '') + '">' +
-            '<datalist id="vgPl">' + provs.map(p => '<option value="' + attr(p) + '">').join('') + '</datalist></div>' +
-          '<div class="field"><label>Orden <span class="txt-3">(opcional)</span></label><input class="inp" id="vgO" maxlength="60" placeholder="Ej.: OC-0567" value="' + attr(x0 ? x0.orden || '' : pre.orden || '') + '"></div>' +
+          '<div class="field"><label>Proveedor <span class="txt-3">(opcional)</span></label><select class="inp" id="vgP">' + this.provOps(prov0) + '</select></div>' +
         '</div>' +
-        '<div class="field"><label>Soporte <span class="txt-3">(la factura o el certificado de garantía)</span></label>' +
-          Dz.html('vgF', 'Suelte aquí el archivo', '<span class="solo-web">o haga clic para escogerlo · PDF o foto</span>', 'application/pdf,image/*', false) + '</div>' +
+        '<div class="field"><label>Órdenes <span class="txt-3">(opcional · de servicio, de compra o de pedido)</span></label><div class="oc-lista vc-ol" id="vgOl"></div>' +
+          '<input class="inp mt8" id="vgO" maxlength="80" placeholder="¿No está en la lista? Escriba el número: ej.: OS-0123" value="' + attr(x0 ? x0.orden || '' : pre.orden || '') + '"></div>' +
+        '<div class="field"><label>Soporte <span class="txt-3">(la factura o el certificado de garantía · uno o varios)</span></label>' +
+          Dz.html('vgF', 'Suelte aquí los archivos', '<span class="solo-web">o haga clic para escogerlos · PDF o foto</span>', 'application/pdf,image/*', true) + '</div>' +
         '<div class="field mb0"><label>Nota <span class="txt-3">(opcional)</span></label><input class="inp" id="vgNo" maxlength="200" placeholder="Ej.: se reclama en la sede de Montería" value="' + attr(x0 ? x0.nota || '' : '') + '"></div>',
       pie: (x0 ? '<button type="button" class="btn btn-ghost btn-del mf-left" data-act="vcQuitar" data-u="' + attr(u.id) + '" data-x="' + attr(x0.id) + '" data-que="ga">' + Icon('trash', '', 14) + 'Quitar</button>' : '') +
-        '<button type="button" class="btn" data-act="cerrarModal">' + (r ? 'No tiene garantía' : 'Cancelar') + '</button><button type="button" class="btn btn-primary" id="vgG" data-act="vcGuardarGa" data-u="' + attr(u ? u.id : '') +
-          '" data-x="' + attr(x0 ? x0.id : '') + '" data-m="' + attr(r ? r.id : '') + '" disabled>' + Icon('check', '', 14) + 'Guardar garantía</button>'
+        '<button type="button" class="btn" data-act="cerrarModal">' + (r ? 'Cerrar sin anotar' : 'Cancelar') + '</button><button type="button" class="btn btn-primary" id="vgG" data-act="vcGuardarGa" data-u="' + attr(u ? u.id : '') +
+          '" data-x="' + attr(x0 ? x0.id : '') + '" data-m="' + attr(r ? r.id : '') + '" disabled>' + Icon('check', '', 14) + '<span id="vgGt">Guardar garantía</span></button>'
     });
-    m._sop = x0 ? x0.archivo || null : null;
-    const de = $('#vgDe', m), n = $('#vgN', m), ud = $('#vgUd', m), ha = $('#vgHa', m), k = $('#vgK', m), g = $('#vgG', m);
-    const firma = () => JSON.stringify([($('#vgU', m) || {}).value || '', $('#vgT', m).value, $('#vgD', m).value.trim(), de.value, ha.value, k.value, $('#vgP', m).value.trim(), $('#vgO', m).value.trim(),
-      $('#vgNo', m).value.trim(), m._sop && m._sop.id]);
-    const antes = x0 ? firma() : '';
-    const revisar = () => { g.disabled = Boolean(m._cargando) || !ha.value || ($('#vgU', m) && !$('#vgU', m).value) || firma() === antes; };
+    m._sops = x0 ? (x0.archivos || (x0.archivo ? [x0.archivo] : [])).map(a => Object.assign({}, a)) : [];
+    m._foto = x0 && x0.foto ? Object.assign({}, x0.foto) : null;
+    m._ords = new Set(x0 ? x0.ordenes || [] : pre.ordenes || []);
+    m._sin = sin0;
+    const de = $('#vgDe', m), n = $('#vgN', m), ud = $('#vgUd', m), ha = $('#vgHa', m), k = $('#vgK', m), g = $('#vgG', m), p = $('#vgP', m);
+    const firma = () => JSON.stringify([($('#vgU', m) || {}).value || '', $('#vgT', m).value, $('#vgD', m).value.trim(), de.value, m._sin ? '' : ha.value, m._sin ? '' : k.value,
+      Boolean(m._sin), this.provNombre(p.value), [...m._ords].sort(), $('#vgO', m).value.trim(), $('#vgNo', m).value.trim(), m._sops.map(a => a.id), m._foto && m._foto.id]);
+    const revisar = () => {
+      if (document.body.contains(m)) g.disabled = Boolean(m._cargando) || Boolean(m._fotoCargando) || (!m._sin && !ha.value) || ($('#vgU', m) && !$('#vgU', m).value) || firma() === m._antes;
+    };
+    m._alCambiar = revisar;
+    m._firma = firma;
     const ponerHasta = () => { const v = +String(n.value).replace(/\D/g, ''); if (v && de.value) ha.value = this.mas(de.value, v * +ud.value); revisar(); };
     n.addEventListener('input', () => { const d = n.value.replace(/\D/g, ''); if (d !== n.value) n.value = d; ponerHasta(); });
     ud.addEventListener('change', ponerHasta);
     de.addEventListener('change', ponerHasta);
     de.addEventListener('input', ponerHasta);
     k.addEventListener('input', () => { const d = k.value.replace(/\D/g, ''); k.value = d ? Number(d).toLocaleString('es-CO') : ''; revisar(); });
-    ['#vgT', '#vgD', '#vgHa', '#vgP', '#vgO', '#vgNo', '#vgU'].forEach(s => { const el = $(s, m); if (el) { el.addEventListener('input', revisar); el.addEventListener('change', revisar); } });
-    this.soporte(m, 'vgF', revisar);
-    revisar();
+    ['#vgT', '#vgD', '#vgHa', '#vgP', '#vgO', '#vgNo'].forEach(s => { const el = $(s, m); if (el) { el.addEventListener('input', revisar); el.addEventListener('change', revisar); } });
+    ['input', 'change', 'click'].forEach(t => m.addEventListener(t, e => { if (e.isTrusted) m._tocado = true; }, true));
+    /* «Garantía sobre garantía»: no pide hasta cuándo, no avisa y queda anotada */
+    const sinB = $('#vgSin', m), sinT = $('#vgSinT', m);
+    const ponerSin = v => {
+      m._sin = v;
+      sinB.classList.toggle('on', v);
+      sinB.setAttribute('aria-pressed', String(v));
+      m.classList.toggle('vg-sin', v);
+      sinT.textContent = !v ? '' : r && Cubre.de(r) === 'garantia' && !x0 ? 'El arreglo fue por garantía: garantía sobre garantía no se da.' : 'Queda anotada sin garantía: no pide hasta cuándo ni avisa.';
+      $('#vgDeL', m).textContent = v ? 'Se cambió el' : 'Desde';
+      $('#vgGt', m).textContent = v ? 'Guardar sin garantía' : 'Guardar garantía';
+      revisar();
+    };
+    sinB.addEventListener('click', () => ponerSin(!m._sin));
+    /* El proveedor, como el taller: se busca escribiendo; cuando llega la lista de Facturación, queda escogido el mismo */
+    ProvFact.listas(m, ['vgP']);
+    ProvFact.traer().then(() => {
+      if (!document.body.contains(m)) return;
+      const nombre = this.provNombre(p.value);
+      p.innerHTML = this.provOps(nombre);
+      p.value = this.provValor(nombre);
+      p.dataset.antes = p.value;
+      if (!m._tocado && m._antes) m._antes = firma();
+      revisar();
+    });
+    /* Las órdenes del vehículo; al marcar una sin proveedor escogido, el de la orden */
+    const caja = $('#vgOl', m);
+    caja.addEventListener('change', e => {
+      const i = e.target.closest('input[type="checkbox"]');
+      if (!i) return;
+      if (i.checked) m._ords.add(i.value); else m._ords.delete(i.value);
+      const x = i.checked && !p.value ? ProvFact.deOrden(Compras.porId(i.value)) : null;
+      if (x && [...p.options].some(op => op.value === 'f:' + x.id)) { p.value = 'f:' + x.id; p.dataset.antes = p.value; }
+      revisar();
+    });
+    if ($('#vgU', m)) $('#vgU', m).addEventListener('change', () => { m._ords.clear(); this.pintarOrdenes(m); revisar(); });
+    this.pintarOrdenes(m);
+    if (Compras.estado !== 'listo') Compras.traer(true).then(() => { if (document.body.contains(m)) { this.pintarOrdenes(m); revisar(); } });
+    /* La foto: se escoge, se arrastra o se cambia */
+    const fo = $('#vgFo', m);
+    const poner = f => {
+      if (!f || !/^image\//.test(f.type)) { if (f) Toast.show('La foto tiene que ser una imagen (JPG o PNG).', 'err'); return; }
+      m._fotoCargando = true;
+      this.pintarFoto(m);
+      Archivos.preparar(f, 'arreglo').then(a => { m._foto = Adjuntos.dato(a); }, () => Toast.show('No se pudo leer la foto.', 'err'))
+        .then(() => { m._fotoCargando = false; this.pintarFoto(m); revisar(); });
+    };
+    m.addEventListener('change', e => { if (e.target.matches('[data-vc-foto]')) { poner(e.target.files[0]); e.target.value = ''; } });
+    m.addEventListener('click', e => { if (e.target.closest('[data-vc-foto-quitar]')) { m._foto = null; this.pintarFoto(m); revisar(); } });
+    fo.addEventListener('dragover', e => { e.preventDefault(); fo.classList.add('over'); });
+    fo.addEventListener('dragleave', () => fo.classList.remove('over'));
+    fo.addEventListener('drop', e => { e.preventDefault(); fo.classList.remove('over'); poner([...e.dataTransfer.files].find(f => /^image\//.test(f.type)) || e.dataTransfer.files[0]); });
+    this.pintarFoto(m);
+    this.soporte(m, 'vgF', revisar, true);
+    m._antes = x0 ? firma() : '';
+    ponerSin(sin0);
+  },
+  /* El proveedor de la garantía: se guarda su nombre; «f:» de Facturación, «t:» uno escrito antes que no está en la lista */
+  provValor(nombre) {
+    if (!nombre) return '';
+    const k = Catalogo.clave(nombre), x = ProvFact.estado === 'listo' ? ProvFact.lista.find(y => y.activo && !y.fusionado_con && Catalogo.clave(y.nombre) === k) : null;
+    return x ? 'f:' + x.id : 't:' + nombre;
+  },
+  provOps(nombre) {
+    const v = this.provValor(nombre);
+    return '<option value="">Sin proveedor</option>' + (v.startsWith('t:') ? '<option value="' + attr(v) + '" selected>' + esc(nombre) + '</option>' : '') + ProvFact.opciones(v) + ProvFact.opcionNuevo();
+  },
+  provNombre(v) {
+    v = String(v || '');
+    if (v.startsWith('f:')) return (ProvFact.porId(v.slice(2)) || {}).nombre || '';
+    if (v.startsWith('v:')) return (Q.proveedor(v.slice(2)) || {}).nombre || '';
+    return v.startsWith('t:') ? v.slice(2) : '';
+  },
+  /* Las órdenes del vehículo para marcar. La primera vez que llegan, las del texto de antes («OC-0567, OS-0123») quedan marcadas y en el
+     campo de abajo solo lo que no está en la lista */
+  pintarOrdenes(m) {
+    const caja = $('#vgOl', m), u = Q.unidad(($('#vgG', m) || {}).dataset.u || ($('#vgU', m) || {}).value);
+    if (!caja) return;
+    if (!u) { caja.innerHTML = '<div class="oc-vacia">Escoja el vehículo para ver sus órdenes.</div>'; return; }
+    if (Compras.estado !== 'listo') {
+      caja.innerHTML = '<div class="oc-vacia">' + (Compras.estado === 'error' ? Icon('warn', '', 14) + 'No se pudieron traer las órdenes de Facturación. Escriba el número abajo.'
+        : '<span class="spin"></span>Trayendo las órdenes de Facturación…') + '</div>';
+      return;
+    }
+    const li = Compras.de(u).slice().sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')));
+    if (!m._ordListas) {
+      m._ordListas = true;
+      const txt = $('#vgO', m), cods = txt.value.split(',').map(s => s.trim()).filter(Boolean), quedan = [];
+      cods.forEach(c => { const o = li.find(y => String(y.codigo || '').toUpperCase() === c.toUpperCase()); if (o) m._ords.add(o.orden_id); else quedan.push(c); });
+      li.forEach(o => { if (m._ords.has(o.orden_id)) { const i = quedan.findIndex(c => c.toUpperCase() === String(o.codigo || '').toUpperCase()); if (i >= 0) quedan.splice(i, 1); } });
+      txt.value = quedan.join(', ');
+      /* Lo de antes, ya marcado, no es un cambio: Guardar sigue apagado */
+      if (!m._tocado && m._antes && m._firma) m._antes = m._firma();
+    }
+    caja.innerHTML = li.length ? li.map(o => '<label class="oc-op"><input type="checkbox" value="' + attr(o.orden_id) + '"' + (m._ords.has(o.orden_id) ? ' checked' : '') + '>' +
+        '<span class="t"><span><b class="mono">' + esc(o.codigo) + '</b> · ' + esc(o.fecha ? Fecha.num(o.fecha) : 'sin fecha') + ' · ' + esc(o.proveedor || Compras.resumen(o)) + '</span></span>' +
+        '<span class="v">' + esc(Money.format(o.valor)) + '</span>' + Compras.pill(o) +
+        '<button type="button" class="btn btn-sm btn-ghost btn-icon oc-ver" data-act="verOrden" data-o="' + attr(o.orden_id) + '" title="Ver la orden: lo que dice en Facturación" aria-label="Ver la orden">' +
+          Icon('eye', '', 14) + '</button></label>').join('')
+      : '<div class="oc-vacia">Este vehículo no tiene órdenes en Facturación. Si tiene el número, escríbalo abajo.</div>';
+  },
+  /* La foto de la ventana, como la de un perfil */
+  pintarFoto(m) {
+    const f = m._foto, inp = '<input type="file" accept="image/*" hidden data-vc-foto>';
+    $('#vgFo', m).innerHTML = m._fotoCargando ? '<span class="spin"></span>' : f ? this.fotoHtml(f, 'vc-foto-g')
+      : '<label class="vc-foto vc-foto-g vc-foto-0" title="Poner la foto">' + Icon('camera', '', 22) + inp + '</label>';
+    $('#vgFoB', m).innerHTML = m._fotoCargando ? '' : f ? '<label class="btn btn-sm">' + Icon('camera', '', 13) + 'Cambiar' + inp + '</label>' +
+        '<button type="button" class="btn btn-sm btn-ghost" data-vc-foto-quitar>' + Icon('x', '', 12) + 'Quitar</button>'
+      : '<label class="btn btn-sm">' + Icon('camera', '', 13) + 'Poner foto' + inp + '</label>';
   },
   guardarGarantia(el) {
     const m = el.closest('.modal-bd'), u = Q.unidad(el.dataset.u || ($('#vgU', m) || {}).value), r = el.dataset.m ? Datos.mantenimientos.find(x => x.id === el.dataset.m) : null;
     if (!u) { Toast.show('Escoja el vehículo.', 'err'); return; }
-    const desde = $('#vgDe', m).value, hasta = $('#vgHa', m).value;
-    if (!hasta) { Toast.show('Escriba hasta cuándo es la garantía.', 'err'); $('#vgHa', m).focus(); return; }
-    if (desde && hasta < desde) { Toast.show('La fecha hasta queda antes de la fecha desde.', 'err'); $('#vgHa', m).focus(); return; }
-    const km = +$('#vgK', m).value.replace(/\D/g, '');
-    const d = this.limpio({ tipo: $('#vgT', m).value, detalle: $('#vgD', m).value.trim(), desde, hasta, hastaKm: km || null, proveedor: $('#vgP', m).value.trim(), orden: $('#vgO', m).value.trim(),
-      nota: $('#vgNo', m).value.trim(), archivo: m._sop || null });
+    const sin = Boolean(m._sin), desde = $('#vgDe', m).value, hasta = sin ? '' : $('#vgHa', m).value;
+    if (!sin && !hasta) { Toast.show('Escriba hasta cuándo es la garantía.', 'err'); $('#vgHa', m).focus(); return; }
+    if (!sin && desde && hasta < desde) { Toast.show('La fecha hasta queda antes de la fecha desde.', 'err'); $('#vgHa', m).focus(); return; }
+    const km = sin ? 0 : +$('#vgK', m).value.replace(/\D/g, '');
+    const ids = [...m._ords], cods = ids.map(id => Compras.porId(id)).filter(Boolean).map(o => o.codigo).filter(Boolean), escrita = $('#vgO', m).value.trim();
+    const d = this.limpio({ tipo: $('#vgT', m).value, detalle: $('#vgD', m).value.trim(), desde, hasta: hasta || null, hastaKm: km || null,
+      sinGarantia: sin || null, motivo: sin ? 'Garantía sobre garantía' : null, proveedor: this.provNombre($('#vgP', m).value),
+      orden: cods.concat(escrita ? [escrita] : []).join(', '), ordenes: ids.length ? ids : null, nota: $('#vgNo', m).value.trim(),
+      archivos: m._sops.length ? m._sops.map(a => Adjuntos.dato(a)) : null, foto: m._foto ? Adjuntos.dato(m._foto) : null });
     u.garantias = u.garantias || [];
     const x = el.dataset.x ? u.garantias.find(y => y.id === el.dataset.x) : null;
     if (x) {
-      ['tipo', 'detalle', 'desde', 'hasta', 'hastaKm', 'proveedor', 'orden', 'nota', 'archivo'].forEach(k2 => { delete x[k2]; });
+      ['tipo', 'detalle', 'desde', 'hasta', 'hastaKm', 'sinGarantia', 'motivo', 'proveedor', 'orden', 'ordenes', 'nota', 'archivo', 'archivos', 'foto'].forEach(k2 => { delete x[k2]; });
       Object.assign(x, d);
     } else u.garantias.push(Object.assign({ id: this.nuevoId('ga') }, d, r ? { arreglo: r.id, arregloNum: r.numero || r.id } : {}));
     Modal.cerrar(m);
-    Toast.show('Garantía ' + (x ? 'guardada' : 'registrada') + ': <b>' + esc(d.tipo) + '</b> de <b>' + esc(UI.placaTxt(u)) + '</b>, hasta el ' + esc(Fecha.larga(hasta)) + '.');
+    Toast.show(sin ? 'Anotado: <b>' + esc(d.tipo) + '</b> de <b>' + esc(UI.placaTxt(u)) + '</b> sin garantía (garantía sobre garantía).'
+      : 'Garantía ' + (x ? 'guardada' : 'registrada') + ': <b>' + esc(d.tipo) + '</b> de <b>' + esc(UI.placaTxt(u)) + '</b>, hasta el ' + esc(Fecha.larga(hasta)) + '.');
     Router.pintar(true);
   },
   /* Quitar un elemento o una garantía mal registrados, después de preguntar */
@@ -24924,7 +25440,9 @@ const Venc = {
     if ((u.garantias || []).some(g => g.arreglo === r.id)) return;
     const tipo = this.clases().find(c => /bater/.test(sinTildes(c))) || this.clases()[0];
     const p = Q.repDe(r) || Q.provDe(r), os = (r.ordenes || []).map(id => Compras.porId(id)).filter(Boolean).map(o => o.codigo).filter(Boolean);
-    setTimeout(() => this.ventanaGarantia({ u, arreglo: r, pre: { tipo, desde: r.salida || hoyISO, meses: 12, proveedor: p && p.nombre && p.nombre !== '—' ? p.nombre : '', orden: os.join(', ') } }), 300);
+    /* Si el arreglo fue por garantía (ver Cubre), la batería nueva no trae garantía (Juan, 18/11/2026: «garantía sobre garantía no se da») */
+    setTimeout(() => this.ventanaGarantia({ u, arreglo: r, pre: { tipo, desde: r.salida || hoyISO, meses: 12, proveedor: p && p.nombre && p.nombre !== '—' ? p.nombre : '', orden: os.join(', '),
+      ordenes: (r.ordenes || []).slice(), sin: Cubre.de(r) === 'garantia' } }), 300);
   },
 
   /* ---- El dashboard: «Lo que vence», con los documentos, los elementos y las garantías ---- */
