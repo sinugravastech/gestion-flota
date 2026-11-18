@@ -1375,6 +1375,23 @@ html[data-theme="dark"] .preview-shell{background:#0a0f13}
 .dp-sign .dp-rol{display:block;font-size:7.5pt;margin-top:.4mm}
 .dp-foot{margin-top:8mm;border-top:.8px solid #c3cfe9;padding-top:2mm;font-size:6.5pt;color:#6b7c8c;display:flex;justify-content:space-between;gap:8px}
 .dp-foot b{color:#132966}
+/* Los adjuntos, seguidos al final del PDF (Juan, 17/11/2026: «que ese adjunto también se imprima, que sea seguido»): debajo de su
+   avance, la línea que lo dice; y cada hoja en una hoja carta, con una línea arriba de qué es (ver AdjImpresos) */
+.pn-adj{font-size:8pt;color:#193680;font-weight:600}
+.pn-t .pn-adj{margin-left:2.2mm}
+.pn-solo .pn-adj:first-child{margin-left:0}
+.pn-adj svg{width:3mm;height:3mm;vertical-align:-.5mm;margin-right:.8mm}
+.dp-sec > .dp-fila{border-top:.6px solid #c3cfe9;border-right:0;border-bottom:0}
+/* La firma y el pie van juntos: el pie nunca queda solo en una hoja */
+.dp-cierre{break-inside:avoid}
+.adj-cab{display:flex;justify-content:space-between;align-items:baseline;gap:4mm;border-bottom:.45mm solid #20449a;padding-bottom:1.4mm;font-size:7.5pt;color:#4e5d6b}
+.adj-cab b{color:#132966;font-size:8pt;text-transform:uppercase;letter-spacing:.3px;min-width:0;overflow-wrap:anywhere}
+.adj-cab span{white-space:nowrap}
+.adj-hoja{display:flex;justify-content:center;margin-top:3mm}
+.adj-hoja img{display:block;max-width:100%;max-height:236mm;width:auto;height:auto}
+.preview-shell .doc-page + .doc-page,.adj-estado + .doc-page{margin-top:18px}
+.adj-estado{max-width:215.9mm;margin:16px auto 0}
+.adj-estado .spin{flex:0 0 auto;width:13px;height:13px;border-width:1.8px;margin-top:2px}
 /* Hoja de vida con el formato SST-FRT-026 del ingeniero anterior, con los
    azules de la plataforma (la opción que escogió Juan): franja azul rey y
    títulos y casillas en azules claros */
@@ -1603,6 +1620,12 @@ html[data-theme="dark"] .plano .alerta circle{stroke:var(--surface)}
   table.tbl.tbl-mant th,table.tbl.tbl-mant td{padding-left:8px;padding-right:8px}
 }
 .tbl-mant .m-pila{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+/* «Pasarlo al taller» (ver RepTaller): debajo del taller y los repuestos, corto y en naranja; lo demás al pasar el cursor */
+.tbl-mant .m-pt{display:inline-flex;align-items:center;gap:3px;margin-top:3px;padding:0;border:0;background:none;font:inherit;font-size:10.5px;
+  font-weight:600;line-height:1.3;color:var(--warn-700);cursor:pointer;white-space:nowrap}
+.tbl-mant .m-pt:hover{text-decoration:underline;text-underline-offset:2px}
+.tbl-mant .m-pt svg{flex:0 0 auto}
+html[data-theme="dark"] .tbl-mant .m-pt{color:var(--warn-500)}
 /* La unidad se abre con un clic: se marca al pasar el mouse */
 .tbl-mant .m-uni{cursor:pointer}
 .tbl-mant .m-uni .who{border-radius:8px;padding:4px 8px;margin:-4px -8px;max-width:290px;transition:background var(--t-fast)}
@@ -2225,6 +2248,18 @@ span.chip-adj{color:var(--text-3)}
 .cs-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--text-3);font-weight:600;margin-bottom:3px}
 .cs-c{font-size:13px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
 .cs-fs{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+/* Los documentos del avance (Juan, 17/11/2026): en la caja, los que se van a anotar; en la línea de tiempo, los de cada avance */
+.cs-docs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cs-docs:empty{display:none}
+.cs-doc{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:4px 5px 4px 9px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);font-size:12.5px}
+.cs-doc > svg{flex:0 0 auto;color:var(--dang-500)}
+.cs-doc .trunc,.cs-docs .chip .trunc{min-width:0}
+.cs-doc .txt-3{font-size:11px;white-space:nowrap}
+.cs-doc .spin{flex:0 0 auto;width:12px;height:12px;border-width:1.6px}
+.cs-doc button{width:20px;height:20px;border:0;border-radius:50%;background:var(--surface-3);color:var(--text-2);display:grid;place-items:center;padding:0;cursor:pointer;flex:0 0 auto}
+.cs-it .cs-docs{margin-top:7px}
+.cs-it .cs-docs .chip{cursor:pointer;font-family:inherit;max-width:100%}
+.cs-it .cs-docs .chip svg{color:var(--dang-500);flex:0 0 auto}
 .cs-lado{border-left:1px solid var(--border);padding-left:22px}
 .cs-est{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .cs-plano{margin-top:12px}
@@ -2234,6 +2269,7 @@ span.chip-adj{color:var(--text-3)}
 .cs-oc{display:flex;align-items:center;gap:8px;padding:2px 0;font-size:12.5px}
 .cs-oc .v{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--text-2)}
 .cs-acc{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
+.cs-pt{margin-top:8px;padding:9px 11px;font-size:12px;line-height:1.45}
 @media(max-width:860px){.cs{grid-template-columns:minmax(0,1fr)} .cs-lado{border-left:0;padding-left:0;border-top:1px solid var(--border);padding-top:16px}}
 /* Terminar arreglo: lo que pasó, en una línea suave */
 .ta-paso{font-size:12.5px;color:var(--text-2);background:var(--surface-2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;line-height:1.45}
@@ -6028,6 +6064,8 @@ const ProvFact = {
     r.prov = x && !x.fact ? x.id : null;
     if (x && x.fact) { r.provFact = x.id; r.provNombre = x.nombre; r.provNit = x.nit || undefined; }
     else { delete r.provFact; delete r.provNombre; delete r.provNit; }
+    /* De qué orden salió (ver Acciones.casoOrdenesSi): al cambiarlo, ya no sale de ninguna */
+    delete r.tallerDeOrden;
   },
   /* Para proponer en un preventivo nuevo: el del último preventivo */
   ultimoPreventivo() {
@@ -6044,7 +6082,7 @@ const ProvFact = {
   },
   /* Quien puso los repuestos (Juan, 03/11/2026): el mismo taller, otro de la lista o nadie registrado */
   ponerRep(r, x, mismo) {
-    ['repFact', 'repNombre', 'repNit', 'repProv', 'repMismo'].forEach(k => { delete r[k]; });
+    ['repFact', 'repNombre', 'repNit', 'repProv', 'repMismo', 'repDeOrden'].forEach(k => { delete r[k]; });
     if (mismo) r.repMismo = true;
     else if (x && x.fact) { r.repFact = x.id; r.repNombre = x.nombre; if (x.nit) r.repNit = x.nit; }
     else if (x) r.repProv = x.id;
@@ -6461,6 +6499,7 @@ const Compras = {
       if (tiene === quiere) return;
       const l = quiere ? antes.concat(id) : antes.filter(x => x !== id);
       if (l.length) m.ordenes = l; else delete m.ordenes;
+      this.notas(m);
     });
   },
   /* Desde el arreglo, las órdenes que se marcaron. La que estaba con otro
@@ -6472,7 +6511,11 @@ const Compras = {
       if (l.length) m.ordenes = l; else delete m.ordenes;
     });
     if (ids.length) r.ordenes = ids.slice(); else delete r.ordenes;
+    Datos.mantenimientos.forEach(m => this.notas(m));
   },
+  /* De qué orden salieron el taller y los repuestos (ver Acciones.casoOrdenesSi): si esa orden ya no está en el arreglo, la nota se
+     borra; el taller y los repuestos se quedan como están */
+  notas(m) { ['tallerDeOrden', 'repDeOrden'].forEach(k => { if (m[k] && !(m.ordenes || []).includes(m[k])) delete m[k]; }); },
   /* En los formularios del arreglo: las órdenes de la unidad para marcar, las
      de fecha más cercana primero. Si todavía no han llegado, se piden y la
      lista se pinta cuando lleguen. */
@@ -9625,9 +9668,10 @@ const Avances = {
     const l = this.de(m);
     if (!l.length) return '';
     return '<div class="av-l">' + l.map(n => {
-      const f = this.fotos(m, n.id).length;
+      const f = this.fotos(m, n.id).length, dn = Adjuntos.deAvance(m, n.id).length;
       return '<div class="av-i' + (n.cierre ? ' cierre' : '') + '"><span class="av-c">' + esc(this.cuando(n)) + (n.cierre ? ' · salió del taller' : '') + '</span>' +
-        esc(n.t || (f ? 'Fotos' : '—')) + (f ? '<span class="av-f">' + Icon('image', '', 11) + f + (f === 1 ? ' foto' : ' fotos') + '</span>' : '') +
+        esc(n.t || (f ? 'Fotos' : dn ? 'Documento' : '—')) + (f ? '<span class="av-f">' + Icon('image', '', 11) + f + (f === 1 ? ' foto' : ' fotos') + '</span>' : '') +
+        (dn ? '<span class="av-f">' + Icon('clip', '', 11) + dn + (dn === 1 ? ' documento' : ' documentos') + '</span>' : '') +
         ((n.llantas || []).length ? '<span class="av-ll">' + Icon('disc', '', 11) + esc(Llantas.nombres(n.llantas, true) + Llantas.valorTxt(n)) + '</span>' : '') + '</div>';
     }).join('') + '</div>';
   },
@@ -9654,7 +9698,148 @@ const Avances = {
 const Adjuntos = {
   de: m => (m.adjuntoId ? [{ id: m.adjuntoId, nombre: m.adjunto || 'Adjunto' }] : []).concat(m.adjuntos || []),
   /* Lo que se guarda de cada uno: su archivo, su nombre y lo que pesaba y pesa (ver Peso.foto) */
-  dato: a => Object.assign({ id: a.id, nombre: a.nombre }, a.tam ? { tam: a.tam } : {}, a.antes > a.tam ? { antes: a.antes } : {})
+  /* y, si llegó con un avance del caso, ese avance (av) */
+  dato: a => Object.assign({ id: a.id, nombre: a.nombre }, a.tam ? { tam: a.tam } : {}, a.antes > a.tam ? { antes: a.antes } : {}, a.av ? { av: a.av } : {}),
+  /* Los documentos de un avance (Juan, 17/11/2026: «que también se me permita juntar documentos»), y ponerlos en el arreglo con el
+     avance (id) o, sin él, solo en el arreglo */
+  deAvance: (m, id) => (m.adjuntos || []).filter(a => a.av === id),
+  alAvance(r, docs, id) {
+    if (docs.length) r.adjuntos = (r.adjuntos || []).concat(docs.map(a => Object.assign(Adjuntos.dato(a), id ? { av: id } : {})));
+  }
+};
+
+/* Los adjuntos, seguidos al final del PDF del arreglo y del preventivo (Juan, 17/11/2026: «al momento de yo imprimir el PDF de ese
+   mantenimiento, siempre se me venga ese adjunto… que sea seguido»; y del preventivo: «si tengo PDF de Navitrans, pues que salga
+   ahí»). Cada hoja de un PDF sale en una hoja carta, dibujada con pdf.js (ver PdfImagen) a 200 puntos por pulgada; la foto de un
+   documento, en una hoja. Lo acostado se gira para que llene la hoja. Arriba de cada hoja va de qué es, por si se separan. Las
+   hojas de cada archivo se arman una vez y quedan mientras la página esté abierta */
+const AdjImpresos = {
+  DPI: 200,
+  /* Ni una hoja de más de 2.400 px de lado (un plano grande, por ejemplo) */
+  LADO: 2400,
+  hechas: new Map(),
+  esPdf: (b, nombre) => /pdf/i.test((b && b.type) || '') || /\.pdf$/i.test(nombre || ''),
+  /* El archivo: el que ya está en este equipo o, si no, el de la nube */
+  async archivo(a) {
+    const v = Archivos.vistos.get(a.id);
+    if (v) return (await fetch(v.url)).blob();
+    const b = await Archivos.traer(Nube.claveDe(a.id));
+    if (b) Archivos.registrar(a.id, b, a.nombre, a.antes);
+    return b;
+  },
+  lienzo(w, h) {
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(w));
+    c.height = Math.max(1, Math.round(h));
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, c.width, c.height);
+    return { c, g };
+  },
+  /* La hoja dibujada, en JPEG; si viene acostada, girada (lo de arriba queda a la izquierda) */
+  async jpeg(c) {
+    let x = c;
+    if (c.width > c.height) {
+      x = document.createElement('canvas');
+      x.width = c.height;
+      x.height = c.width;
+      const g = x.getContext('2d');
+      g.translate(0, x.height);
+      g.rotate(-Math.PI / 2);
+      g.drawImage(c, 0, 0);
+    }
+    const b = await new Promise(ok => x.toBlob(ok, 'image/jpeg', 0.88));
+    if (!b) throw new Error('No se pudo armar la hoja');
+    return URL.createObjectURL(b);
+  },
+  async dePdf(b, paso) {
+    const lib = await PdfImagen.lib();
+    const pdf = await lib.getDocument({ data: await b.arrayBuffer(), isEvalSupported: false }).promise;
+    try {
+      const l = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        if (paso && pdf.numPages > 1) paso(i, pdf.numPages);
+        const pag = await pdf.getPage(i), v1 = pag.getViewport({ scale: 1 });
+        const vp = pag.getViewport({ scale: Math.min(this.DPI / 72, this.LADO / Math.max(v1.width, v1.height)) });
+        const { c, g } = this.lienzo(vp.width, vp.height);
+        await pag.render({ canvasContext: g, viewport: vp, intent: 'print' }).promise;
+        l.push(await this.jpeg(c));
+        pag.cleanup();
+      }
+      return l;
+    } finally { pdf.destroy(); }
+  },
+  async deFoto(b) {
+    const bmp = await createImageBitmap(b), k = Math.min(1, this.LADO / Math.max(bmp.width, bmp.height));
+    const { c, g } = this.lienzo(bmp.width * k, bmp.height * k);
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    return [await this.jpeg(c)];
+  },
+  /* Las hojas de un adjunto (la dirección de cada una), una sola vez por archivo */
+  hojas(a, paso) {
+    if (!this.hechas.has(a.id)) {
+      const p = this.archivo(a).then(b => {
+        if (!b) throw new Error('No se pudo traer de la nube');
+        return this.esPdf(b, a.nombre) ? this.dePdf(b, paso) : this.deFoto(b);
+      });
+      this.hechas.set(a.id, p);
+      p.catch(() => this.hechas.delete(a.id));
+    }
+    return this.hechas.get(a.id);
+  },
+  /* En la primera hoja del PDF, a todo lo ancho debajo del taller (o del servicio): los adjuntos, con cuántas hojas tiene cada uno
+     cuando ya se sabe */
+  fila(d) {
+    const l = d.adjuntos || (d.adjunto ? [{ nombre: d.adjunto }] : []);
+    if (!l.length) return '';
+    return '<div class="dp-f dp-fila"><label>' + (l.length === 1 ? 'Adjunto' : 'Adjuntos') + '</label><span>' + esc(l.map(a => a.nombre +
+      (a.hojas ? ' (' + a.hojas + (a.hojas === 1 ? ' hoja)' : ' hojas)') : a.falla ? ' (no se pudo traer)' : '')).join(', ') +
+      (d.adjuntos ? (l.length === 1 ? ' · va al final' : ' · van al final') : '')) + '</span></div>';
+  },
+  /* En el historial del PDF, seguido de lo que dice su avance: «Adjunto 1: Cotización.pdf · va al final» (en la misma línea si
+     cabe, para no alargar el PDF) */
+  lineas(d, id) {
+    return (d.adjuntos || []).map((a, i) => (a.av === id ? '<span class="pn-adj">' + Icon('clip', '', 12) + esc('Adjunto ' + (i + 1) + ': ' + a.nombre + ' · va al final') +
+      '</span>' : '')).join('');
+  },
+  /* Las hojas que siguen al documento; «cab»: de qué son (el correctivo o el preventivo, y la placa) */
+  html(n, hechos, cab) {
+    return hechos.map(x => x.hojas.map((src, j) => '<div class="doc-page doc-adj"><div class="adj-cab"><b>' + esc('Adjunto ' + (x.i + 1) + ' de ' + n + ' · ' + x.a.nombre) +
+      '</b><span>' + esc(cab + ' · hoja ' + (j + 1) + ' de ' + x.hojas.length) + '</span></div><div class="adj-hoja"><img src="' + attr(src) + '" alt=""></div></div>').join('')).join('');
+  },
+  /* En la vista previa: las hojas debajo del documento y en lo que se imprime (v._adjDoc). Mientras se arman, el botón de imprimir
+     espera. «pintar»: dibuja otra vez el documento (ya con cuántas hojas tiene cada adjunto) y arma lo que se imprime */
+  montar(v, lista, cab, pintar) {
+    if (!v || !lista.length) return;
+    const caja = $('.preview-shell', v), btn = $('[data-act="imprimirVista"]', v), antes = btn ? btn.innerHTML : '';
+    const est = document.createElement('div');
+    est.className = 'adj-estado';
+    caja.appendChild(est);
+    const decir = t => { est.innerHTML = '<div class="alert a-info mb0"><span class="spin"></span><div>' + esc(t) + '</div></div>'; };
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Preparando los adjuntos…'; }
+    (async () => {
+      const hechos = [], malos = [];
+      for (let i = 0; i < lista.length; i++) {
+        const a = lista[i];
+        decir('Preparando los adjuntos para ponerlos al final: ' + (lista.length > 1 ? (i + 1) + ' de ' + lista.length + ', ' : '') + a.nombre + '…');
+        try {
+          const hojas = await this.hojas(a, (k, n) => decir('Preparando «' + a.nombre + '» para ponerlo al final: hoja ' + k + ' de ' + n + '…'));
+          a.hojas = hojas.length;
+          hechos.push({ a, i, hojas });
+        } catch (e) { a.falla = true; malos.push(a.nombre); }
+        if (!document.body.contains(v)) return;
+      }
+      v._adjDoc = this.html(lista.length, hechos, cab);
+      caja.insertAdjacentHTML('beforeend', v._adjDoc);
+      if (malos.length) est.innerHTML = '<div class="alert a-warn mb0">' + Icon('warn') + '<div>' + esc('No se pudo preparar ' + malos.map(x => '«' + x + '»').join(', ') +
+        ': revise el internet y vuelva a abrir el PDF. ' + (hechos.length ? 'Lo demás sí sale al final; puede' : 'Puede') + ' imprimir igual.') + '</div></div>';
+      else est.remove();
+      if (btn) { btn.disabled = false; btn.innerHTML = antes; }
+      pintar();
+    })();
+  }
 };
 
 /* El valor que sale de la orden (Juan, 03/11/2026: «cuando a mí me llega la
@@ -9992,6 +10177,42 @@ const Pendiente = {
   }
 };
 
+/* El taller que quedó en repuestos (Juan, 14/11/2026: en la SNW 865 decía «Repuestos: Sebastián Eléctrico», y Sebastián es el
+   taller, con su OS). Flota pone el taller y los repuestos desde la orden solo al relacionarla (ver Acciones.casoOrdenesSi y
+   ProvOrden): si la orden era OC y después quedó OS (corregida en Facturación o cambiada en el caso), el de repuestos se quedaba. Aquí
+   se mira con las órdenes que el arreglo tiene hoy: si el de repuestos no tiene OC ni OP en el arreglo pero sí una OS, y el taller está
+   vacío o es él mismo, se avisa en la fila de Taller SINUGRAVAS y en el caso, con «Pasarlo al taller». No bloquea nada */
+const RepTaller = {
+  /* { x: el de repuestos, os: sus órdenes de servicio en el arreglo, mismo: si ya es el taller } o null */
+  de(m) {
+    if (!m || m.repMismo || !m.repFact || m.prov || ProvFact.estado !== 'listo') return null;
+    const x = ProvFact.porId(m.repFact), c = Compras.deArreglo(m);
+    if (!x || !c.fiable) return null;
+    const suya = o => { const p = ProvFact.deOrden(o); return Boolean(p) && p.id === x.id; };
+    const os = c.esta.filter(o => o.tipo === 'SERVICIO' && suya(o));
+    if (!os.length || c.esta.some(o => o.tipo !== 'SERVICIO' && suya(o))) return null;
+    const t = m.provFact ? ProvFact.porId(m.provFact) : null;
+    if (m.provFact && (!t || t.id !== x.id)) return null;
+    return { x, os, mismo: Boolean(t) };
+  },
+  txt(d) {
+    const cods = d.os.map(o => o.codigo);
+    return d.x.nombre + ' está en repuestos, pero en este arreglo ' + (cods.length === 1 ? 'su orden es la ' + cods[0] + ', de servicio,'
+      : 'sus órdenes son de servicio (' + cods.join(', ') + '),') + ' y no tiene OC ni OP.';
+  },
+  /* En la fila, debajo del taller y los repuestos */
+  fila(m, d) {
+    return '<button type="button" class="m-pt" data-act="pasarAlTaller" data-m="' + attr(m.id) + '" title="' + attr(this.txt(d) + ' Un clic lo deja de taller.') + '">' +
+      Icon('warn', '', 11) + 'Pasarlo al taller</button>';
+  },
+  /* En el caso, debajo de «Taller» */
+  caso(r) {
+    const d = this.de(r);
+    return d ? '<div class="alert a-warn cs-pt">' + Icon('warn') + '<div>' + esc(this.txt(d)) + '<div class="mt8"><button type="button" class="btn btn-sm" ' +
+      'data-act="pasarAlTaller" data-m="' + attr(r.id) + '">' + Icon('check', '', 12) + 'Pasarlo al taller</button></div></div></div>' : '';
+  }
+};
+
 /* Varios avances de una vez (Juan, 03/11/2026: «si ya yo tengo los avances, yo
    puedo aquí mismo… registrar varios avances enseguida»): en el registro del
    arreglo, si sigue en el taller, y en «Anotar avance». Cada bloque con su
@@ -10089,7 +10310,8 @@ const AvancesForm = {
   preguntaValor: (m, a) => !(m._partes || []).includes('llantas') || Boolean(a.llValor),
   /* Los bloques con algo escrito o con fotos, listos para guardar (ver Avances) */
   leer(m) {
-    return (m._av || []).filter(a => a.t.trim() || a.fotos.length)
+    /* También el que solo tiene documentos (ver Adjuntos.deAvance) */
+    return (m._av || []).filter(a => a.t.trim() || a.fotos.length || (a.id && (m._adj || []).some(x => x.av === a.id)))
       .map(a => ({ n: a.id ? Object.assign({ id: a.id, f: a.f || hoyISO, h: a.h || '', t: a.t.trim(), ts: a.ts || marca() }, a.cierre ? { cierre: true } : {},
           a.espera ? { espera: true } : {}, (a.llantas || []).length ? { llantas: a.llantas } : {}, (a.llantas || []).length && Money.leer(a.llValor) ? { llValor: Money.leer(a.llValor) } : {})
         : Avances.nueva(a.f || hoyISO, a.h || '', a.t.trim()),
@@ -12911,14 +13133,14 @@ const Formatos = {
         ['Marca y línea', UI.nombre(u) || '—'], ['Conductor', c ? c.nombre : 'Sin asignar']])) +
       this.sec('Servicio', this.campos([['Proveedor', p ? p.nombre : '—'], ['NIT', p && p.nit ? p.nit : 'Por completar'],
         ['Fecha', Fecha.larga(d.fecha) + (d.horaEntrada ? ' · ' + Programado.hora(d.horaEntrada) : '')],
-        [horas ? 'Horómetro' : 'Kilometraje', d.lectura || '—']].concat(TallerRep.campos(d)).concat(d.adjunto ? [['Adjunto', d.adjunto]] : []))) +
+        [horas ? 'Horómetro' : 'Kilometraje', d.lectura || '—']].concat(TallerRep.campos(d))) + AdjImpresos.fila(d)) +
       (partes.length ? this.sec('Partes que tocó', '<div class="dp-arreglo"><div class="dp-plano">' + Plano.svg(k, { mini: true, sel: zonas }) + '</div>' +
         '<div class="dp-fields"><div class="dp-f"><label>Partes</label><span>' + esc(partes.map(x => Plano.nombre(u, x)).join(', ')) + '</span></div></div></div>') : '') +
       /* Lo que se hizo y, si tiene, sus fotos de dos en dos, como en el correctivo */
       ((d.fotos || []).length ? this.trabajoCorrectivo({ unidad: u, notas: [], trabajo: d.trabajo || '—', fotos: d.fotos })
         : '<div class="dp-obs"><b>Trabajo realizado</b>' + esc(d.trabajo || '—') + '</div>') +
-      this.firmas([['Responsable de flota', '']], true) +
-      this.pie('Mantenimiento preventivo · ' + UI.placaTxt(u) + ' · ' + Fecha.corta(d.fecha));
+      '<div class="dp-cierre">' + this.firmas([['Responsable de flota', '']], true) +
+      this.pie('Mantenimiento preventivo · ' + UI.placaTxt(u) + ' · ' + Fecha.corta(d.fecha)) + '</div>';
   },
 
   /* El historial de una visita al taller, con una foto por cambio */
@@ -12944,14 +13166,14 @@ const Formatos = {
         ['Repuestos', d.repMismo ? 'Los puso el mismo taller' : d.rep ? d.rep.nombre + (d.rep.nit ? ' · NIT ' + d.rep.nit : '') : '—'],
         ...(d.estado === 'programado' ? [['Programado para', Programado.txt(d.programado || { f: d.entrada })], ['Estado', 'Todavía no ingresa al taller']]
           : [['Entró', Fecha.larga(d.entrada)], ['Salió', d.salida ? Fecha.larga(d.salida) : 'Sigue en el taller']]
-            .concat(d.programado ? [['Estaba programado', Programado.txt(d.programado)]] : []))].concat(TallerRep.campos(d)))) +
+            .concat(d.programado ? [['Estaba programado', Programado.txt(d.programado)]] : []))].concat(TallerRep.campos(d))) + AdjImpresos.fila(d)) +
       this.sec('Arreglo', '<div class="dp-arreglo"><div class="dp-plano">' + Plano.svg(k, { mini: true, sel: zonas }) + '</div>' +
         '<div class="dp-fields">' + arreglo.map(x => '<div class="dp-f"><label>' + esc(x[0]) + '</label><span>' + esc(x[1]) + '</span></div>').join('') + '</div></div>') +
       (d.falla ? '<div class="dp-obs"><b>Qué pasó</b>' + esc(d.falla) + '</div>' : '') +
       this.trabajoCorrectivo(d) +
       /* Solo la del responsable de flota, en el centro (Juan, 03/11/2026) */
-      this.firmas([['Responsable de flota', '']], true) +
-      this.pie('Mantenimiento correctivo ' + d.numero);
+      '<div class="dp-cierre">' + this.firmas([['Responsable de flota', '']], true) +
+      this.pie('Mantenimiento correctivo ' + d.numero) + '</div>';
   },
 
   /* Lo que se hizo. Sin historial, «Trabajo realizado» y sus fotos, como
@@ -12986,7 +13208,7 @@ const Formatos = {
       : c === 'fin' ? '<circle cx="5" cy="5" r="4.3" fill="#fff" stroke="#193680" stroke-width="1.1"/><circle cx="5" cy="5" r="2.5" fill="#193680"/>'
         : '<circle cx="5" cy="5" r="3.6" fill="#193680"/>') + '</svg>';
     const nodo = (x, ult) => '<div class="pn-it' + (ult ? ' pn-ult' : '') + '">' + punto(x.c) + '<div><div class="pn-h">' + x.h + '</div>' +
-      (x.t ? '<div class="pn-t">' + esc(x.t) + '</div>' : '') +
+      (x.t || x.adj ? '<div class="pn-t' + (x.t ? '' : ' pn-solo') + '">' + esc(x.t || '') + (x.adj || '') + '</div>' : '') +
       (x.fs.length ? '<div class="pn-fs">' + x.fs.map(f => '<figure class="pn-foto">' + img(f) + pie(f) + '</figure>').join('') + '</div>' : '') + '</div></div>';
     /* Primero cómo llegó (o la cita, si está programado) con las fotos del registro, que se numeran primero porque salen primero */
     const sueltas = fotos.filter(f => !f.nota || !notas.some(n => n.id === f.nota));
@@ -12994,7 +13216,7 @@ const Formatos = {
        lo que se hizo (Juan, 10/11/2026: «no me sale el último nodo, que es cuando sale del taller») */
     const salio = Boolean(d.salida) && !d.taller && d.estado !== 'taller' && d.estado !== 'programado' && !notas.some(n => n.cierre);
     const lista = [{ c: 'ini', fs: sueltas, h: esc(d.estado === 'programado' ? 'Programado · ' + Programado.txt(d.programado || { f: d.entrada }, true)
-      : Fecha.corta(d.entrada) + (d.horaEntrada ? ' · ' + d.horaEntrada : '') + ' · Entró al taller') }].concat(notas.map(n => ({ c: n.cierre ? 'fin' : '', t: n.t, fs: fotos.filter(f => f.nota === n.id),
+      : Fecha.corta(d.entrada) + (d.horaEntrada ? ' · ' + d.horaEntrada : '') + ' · Entró al taller') }].concat(notas.map(n => ({ adj: AdjImpresos.lineas(d, n.id), c: n.cierre ? 'fin' : '', t: n.t, fs: fotos.filter(f => f.nota === n.id),
       h: esc(Avances.cuando(n) + (n.cierre ? ' · Salió del taller' : '')) + (n.espera ? '<span class="pn-tag">Esperando repuestos</span>' : '') +
         ((n.llantas || []).length ? '<span class="pn-tag">' + esc((n.llantas.length > 1 ? 'Llantas: ' : 'Llanta: ') + Llantas.nombres(n.llantas) + Llantas.valorTxt(n)) + '</span>' : '') })),
       salio ? [{ c: 'fin', t: d.trabajo || '', fs: [], h: esc(Fecha.corta(d.salida) + (d.horaSalida ? ' · ' + d.horaSalida : '') + ' · Salió del taller') }] : []);
@@ -13274,7 +13496,9 @@ Object.assign(Vistas, {
             '<td>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + '</td>' +
             '<td title="' + attr([m.falla ? 'Qué pasó: ' + m.falla : Avances.titulo(m), como, m.lectura, partes.join(', ')].concat(novs).filter(Boolean).join('\n')) + '">' +
               '<div class="m-trab m-que">' + esc(que) + '</div>' + (abajo ? '<div class="dias m-1l m-trab">' + esc(abajo) + '</div>' : '') + '</td>' +
-            '<td><div class="m-2l" title="' + attr(UI.provTxt(m)) + '">' + esc(UI.provTxt(m)) + '</div></td>' +
+            /* Si el de repuestos es el taller de su OS, «Pasarlo al taller» (ver RepTaller) */
+            '<td>' + (pt => '<div class="m-2l" title="' + attr(UI.provTxt(m) + (pt ? '\n' + RepTaller.txt(pt) : '')) + '">' + esc(UI.provTxt(m)) + '</div>' +
+              (pt ? RepTaller.fila(m, pt) : ''))(RepTaller.de(m)) + '</td>' +
             '<td class="num"' + (ordenesTodo.length || avisosTodo.length ? ' title="' + attr(ordenesTodo.concat(avisosTodo).join('\n')) + '"' : '') + '>' +
               (c.valor ? Money.format(c.valor) : m.oc ? '<span class="txt-3">' + esc(m.oc) + '</span>' : '—') +
               (ordenes.length ? '<div class="dias m-1l m-val">' + esc(ordenes.join(' · ')) + '</div>' : '') +
@@ -14821,9 +15045,12 @@ Object.assign(Ventanas, {
       cuerpo: MantRemolque.banda(r) + '<div class="cs"><div class="cs-main">' +
           '<div class="cs-nuevo" id="csCaja"><textarea class="inp" id="csT" rows="2" placeholder="¿Qué hay de nuevo en el taller?"></textarea>' +
             '<div class="cs-ll hidden" id="csLlP"></div>' +
-            '<div class="sug cs-sug" id="csSug"></div><div class="cs-fotos" id="csFotos"></div>' +
+            '<div class="sug cs-sug" id="csSug"></div><div class="cs-fotos" id="csFotos"></div><div class="cs-docs" id="csDocs"></div>' +
             '<div class="cs-nuevo-a"><label class="btn btn-sm" title="Las fotos del avance; también se pueden soltar en esta caja">' + Icon('camera', '', 13) + 'Fotos' +
                 '<input type="file" id="csArch" accept="image/*" multiple hidden></label>' +
+              /* La cotización, la factura o el informe del taller (Juan, 17/11/2026), con el avance */
+              '<label class="btn btn-sm" title="La cotización, la factura o el informe del taller: PDF o foto del documento. Un PDF también se puede soltar en esta caja">' +
+                Icon('clip', '', 13) + 'Documento<input type="file" id="csDoc" accept="application/pdf,image/*" multiple hidden></label>' +
               /* De qué llanta habla el avance (Juan, 09/11/2026) */
               (Llantas.aplica(u) ? '<button type="button" class="btn btn-sm" id="csLl" aria-pressed="false" title="De qué llanta habla el avance">' +
                 Icon('disc', '', 13) + 'Llanta</button>' : '') +
@@ -14893,7 +15120,8 @@ Object.assign(Ventanas, {
     /* «Esperando repuestos» sigue como quedó en el último avance, hasta que se quite */
     m._espera = Boolean(r.espera);
     const g = $('[data-act="anotarCaso"]', m), esp = $('#csEspera', m), caja = $('#csCaja', m);
-    const revisar = () => { g.disabled = !$('#csT', m).value.trim() && !m._fotos.length; };
+    /* Con algo que anotar: texto, fotos o documentos, y ningún documento preparándose */
+    const revisar = () => { g.disabled = (m._docsVan || []).length > 0 || (!$('#csT', m).value.trim() && !m._fotos.length && !(m._docs || []).length); };
     const ponerEspera = () => {
       esp.classList.toggle('on', m._espera);
       esp.setAttribute('aria-pressed', String(m._espera));
@@ -14928,10 +15156,36 @@ Object.assign(Ventanas, {
     /* Las fotos del avance, a 1.600 px como las del arreglo; también se sueltan en la caja */
     const recibir = files => Promise.all(files.filter(f => /^image\//.test(f.type)).map(f => Archivos.preparar(f, 'arreglo')))
       .then(l => { l.forEach(a => m._fotos.push({ id: a.id, src: Archivos.vistos.get(a.id).url, txt: '' })); m._pintarFotos(); });
+    /* Los documentos del avance (ver Adjuntos): se comprimen como los demás documentos y, mientras, salen con la ruedita */
+    m._docs = [];
+    m._docsVan = [];
+    m._pintarDocs = () => {
+      $('#csDocs', m).innerHTML = m._docs.map((a, i) => '<span class="cs-doc">' + Icon(/\.pdf$/i.test(a.nombre) ? 'pdf' : 'image', '', 15) +
+          '<span class="trunc">' + esc(a.nombre) + '</span><span class="txt-3">' + esc(Peso.foto(a.tam, a.antes)) + '</span>' +
+          '<button type="button" data-i="' + i + '" title="Quitar el documento" aria-label="Quitar el documento">' + Icon('x', '', 11) + '</button></span>').join('') +
+        m._docsVan.map(n => '<span class="cs-doc"><span class="spin"></span><span class="trunc">' + esc(n) + '</span><span class="txt-3">Preparando…</span></span>').join('');
+      revisar();
+    };
+    const recibirDocs = files => {
+      files.forEach(f => m._docsVan.push(f.name));
+      m._pintarDocs();
+      Promise.all(files.map(f => Archivos.preparar(f).catch(() => null))).then(l => {
+        files.forEach(f => { const i = m._docsVan.indexOf(f.name); if (i >= 0) m._docsVan.splice(i, 1); });
+        l.filter(Boolean).forEach(a => m._docs.push(Adjuntos.dato(a)));
+        m._pintarDocs();
+      });
+    };
+    $('#csDocs', m).addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) { m._docs.splice(+b.dataset.i, 1); m._pintarDocs(); } });
+    $('#csDoc', m).addEventListener('change', e => { const f = Array.from(e.target.files); e.target.value = ''; if (f.length) recibirDocs(f); });
     $('#csArch', m).addEventListener('change', e => { const f = Array.from(e.target.files); e.target.value = ''; if (f.length) recibir(f); });
     ['dragenter', 'dragover'].forEach(ev => caja.addEventListener(ev, e => { e.preventDefault(); caja.classList.add('over'); }));
     ['dragleave', 'drop'].forEach(ev => caja.addEventListener(ev, e => { e.preventDefault(); caja.classList.remove('over'); }));
-    caja.addEventListener('drop', e => { const f = Array.from(e.dataTransfer.files); if (f.length) recibir(f); });
+    /* Lo que se suelta: los PDF son documentos; las imágenes, fotos (la foto de un documento va con «Documento») */
+    caja.addEventListener('drop', e => {
+      const f = Array.from(e.dataTransfer.files), pdf = f.filter(x => AdjImpresos.esPdf(x, x.name)), fotos = f.filter(x => !pdf.includes(x));
+      if (pdf.length) recibirDocs(pdf);
+      if (fotos.length) recibir(fotos);
+    });
     m._pintarFotos = () => {
       $('#csFotos', m).innerHTML = m._fotos.map((f, i) => '<span class="cs-f"><img src="' + attr(f.src) + '" alt="">' +
         '<button type="button" data-i="' + i + '" title="Quitar la foto" aria-label="Quitar la foto">' + Icon('x', '', 11) + '</button></span>').join('');
@@ -14962,17 +15216,21 @@ Object.assign(Ventanas, {
       return '<button type="button" class="cs-f" data-act="verArchivo" data-nombre="' + attr(f.txt || 'Foto del taller') + '"' + (f.id ? ' data-id="' + attr(f.id) + '"' : '') +
         ' title="' + attr(f.txt || 'Ver la foto') + '">' + (v ? '<img src="' + attr(v.url) + '" alt="">' : Icon('image', '', 18)) + '</button>';
     };
-    const it = (cuando, txt, fotos, extra, cls) => '<div class="cs-it' + (cls ? ' ' + cls : '') + '"><span class="cs-dot"></span><div>' +
+    /* Los documentos del avance, para abrirlos con un clic (ver Adjuntos.deAvance) */
+    const docBtn = a => '<button type="button" class="chip chip-btn" data-act="verArchivo" data-id="' + attr(a.id) + '" data-nombre="' + attr(a.nombre) +
+      '" title="Abrir el documento">' + Icon(/\.pdf$/i.test(a.nombre) ? 'pdf' : 'image', '', 12) + '<span class="trunc">' + esc(a.nombre) + '</span></button>';
+    const it = (cuando, txt, fotos, extra, cls, docs) => '<div class="cs-it' + (cls ? ' ' + cls : '') + '"><span class="cs-dot"></span><div>' +
       '<div class="cs-h">' + esc(cuando) + (extra || '') + '</div><div class="cs-c">' + txt + '</div>' +
+      ((docs || []).length ? '<div class="cs-docs">' + docs.map(docBtn).join('') + '</div>' : '') +
       (fotos.length ? '<div class="cs-fs">' + fotos.map(foto).join('') + '</div>' : '') + '</div></div>';
     /* El más nuevo arriba; al final, cómo llegó: lo que pasó y las fotos del registro */
     const notas = Avances.de(r).reverse(), salio = ' ' + UI.pill('ok', 'Salió del taller');
     /* Cerrado: ya no se anotan avances aquí (se corrige con «Editar todo») */
     $('#csCaja', m).classList.toggle('hidden', fin);
     $('#csTl', m).innerHTML = (fin && !notas.some(n => n.cierre) ? it(Fecha.corta(r.salida || r.fecha) + (r.horaSalida ? ' · ' + r.horaSalida : ''), esc(r.trabajo || ''), [], salio) : '') +
-      notas.map(n => it(Avances.cuando(n), esc(n.t || (Avances.fotos(r, n.id).length ? 'Fotos' : '—')), Avances.fotos(r, n.id),
+      notas.map(n => it(Avances.cuando(n), esc(n.t || (Avances.fotos(r, n.id).length ? 'Fotos' : Adjuntos.deAvance(r, n.id).length ? 'Documento' : '—')), Avances.fotos(r, n.id),
         (n.espera ? ' ' + UI.pill('warn', 'Esperando repuestos') : '') + (n.cierre ? salio : '') + ((n.llantas || []).length ? ' <span class="chip cs-ll-c">' + Icon('disc', '', 11) +
-          esc((n.llantas.length > 1 ? 'Llantas · ' : 'Llanta · ') + Llantas.nombres(n.llantas) + Llantas.valorTxt(n)) + '</span>' : ''))).join('') +
+          esc((n.llantas.length > 1 ? 'Llantas · ' : 'Llanta · ') + Llantas.nombres(n.llantas) + Llantas.valorTxt(n)) + '</span>' : ''), '', Adjuntos.deAvance(r, n.id))).join('') +
       it(prog ? 'Programado · ' + Programado.txt(Programado.de(r), true) : Fecha.corta(r.fecha) + (r.horaEntrada ? ' · ' + r.horaEntrada : ''),
         '<b>' + (prog ? 'Programado.' : 'Entró al taller.') + '</b> ' + esc(r.falla || ''),
         Avances.fotos(r, ''), '', 'ini');
@@ -14992,7 +15250,7 @@ Object.assign(Ventanas, {
       '<div class="cs-d"><span class="l">Componentes</span>' + (comps.length ? '<div class="cs-tags">' + comps.map(x => '<span class="ctag">' + esc(x) + '</span>').join('') + '</div>'
         : '<div class="txt-3 fs12">Todavía sin componentes</div>') +
         '<span class="link fs12" data-act="casoComps" data-m="' + attr(r.id) + '">' + (comps.length ? 'Agregar o quitar' : '+ Agregar') + '</span></div>' +
-      dato('Taller', prov !== '—' ? esc(prov) : '') +
+      dato('Taller', prov !== '—' ? esc(prov) + RepTaller.caso(r) : '') +
       '<div class="cs-d"><span class="l">Órdenes de Facturación</span>' + (c.esta.length ? c.esta.map(o => '<div class="cs-oc"><b class="mono">' + esc(o.codigo) + '</b>' +
           '<span class="txt-3">' + (o.tipo === 'SERVICIO' ? 'Taller' : 'Repuestos') + '</span><span class="v">' + esc(Money.format(o.valor)) + '</span>' +
           '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-act="verOrden" data-o="' + attr(o.orden_id) + '" title="Ver la orden" aria-label="Ver la orden">' +
@@ -15739,7 +15997,8 @@ const Leer = {
       programado: m._estado === 'programado' ? { f: entrada, h: $('#mcH', m).value } : null,
       trabajo: taller ? '' : $('#mcT', m).value.trim(),
       fotos: m._fotos.concat(...av.map(a => a.fotos.map(f => Object.assign({}, f, { nota: a.n.id })))),
-      adjuntos: (m._adj || []).map(Adjuntos.dato),
+      /* Un documento cuyo avance ya no está queda solo en el arreglo */
+      adjuntos: (m._adj || []).map(a => Adjuntos.dato(!a.av || notas.some(n => n.id === a.av) ? a : Object.assign({}, a, { av: '' }))),
       valor: tr.valor, valorTaller: tr.valorTaller, valorRep: tr.valorRep, aMano: tr.aMano, ordenes: tr.ordenes,
       componente: Comp.texto(Comp.leer(m)), componentes: Comp.leer(m), falla: $('#mcF', m).value.trim(), lectura: Aceite.aplica(u) ? $('#mcL', m).value.trim() : '',
       partes: PlanoForm.escogidas(m), llantas: m._partes.includes('llantas') ? m._llantas.slice() : [], llanta: LlantaForm.leer(m),
@@ -15915,11 +16174,14 @@ Object.assign(Acciones, {
     const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
     if (!u || el.disabled) return;
     const t = $('#csT', m).value.trim();
-    if (!t && !m._fotos.length) return;
+    if ((m._docsVan || []).length || (!t && !m._fotos.length && !(m._docs || []).length)) return;
     /* Cuándo pasó (Juan, 05/11/2026: «no es la hora actual, sino algo que pasó hace 2 horas»): lo de la caja */
     const ll = (m._llantas || []).slice(), lv = ll.length && Llantas.preguntaValor(r) ? Money.leer(m._llValor) : null;
-    Avances.agregar(r, Object.assign(Avances.nueva($('#csF', m).value || hoyISO, $('#csH', m).value || ahora(), t), m._espera ? { espera: true } : {},
-      ll.length ? { llantas: ll } : {}, lv ? { llValor: lv } : {}), m._fotos);
+    const nota = Object.assign(Avances.nueva($('#csF', m).value || hoyISO, $('#csH', m).value || ahora(), t), m._espera ? { espera: true } : {},
+      ll.length ? { llantas: ll } : {}, lv ? { llValor: lv } : {}), nd = (m._docs || []).length;
+    Avances.agregar(r, nota, m._fotos);
+    /* Sus documentos, con el avance (ver Adjuntos.alAvance) */
+    Adjuntos.alAvance(r, m._docs || [], nota.id);
     Llantas.alArreglo(r, ll);
     if (m._espera) r.espera = true; else delete r.espera;
     /* También en el otro ingreso, si se marcó (ver MantRemolque.tambien): la nota y «Esperando repuestos»; las fotos se quedan aquí */
@@ -15946,12 +16208,15 @@ Object.assign(Acciones, {
     m._llValor = '';
     if ($('#csLl', m)) $('#csLl', m).setAttribute('aria-pressed', 'false');
     if (m._pintarLl) m._pintarLl();
+    m._docs = [];
     m._pintarFotos();
+    m._pintarDocs();
     m._pintarCaso();
     const y = l => (l.length > 1 ? l.slice(0, -1).join(', ') + ' y ' + l[l.length - 1] : l[0] || '');
     Toast.show('Avance anotado en <b>' + esc(UI.placaTxt(u)) + '</b>' + (ll.length ? ', en ' + (ll.length > 1 ? 'las llantas ' : 'la llanta ') + '<b>' +
       esc(Llantas.nombres(ll)) + '</b>' + (lv ? ' (' + esc(Money.format(lv)) + ')' : '') : '') + (ou ? ' y en <b>' + esc(UI.placaTxt(ou)) + '</b>' : '') + (nuevos.length ? ' con ' + esc(y(nuevos.map(x => x.c))) : '') +
-      (r.espera ? ': esperando repuestos.' : '.'));
+      (r.espera ? ': esperando repuestos.' : '.') +
+      (nd ? '<br>' + (nd === 1 ? 'El documento quedó en el avance y sale' : 'Los ' + nd + ' documentos quedaron en el avance y salen') + ' al final del PDF del arreglo.' : ''));
     Router.pintar(true);
   },
   /* Desde el resumen del caso: «Editar todo» (y «+ Relacionar una orden», que baja a las órdenes), «Terminar arreglo» e «Ingresó» */
@@ -15972,12 +16237,16 @@ Object.assign(Acciones, {
   terminarCaso(el) {
     const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
     if (!m || !u || r.estado !== 'taller') return;
+    if ((m._docsVan || []).length) { Toast.show('Espere un momento: el documento todavía se está preparando.', 'warn'); return; }
+    const docs = m._docs || [];
     const t = $('#csT', m).value.trim(), f = $('#csF', m).value || hoyISO, h = $('#csH', m).value || '', hay = (r.notas || []).length > 0;
     /* Lo que costó lo de la llanta, antes de que los componentes tocados le sumen otra parte */
     const lv0 = Llantas.preguntaValor(r) ? Money.leer(m._llValor) : null;
     if (Ventanas.terminaConVentana(r)) {
       /* Las llantas que se tocaron quedan en el arreglo; la ventana de terminar las trae marcadas */
       Llantas.alArreglo(r, m._llantas);
+      /* Los documentos de la caja quedan en el arreglo */
+      Adjuntos.alAvance(r, docs, '');
       Modal.cerrar(m);
       Acciones.terminarVentana(el);
       const v = $$('#modals .modal-bd').pop();
@@ -16006,12 +16275,17 @@ Object.assign(Acciones, {
     /* Con una llanta tocada, lo escrito va como la nota de la salida, con su llanta, aunque no tenga historial */
     const ll = (m._llantas || []).slice(), lv = ll.length ? lv0 : null;
     if (hay || ll.length) {
-      if (t || m._fotos.length) Avances.agregar(r, Object.assign(Avances.nueva(f, h, t, true), ll.length ? { llantas: ll } : {}, lv ? { llValor: lv } : {}), m._fotos);
+      if (t || m._fotos.length || docs.length) {
+        const n = Object.assign(Avances.nueva(f, h, t, true), ll.length ? { llantas: ll } : {}, lv ? { llValor: lv } : {});
+        Avances.agregar(r, n, m._fotos);
+        Adjuntos.alAvance(r, docs, n.id);
+      }
       Llantas.alArreglo(r, ll);
     } else {
       r.trabajo = t;
       r.fotosData = (r.fotosData || []).concat(m._fotos.map(x => Avances.dato(x)));
       r.fotos = r.fotosData.length;
+      Adjuntos.alAvance(r, docs, '');
     }
     if (o) Avances.agregar(o, Avances.nueva(f, h, t), []);
     r.estado = 'cerrado';
@@ -16060,23 +16334,52 @@ Object.assign(Acciones, {
   },
   casoOrdenesNo(el) { const c = el.closest('#csOr'); if (c) c.remove(); },
   /* Al guardar, el valor sale de las órdenes, como siempre; y si el arreglo no tiene el taller o el proveedor de repuestos, se pone el de
-     la orden (ver ProvOrden): el de una OS al taller, el de una OC u OP a los repuestos (el mismo taller, si es el mismo) */
+     la orden (ver ProvOrden): el de una OS al taller, el de una OC u OP a los repuestos (el mismo taller, si es el mismo). Lo que puso
+     una orden queda anotado (tallerDeOrden, repDeOrden): si después se quita esa orden aquí, se quita también (Juan, 14/11/2026: la OC
+     hecha por error dejaba al taller en repuestos). Lo escogido a mano no se toca: al cambiarlo se borra la nota (ver ProvFact.poner) */
   casoOrdenesSi(el) {
     const m = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), caja = m && $('#csOrL', m), u = r && Q.unidad(r.unidad);
     if (!u || !caja || el.disabled) return;
     const antes = r.ordenes || [], ids = Compras.leer(caja, r), nuevas = ids.filter(id => !antes.includes(id)).map(id => Compras.porId(id)).filter(Boolean);
+    const quito = [];
+    if (r.tallerDeOrden && !ids.includes(r.tallerDeOrden)) {
+      const t = Q.provDe(r);
+      ProvFact.poner(r, null);
+      if (r.repMismo) ProvFact.ponerRep(r, null, false);
+      if (t) quito.push(t.nombre + ' del taller');
+    }
+    if (r.repDeOrden && !ids.includes(r.repDeOrden)) {
+      const x = Q.repDe(r);
+      ProvFact.ponerRep(r, null, false);
+      if (x) quito.push(x.nombre + ' de repuestos');
+    }
     Compras.ponerOrdenes(r, ids);
     const de = o => { const x = ProvFact.deOrden(o); return x && x.activo ? ProvFact.leer('f:' + x.id) : null; };
     const os = nuevas.find(o => o.tipo === 'SERVICIO'), oc = nuevas.find(o => o.tipo !== 'SERVICIO');
-    if (os && !r.provFact && !r.prov) { const x = de(os); if (x) ProvFact.poner(r, x); }
+    if (os && !r.provFact && !r.prov) { const x = de(os); if (x) { ProvFact.poner(r, x); r.tallerDeOrden = os.orden_id; } }
     if (oc && !r.repMismo && !r.repFact && !r.repProv) {
       const x = de(oc);
-      if (x) { if (x.id === r.provFact) ProvFact.ponerRep(r, null, true); else ProvFact.ponerRep(r, x, false); }
+      if (x) { if (x.id === r.provFact) ProvFact.ponerRep(r, null, true); else ProvFact.ponerRep(r, x, false); r.repDeOrden = oc.orden_id; }
     }
     m._pintarCaso();
     const c = Compras.deArreglo(r);
     Toast.show('Órdenes de <b>' + esc(UI.placaTxt(u)) + '</b>: ' + (c.esta.length ? esc(c.esta.map(o => o.codigo).join(', ')) : 'ninguna') +
-      (c.valor ? ' · valor ' + esc(Money.format(c.valor)) : '') + '.');
+      (c.valor ? ' · valor ' + esc(Money.format(c.valor)) : '') + '.' + (quito.length ? '<br>Se quitó ' + esc(quito.join(' y ')) + ': lo había puesto la orden que quitó.' : ''));
+    Router.pintar(true);
+  },
+  /* «Pasarlo al taller» (ver RepTaller): queda de taller, como si lo hubiera puesto su OS; en repuestos, el de la primera OC u OP del
+     arreglo, si tiene; si no, ninguno */
+  pasarAlTaller(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), d = r && RepTaller.de(r);
+    if (!d) { Toast.show('Ya no hace falta: el taller y los repuestos de ese arreglo cambiaron.', 'warn'); Router.pintar(true); return; }
+    if (!d.mismo) { ProvFact.poner(r, ProvFact.leer('f:' + d.x.id)); r.tallerDeOrden = d.os[0].orden_id; }
+    const oc = Compras.deArreglo(r).esta.find(o => o.tipo !== 'SERVICIO'), y = oc && ProvFact.deOrden(oc), rep = y && y.activo ? ProvFact.leer('f:' + y.id) : null;
+    ProvFact.ponerRep(r, rep, false);
+    if (rep) r.repDeOrden = oc.orden_id;
+    const m = el.closest('.modal-bd');
+    if (m && m._pintarCaso) m._pintarCaso();
+    Toast.show('Listo: <b>' + esc(d.x.nombre) + '</b> quedó ' + (d.mismo ? 'solo de taller' : 'de taller') + (r.numero ? ' en ' + esc(r.numero) : '') + '.' +
+      (rep ? '<br>En repuestos quedó ' + esc(rep.nombre) + ', de la ' + esc(oc.codigo) + '.' : ''));
     Router.pintar(true);
   },
   /* Del ingreso de un vehículo al del otro (ver MantRemolque.banda): desde el caso se cambia; desde «Editar», se abre encima */
@@ -16574,7 +16877,15 @@ Object.assign(Acciones, {
 
   nuevoCorrectivo(el) { Ventanas.correctivo({ u: el.dataset.u }); },
   vistaCorrectivo(el) {
-    Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(Leer.correctivo(el.closest('.modal-bd'))));
+    const d = Leer.correctivo(el.closest('.modal-bd'));
+    /* Con sus adjuntos al final, como «Ver PDF» (ver AdjImpresos) */
+    d.adjuntos = (d.adjuntos || []).map(a => Object.assign({}, a));
+    const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d));
+    AdjImpresos.montar(v, d.adjuntos, 'Correctivo ' + d.numero + ' · ' + UI.placaTxt(d.unidad), () => {
+      const html = Formatos.correctivo(d);
+      $('.doc-page', v).innerHTML = html;
+      v._doc = '<div class="doc-page">' + html + '</div>' + (v._adjDoc || '');
+    });
   },
   guardarCorrectivo(el) {
     const m = el.closest('.modal-bd'), d = Leer.correctivo(m);
@@ -16635,16 +16946,22 @@ Object.assign(Acciones, {
     if (!r) return;
     const fotos = () => (r.fotosData || []).map(f => ({ src: f.id && Archivos.vistos.has(f.id) ? Archivos.vistos.get(f.id).url : null, txt: f.txt }));
     const d = { unidad: Q.unidad(r.unidad), prov: Q.provDe(r), fecha: r.fecha, horaEntrada: r.horaEntrada, lectura: r.lectura, trabajo: r.trabajo, partes: r.partes || [],
-      adjunto: r.adjuntoId ? r.adjunto : '', valor: r.valor, aMano: r.aMano, ordenes: r.ordenes || [], fotos: fotos(), enlace: r.enlace };
+      adjunto: r.adjuntoId ? r.adjunto : '', valor: r.valor, aMano: r.aMano, ordenes: r.ordenes || [], fotos: fotos(), enlace: r.enlace,
+      /* Su PDF de Navitrans, seguido al final (ver AdjImpresos) */
+      adjuntos: Adjuntos.de(r).map(a => Object.assign({}, a)) };
     const v = Ventanas.vistaPrevia('Mantenimiento preventivo', Formatos.preventivo(d));
+    const pintar = () => {
+      const html = Formatos.preventivo(d);
+      $('.doc-page', v).innerHTML = html;
+      v._doc = '<div class="doc-page">' + html + '</div>' + (v._adjDoc || '');
+    };
     /* Las fotos se bajan al abrirlo; cuando llegan, el PDF se dibuja otra vez */
     Guardadas.traerArreglo(r).then(n => {
       if (!n || !document.body.contains(v)) return;
       d.fotos = fotos();
-      const html = Formatos.preventivo(d);
-      $('.doc-page', v).innerHTML = html;
-      v._doc = '<div class="doc-page">' + html + '</div>';
+      pintar();
     });
+    AdjImpresos.montar(v, d.adjuntos, 'Preventivo del ' + Fecha.num(r.fecha) + ' · ' + UI.placaTxt(d.unidad), pintar);
   },
   pdfCorrectivo(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
@@ -16653,16 +16970,22 @@ Object.assign(Acciones, {
     const d = { numero: r.numero || Num.mc(), unidad: Q.unidad(r.unidad), prov: Q.provDe(r), rep: Q.repDe(r), repMismo: r.repMismo, entrada: r.fecha, horaEntrada: r.horaEntrada, salida: r.salida, horaSalida: r.horaSalida, trabajo: r.trabajo, fotos: fotos(),
       partes: r.partes || [], componente: r.componente, falla: r.falla, lectura: r.lectura, llantas: r.llantas || [], llanta: r.llanta, notas: r.notas || [],
       valor: r.valor, valorTaller: r.valorTaller, valorRep: r.valorRep, aMano: r.aMano, ordenes: r.ordenes || [], estado: r.estado, programado: r.programado,
-      enlace: r.enlace };
+      enlace: r.enlace,
+      /* Sus adjuntos, seguidos al final (ver AdjImpresos) */
+      adjuntos: Adjuntos.de(r).map(a => Object.assign({}, a)) };
     const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d));
+    const pintar = () => {
+      const html = Formatos.correctivo(d);
+      $('.doc-page', v).innerHTML = html;
+      v._doc = '<div class="doc-page">' + html + '</div>' + (v._adjDoc || '');
+    };
     /* Las fotos se bajan al abrirlo; cuando llegan, el PDF se dibuja otra vez */
     Guardadas.traerArreglo(r).then(n => {
       if (!n || !document.body.contains(v)) return;
       d.fotos = fotos();
-      const html = Formatos.correctivo(d);
-      $('.doc-page', v).innerHTML = html;
-      v._doc = '<div class="doc-page">' + html + '</div>';
+      pintar();
     });
+    AdjImpresos.montar(v, d.adjuntos, 'Correctivo ' + d.numero + ' · ' + UI.placaTxt(d.unidad), pintar);
   },
 
   nuevaInspeccion(el) { Ventanas.inspeccion({ u: el.dataset.u }); },
@@ -20200,7 +20523,19 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
   const minDe = t => (t && t.f && t.h ? Math.round(new Date(t.f + 'T' + t.h + ':00').getTime() / 60000) : null);
   const durTxt = m => { const h = Math.floor(m / 60), x = m % 60; return h ? h + ' h' + (x ? ' ' + dos(x) + ' min' : '') : x + ' min'; };
   const nuevoId = p => (p || '') + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-  const corto = n => { const p = String(n || '').trim().split(/\s+/); return p.length >= 4 ? p[0] + ' ' + p[2] : p.slice(0, 2).join(' '); };
+  /* El primer nombre y el primer apellido; con el indicativo del tercero adelante (P1…), como Rutas.cortoNombre */
+  const corto = n => {
+    const p = String(n || '').trim().split(/\s+/).filter(Boolean);
+    /* «P1-Daniel …» pegado: se separa */
+    const pg = p.length ? /^(\S*\d[^\sA-Za-zÀ-ÖØ-öø-ÿ]*?)[-–—.:,|]+([A-Za-zÀ-ÖØ-öø-ÿ]\S*)$/.exec(p[0]) : null;
+    if (pg) p.splice(0, 1, pg[1], pg[2]);
+    if (p.length > 1 && /\d/.test(p[0])) {
+      let ind = p.shift();
+      while (p.length > 1 && !/[0-9A-Za-zÀ-ÖØ-öø-ÿ]/.test(p[0])) ind += ' ' + p.shift();
+      return ind + ' ' + (p.length >= 3 ? p[0] + ' ' + p[2] : p.join(' '));
+    }
+    return p.length >= 4 ? p[0] + ' ' + p[2] : p.slice(0, 2).join(' ');
+  };
 
   /* Lo de cada tipo de operación que se escogió en Catálogo: su imagen, su color y si lleva racimos (como Rutas.estilo) */
   const clave = t => String(t || '').trim().replace(/\s+/g, ' ').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -22632,8 +22967,22 @@ const Rutas = {
     const u = v.unidad ? Q.unidad(v.unidad) : null;
     return u ? Q.conductorDe(u) : null;
   },
-  /* En la ficha, el nombre corto del conductor: el primer nombre y el primer apellido. No se llama «corto»: ese es el de las rutas */
-  cortoNombre(n) { const p = String(n || '').trim().split(/\s+/); return p.length >= 4 ? p[0] + ' ' + p[2] : p.slice(0, 2).join(' '); },
+  /* En la ficha, el nombre corto del conductor: el primer nombre y el primer apellido. No se llama «corto»: ese es el de las rutas.
+     Nombre del conductor con indicativo (Juan, 18/11/2026): a los de los terceros les pone uno adelante, «P1 Daniel David Hernández»,
+     y salía «P1 David». Si la primera palabra lleva un número, se queda adelante y el resto se acorta sin ella; con tres palabras
+     después, la primera y la tercera, como en su ejemplo («P1 Daniel Hernández»). Sin indicativo, como antes. Igual en la app (corto) */
+  cortoNombre(n) {
+    const p = String(n || '').trim().split(/\s+/).filter(Boolean);
+    /* «P1-Daniel …» pegado: se separa */
+    const pg = p.length ? /^(\S*\d[^\sA-Za-zÀ-ÖØ-öø-ÿ]*?)[-–—.:,|]+([A-Za-zÀ-ÖØ-öø-ÿ]\S*)$/.exec(p[0]) : null;
+    if (pg) p.splice(0, 1, pg[1], pg[2]);
+    if (p.length > 1 && /\d/.test(p[0])) {
+      let ind = p.shift();
+      while (p.length > 1 && !/[0-9A-Za-zÀ-ÖØ-öø-ÿ]/.test(p[0])) ind += ' ' + p.shift();
+      return ind + ' ' + (p.length >= 3 ? p[0] + ' ' + p[2] : p.join(' '));
+    }
+    return p.length >= 4 ? p[0] + ' ' + p[2] : p.slice(0, 2).join(' ');
+  },
   /* El conductor que el camión tiene asignado en Flota, debajo de la placa (Juan, 13/11/2026: «pequeñito»), aunque un día maneje otro.
      Solo en la plataforma: en «Copiar imagen» y en el PDF no sale (imgTablero no lo dibuja) */
   conductorCamion(u) {
