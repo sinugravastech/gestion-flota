@@ -1828,6 +1828,20 @@ html[data-theme="dark"] .per-t.on{box-shadow:0 0 0 3px var(--accent-soft)}
 .per-t span span{display:block;font-size:12px;color:var(--text-3)}
 .per-ic{flex:0 0 34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
 .per-t .tb-count{margin-left:auto}
+/* Hacer la OS o la OC desde el caso (19/11/2026; ver HacerOrden): los botones y su ventana */
+.hor-b{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.hor-b .btn{gap:5px}
+.hor-tipo{display:flex;gap:6px;flex-wrap:wrap}
+.hor-tipo .zchip.on{background:var(--brand-50);border-color:var(--brand-400);color:var(--brand-700);font-weight:600}
+html[data-theme="dark"] .hor-tipo .zchip.on{background:var(--accent-soft);color:var(--brand-300)}
+.hor-art{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12.5px}
+.hor-art th{font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:4px 6px}
+.hor-art td{padding:3px 4px}
+.hor-art .inp{padding:6px 8px;font-size:12.5px;width:100%}
+.hor-art .hor-c{width:76px}
+.hor-art .hor-w{width:132px}
+.hor-nota{display:flex;gap:7px;align-items:flex-start;margin-top:12px;font-size:12px;color:var(--text-2);line-height:1.45}
+.hor-nota svg{flex:0 0 auto;margin-top:2px}
 .per-nuevo{align-self:center;font-size:12.5px}
 .per-tbl th.per-s{text-align:center;white-space:nowrap}
 .per-tbl th.per-s span{display:block;font-weight:500;font-size:11px;color:var(--text-3);text-transform:none;letter-spacing:0}
@@ -15604,7 +15618,7 @@ Object.assign(Ventanas, {
           '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-act="verOrden" data-o="' + attr(o.orden_id) + '" title="Ver la orden" aria-label="Ver la orden">' +
           Icon('eye', '', 14) + '</button></div>').join('') : '<div class="txt-3 fs12">Todavía sin órdenes</div>') +
         '<span class="link fs12" data-act="casoOrdenes" data-m="' + attr(r.id) + '">' + (c.esta.length ? 'Relacionar o quitar órdenes' : '+ Relacionar una orden') +
-          '</span></div>' + Cubre.pregunta(r, c) +
+          '</span>' + HacerOrden.botones(r, c) + '</div>' + Cubre.pregunta(r, c) +
       dato(fin ? 'Valor' : 'Valor hasta hoy', c.valor ? '<b>' + esc(Money.format(c.valor)) + '</b>' : '')) +
       /* Lo que costó lo de las llantas, escrito en los avances: sale de ese valor (ver Plano.reparto) */
       (!Cubre.de(r) && Llantas.valorEscrito(r) != null && (!(r.partes || []).length || (r.partes || []).some(x => x.k !== 'llantas'))
@@ -25991,6 +26005,232 @@ Object.assign(Acciones, {
     Router.ir('mantenimientos');
   }
 });
+/* Hacer la OS o la OC desde el caso (Juan, 18/11/2026: demoraba mucho yendo a Facturación a crear la orden y volviendo a relacionarla;
+   «si se crea en mantenimiento, sea la orden de compra o de servicio, que se crea automáticamente en facturación… yo quiero modificar cosas
+   más adelante… me voy directo al módulo de facturación»; 19/11/2026: «Sí, constrúyelo»).
+   - En el caso, «Hacer la OS» y «Hacer la OC». La ventana sale llena con lo del caso: el proveedor (el taller para la OS; para la OC,
+     quien puso los repuestos), el concepto y lo que se pide; el valor, si ya se sabe.
+   - Al darle, la orden se crea de una vez en Facturación con su función (public.facturacion_crear_orden_desde_flota, SQL de Facturación):
+     Flota no escribe en sus tablas. Allá queda a nombre de quien la crea, en «Esperando cotización», con el consecutivo que siga, y se
+     cambia allá como cualquier otra. Las de Flota son de SINUGRAVAS: de servicio o de compra.
+   - Aquí queda relacionada enseguida, como si se hubiera marcado en «Relacionar» (ver Acciones.casoOrdenesSi): si al caso le falta el
+     taller o el proveedor de repuestos, se pone el de la orden. El valor sale de la orden, como siempre.
+   - La llave de la ventana: si se va la señal y se intenta otra vez, Facturación devuelve la misma orden; nunca salen dos. */
+const HacerOrden = {
+  TIPOS: {
+    SERVICIO: { sigla: 'OS', chip: 'De servicio (el taller)' },
+    COMPRA: { sigla: 'OC', chip: 'De compra (repuestos)' }
+  },
+  /* En el bloque «Órdenes de Facturación» del caso */
+  botones(r, c) {
+    if (!r || r.tipo !== 'correctivo') return '';
+    const conOS = Boolean(c && c.esta.some(o => o.tipo === 'SERVICIO'));
+    return '<div class="hor-b">' + Object.keys(this.TIPOS).map((t, i) => '<button type="button" class="btn btn-sm' + (!i && !conOS ? ' btn-primary' : '') +
+      '" data-act="hacerOrden" data-m="' + attr(r.id) + '" data-t="' + t + '">' + Icon('plus', '', 13) + 'Hacer la ' + this.TIPOS[t].sigla + '</button>').join('') + '</div>';
+  },
+  llave() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    const b = crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    const h = Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  },
+  /* Qué se pide: el periódico, si la entrada es de uno (ver Periodicos); si no, lo primero de «¿Qué pasó?»; si no, los componentes */
+  que(r) {
+    const per = (r.periodicos || [])[0];
+    const f = String(r.falla || '').replace(/\s+/g, ' ').trim().split(/[.!?;]\s/)[0].replace(/[\s.!?;:,]+$/, '');
+    const comps = (r.componentes || (r.componente ? [r.componente] : [])).filter(Boolean).join(', ');
+    return String(per || f || comps || 'Arreglo').slice(0, 90);
+  },
+  /* El proveedor que se propone, de la lista de Facturación: el taller del caso para la OS; para la OC, quien puso los repuestos (el
+     taller, si fue el mismo) */
+  propuesto(r, t) {
+    const v = t === 'SERVICIO' || r.repMismo ? ProvFact.valor(r) : ProvFact.valor(r, true);
+    const x = v.startsWith('f:') ? ProvFact.porId(v.slice(2)) : null;
+    return x && x.activo ? 'f:' + x.id : '';
+  },
+  pista(r, t, v) {
+    if (v && v === this.propuesto(r, t)) return t === 'SERVICIO' ? 'El taller del caso. Se puede cambiar.'
+      : r.repMismo ? 'El taller del caso, que también puso los repuestos. Se puede cambiar.' : 'Quien puso los repuestos en el caso. Se puede cambiar.';
+    return v ? '' : (t === 'SERVICIO' ? 'Escoja el taller.' : 'Escoja quién vende los repuestos.') + ' Si no está, «+ Agregar uno nuevo…».';
+  },
+  fila(d, n) {
+    return '<tr><td><input class="inp hor-d" autocomplete="off" value="' + attr(d || '') + '" placeholder="' + (d == null ? 'Otra fila…' : 'Qué se pide') + '"></td>' +
+      '<td><input class="inp hor-n" inputmode="decimal" autocomplete="off" value="' + attr(n == null ? '' : String(n)) + '" placeholder="1"></td>' +
+      '<td><input class="inp hor-v" inputmode="numeric" autocomplete="off" placeholder="$ 0"></td></tr>';
+  },
+  /* «1,5» o «1.5» → 1,5; «1.000» → 1.000 */
+  cantidad(s) {
+    s = String(s || '').replace(/\s/g, '');
+    if (!s) return null;
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    const n = parseFloat(s);
+    return isFinite(n) && n > 0 ? Math.round(n * 1000) / 1000 : null;
+  },
+  /* Lo de la ventana: el tipo, el proveedor (solo uno activo de Facturación), el concepto, lo que se pide y la nota */
+  leer(m) {
+    const s = $('#hoP', m), x = s && s.value.startsWith('f:') ? ProvFact.leer(s.value) : null, px = x && ProvFact.porId(x.id);
+    const items = $$('#hoA tr', m).map(tr => ({ descripcion: $('.hor-d', tr).value.replace(/\s+/g, ' ').trim().slice(0, 300),
+      cantidad: this.cantidad($('.hor-n', tr).value) || 1, valor_unitario: Money.leer($('.hor-v', tr).value) || 0 })).filter(i => i.descripcion);
+    return { tipo: m._tipo, x: px && px.activo ? x : null, concepto: $('#hoC', m).value.replace(/\s+/g, ' ').trim().slice(0, 300), items,
+      nota: $('#hoN', m).value.replace(/\s+/g, ' ').trim().slice(0, 500) };
+  },
+  abrir(r, t, caso) {
+    const u = r && Q.unidad(r.unidad);
+    if (!u) return;
+    const que = this.que(r);
+    const m = Modal.abrir({
+      titulo: 'Hacer la orden en Facturación', sub: esc([r.numero, UI.placaTxt(u), u.clase].filter(Boolean).join(' · ')), sinFoco: true, ancho: 'm-hoja',
+      cuerpo: '<div class="field"><label>¿Qué orden?</label><div class="hor-tipo" id="hoT">' + Object.keys(this.TIPOS).map(k =>
+          '<button type="button" class="zchip" data-v="' + k + '" aria-pressed="false"></button>').join('') + '</div></div>' +
+        '<div class="field"><label>Proveedor</label><select class="inp" id="hoP"><option value="">Escoja el proveedor</option>' +
+          ProvFact.opciones(this.propuesto(r, t)) + ProvFact.opcionNuevo() + '</select><div class="hint" id="hoPn"></div></div>' +
+        '<div class="field"><label>Concepto</label><input class="inp" id="hoC" autocomplete="off" value="' +
+          attr([que, UI.placaTxt(u), r.numero].filter(Boolean).join(' · ')) + '"></div>' +
+        '<div class="field"><label>Lo que se pide <span class="txt-3">(el valor, si ya lo sabe)</span></label><table class="hor-art"><thead><tr><th>Descripción</th>' +
+          '<th class="hor-c">Cant.</th><th class="hor-w">Valor</th></tr></thead><tbody id="hoA">' + this.fila(que, 1) + this.fila(null, null) + '</tbody></table>' +
+          '<div class="hint" id="hoAn"></div></div>' +
+        '<div class="field mb0"><label>Nota para Facturación <span class="txt-3">(opcional)</span></label>' +
+          '<input class="inp" id="hoN" autocomplete="off" placeholder="Ej.: la cotización está en el caso"></div>' +
+        '<div id="hoAviso"></div>' +
+        '<div class="hor-nota">' + Icon('info', '', 13) + '<span>La orden se crea de una vez en Facturación, a nombre suyo, en «Esperando cotización» y con el ' +
+          'número que siga. Aquí queda relacionada enseguida. Lo demás lo cambia allá.</span></div>',
+      pie: '<button type="button" class="btn" data-act="cerrarModal">Cancelar</button><button type="button" class="btn btn-primary" data-act="hacerOrdenSi" disabled>' +
+        Icon('send', '', 14) + '<span id="hoBt"></span></button>'
+    });
+    m._r = r.id;
+    m._caso = caso || null;
+    m._llave = this.llave();
+    const s = $('#hoP', m);
+    /* Lo que pone el programa no cuenta como escogido: al cambiar de tipo, el proveedor que corresponde, si no se escogió otro */
+    const ponerProv = v => {
+      if (v && !s.querySelector('option[value="' + CSS.escape(v) + '"]')) v = '';
+      m._puesto = v;
+      s.value = v;
+      s.dataset.antes = s.dataset.inicial = v;
+    };
+    const revisar = () => {
+      const d = this.leer(m);
+      $('#hoPn', m).textContent = s.value.startsWith('v:') ? 'Ese es de la lista vieja de Flota: escoja uno de la lista de Facturación.'
+        : ProvFact.estado !== 'listo' ? (ProvFact.estado === 'error' ? 'No se pudo traer la lista de proveedores de Facturación.' : 'Trayendo la lista de proveedores de Facturación…')
+        : this.pista(r, m._tipo, s.value);
+      $('#hoAn', m).textContent = 'El valor de cada uno, antes del IVA: Facturación le pone el IVA, como en cualquier orden.' +
+        (d.items.length && !d.items.some(i => i.valor_unitario > 0) ? ' Sin valor, el caso queda «por completar» hasta que la orden tenga sus valores.' : '');
+      $('[data-act="hacerOrdenSi"]', m).disabled = Boolean(m._creando) || !d.x || !d.items.length;
+    };
+    const tipo = k => {
+      m._tipo = k;
+      $$('#hoT .zchip', m).forEach(b => {
+        const on = b.dataset.v === k;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', String(on));
+        b.innerHTML = (on ? Icon('check', '', 11) : '') + this.TIPOS[b.dataset.v].chip;
+      });
+      if (!m._tocado) ponerProv(this.propuesto(r, k));
+      $('#hoBt', m).textContent = 'Crear la ' + this.TIPOS[k].sigla + ' en Facturación';
+      revisar();
+    };
+    $$('#hoT .zchip', m).forEach(b => b.addEventListener('click', () => { if (!m._creando) tipo(b.dataset.v); }));
+    ProvFact.listas(m, ['hoP']);
+    s.addEventListener('change', () => { if (s.value !== m._puesto && s.value !== 'nuevo:') m._tocado = true; revisar(); });
+    s._alCrear = () => { m._tocado = true; revisar(); };
+    /* Lo que se pide: los puntos de los miles en el valor y, al escribir en la última fila, otra debajo */
+    $('#hoA', m).addEventListener('input', e => {
+      if (e.target.classList.contains('hor-v')) Money.escribir(e.target);
+      const filas = $$('#hoA tr', m), ult = filas[filas.length - 1];
+      if (filas.length < 15 && $$('input', ult).some(i => i.value.trim())) $('#hoA', m).insertAdjacentHTML('beforeend', this.fila(null, null));
+      revisar();
+    });
+    ['#hoC', '#hoN'].forEach(id => $(id, m).addEventListener('input', revisar));
+    tipo(t);
+    /* Si la lista de Facturación no había llegado, se pone cuando llegue, con el propuesto */
+    ProvFact.traer().then(() => {
+      if (!document.body.contains(m)) return;
+      if (ProvFact.estado === 'listo' && !s.value.startsWith('f:') && !m._tocado) {
+        s.innerHTML = '<option value="">Escoja el proveedor</option>' + ProvFact.opciones('') + ProvFact.opcionNuevo();
+        ponerProv(this.propuesto(r, m._tipo));
+      }
+      revisar();
+    });
+  },
+  async crear(r, u, d, llave) {
+    const p = { llave, tipo: d.tipo, flota_id: u.id, proveedor_id: d.x.id, concepto: d.concepto, items: d.items, arreglo: r.numero || '' };
+    if (d.nota) p.nota = d.nota;
+    const res = await Nube.pedir('rpc/facturacion_crear_orden_desde_flota', { method: 'POST', publico: true, body: JSON.stringify({ p }) });
+    const o = Array.isArray(res) ? res[0] : res;
+    if (!o || typeof o !== 'object' || !o.orden_id) throw errorNube('Facturación no devolvió la orden.');
+    return { orden_id: String(o.orden_id), codigo: String(o.codigo || o.numero || ''), ya_estaba: o.ya_estaba === true };
+  },
+  /* Los avisos de Facturación vienen escritos para mostrarlos tal cual */
+  error(e) {
+    if (e && (e.status === 404 || /PGRST202|42883/.test(e.codigo || ''))) return 'Todavía no se puede: falta que Facturación corra su SQL para crear órdenes desde Flota.';
+    if (e && e.sesion) return 'La sesión se cerró. Vuelva a entrar e inténtelo otra vez.';
+    /* El 42501 de Facturación viene en español y dice qué permiso falta; el de PostgREST («permission denied…»), en inglés */
+    if (e && e.codigo === '42501') return e.message && !/permission denied/i.test(e.message) ? esc(e.message) : 'Sin permiso para crear órdenes en Facturación.';
+    if (e && e.codigo === 'P0001' && e.message) return esc(e.message);
+    return 'No se pudo crear: ' + esc((e && e.message) || 'error') + '. Inténtelo otra vez: si alcanzó a crearse, no sale repetida.';
+  },
+  /* La lista de Facturación con la orden nueva, para que el caso la muestre con su valor */
+  async traerCon(id) {
+    for (let i = 0; i < 3; i++) {
+      if (Compras._trayendo) await Compras._trayendo;
+      await Compras.traer(true);
+      if (Compras.porId(id)) return true;
+      await new Promise(ok => setTimeout(ok, 1200));
+    }
+    return false;
+  },
+  /* Como en «Relacionar» (ver Acciones.casoOrdenesSi): si al caso le falta el taller o el proveedor de repuestos, el de la orden */
+  relacionar(r, id, d) {
+    Compras.ponerOrdenes(r, (r.ordenes || []).filter(x => x !== id).concat(id));
+    if (d.tipo === 'SERVICIO') {
+      if (!r.provFact && !r.prov) { ProvFact.poner(r, d.x); r.tallerDeOrden = id; }
+    } else if (!r.repMismo && !r.repFact && !r.repProv) {
+      if (d.x.id === r.provFact) ProvFact.ponerRep(r, null, true); else ProvFact.ponerRep(r, d.x, false);
+      r.repDeOrden = id;
+    }
+  }
+};
+
+Object.assign(Acciones, {
+  hacerOrden(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
+    if (r) HacerOrden.abrir(r, el.dataset.t === 'COMPRA' ? 'COMPRA' : 'SERVICIO', el.closest('.modal-bd'));
+  },
+  async hacerOrdenSi(el) {
+    const m = el.closest('.modal-bd'), r = m && Datos.mantenimientos.find(x => x.id === m._r), u = r && Q.unidad(r.unidad);
+    if (!u || el.disabled || m._creando) return;
+    const d = HacerOrden.leer(m);
+    if (!d.x || !d.items.length) return;
+    m._creando = true;
+    el.disabled = true;
+    const bt = $('#hoBt', m), antes = bt.textContent, sig = HacerOrden.TIPOS[d.tipo].sigla;
+    bt.textContent = 'Creando la ' + sig + '…';
+    $('#hoAviso', m).innerHTML = '';
+    let res;
+    try { res = await HacerOrden.crear(r, u, d, m._llave); } catch (e) {
+      m._creando = false;
+      bt.textContent = antes;
+      el.disabled = false;
+      $('#hoAviso', m).innerHTML = '<div class="alert a-err mt12">' + Icon('warn') + '<div>' + HacerOrden.error(e) + '</div></div>';
+      return;
+    }
+    bt.textContent = 'Relacionándola…';
+    const llego = await HacerOrden.traerCon(res.orden_id).catch(() => false);
+    HacerOrden.relacionar(r, res.orden_id, d);
+    if (document.body.contains(m)) Modal.cerrar(m);
+    if (m._caso && document.body.contains(m._caso) && m._caso._pintarCaso) m._caso._pintarCaso();
+    const o = Compras.porId(res.orden_id), cod = (o && o.codigo) || res.codigo || 'la orden';
+    /* «ya_estaba»: la primera vez alcanzó a crearse y la respuesta no llegó; con la misma llave, Facturación devolvió esa misma */
+    Toast.show('Quedó la <b>' + esc(cod) + '</b> en Facturación' + (r.numero ? ', relacionada con <b>' + esc(r.numero) + '</b>.' : ' y relacionada.') +
+      (res.ya_estaba ? '<br>Se fue la señal, pero no salió repetida: es la misma.' : '') +
+      (llego ? '' : '<br>Todavía no llega en la lista de Facturación: sale con su valor cuando llegue.'));
+    Router.pintar(true);
+  }
+});
+
 Vistas.vencimientos = () => Venc.vista();
 Vistas.tab_venc = u => Venc.tabFicha(u);
 /* El número rojo del menú: lo que avisa */
