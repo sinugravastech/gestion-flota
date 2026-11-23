@@ -2367,6 +2367,16 @@ span.chip-adj{color:var(--text-3)}
 html[data-theme="dark"] .cb-form .zchip.on{background:var(--accent-soft);color:var(--brand-300)}
 .cb-tarjeta #mcTB,.cb-tarjeta #mcRC,.cb-tarjeta #mcTot,.cb-tarjeta #mcTh,.cb-garantia #mcRC,.cb-garantia #mcTot,.cb-garantia #mcTh,
 .cb-garantia #mcMismo,.cb-garantia #mcTB .tr-vf,.cb-garantia #mcTB .tr-of{display:none}
+/* Lo pagó el conductor (22/11/2026; ver Cubre): quién, cuánto y si ya se le devolvió */
+.cs-pago .cs-dos{display:grid;grid-template-columns:minmax(0,1fr) 130px;gap:8px}
+.cs-pago .cs-g{display:flex;justify-content:flex-end;margin-top:8px}
+.cs-pago .cs-solo{max-width:200px}
+.cs-dev{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.cs-dev .l2{font-size:11.5px;font-weight:600;color:var(--text-2);margin-right:auto}
+.cs-dev .chk{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;margin-right:auto;cursor:pointer}
+.cs-dev .inp{width:auto;flex:0 0 150px}
+.chip-ok{background:var(--ok-50);border-color:transparent;color:var(--ok-700)}
+.chip-ok svg{color:var(--ok-500)}
 @media(max-width:860px){.cs{grid-template-columns:minmax(0,1fr)} .cs-lado{border-left:0;padding-left:0;border-top:1px solid var(--border);padding-top:16px}}
 /* Terminar arreglo: lo que pasó, en una línea suave */
 .ta-paso{font-size:12.5px;color:var(--text-2);background:var(--surface-2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;line-height:1.45}
@@ -10303,19 +10313,33 @@ const Pendiente = {
 
 /* El arreglo que no se paga desde Flota (Juan, 18/11/2026). «Lo pagó la tarjeta»: lo arregló alguien que no está registrado (sin RUT)
    y el conductor le pagó con la tarjeta; esos gastos los lleva otra área (Contabilidad) y, si se ponían aquí, al pedirle a esa área
-   los movimientos de la tarjeta quedaban dobles. «Es garantía»: lo cubre el mecánico de un arreglo anterior y no se paga nada. Con
-   cualquiera de los dos no se pide taller, orden ni valor (ver Pendiente), no suma en el gasto y sí cuenta como arreglo. Va en el
-   extra: r.cubre ('tarjeta' o 'garantia'), r.cubreQuien (quién lo arregló, escrito, con la tarjeta) y r.garantiaDe (el arreglo de
-   la garantía). Se marca en el caso (Ventanas.caso) y en «Editar todo» (Ventanas.correctivo) */
+   los movimientos de la tarjeta quedaban dobles. «Es garantía»: lo cubre el mecánico de un arreglo anterior y no se paga nada.
+   «Lo pagó el conductor» (Juan, 21/11/2026; a si suma: «No, como la tarjeta», 22/11/2026): pagó de su plata y se le devuelve en la
+   oficina; se anota quién, cuánto y si ya se le devolvió, pero no suma. Con cualquiera de los tres no se pide taller, orden ni valor
+   (ver Pendiente), no suma en el gasto y sí cuenta como arreglo. Va en el extra: r.cubre ('tarjeta', 'garantia' o 'conductor'),
+   r.cubreQuien (quién lo arregló, escrito, con la tarjeta o el conductor), r.garantiaDe (el arreglo de la garantía) y, con el
+   conductor, r.cubreConductor (su id) y r.cubreDevuelto (el día en que se le devolvió). Con los tres se puede anotar cuánto se pagó
+   (Juan, 22/11/2026), en r.cubreValor, pero es solo informativo: esos pagos los llevan en otro Excel que después se suma a los gastos
+   de los vehículos, así que aquí no suma en ningún gasto. Se marca en el caso (Ventanas.caso: al tocar el botón se abre una ventanita
+   para el valor) y en «Editar todo» (Ventanas.correctivo) */
 const Cubre = {
+  /* quien: sin taller; en su lugar, quién lo arregló (escrito, si quiere) */
   TIPOS: {
-    tarjeta: { boton: 'Lo pagó la tarjeta', corto: 'Tarjeta', icono: 'tarjeta', linea: 'lo lleva Contabilidad',
-      txt: 'El valor lo lleva Contabilidad. Aquí no se pide taller, orden ni valor, y no suma en el gasto.' },
-    garantia: { boton: 'Es garantía', titulo: 'Garantía · sin costo', corto: 'Garantía', icono: 'shieldOk', linea: 'sin costo',
-      txt: 'Lo cubre el mecánico. No se pide orden ni valor y no suma en el gasto.' }
+    tarjeta: { boton: 'Lo pagó la tarjeta', corto: 'Tarjeta', icono: 'tarjeta', linea: 'lo lleva Contabilidad', quien: true,
+      txt: 'Lo lleva Contabilidad. El valor que se anote aquí es solo informativo: no suma en ningún gasto. No se pide taller ni orden.' },
+    garantia: { boton: 'Es garantía', titulo: 'Garantía', corto: 'Garantía', icono: 'shieldOk', linea: 'sin costo',
+      txt: 'Lo cubre el mecánico: lo más seguro es que no se pague. Si se pagó algo, el valor es solo informativo: no suma en ningún gasto.' },
+    conductor: { boton: 'Lo pagó el conductor', corto: 'Conductor', icono: 'user', linea: 'se le devuelve en la oficina', quien: true,
+      txt: 'Pagó de su plata y se le devuelve en la oficina. El valor que se anote es solo informativo: no suma en ningún gasto. No se pide taller ni orden.' }
   },
-  /* 'tarjeta', 'garantia' o '' (un preventivo no la lleva) */
+  /* Cuánto se pagó (Juan, 22/11/2026): con los tres se puede anotar, pero no suma en ningún gasto */
+  VALOR: { tarjeta: '¿Cuánto se pagó?', garantia: '¿Se pagó algo?', conductor: '¿Cuánto pagó?' },
+  /* Dónde se escribe en «Editar todo» */
+  VALOR_FORM: { tarjeta: '#mcCbTv', garantia: '#mcCbGv', conductor: '#mcCbCv' },
+  /* 'tarjeta', 'garantia', 'conductor' o '' (un preventivo no la lleva) */
   de: m => (m && m.tipo !== 'preventivo' && Cubre.TIPOS[m.cubre] ? m.cubre : ''),
+  /* La tarjeta y el conductor: sin taller */
+  sinTaller: k => Boolean(k && Cubre.TIPOS[k] && Cubre.TIPOS[k].quien),
   titulo(k) { return this.TIPOS[k].titulo || this.TIPOS[k].boton; },
   lista: l => (l.length > 1 ? l.slice(0, -1).join(', ') + ' y ' + l[l.length - 1] : l[0] || ''),
   /* El arreglo de la garantía */
@@ -10346,41 +10370,116 @@ const Cubre = {
   },
   linea(m) {
     const k = this.de(m), o = k === 'garantia' && this.origen(m);
-    return o ? 'de ' + (o.numero || 'otro arreglo') : this.TIPOS[k].linea;
+    if (k === 'conductor') return this.devolucion(m);
+    return (o ? 'de ' + (o.numero || 'otro arreglo') : k === 'garantia' && +m.cubreValor > 0 ? 'se pagó' : this.TIPOS[k].linea) + this.valorTxt(m);
   },
+  /* « · $ 80.000», lo que se anotó que se pagó (solo informativo) */
+  valorTxt: m => (+m.cubreValor > 0 ? ' · ' + Money.format(m.cubreValor) : ''),
+  /* Con el conductor: si ya se le devolvió y cuánto («por devolver · $ 35.000», «devuelto el 22/11/2026 · $ 35.000») */
+  devolucion(m) {
+    const v = +m.cubreValor > 0 ? ' · ' + Money.format(m.cubreValor) : '';
+    return (m.cubreDevuelto ? 'devuelto el ' + Fecha.num(m.cubreDevuelto) : 'por devolver') + v;
+  },
+  porDevolver: m => Cubre.de(m) === 'conductor' && !m.cubreDevuelto,
+  /* El conductor que pagó, o «—» si no se escogió o ya no está */
+  conductorTxt(m) { const c = m.cubreConductor ? Q.conductor(m.cubreConductor) : null; return c && c.nombre ? c.nombre : '—'; },
   /* La columna «Valor» de Taller SINUGRAVAS. Si aun así tiene una orden (relacionada desde la orden), se avisa */
   celda(m, c) {
-    return this.chip(m, 11) + '<div class="dias m-1l m-val">' + esc(this.linea(m)) + '</div>' +
+    return this.chip(m, 11) + '<div class="dias m-1l m-val' + (this.porDevolver(m) ? ' d-warn' : '') + '">' + esc(this.linea(m)) + '</div>' +
       (c.esta.length ? '<div class="dias d-warn m-1l m-val">Tiene ' + esc(c.esta.map(o => o.codigo).join(', ')) + '</div>' : '');
   },
-  /* La columna del taller: con la tarjeta y sin taller, quién lo arregló, si se escribió */
-  sinRegistrar(m) { return this.de(m) === 'tarjeta' && Boolean(m.cubreQuien) && UI.provTxt(m) === '—'; },
+  /* La columna del taller: con la tarjeta o el conductor y sin taller, quién lo arregló, si se escribió */
+  sinRegistrar(m) { return this.sinTaller(this.de(m)) && Boolean(m.cubreQuien) && UI.provTxt(m) === '—'; },
   tallerTxt(m) { return esc(this.sinRegistrar(m) ? m.cubreQuien : UI.provTxt(m)); },
   bajoTaller(m) { return this.sinRegistrar(m) ? '<div class="dias m-1l">sin registrar</div>' : ''; },
   /* En el caso, debajo del taller */
   porGarantia(r) { return this.de(r) === 'garantia' ? '<div class="txt-3 fs12">Por garantía</div>' : ''; },
-  /* En el caso, sin órdenes: los dos botones */
+  /* En el caso, sin órdenes: los tres botones */
   pregunta(r, c) {
     if (r.tipo === 'preventivo' || c.esta.length || (r.ordenes || []).length) return '';
     const b = k => '<button type="button" class="btn btn-sm" data-act="casoCubre" data-k="' + k + '" data-m="' + attr(r.id) + '">' + Icon(this.TIPOS[k].icono, '', 13) +
       esc(this.TIPOS[k].boton) + '</button>';
-    return '<div class="cs-d cs-cb"><span class="l">¿No lleva orden?</span><div class="cs-pago-b">' + b('tarjeta') + b('garantia') + '</div>' +
-      '<div class="txt-3 fs12">Con alguno de los dos, no se le pide taller, orden ni valor, y no suma en el gasto.</div></div>';
+    return '<div class="cs-d cs-cb"><span class="l">¿No lleva orden?</span><div class="cs-pago-b">' + b('tarjeta') + b('garantia') + b('conductor') + '</div>' +
+      '<div class="txt-3 fs12">Al tocar uno se abre una ventanita para anotar cuánto se pagó. Es solo informativo: no suma en ningún gasto, y no se pide la orden.</div></div>';
   },
   /* En el caso, marcado: en vez de las órdenes y el valor */
   caso(r, c) {
     const k = this.de(r), T = this.TIPOS[k], id = attr(r.id);
-    const mas = k === 'tarjeta'
-      ? '<div class="field"><label for="csCq">¿Quién lo arregló? <span class="txt-3">(si quiere)</span></label><div class="cs-cq">' +
-        '<input class="inp" id="csCq" maxlength="120" placeholder="Ej.: un mecánico de la zona" value="' + attr(r.cubreQuien || '') + '">' +
-        '<button type="button" class="btn btn-sm" data-act="casoCubreQuien" data-m="' + id + '" disabled>' + Icon('save', '', 13) + 'Guardar</button></div></div>'
+    const mas = k !== 'garantia' ? this.casoCampos(r, k)
       : '<div class="field"><label for="csGd">¿De qué arreglo es la garantía?</label><select class="inp" id="csGd" data-m="' + id + '">' +
-        this.opciones(this.previos(r), r.garantiaDe || '') + '</select></div>' + this.notaTaller(r);
+        this.opciones(this.previos(r), r.garantiaDe || '') + '</select></div>' + this.notaTaller(r) + this.casoCampos(r, k);
     return '<div class="cs-d cs-cb"><span class="l">Pago</span><div class="cs-pago"><div class="cs-pago-t">' + Icon(T.icono, '', 14) + esc(this.titulo(k)) + '</div>' +
       '<div class="txt-3 fs12">' + esc(T.txt) + '</div>' + mas + '</div>' +
       (c.esta.length ? '<div class="alert a-warn cs-pt">' + Icon('warn') + '<div>Tiene ' + esc(c.esta.map(o => o.codigo).join(', ')) +
         ', y su valor cuenta en el gasto. Si sí lleva orden, toque «Quitar».</div></div>' : '') +
       '<span class="link fs12" data-act="casoCubreQuitar" data-m="' + id + '">Quitar: sí lleva orden</span></div>';
+  },
+  /* En el caso, marcado: cuánto se pagó (solo informativo) y, con la tarjeta o el conductor, quién lo arregló, con un solo Guardar
+     apagado sin cambios. Con el conductor, además, quién pagó (al marcarlo, el del vehículo) y, abajo, si ya se le devolvió */
+  casoCampos(r, k) {
+    const id = attr(r.id), con = k === 'conductor', q = this.sinTaller(k);
+    const valor = '<div class="field' + (con || q ? '' : ' cs-solo') + '"><label for="csCv">' + this.VALOR[k] + '</label><input class="inp" id="csCv" inputmode="numeric" ' +
+      'autocomplete="off" placeholder="' + (k === 'garantia' ? 'Si no se pagó, vacío' : 'Ej.: 35.000') + '" value="' + attr(Money.campo(+r.cubreValor > 0 ? r.cubreValor : null)) + '"></div>';
+    const quien = '<div class="field"><label for="csCq">¿Quién lo arregló? <span class="txt-3">(si quiere)</span></label>' +
+      '<input class="inp" id="csCq" maxlength="120" placeholder="Ej.: un mecánico de la zona" value="' + attr(r.cubreQuien || '') + '"></div>';
+    return (con ? '<div class="cs-dos"><div class="field"><label for="csCc">¿Qué conductor?</label><select class="inp" id="csCc">' + this.conductores(r.cubreConductor || '') +
+        '</select></div>' + valor + '</div>' + quien : q ? '<div class="cs-dos">' + quien + valor + '</div>' : valor) +
+      '<div class="cs-g"><button type="button" class="btn btn-sm" data-act="casoCubreCond" data-m="' + id + '" disabled>' + Icon('save', '', 13) + 'Guardar</button></div>' +
+      (con ? this.casoDevolucion(r) : '');
+  },
+  casoDevolucion(r) {
+    const id = attr(r.id), dev = r.cubreDevuelto;
+    return '<div class="cs-dev"><span class="l2">¿Ya se le devolvió?</span>' + (dev
+        ? '<span class="chip chip-ok">' + Icon('check', '', 11) + 'Devuelto el ' + esc(Fecha.num(dev)) + '</span>' +
+          '<button type="button" class="btn btn-sm btn-ghost" data-act="casoCubreDevuelto" data-m="' + id + '" data-no="1">Deshacer</button>'
+        : '<span class="chip chip-falta">' + Icon('clock', '', 11) + 'Por devolver</span>' +
+          '<button type="button" class="btn btn-sm" data-act="casoCubreDevuelto" data-m="' + id + '">' + Icon('check', '', 13) + 'Ya se le devolvió</button>') + '</div>';
+  },
+  /* La ventanita al tocar uno de los tres (Juan, 22/11/2026): cuánto se pagó, solo informativo, y lo de cada uno. Si el arreglo tenía
+     algo que con la marca no va, se avisa ahí mismo que se quita */
+  ventana(r, k, quita) {
+    const con = k === 'conductor';
+    return '<p class="txt-2" style="font-size:13px;line-height:1.5;margin:0 0 12px">' + esc(this.TIPOS[k].txt) + '</p>' +
+      (con ? '<div class="field"><label for="cbVc">¿Qué conductor?</label><select class="inp" id="cbVc">' + this.conductores(r.cubreConductor || this.delVehiculo(r)) + '</select></div>' : '') +
+      '<div class="field"><label for="cbVv">' + this.VALOR[k] + '</label><input class="inp" id="cbVv" inputmode="numeric" autocomplete="off" placeholder="' +
+        (k === 'garantia' ? 'Si no se pagó nada, déjelo vacío' : 'Ej.: 35.000') + '" value="' + attr(Money.campo(+r.cubreValor > 0 ? r.cubreValor : null)) + '"></div>' +
+      (this.sinTaller(k) ? '<div class="field"><label for="cbVq">¿Quién lo arregló? <span class="txt-3">(si quiere)</span></label>' +
+        '<input class="inp" id="cbVq" maxlength="120" placeholder="Ej.: un mecánico de la zona" value="' + attr(r.cubreQuien || '') + '"></div>' : '') +
+      (quita.length ? '<div class="alert a-warn mb0">' + Icon('warn') + '<div>Este arreglo tiene ' + esc(this.lista(quita)) + '. Con «' + esc(this.TIPOS[k].boton) +
+        '» no van aquí, para no contarlos dos veces: se quitan.</div></div>' : '');
+  },
+  montarVentana(m) {
+    const v = $('#cbVv', m), si = $('[data-act="casoCubreSi"]', m);
+    v.addEventListener('input', () => Money.escribir(v));
+    $$('input', m).forEach(x => x.addEventListener('keydown', e => { if (e.key === 'Enter' && si) { e.preventDefault(); si.click(); } }));
+  },
+  leerVentana(m) {
+    const c = $('#cbVc', m), v = $('#cbVv', m), q = $('#cbVq', m);
+    return { c: c ? c.value : '', v: v ? Money.leer(v.value) || 0 : 0, q: q ? q.value.trim().replace(/\s+/g, ' ') : '' };
+  },
+  /* Los conductores para escoger, por nombre; si el escogido ya salió de Flota, también él */
+  conductores(ya) {
+    const l = Datos.conductores.slice().sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '')), o = ya ? Q.conductor(ya) : null;
+    return '<option value="">' + (l.length ? 'Sin escoger' : 'No hay conductores en Flota') + '</option>' +
+      l.map(c => '<option value="' + attr(c.id) + '"' + (c.id === ya ? ' selected' : '') + '>' + esc(c.nombre || c.id) + '</option>').join('') +
+      (o && !l.includes(o) ? '<option value="' + attr(o.id) + '" selected>' + esc(o.nombre || o.id) + '</option>' : '');
+  },
+  /* El conductor del vehículo, para ponerlo al marcar */
+  delVehiculo(r) {
+    const u = Q.unidad(r.unidad && typeof r.unidad === 'object' ? r.unidad.id : r.unidad);
+    return u && u.conductor && Q.conductor(u.conductor) ? u.conductor : '';
+  },
+  /* Lo que dice el caso (cuánto, quién lo arregló y, con el conductor, quién pagó) y lo guardado, para comparar (Guardar apagado sin
+     cambios) y guardarlo */
+  leerCaso(m) {
+    const cc = $('#csCc', m), cv = $('#csCv', m), q = $('#csCq', m);
+    return { c: cc ? cc.value : '', v: cv ? Money.leer(cv.value) || 0 : 0, q: q ? q.value.trim().replace(/\s+/g, ' ') : '' };
+  },
+  datosCaso: r => ({ c: r.cubreConductor || '', v: +r.cubreValor > 0 ? +r.cubreValor : 0, q: r.cubreQuien || '' }),
+  ponerCaso(r, d) {
+    if (d.c) r.cubreConductor = d.c; else delete r.cubreConductor;
+    if (d.v > 0) r.cubreValor = d.v; else delete r.cubreValor;
+    if (d.q) r.cubreQuien = d.q; else delete r.cubreQuien;
   },
   /* Quién cubre la garantía: el taller del arreglo escogido */
   notaTaller(r) {
@@ -10393,22 +10492,25 @@ const Cubre = {
   /* Lo que tiene y se quita al marcarlo, para no contarlo dos veces */
   habia(r, k) {
     const t = Q.provDe(r), rep = r.repMismo ? null : Q.repDe(r), v = TallerRep.valores(r).total, os = Compras.deArreglo(r).esta;
-    return [k === 'tarjeta' && t ? 'el taller ' + t.nombre : '', rep ? 'los repuestos de ' + rep.nombre : '', v > 0 ? 'el valor de ' + Money.format(v) : '',
+    return [this.sinTaller(k) && t ? 'el taller ' + t.nombre : '', rep ? 'los repuestos de ' + rep.nombre : '', v > 0 ? 'el valor de ' + Money.format(v) : '',
       os.length ? os.map(o => o.codigo).join(', ') : ''].filter(Boolean);
   },
   limpiar(r, k) {
-    if (k === 'tarjeta') ProvFact.poner(r, null);
+    if (this.sinTaller(k)) ProvFact.poner(r, null);
     ProvFact.ponerRep(r, null, false);
     ['valor', 'valorTaller', 'valorRep', 'aMano'].forEach(x => { delete r[x]; });
     Compras.ponerOrdenes(r, []);
   },
   marcar(r, k) {
     r.cubre = k;
-    if (k !== 'tarjeta') delete r.cubreQuien;
+    if (!this.sinTaller(k)) delete r.cubreQuien;
     if (k !== 'garantia') delete r.garantiaDe;
+    if (k !== 'conductor') this.sinConductor(r);
+    else if (!r.cubreConductor) { const c = this.delVehiculo(r); if (c) r.cubreConductor = c; }
     this.limpiar(r, k);
   },
-  quitar(r) { delete r.cubre; delete r.cubreQuien; delete r.garantiaDe; },
+  sinConductor(r) { delete r.cubreConductor; delete r.cubreDevuelto; },
+  quitar(r) { delete r.cubre; delete r.cubreQuien; delete r.garantiaDe; delete r.cubreValor; this.sinConductor(r); },
   /* Las cajas del caso: «Guardar» de quién lo arregló, apagado sin cambios; el arreglo de la garantía, al escogerlo */
   montar(m, r) {
     const q = $('#csCq', m), g = q && $('[data-act="casoCubreQuien"]', m);
@@ -10419,20 +10521,33 @@ const Cubre = {
     }
     const s = $('#csGd', m);
     if (s) s.addEventListener('change', () => Acciones.casoGarantiaDe(s));
+    const gc = $('[data-act="casoCubreCond"]', m);
+    if (gc) {
+      const cc = $('#csCc', m), cv = $('#csCv', m), antes = JSON.stringify(this.datosCaso(r));
+      const revisar = () => { gc.disabled = JSON.stringify(this.leerCaso(m)) === antes; };
+      cv.addEventListener('input', () => { Money.escribir(cv); revisar(); });
+      [cc, q].filter(Boolean).forEach(x => { x.addEventListener('input', revisar); x.addEventListener('change', revisar); });
+      [cv, q].filter(Boolean).forEach(x => x.addEventListener('keydown', e => { if (e.key === 'Enter' && !gc.disabled) { e.preventDefault(); gc.click(); } }));
+    }
   },
   /* En el PDF, donde va el valor */
   campos(d) {
     const k = this.de(d);
     if (!k) return null;
-    if (k === 'tarjeta') return [['Pago', 'Lo pagó la tarjeta: el valor lo lleva Contabilidad'], ['Órdenes', 'No lleva']];
+    const v = +d.cubreValor > 0 ? Money.format(d.cubreValor) + ' (solo informativo: no suma)' : '';
+    if (k === 'tarjeta') return [['Pago', 'Lo pagó la tarjeta: el valor lo lleva Contabilidad'], ['Órdenes', 'No lleva']].concat(v ? [['Se pagó', v]] : []);
+    if (k === 'conductor') return [['Pago', 'Lo pagó el conductor: se le devuelve en la oficina'], ['Conductor', this.conductorTxt(d)],
+      ['Pagó', v || '—'], ['Devolución', d.cubreDevuelto ? 'Devuelto el ' + Fecha.num(d.cubreDevuelto) : 'Por devolver']];
     const o = this.origen(d);
-    return [['Pago', 'Garantía: sin costo'], ['Garantía de', o ? (o.numero || 'Otro arreglo') + ' del ' + Fecha.num(o.fecha) : 'Sin escoger']];
+    return [['Pago', v ? 'Garantía' : 'Garantía: sin costo'], ['Garantía de', o ? (o.numero || 'Otro arreglo') + ' del ' + Fecha.num(o.fecha) : 'Sin escoger']]
+      .concat(v ? [['Se pagó', v]] : []);
   },
-  quienPdf(d) { return this.de(d) === 'tarjeta' && d.cubreQuien ? d.cubreQuien + ' (sin registrar)' : '—'; },
+  quienPdf(d) { return this.sinTaller(this.de(d)) && d.cubreQuien ? d.cubreQuien + ' (sin registrar)' : '—'; },
   excel(m) {
     const k = this.de(m), o = k === 'garantia' && this.origen(m);
-    return k === 'tarjeta' ? 'Lo pagó la tarjeta: el valor lo lleva Contabilidad' + (m.cubreQuien ? ' · Lo arregló: ' + m.cubreQuien : '')
-      : k === 'garantia' ? 'Garantía: sin costo' + (o ? ' · de ' + (o.numero || 'otro arreglo') : '') : '';
+    return k === 'tarjeta' ? 'Lo pagó la tarjeta: el valor lo lleva Contabilidad' + this.valorTxt(m) + (m.cubreQuien ? ' · Lo arregló: ' + m.cubreQuien : '')
+      : k === 'conductor' ? 'Lo pagó el conductor: ' + this.conductorTxt(m) + ' · ' + this.devolucion(m) + (m.cubreQuien ? ' · Lo arregló: ' + m.cubreQuien : '')
+      : k === 'garantia' ? (+m.cubreValor > 0 ? 'Garantía: se pagó' + this.valorTxt(m) : 'Garantía: sin costo') + (o ? ' · de ' + (o.numero || 'otro arreglo') : '') : '';
   },
   /* En «Terminar arreglo» de las llantas: lo del taller no se pide */
   nota(r) {
@@ -10440,23 +10555,35 @@ const Cubre = {
     return '<div class="cs-pago mb12"><div class="cs-pago-t">' + Icon(this.TIPOS[k].icono, '', 14) + esc(this.titulo(k)) + '</div><div class="txt-3 fs12">' +
       esc(this.TIPOS[k].txt) + ' Se cambia en el caso o en «Editar todo».</div></div>';
   },
-  /* «Editar todo» (Ventanas.correctivo): los dos botones encima del taller; con uno, lo que no va se esconde (cb-tarjeta, cb-garantia) */
+  /* «Editar todo» (Ventanas.correctivo): los tres botones encima del taller; con uno, lo que no va se esconde (cb-tarjeta: sin taller,
+     con la tarjeta o el conductor; cb-garantia) */
   form() {
     const b = k => '<button type="button" class="zchip" data-cb="' + k + '" aria-pressed="false">' + Icon(this.TIPOS[k].icono, '', 13) + esc(this.TIPOS[k].boton) + '</button>';
     const caja = (k, id, mas) => '<div class="cs-pago hidden" id="' + id + '"><div class="cs-pago-t">' + Icon(this.TIPOS[k].icono, '', 14) + esc(this.titulo(k)) + '</div>' +
       '<div class="txt-3 fs12">' + esc(this.TIPOS[k].txt) + '</div>' + mas + '</div>';
-    return '<div class="field cb-form" id="mcCb"><label>¿No lleva orden?</label><div class="cs-pago-b">' + b('tarjeta') + b('garantia') + '</div>' +
-      caja('tarjeta', 'mcCbT', '<div class="field"><label for="mcCbQ">¿Quién lo arregló? <span class="txt-3">(si quiere)</span></label>' +
-        '<input class="inp" id="mcCbQ" maxlength="120" placeholder="Ej.: un mecánico de la zona"></div>') +
+    return '<div class="field cb-form" id="mcCb"><label>¿No lleva orden?</label><div class="cs-pago-b">' + b('tarjeta') + b('garantia') + b('conductor') + '</div>' +
+      caja('tarjeta', 'mcCbT', '<div class="cs-dos"><div class="field"><label for="mcCbQ">¿Quién lo arregló? <span class="txt-3">(si quiere)</span></label>' +
+        '<input class="inp" id="mcCbQ" maxlength="120" placeholder="Ej.: un mecánico de la zona"></div>' +
+        '<div class="field"><label for="mcCbTv">¿Cuánto se pagó?</label><input class="inp" id="mcCbTv" inputmode="numeric" autocomplete="off" placeholder="Ej.: 35.000"></div></div>') +
       caja('garantia', 'mcCbG', '<div class="field"><label for="mcCbD">¿De qué arreglo es la garantía?</label><select class="inp" id="mcCbD"></select></div>' +
-        '<div class="txt-3 fs12 mt8" id="mcCbDn"></div>') +
+        '<div class="txt-3 fs12 mt8" id="mcCbDn"></div>' +
+        '<div class="field cs-solo"><label for="mcCbGv">¿Se pagó algo?</label><input class="inp" id="mcCbGv" inputmode="numeric" autocomplete="off" placeholder="Si no se pagó, vacío"></div>') +
+      caja('conductor', 'mcCbC', '<div class="cs-dos"><div class="field"><label for="mcCbCc">¿Qué conductor?</label><select class="inp" id="mcCbCc"></select></div>' +
+        '<div class="field"><label for="mcCbCv">¿Cuánto pagó?</label><input class="inp" id="mcCbCv" inputmode="numeric" autocomplete="off" placeholder="Ej.: 35.000"></div></div>' +
+        '<div class="field"><label for="mcCbCq">¿Quién lo arregló? <span class="txt-3">(si quiere)</span></label>' +
+        '<input class="inp" id="mcCbCq" maxlength="120" placeholder="Ej.: un mecánico de la zona"></div>' +
+        '<div class="cs-dev"><label class="chk"><input type="checkbox" id="mcCbCd">Ya se le devolvió</label>' +
+        '<input class="inp hidden" type="date" id="mcCbCf" aria-label="El día en que se le devolvió"></div>') +
       '<div class="alert a-warn cs-pt hidden" id="mcCbA"></div></div>';
   },
   montarForm(m) {
     m._cubre = '';
     m._garantiaDe = '';
+    m._conductor = '';
     $$('#mcCb [data-cb]', m).forEach(b => b.addEventListener('click', () => { m._cubre = m._cubre === b.dataset.cb ? '' : b.dataset.cb; this.pintarForm(m); }));
     $('#mcCbD', m).addEventListener('change', () => this.tallerForm(m, true));
+    ['#mcCbTv', '#mcCbGv', '#mcCbCv'].forEach(s => $(s, m).addEventListener('input', e => Money.escribir(e.target)));
+    $('#mcCbCd', m).addEventListener('change', e => { const f = $('#mcCbCf', m); f.classList.toggle('hidden', !e.target.checked); if (e.target.checked && !f.value) f.value = hoyISO; });
     /* Lo que se quitaría cambia con lo que se escoja abajo (el taller, el valor, las órdenes) */
     ['change', 'input'].forEach(t => $('.reg-or', m).addEventListener(t, e => { if (m._cubre && !e.target.closest('#mcCb')) this.avisoForm(m); }));
     this.pintarForm(m);
@@ -10465,17 +10592,34 @@ const Cubre = {
     m._cubre = this.de(r);
     m._garantiaDe = r.garantiaDe || '';
     $('#mcCbQ', m).value = r.cubreQuien || '';
+    m._conductor = r.cubreConductor || '';
+    $('#mcCbCq', m).value = r.cubreQuien || '';
+    ['#mcCbTv', '#mcCbGv', '#mcCbCv'].forEach(s => { $(s, m).value = Money.campo(+r.cubreValor > 0 ? r.cubreValor : null); });
+    $('#mcCbCd', m).checked = Boolean(r.cubreDevuelto);
+    $('#mcCbCf', m).value = r.cubreDevuelto || '';
+    $('#mcCbCf', m).classList.toggle('hidden', !r.cubreDevuelto);
     this.pintarForm(m);
   },
   pintarForm(m) {
     const k = m._cubre || '';
+    /* Al cambiar de botón, lo que se escribió que se pagó pasa a la caja del nuevo */
+    const antes = m._cubreVisto || '', ve = antes && k && antes !== k && $(this.VALOR_FORM[antes], m), va = k && $(this.VALOR_FORM[k], m);
+    if (ve && va && ve.value && !va.value) va.value = ve.value;
+    if (k) m._cubreVisto = k;
     $$('#mcCb [data-cb]', m).forEach(b => { const on = b.dataset.cb === k; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
     $('#mcCbT', m).classList.toggle('hidden', k !== 'tarjeta');
     $('#mcCbG', m).classList.toggle('hidden', k !== 'garantia');
-    m.classList.toggle('cb-tarjeta', k === 'tarjeta');
+    $('#mcCbC', m).classList.toggle('hidden', k !== 'conductor');
+    m.classList.toggle('cb-tarjeta', this.sinTaller(k));
     m.classList.toggle('cb-garantia', k === 'garantia');
     if (k === 'garantia') this.opcionesForm(m);
+    if (k === 'conductor') this.conductoresForm(m);
     this.avisoForm(m);
+  },
+  /* El conductor en «Editar todo»: el escogido o, si no hay, el del vehículo del formulario */
+  conductoresForm(m) {
+    const s = $('#mcCbCc', m), u = PlanoForm.u(m);
+    s.innerHTML = this.conductores(s.value || m._conductor || (u && u.conductor && Q.conductor(u.conductor) ? u.conductor : ''));
   },
   opcionesForm(m) {
     const s = $('#mcCbD', m), u = PlanoForm.u(m);
@@ -10495,7 +10639,7 @@ const Cubre = {
   avisoForm(m) {
     const a = $('#mcCbA', m), k = m._cubre || '';
     const r0 = m._editar ? Datos.mantenimientos.find(x => x.id === m._editar) : null, tr = k ? TallerRep.leer(m, 'mc', r0) : null;
-    const quita = !k ? [] : [k === 'tarjeta' && tr.prov ? 'el taller ' + tr.prov.nombre : '', tr.rep ? 'los repuestos de ' + tr.rep.nombre : '',
+    const quita = !k ? [] : [this.sinTaller(k) && tr.prov ? 'el taller ' + tr.prov.nombre : '', tr.rep ? 'los repuestos de ' + tr.rep.nombre : '',
       tr.valor > 0 ? 'el valor de ' + Money.format(tr.valor) : '',
       tr.ordenes.length ? (tr.ordenes.length === 1 ? 'la orden marcada' : 'las ' + tr.ordenes.length + ' órdenes marcadas') : ''].filter(Boolean);
     a.classList.toggle('hidden', !quita.length);
@@ -10505,19 +10649,27 @@ const Cubre = {
   /* Lo que lee «Editar todo» (ver Leer.correctivo): con la marca, sin órdenes, valor ni repuestos; con la tarjeta, sin taller */
   leer(m, tr) {
     const k = m._cubre || '';
-    return !k ? tr : Object.assign({}, tr, { prov: k === 'tarjeta' ? null : tr.prov, rep: null, repMismo: false, valorTaller: 0, valorRep: 0, valor: 0, aMano: null, ordenes: [] });
+    return !k ? tr : Object.assign({}, tr, { prov: this.sinTaller(k) ? null : tr.prov, rep: null, repMismo: false, valorTaller: 0, valorRep: 0, valor: 0, aMano: null, ordenes: [] });
   },
   datosForm(m) {
-    const k = m._cubre || '', q = $('#mcCbQ', m), s = $('#mcCbD', m);
-    return { cubre: k, cubreQuien: k === 'tarjeta' && q ? q.value.trim().replace(/\s+/g, ' ') : '', garantiaDe: k === 'garantia' && s ? s.value || '' : '' };
+    const k = m._cubre || '', con = k === 'conductor', q = $(con ? '#mcCbCq' : '#mcCbQ', m), s = $('#mcCbD', m), dev = con && $('#mcCbCd', m).checked;
+    return { cubre: k, cubreQuien: this.sinTaller(k) && q ? q.value.trim().replace(/\s+/g, ' ') : '', garantiaDe: k === 'garantia' && s ? s.value || '' : '',
+      cubreConductor: con ? $('#mcCbCc', m).value || '' : '', cubreValor: k ? Money.leer($(this.VALOR_FORM[k], m).value) || 0 : 0,
+      cubreDevuelto: dev ? $('#mcCbCf', m).value || hoyISO : '' };
   },
   /* Al guardar «Editar todo» o un correctivo nuevo */
   guardar(r, d) {
     const k = this.TIPOS[d.cubre] ? d.cubre : '';
     if (!k) { this.quitar(r); return; }
     r.cubre = k;
-    if (k === 'tarjeta' && d.cubreQuien) r.cubreQuien = d.cubreQuien; else delete r.cubreQuien;
+    if (this.sinTaller(k) && d.cubreQuien) r.cubreQuien = d.cubreQuien; else delete r.cubreQuien;
     if (k === 'garantia' && d.garantiaDe) r.garantiaDe = d.garantiaDe; else delete r.garantiaDe;
+    if (d.cubreValor > 0) r.cubreValor = d.cubreValor; else delete r.cubreValor;
+    if (k !== 'conductor') this.sinConductor(r);
+    else {
+      if (d.cubreConductor) r.cubreConductor = d.cubreConductor; else delete r.cubreConductor;
+      if (d.cubreDevuelto) r.cubreDevuelto = d.cubreDevuelto; else delete r.cubreDevuelto;
+    }
     this.limpiar(r, k);
   }
 };
@@ -10931,7 +11083,7 @@ const EditarArreglo = {
   firma(m) {
     const d = Leer.correctivo(m);
     return JSON.stringify([d.entrada, d.horaEntrada, d.programado ? d.programado.h : '', d.salida, d.horaSalida, d.trabajo, d.componente, d.falla, d.lectura, d.valor, d.partes.map(p => p.k), d.llantas, d.llanta, d.repMismo,
-      d.notas.map(n => [n.id, n.f, n.h, n.t, n.llValor || 0]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort(), d.adjuntos.map(a => a.id), d.valorTaller, d.valorRep, d.aMano || null, d.cubre, d.cubreQuien, d.garantiaDe]);
+      d.notas.map(n => [n.id, n.f, n.h, n.t, n.llValor || 0]), d.fotos.map(f => [f.id, f.txt, f.nota || '']), d.ordenes.slice().sort(), d.adjuntos.map(a => a.id), d.valorTaller, d.valorRep, d.aMano || null, d.cubre, d.cubreQuien, d.garantiaDe, d.cubreConductor, d.cubreValor, d.cubreDevuelto]);
   },
   /* Guardar, apagado hasta que algo cambie */
   vigilar(m, r) {
@@ -16745,30 +16897,33 @@ Object.assign(Acciones, {
       (rep ? '<br>En repuestos quedó ' + esc(rep.nombre) + ', de la ' + esc(oc.codigo) + '.' : ''));
     Router.pintar(true);
   },
-  /* El arreglo que no se paga desde Flota (ver Cubre), desde el caso. Si tiene algo que con la marca no va (el valor, los repuestos
-     o, con la tarjeta, el taller), se pregunta antes de quitarlo */
+  /* El arreglo que no se paga desde Flota (ver Cubre), desde el caso: la ventanita para anotar cuánto se pagó (Juan, 22/11/2026). Si
+     tiene algo que con la marca no va (el valor, los repuestos o, con la tarjeta o el conductor, el taller), ahí mismo dice que se quita */
   casoCubre(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), k = el.dataset.k;
     if (!r || !Cubre.TIPOS[k]) return;
     const quita = Cubre.habia(r, k);
-    if (!quita.length) { Acciones.casoCubreSi(el); return; }
-    Modal.abrir({
-      titulo: Cubre.TIPOS[k].boton, sub: esc([r.numero, UI.placaTxt(Q.unidad(r.unidad))].filter(Boolean).join(' · ')), ancho: 'm-hoja', sinFoco: true,
-      cuerpo: '<p class="txt-2" style="font-size:13px;line-height:1.5;margin:0">Este arreglo tiene ' + esc(Cubre.lista(quita)) + '. Con «' + esc(Cubre.TIPOS[k].boton) +
-        '» no van aquí, para no contarlos dos veces: se quitan.</p>',
+    const v = Modal.abrir({
+      titulo: Cubre.TIPOS[k].boton, sub: esc([r.numero, UI.placaTxt(Q.unidad(r.unidad))].filter(Boolean).join(' · ')), ancho: 'm-hoja',
+      cuerpo: Cubre.ventana(r, k, quita),
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-primary" data-act="casoCubreSi" data-k="' + k + '" data-m="' + attr(r.id) + '">' +
-        Icon('check', '', 14) + (quita.length > 1 ? 'Marcar y quitarlos' : 'Marcar y quitarlo') + '</button>'
+        Icon('check', '', 14) + (!quita.length ? 'Marcar' : quita.length > 1 ? 'Marcar y quitarlos' : 'Marcar y quitarlo') + '</button>'
     });
+    Cubre.montarVentana(v);
   },
   casoCubreSi(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), k = el.dataset.k;
     if (!r || !Cubre.TIPOS[k]) return;
-    const quita = Cubre.habia(r, k), aqui = el.closest('.modal-bd');
+    const quita = Cubre.habia(r, k), aqui = el.closest('.modal-bd'), d = aqui && !aqui._pintarCaso && $('#cbVv', aqui) ? Cubre.leerVentana(aqui) : null;
     Cubre.marcar(r, k);
+    /* Lo de la ventanita: cuánto se pagó y, según el botón, el conductor o quién lo arregló */
+    if (d) Cubre.ponerCaso(r, { c: k === 'conductor' ? d.c : '', v: d.v, q: Cubre.sinTaller(k) ? d.q : '' });
     if (aqui && !aqui._pintarCaso) Modal.cerrar(aqui);
     const m = $$('#modals .modal-bd').filter(x => x._pintarCaso).pop();
     if (m) m._pintarCaso();
-    Toast.show('Listo: ' + (r.numero ? '<b>' + esc(r.numero) + '</b>' : 'el arreglo') + ' quedó con «' + esc(Cubre.TIPOS[k].boton) + '». No pide taller, orden ni valor, y no suma en el gasto.' +
+    Toast.show('Listo: ' + (r.numero ? '<b>' + esc(r.numero) + '</b>' : 'el arreglo') + ' quedó con «' + esc(Cubre.TIPOS[k].boton) + '»' +
+      (+r.cubreValor > 0 ? ', con <b>' + esc(Money.format(r.cubreValor)) + '</b> solo informativo' : '') + '. No suma en ningún gasto.' +
+      (k === 'conductor' && !(+r.cubreValor > 0) ? ' Anote cuánto pagó, para devolvérselo.' : '') +
       (quita.length ? '<br>Se quitó ' + esc(Cubre.lista(quita)) + '.' : ''));
     Router.pintar(true);
   },
@@ -16790,10 +16945,39 @@ Object.assign(Acciones, {
     Toast.show(t ? 'Quedó anotado quién lo arregló: <b>' + esc(t) + '</b>.' : 'Se borró quién lo arregló.');
     Router.pintar(true);
   },
+  /* Con el conductor (ver Cubre): quién pagó, cuánto y quién lo arregló */
+  casoCubreCond(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), m = el.closest('.modal-bd');
+    if (!r || !m || !Cubre.de(r)) return;
+    const d = Cubre.leerCaso(m), con = Cubre.de(r) === 'conductor';
+    Cubre.ponerCaso(r, d);
+    if (m._pintarCaso) m._pintarCaso();
+    const quien = d.c ? '<b>' + esc(Cubre.conductorTxt(r)) + '</b>' : 'el conductor';
+    Toast.show(con ? (d.v > 0 ? 'Quedó anotado: ' + quien + ' pagó <b>' + esc(Money.format(d.v)) + '</b>. Es solo informativo: no suma en ningún gasto.'
+        : 'Quedó anotado: lo pagó ' + quien + '. Falta cuánto pagó.')
+      : d.v > 0 ? 'Quedó anotado: se pagó <b>' + esc(Money.format(d.v)) + '</b>. Es solo informativo: no suma en ningún gasto.' : 'Quedó guardado, sin valor.');
+    Router.pintar(true);
+  },
+  /* «Ya se le devolvió» (hoy) o «Deshacer». Si arriba había algo sin guardar, se guarda también */
+  casoCubreDevuelto(el) {
+    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), m = el.closest('.modal-bd');
+    if (!r || Cubre.de(r) !== 'conductor') return;
+    const g = m && $('[data-act="casoCubreCond"]', m);
+    if (g && !g.disabled) Cubre.ponerCaso(r, Cubre.leerCaso(m));
+    if (el.dataset.no) delete r.cubreDevuelto; else r.cubreDevuelto = hoyISO;
+    if (m && m._pintarCaso) m._pintarCaso();
+    Toast.show(el.dataset.no ? 'Listo: vuelve a quedar <b>por devolver</b>.'
+      : 'Listo: quedó que ' + (r.cubreConductor ? 'a <b>' + esc(Cubre.conductorTxt(r)) + '</b> ' : '') + 'se le ' +
+        (+r.cubreValor > 0 ? 'devolvieron <b>' + esc(Money.format(r.cubreValor)) + '</b>' : 'devolvió lo que pagó') + ' hoy.');
+    Router.pintar(true);
+  },
   /* El arreglo de la garantía: si el caso no tiene taller, queda el de ese arreglo */
   casoGarantiaDe(s) {
     const r = Datos.mantenimientos.find(x => x.id === s.dataset.m), m = s.closest('.modal-bd');
     if (!r) return;
+    /* Si abajo había algo sin guardar (cuánto se pagó), se guarda también */
+    const g = m && $('[data-act="casoCubreCond"]', m);
+    if (g && !g.disabled) Cubre.ponerCaso(r, Cubre.leerCaso(m));
     if (s.value) r.garantiaDe = s.value; else delete r.garantiaDe;
     const o = Cubre.origen(r), t = o && Cubre.tallerDe(o), puso = Boolean(t && !Q.provDe(r)), n = o && Q.provDe(o);
     if (puso) ProvFact.poner(r, t);
@@ -17406,7 +17590,7 @@ Object.assign(Acciones, {
       valor: r.valor, valorTaller: r.valorTaller, valorRep: r.valorRep, aMano: r.aMano, ordenes: r.ordenes || [], estado: r.estado, programado: r.programado,
       enlace: r.enlace,
       /* Si no se paga desde Flota (ver Cubre) */
-      cubre: r.cubre, cubreQuien: r.cubreQuien, garantiaDe: r.garantiaDe,
+      cubre: r.cubre, cubreQuien: r.cubreQuien, garantiaDe: r.garantiaDe, cubreConductor: r.cubreConductor, cubreValor: r.cubreValor, cubreDevuelto: r.cubreDevuelto,
       /* Sus adjuntos, seguidos al final (ver AdjImpresos) */
       adjuntos: Adjuntos.de(r).map(a => Object.assign({}, a)) };
     const v = Ventanas.vistaPrevia('Historial de mantenimiento correctivo', Formatos.correctivo(d));
@@ -26090,7 +26274,7 @@ const HacerOrden = {
         '<div class="field"><label>Concepto</label><input class="inp" id="hoC" autocomplete="off" value="' +
           attr([que, UI.placaTxt(u), r.numero].filter(Boolean).join(' · ')) + '"></div>' +
         '<div class="field"><label>Lo que se pide <span class="txt-3">(el valor, si ya lo sabe)</span></label><table class="hor-art"><thead><tr><th>Descripción</th>' +
-          '<th class="hor-c">Cant.</th><th class="hor-w">Valor</th></tr></thead><tbody id="hoA">' + this.fila(que, 1) + this.fila(null, null) + '</tbody></table>' +
+          '<th class="hor-c">Cant.</th><th class="hor-w">Valor con IVA</th></tr></thead><tbody id="hoA">' + this.fila(que, 1) + this.fila(null, null) + '</tbody></table>' +
           '<div class="hint" id="hoAn"></div></div>' +
         '<div class="field mb0"><label>Nota para Facturación <span class="txt-3">(opcional)</span></label>' +
           '<input class="inp" id="hoN" autocomplete="off" placeholder="Ej.: la cotización está en el caso"></div>' +
@@ -26116,7 +26300,10 @@ const HacerOrden = {
       $('#hoPn', m).textContent = s.value.startsWith('v:') ? 'Ese es de la lista vieja de Flota: escoja uno de la lista de Facturación.'
         : ProvFact.estado !== 'listo' ? (ProvFact.estado === 'error' ? 'No se pudo traer la lista de proveedores de Facturación.' : 'Trayendo la lista de proveedores de Facturación…')
         : this.pista(r, m._tipo, s.value);
-      $('#hoAn', m).textContent = 'El valor de cada uno, antes del IVA: Facturación le pone el IVA, como en cualquier orden.' +
+      /* Con el IVA incluido (Juan, 22/11/2026): el total de la orden es lo que suman las filas */
+      const tot = d.items.reduce((s, i) => s + (i.cantidad || 1) * (i.valor_unitario || 0), 0);
+      $('#hoAn', m).textContent = 'El valor de cada uno, con el IVA incluido: Facturación saca el IVA de ahí, como con «ya incluido en los precios».' +
+        (tot > 0 ? ' Total de la orden: ' + Money.format(tot) + '.' : '') +
         (d.items.length && !d.items.some(i => i.valor_unitario > 0) ? ' Sin valor, el caso queda «por completar» hasta que la orden tenga sus valores.' : '');
       $('[data-act="hacerOrdenSi"]', m).disabled = Boolean(m._creando) || !d.x || !d.items.length;
     };
@@ -26156,12 +26343,13 @@ const HacerOrden = {
     });
   },
   async crear(r, u, d, llave) {
-    const p = { llave, tipo: d.tipo, flota_id: u.id, proveedor_id: d.x.id, concepto: d.concepto, items: d.items, arreglo: r.numero || '' };
+    /* iva_incluido: los valores ya traen el IVA (SQL 217 de Facturación) */
+    const p = { llave, tipo: d.tipo, flota_id: u.id, proveedor_id: d.x.id, concepto: d.concepto, items: d.items, arreglo: r.numero || '', iva_incluido: true };
     if (d.nota) p.nota = d.nota;
     const res = await Nube.pedir('rpc/facturacion_crear_orden_desde_flota', { method: 'POST', publico: true, body: JSON.stringify({ p }) });
     const o = Array.isArray(res) ? res[0] : res;
     if (!o || typeof o !== 'object' || !o.orden_id) throw errorNube('Facturación no devolvió la orden.');
-    return { orden_id: String(o.orden_id), codigo: String(o.codigo || o.numero || ''), ya_estaba: o.ya_estaba === true };
+    return { orden_id: String(o.orden_id), codigo: String(o.codigo || o.numero || ''), ya_estaba: o.ya_estaba === true, iva_incluido: o.iva_incluido === true };
   },
   /* Los avisos de Facturación vienen escritos para mostrarlos tal cual */
   error(e) {
@@ -26226,7 +26414,9 @@ Object.assign(Acciones, {
     /* «ya_estaba»: la primera vez alcanzó a crearse y la respuesta no llegó; con la misma llave, Facturación devolvió esa misma */
     Toast.show('Quedó la <b>' + esc(cod) + '</b> en Facturación' + (r.numero ? ', relacionada con <b>' + esc(r.numero) + '</b>.' : ' y relacionada.') +
       (res.ya_estaba ? '<br>Se fue la señal, pero no salió repetida: es la misma.' : '') +
-      (llego ? '' : '<br>Todavía no llega en la lista de Facturación: sale con su valor cuando llegue.'));
+      (llego ? '' : '<br>Todavía no llega en la lista de Facturación: sale con su valor cuando llegue.') +
+      (res.iva_incluido ? '' : '<br>Ojo: Facturación le sumó el IVA encima de lo que escribió, porque todavía no tiene su SQL 217. ' +
+        'Corríjala allá con «ya incluido en los precios».'), res.iva_incluido ? undefined : 'warn');
     Router.pintar(true);
   }
 });
