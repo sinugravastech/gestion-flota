@@ -15768,7 +15768,10 @@ Object.assign(Ventanas, {
       (Cubre.de(r) ? Cubre.caso(r, c) : '<div class="cs-d"><span class="l">Órdenes de Facturación</span>' + (c.esta.length ? c.esta.map(o => '<div class="cs-oc"><b class="mono">' + esc(o.codigo) + '</b>' +
           '<span class="txt-3">' + (o.tipo === 'SERVICIO' ? 'Taller' : 'Repuestos') + '</span><span class="v">' + esc(Money.format(o.valor)) + '</span>' +
           '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-act="verOrden" data-o="' + attr(o.orden_id) + '" title="Ver la orden" aria-label="Ver la orden">' +
-          Icon('eye', '', 14) + '</button></div>').join('') : '<div class="txt-3 fs12">Todavía sin órdenes</div>') +
+          Icon('eye', '', 14) + '</button>' +
+          /* Copiar la orden y la placa, como «Copiar consecutivo» de Facturación (ver HacerOrden.consecutivo) */
+          '<button type="button" class="btn btn-sm btn-ghost btn-icon" data-act="copiarOrden" data-o="' + attr(o.orden_id) + '" title="Copiar la orden y la placa" ' +
+          'aria-label="Copiar la orden y la placa">' + Icon('copiar', '', 14) + '</button></div>').join('') : '<div class="txt-3 fs12">Todavía sin órdenes</div>') +
         '<span class="link fs12" data-act="casoOrdenes" data-m="' + attr(r.id) + '">' + (c.esta.length ? 'Relacionar o quitar órdenes' : '+ Relacionar una orden') +
           '</span>' + HacerOrden.botones(r, c) + '</div>' + Cubre.pregunta(r, c) +
       dato(fin ? 'Valor' : 'Valor hasta hoy', c.valor ? '<b>' + esc(Money.format(c.valor)) + '</b>' : '')) +
@@ -26253,12 +26256,13 @@ const HacerOrden = {
     const n = parseFloat(s);
     return isFinite(n) && n > 0 ? Math.round(n * 1000) / 1000 : null;
   },
-  /* Lo de la ventana: el tipo, el proveedor (solo uno activo de Facturación), el concepto, lo que se pide y la nota */
+  /* Lo de la ventana: el tipo, el proveedor (solo uno activo de Facturación), lo que se pide y la nota. Sin concepto (Juan, 23/11/2026):
+     así la columna «Concepto» de Facturación muestra lo que se escribe en las filas */
   leer(m) {
     const s = $('#hoP', m), x = s && s.value.startsWith('f:') ? ProvFact.leer(s.value) : null, px = x && ProvFact.porId(x.id);
     const items = $$('#hoA tr', m).map(tr => ({ descripcion: $('.hor-d', tr).value.replace(/\s+/g, ' ').trim().slice(0, 300),
       cantidad: this.cantidad($('.hor-n', tr).value) || 1, valor_unitario: Money.leer($('.hor-v', tr).value) || 0 })).filter(i => i.descripcion);
-    return { tipo: m._tipo, x: px && px.activo ? x : null, concepto: $('#hoC', m).value.replace(/\s+/g, ' ').trim().slice(0, 300), items,
+    return { tipo: m._tipo, x: px && px.activo ? x : null, items,
       nota: $('#hoN', m).value.replace(/\s+/g, ' ').trim().slice(0, 500) };
   },
   abrir(r, t, caso) {
@@ -26271,8 +26275,6 @@ const HacerOrden = {
           '<button type="button" class="zchip" data-v="' + k + '" aria-pressed="false"></button>').join('') + '</div></div>' +
         '<div class="field"><label>Proveedor</label><select class="inp" id="hoP"><option value="">Escoja el proveedor</option>' +
           ProvFact.opciones(this.propuesto(r, t)) + ProvFact.opcionNuevo() + '</select><div class="hint" id="hoPn"></div></div>' +
-        '<div class="field"><label>Concepto</label><input class="inp" id="hoC" autocomplete="off" value="' +
-          attr([que, UI.placaTxt(u), r.numero].filter(Boolean).join(' · ')) + '"></div>' +
         '<div class="field"><label>Lo que se pide <span class="txt-3">(el valor, si ya lo sabe)</span></label><table class="hor-art"><thead><tr><th>Descripción</th>' +
           '<th class="hor-c">Cant.</th><th class="hor-w">Valor con IVA</th></tr></thead><tbody id="hoA">' + this.fila(que, 1) + this.fila(null, null) + '</tbody></table>' +
           '<div class="hint" id="hoAn"></div></div>' +
@@ -26330,7 +26332,7 @@ const HacerOrden = {
       if (filas.length < 15 && $$('input', ult).some(i => i.value.trim())) $('#hoA', m).insertAdjacentHTML('beforeend', this.fila(null, null));
       revisar();
     });
-    ['#hoC', '#hoN'].forEach(id => $(id, m).addEventListener('input', revisar));
+    $('#hoN', m).addEventListener('input', revisar);
     tipo(t);
     /* Si la lista de Facturación no había llegado, se pone cuando llegue, con el propuesto */
     ProvFact.traer().then(() => {
@@ -26342,9 +26344,30 @@ const HacerOrden = {
       revisar();
     });
   },
+  /* «Copiar» de cada orden del caso (Juan, 23/11/2026): lo mismo que «Copiar consecutivo» de Facturación, lo que el proveedor pone en su
+     factura: «Orden: OC-304-26» y debajo «Placa: THX523». Sin placa, el vehículo */
+  consecutivo(o) {
+    const u = Q.unidad(o.flota_id), placa = u ? String(u.placa || '').trim().toUpperCase() : '';
+    return ['Orden: ' + o.codigo, placa ? 'Placa: ' + placa : u ? 'Equipo: ' + (UI.nombre(u) || UI.placaTxt(u)) : ''].filter(Boolean).join('\n');
+  },
+  /* Al portapapeles; si el navegador no deja, como antes, seleccionándolo. false si no pudo */
+  async copiar(t) {
+    try { await navigator.clipboard.writeText(t); return true; } catch (e) { /* el de antes */ }
+    const antes = document.activeElement, a = document.createElement('textarea');
+    a.value = t;
+    a.readOnly = true;
+    a.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+    document.body.appendChild(a);
+    a.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    a.remove();
+    if (antes && antes.focus) antes.focus({ preventScroll: true });
+    return ok;
+  },
   async crear(r, u, d, llave) {
     /* iva_incluido: los valores ya traen el IVA (SQL 217 de Facturación) */
-    const p = { llave, tipo: d.tipo, flota_id: u.id, proveedor_id: d.x.id, concepto: d.concepto, items: d.items, arreglo: r.numero || '', iva_incluido: true };
+    const p = { llave, tipo: d.tipo, flota_id: u.id, proveedor_id: d.x.id, items: d.items, arreglo: r.numero || '', iva_incluido: true };
     if (d.nota) p.nota = d.nota;
     const res = await Nube.pedir('rpc/facturacion_crear_orden_desde_flota', { method: 'POST', publico: true, body: JSON.stringify({ p }) });
     const o = Array.isArray(res) ? res[0] : res;
@@ -26386,6 +26409,13 @@ Object.assign(Acciones, {
   hacerOrden(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     if (r) HacerOrden.abrir(r, el.dataset.t === 'COMPRA' ? 'COMPRA' : 'SERVICIO', el.closest('.modal-bd'));
+  },
+  async copiarOrden(el) {
+    const o = Compras.porId(el.dataset.o);
+    if (!o) return;
+    const t = HacerOrden.consecutivo(o), ver = '<div class="mono" style="white-space:pre-line;user-select:all;margin-top:4px;font-weight:700">' + esc(t) + '</div>';
+    if (await HacerOrden.copiar(t)) Toast.show('Copiado. Péguelo con <b>Ctrl + V</b> en WhatsApp o en el correo:' + ver);
+    else Toast.show('El navegador no dejó copiarlo. Selecciónelo aquí y cópielo:' + ver, 'warn');
   },
   async hacerOrdenSi(el) {
     const m = el.closest('.modal-bd'), r = m && Datos.mantenimientos.find(x => x.id === m._r), u = r && Q.unidad(r.unidad);
