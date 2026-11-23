@@ -754,6 +754,19 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 /* Taller SINUGRAVAS: el mes de las tarjetas */
 .tk-mes{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:-2px 0 10px;font-size:12.5px;color:var(--text-2)}
 .tk-mes .inp{width:auto;min-width:200px}
+/* Taller SINUGRAVAS: arriba, el buscador y el mes de las tarjetas (ver TallerBusca) */
+.tb-arriba{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;margin:-2px 0 12px}
+.tb-arriba .tk-mes{margin:0 0 0 auto}
+.fbusca.tb-q{flex:1 1 380px;width:auto;max-width:560px;height:38px}
+.fbusca.tb-q input{font-size:13.5px}
+.fbusca.tb-q input::-webkit-search-cancel-button{cursor:pointer}
+.tb-res-h{display:flex;align-items:baseline;justify-content:space-between;gap:6px 14px;flex-wrap:wrap;margin:0 2px 10px;font-size:13px;color:var(--text-2)}
+.tb-res-h b{color:var(--text);font-weight:650}
+.tbl-busca mark{background:#fde68a;color:inherit;font-weight:inherit;border-radius:3px;padding:0 1px}
+html[data-theme="dark"] .tbl-busca mark{background:rgba(250,204,21,.32);color:var(--text)}
+.tbl-busca .tb-donde b{font-weight:650;color:var(--text-2)}
+.tb-mas{padding:10px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--text-3)}
+@media(max-width:860px){.fbusca.tb-q{flex-basis:100%;max-width:none}.fbusca.tb-q input{font-size:16px}.tb-arriba .tk-mes{margin-left:0}}
 /* Los componentes deducidos del texto del registro manual (ver Historico.comps): con borde punteado, para que no parezcan escritos */
 .ctag.ded{background:transparent;border:1px dashed var(--border-strong);color:var(--text-2);font-weight:500;padding:1px 9px}
 .hx-ded{font-size:11px;color:var(--text-3);font-style:italic}
@@ -2503,6 +2516,22 @@ html[data-theme="dark"] .reg-sel .zchip.on{background:var(--accent-soft);color:v
 .el-p{font-size:13px;line-height:1.5;margin:0 0 10px}
 .el-l{margin:0;padding-left:18px;font-size:12.5px;color:var(--text-2);line-height:1.5}
 .el-l li{margin-bottom:4px}
+/* Las órdenes de Facturación del arreglo que se elimina (ver EliminarOrdenes) */
+.el-oc{margin:14px 0 0;padding:12px 14px;border:1px solid rgba(200,134,13,.35);border-radius:10px;background:var(--warn-50)}
+.el-oc-t{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:650;color:var(--warn-700);margin:0 0 9px}
+.el-oc-t svg{width:15px;height:15px;flex:0 0 15px}
+.el-oc-l{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.el-oc-l li{display:grid;grid-template-columns:86px minmax(0,1fr) auto 92px;align-items:center;gap:10px;padding:7px 10px;background:var(--surface);
+  border:1px solid var(--border);border-radius:8px;font-size:12.5px}
+.el-oc-l .el-oc-p{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.el-oc-l .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.el-oc .el-tambien{margin-top:11px;font-weight:600}
+.el-oc-h{font-size:12px;color:var(--text-2);line-height:1.5;margin:4px 0 0 24px}
+.el-oc-h.sin{margin-left:0}
+html[data-theme="dark"] .el-oc{background:rgba(200,134,13,.1);border-color:rgba(200,134,13,.4)}
+html[data-theme="dark"] .el-oc-t{color:var(--warn-500)}
+@media(max-width:600px){.el-oc-l li{grid-template-columns:minmax(0,1fr) auto;row-gap:4px}.el-oc-l li .num{grid-column:2;grid-row:1}
+  .el-oc-l li .el-oc-p{grid-column:1;grid-row:2}.el-oc-l li .pill{grid-column:2;grid-row:2;justify-self:end}.el-oc-h{margin-left:0}}
 .reg-ll{display:flex;gap:14px;align-items:flex-start}
 .reg-ll .llantas-v{width:150px;flex:0 0 150px}
 .reg-ll .hint{margin-top:0}
@@ -5740,8 +5769,9 @@ const Persistencia = {
 const Borrar = {
   unidad(id) { return this.unidades([id]); },
   /* Un mantenimiento (ver Ventanas.eliminarMant): se va con sus avances, fotos y
-     adjuntos. Sus órdenes de Facturación quedan libres y sus novedades vuelven
-     a «Sin atender», porque se leen de los mantenimientos. Si era el último
+     adjuntos. Sus órdenes de Facturación quedan libres (las que esperaban
+     cotización, ya anuladas allá si se marcó la casilla: ver EliminarOrdenes) y
+     sus novedades vuelven a «Sin atender», porque se leen de los mantenimientos. Si era el último
      cambio de aceite, el último vuelve a ser el anterior (ver EditarPreventivo.aceite) */
   mantenimiento(id) {
     const r = Datos.mantenimientos.find(x => x.id === id), u = r && Q.unidad(r.unidad);
@@ -6946,21 +6976,22 @@ const Historico = {
   },
   filasTaller(xs) {
     if (!xs.length) return '';
-    return '<tr class="hx-sep"><td colspan="8">' + this.separador(xs) + '</td></tr>' +
-      xs.map(x => {
-        const u = x.unidad && Q.unidad(x.unidad), tipo = x.tipo || 'Sin tipo', k = tipo.toLowerCase(), prov = this.prov(x);
-        return '<tr class="row-click" data-act="verHistorico" data-h="' + attr(x.id) + '" title="Ver la línea del registro manual">' +
-          '<td class="nowrap">' + esc(x.fecha ? Fecha.num(x.fecha) : 'Sin fecha') + (x.fecha ? '<div class="dias">' + esc(Fecha.hace(x.fecha)) + '</div>' : '') + '</td>' +
-          (u ? '<td class="m-uni" data-act="verVehiculo" data-u="' + attr(u.id) + '" title="Ver el vehículo, su conductor y su remolque">' + UI.unidadCelda(u) + '</td>'
-            : '<td><div class="m-2l">' + esc(x.nota || x.placa_excel || 'Sin vehículo') + '</div></td>') +
-          '<td>' + UI.pill(k === 'preventivo' ? 'info' : k === 'correctivo' ? 'warn' : 'nr', tipo) + '</td>' +
-          '<td title="' + attr([x.trabajo, x.falla, x.parte].filter(Boolean).join('\n')) + '"><div class="m-1l m-trab">' + esc(x.trabajo || x.falla || '—') + '</div>' +
-            (x.parte ? '<div class="dias m-1l m-trab">' + esc(x.parte) + '</div>' : '') + '</td>' +
-          '<td><div class="m-2l" title="' + attr(prov) + '">' + esc(prov || '—') + '</div></td>' +
-          '<td class="num">' + esc(Money.format(x.valor)) + '</td>' +
-          '<td>' + (x.factura ? '<span class="txt-2 fs12">' + esc('Factura ' + x.factura) + '</span>' : '') + '</td>' +
-          '<td>' + UI.pill('nr', 'Manual') + '</td></tr>';
-      }).join('');
+    return '<tr class="hx-sep"><td colspan="8">' + this.separador(xs) + '</td></tr>' + xs.map(x => this.filaTaller(x)).join('');
+  },
+  /* Una línea en la tabla de Taller SINUGRAVAS; también en lo que encuentra el buscador (ver TallerBusca) */
+  filaTaller(x) {
+    const u = x.unidad && Q.unidad(x.unidad), tipo = x.tipo || 'Sin tipo', k = tipo.toLowerCase(), prov = this.prov(x);
+    return '<tr class="row-click" data-act="verHistorico" data-h="' + attr(x.id) + '" title="Ver la línea del registro manual">' +
+      '<td class="nowrap">' + esc(x.fecha ? Fecha.num(x.fecha) : 'Sin fecha') + (x.fecha ? '<div class="dias">' + esc(Fecha.hace(x.fecha)) + '</div>' : '') + '</td>' +
+      (u ? '<td class="m-uni" data-act="verVehiculo" data-u="' + attr(u.id) + '" title="Ver el vehículo, su conductor y su remolque">' + UI.unidadCelda(u) + '</td>'
+        : '<td><div class="m-2l">' + esc(x.nota || x.placa_excel || 'Sin vehículo') + '</div></td>') +
+      '<td>' + UI.pill(k === 'preventivo' ? 'info' : k === 'correctivo' ? 'warn' : 'nr', tipo) + '</td>' +
+      '<td title="' + attr([x.trabajo, x.falla, x.parte].filter(Boolean).join('\n')) + '"><div class="m-1l m-trab">' + esc(x.trabajo || x.falla || '—') + '</div>' +
+        (x.parte ? '<div class="dias m-1l m-trab">' + esc(x.parte) + '</div>' : '') + '</td>' +
+      '<td><div class="m-2l" title="' + attr(prov) + '">' + esc(prov || '—') + '</div></td>' +
+      '<td class="num">' + esc(Money.format(x.valor)) + '</td>' +
+      '<td>' + (x.factura ? '<span class="txt-2 fs12">' + esc('Factura ' + x.factura) + '</span>' : '') + '</td>' +
+      '<td>' + UI.pill('nr', 'Manual') + '</td></tr>';
   },
   /* «… · $3,2 M de registro manual», para lo que suma este gasto */
   meta: v => (v ? ' · ' + esc(Money.compacto(v)) + ' de registro manual' : ''),
@@ -13552,8 +13583,11 @@ const Acciones = {
    conductores, proveedores y configuración
    ========================================================================== */
 Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
-  /* Mantenimientos: la pestaña (por vehículo o historial) y el tipo de unidad */
-  mantTab: 'vehiculos', mantTipo: 'todos',
+  /* Mantenimientos: la pestaña y el tipo de unidad. De entrada, Taller SINUGRAVAS (Juan, 23/11/2026: «lo que más yo uso es el apartado
+     taller SINUGRAVAS… siempre me va a salir de primerito») */
+  mantTab: 'historial', mantTipo: 'todos',
+  /* Lo que se escribió en el buscador de Taller SINUGRAVAS (ver TallerBusca) */
+  tallerQ: '',
   /* Taller SINUGRAVAS: si los números de los botones cuentan también el registro manual; al entrar, apagado (Juan, 07/11/2026) */
   tallerX: false,
   /* Proveedores → «Del registro manual»: si se ven también los ya revisados (al entrar, escondidos) */
@@ -13869,10 +13903,451 @@ const Formatos = {
   }
 };
 
+/* Las órdenes de Facturación de un arreglo que se elimina (Juan, 23/11/2026: «deberían de eliminarse también esas órdenes de servicio y
+   esas órdenes de compra del módulo de facturación… solamente que salga como un aviso cuando yo voy a eliminarlo»). Vio la maqueta y
+   escogió anularlas, no borrarlas: así conservan su número, dejan de contar y, si fue un error, se reactivan en Facturación.
+   · En la ventana de eliminar, un recuadro con sus órdenes (el número, el proveedor, el estado y el valor) y la casilla «Anular también
+     en Facturación …», marcada. Desmarcada, se quedan allá como están y salen libres para otro arreglo, como antes.
+   · Solo se anulan las que esperan cotización. Las que ya tienen factura o pago se quedan: esa plata sí se gastó.
+   · Las anula Facturación con su función (public.facturacion_anular_ordenes_desde_flota, su SQL 218): todo o nada, con su regla de
+     siempre (las anula quien las hizo o el administrador) y el motivo «Se eliminó el arreglo MC-… en Flota». Flota no escribe en
+     Facturación.
+   · Con «Eliminar también el ingreso del remolque», también las del remolque.
+   · Al abrir la ventana se vuelve a pedir la lista de Facturación, por si alguna orden cambió de estado */
+const EliminarOrdenes = {
+  /* Las órdenes de esos arreglos que están en la lista de Facturación, cada una con su arreglo */
+  de: rs => [].concat(...rs.map(r => Compras.deArreglo(r).esta.map(o => ({ o, r })))),
+  anulable: o => o.estado === 'ESPERANDO',
+  y: l => (l.length > 1 ? l.slice(0, -1).join(', ') + ' y ' + l[l.length - 1] : l[0] || ''),
+  /* El motivo que queda en Facturación */
+  motivo: r => 'Se eliminó ' + (r.tipo === 'preventivo' ? 'el preventivo del ' + Fecha.num(r.fecha) : 'el arreglo ' + (r.numero || 'del ' + Fecha.num(r.fecha))) + ' en Flota',
+  caja(rs) {
+    if (Compras.estado !== 'listo') {
+      const n = rs.reduce((t, r) => t + (r.ordenes || []).length, 0);
+      return n ? '<div class="el-oc"><p class="el-oc-t">' + Icon('warn') + (n === 1 ? 'Tiene una orden de Facturación' : 'Tiene ' + n + ' órdenes de Facturación') + '</p>' +
+        '<p class="el-oc-h sin">Todavía no llega la lista de Facturación, así que no se pueden anular desde aquí: si lo elimina ahora, se quedan allá como están. ' +
+        'Espere un momento y vuelva a abrir esta ventana.</p></div>' : '';
+    }
+    const l = this.de(rs);
+    if (!l.length) return '';
+    const anu = l.filter(x => this.anulable(x.o)), otras = l.filter(x => !this.anulable(x.o)), varios = rs.length > 1, uno = anu.length === 1;
+    /* El motivo: el del arreglo de esas órdenes; si son del camión y del remolque, cada una con el suyo */
+    const duenos = [...new Set(anu.map(x => x.r))];
+    const la = x => 'la <b>' + esc(x.o.codigo) + '</b>';
+    return '<div class="el-oc"><p class="el-oc-t">' + Icon('warn') + (l.length === 1 ? 'Tiene una orden en Facturación' : 'Tiene ' + l.length + ' órdenes en Facturación') + '</p>' +
+      '<ul class="el-oc-l">' + l.map(x => '<li><b class="mono">' + esc(x.o.codigo) + '</b><span class="txt-2 el-oc-p">' + esc(x.o.proveedor || '—') +
+        (varios ? ' · ' + esc(UI.placaTxt(Q.unidad(x.r.unidad))) : '') + '</span>' + Compras.pill(x.o) + '<span class="num">' + Money.format(x.o.valor) + '</span></li>').join('') + '</ul>' +
+      (anu.length ? '<label class="el-tambien"><input type="checkbox" id="elAnular" checked>Anular también en Facturación ' +
+          (uno ? 'la ' + esc(anu[0].o.codigo) : 'las órdenes ' + esc(this.y(anu.map(x => x.o.codigo)))) + '</label>' +
+        '<p class="el-oc-h" id="elAnSi">Allá ' + (uno ? 'queda tachada como «Anulada»' : 'quedan tachadas como «Anuladas»') + ', con su número y ' +
+          (duenos.length === 1 ? 'el motivo «' + esc(this.motivo(duenos[0])) + '»' : 'como motivo el arreglo que se eliminó en Flota') + '. No ' + (uno ? 'cuenta' : 'cuentan') + ' en ningún gasto, y si fue un error se ' +
+          (uno ? 'reactiva' : 'reactivan') + ' en Facturación.</p>' +
+        '<p class="el-oc-h hidden" id="elAnNo">' + (uno ? 'Se queda en Facturación como está y sale libre para relacionarla' : 'Se quedan en Facturación como están y salen libres para relacionarlas') +
+          ' con otro arreglo.</p>' : '') +
+      (otras.length ? '<p class="el-oc-h">' + (otras.length === 1 ? (otras[0].o.estado === 'PAGADA' ? 'La <b>' + esc(otras[0].o.codigo) + '</b> ya está pagada' : 'La <b>' + esc(otras[0].o.codigo) + '</b> ya tiene factura') +
+          ': esa no se anula. Se queda en Facturación como está y sale libre para relacionarla con otro arreglo.'
+        : this.y(otras.map(la)).replace(/^la/, 'La') + ' ya tienen factura o pago: esas no se anulan. Se quedan en Facturación como están y salen libres para relacionarlas con otro arreglo.') + '</p>' : '') +
+      '<div id="elOcErr"></div></div>';
+  },
+  /* En la ventana: el recuadro, que cambia con «Eliminar también el ingreso del remolque» y cuando llega la lista de Facturación (lo
+     que se haya desmarcado sigue desmarcado) */
+  poner(m, r) {
+    const pintar = () => {
+      const caja = $('#elOc', m);
+      if (!caja || m._eliminando) return;
+      const tb = $('#elTambien', m), o = tb && tb.checked ? MantRemolque.otro(r) : null, a0 = $('#elAnular', m), marcada = a0 ? a0.checked : true;
+      caja.innerHTML = this.caja(o ? [r, o] : [r]);
+      const a = $('#elAnular', m);
+      if (!a) return;
+      const ver = () => { $('#elAnSi', m).classList.toggle('hidden', !a.checked); $('#elAnNo', m).classList.toggle('hidden', a.checked); };
+      a.checked = marcada;
+      a.addEventListener('change', ver);
+      ver();
+    };
+    const tb = $('#elTambien', m);
+    if (tb) tb.addEventListener('change', pintar);
+    pintar();
+    if ((r.ordenes || []).length || (MantRemolque.otro(r) && (MantRemolque.otro(r).ordenes || []).length)) {
+      Compras.traer(true).then(() => { if (document.body.contains(m)) pintar(); }).catch(() => {});
+    }
+  },
+  /* Que Facturación las anule: todo o nada. Lo que devuelve: los códigos de las que quedaron anuladas */
+  async anular(l) {
+    const p = { ordenes: l.map(x => ({ orden_id: x.o.orden_id, flota_id: x.r.unidad, motivo: this.motivo(x.r) })) };
+    const res = await Nube.pedir('rpc/facturacion_anular_ordenes_desde_flota', { method: 'POST', publico: true, body: JSON.stringify({ p }) });
+    const v = Array.isArray(res) ? res[0] : res, os = v && Array.isArray(v.ordenes) ? v.ordenes : null;
+    if (!os) throw errorNube('Facturación no dijo qué pasó con las órdenes.');
+    /* «ya_estaba»: alcanzó a anularse y la respuesta no llegó. «no_estaba»: ya la habían borrado allá */
+    const de = new Map(os.map(x => [String(x && x.orden_id), x && x.resultado]));
+    const faltan = l.filter(x => !['anulada', 'ya_estaba', 'no_estaba'].includes(de.get(x.o.orden_id)));
+    if (faltan.length) throw errorNube('Facturación no anuló ' + this.y(faltan.map(x => x.o.codigo)) + '.');
+    return l.filter(x => de.get(x.o.orden_id) !== 'no_estaba').map(x => x.o.codigo);
+  },
+  /* Los avisos de Facturación vienen escritos para mostrarlos tal cual (como en HacerOrden.error) */
+  error(e) {
+    if (e && (e.status === 404 || /PGRST202|42883/.test(e.codigo || ''))) return 'Todavía no se puede: falta que Facturación corra su SQL para anular órdenes desde Flota.';
+    if (e && e.sesion) return 'La sesión se cerró. Vuelva a entrar e inténtelo otra vez.';
+    if (e && e.codigo === '42501') return e.message && !/permission denied/i.test(e.message) ? esc(e.message) : 'Sin permiso para anular órdenes en Facturación.';
+    if (e && e.codigo === 'P0001' && e.message) return esc(e.message);
+    return 'No se pudieron anular en Facturación: ' + esc((e && e.message) || 'error') + '. Inténtelo otra vez: si alcanzaron a anularse, no pasa nada.';
+  }
+};
+
+/* Una fila de Taller SINUGRAVAS: la de la tabla y la de lo que encuentra el buscador (ver TallerBusca). cls: la del camión con su
+   remolque, que van juntos (ver MantRemolque.pares); en lo que encuentra el buscador, ninguna */
+const TallerFila = {
+  html(m, cls) {
+    const u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', c = Compras.deArreglo(m);
+    /* Todas las filas del mismo alto (Juan, 04/11/2026): cada dato en uno o
+       dos renglones, y completo al pasar el mouse. El clic en la fila abre
+       el arreglo: «Anotar avance» si sigue en el taller, «Editar» si ya
+       se cerró. La unidad abre su ficha corta (ver Ventanas.vehiculo) */
+    const enTaller = m.estado === 'taller' || m.estado === 'programado', progr = m.estado === 'programado', partes = (m.partes || []).map(x => Plano.nombre(u, x));
+    const novs = (m.novedades || []).map(n => 'Novedad: ' + n.t + ' · ' + (/^m:/.test(n.i) ? 'registrada a mano' : 'preoperacional del ' + Fecha.corta(n.f)));
+    const trab = [m.lectura, partes.join(', '), novs.length === 1 ? 'novedad: ' + m.novedades[0].t : novs.length ? novs.length + ' novedades' : ''].filter(Boolean).join(' · ');
+    /* Con qué entró (Juan, 10/11/2026: «el texto con el que ingresa el vehículo al taller… para uno tener noción viendo las filas»):
+       arriba lo que pasó; debajo, cómo va (en el taller con sus avances, programado o lo que se hizo) con lo demás. El preventivo, su
+       servicio; los de antes, sin «¿Qué pasó?», como siempre */
+    const nAv = (m.notas || []).length, avTxt = nAv ? nAv + (nAv === 1 ? ' avance' : ' avances') : '';
+    const como = !m.falla ? '' : progr ? ['Programado', avTxt].filter(Boolean).join(' · ') : m.estado === 'taller' ? 'En el taller · ' + (avTxt || 'sin avances todavía')
+      : m.trabajo ? 'Se hizo: ' + m.trabajo : ['Reparación', avTxt].filter(Boolean).join(' · ');
+    const que = m.falla || Avances.titulo(m), abajo = [como, trab].filter(Boolean).join(' · ');
+    /* Lo que cuenta (ver Compras): sus órdenes de Facturación cuando ya
+       son gasto; si no, su valor. Debajo, sus órdenes y lo que falta */
+    /* Las órdenes: dos a la vista y «+N»; todas al pasar el cursor (Juan, 08/11/2026: «solamente mostrar dos órdenes ahí») */
+    const cods = c.esta.map(o => o.codigo), estOrd = c.esta.length && !c.deOrden ? ' · ' + ((Compras.ESTADOS[c.esta[0].estado] || [])[1] || 'sin contar todavía').toLowerCase() : '';
+    const demas = [c.ids.length && !c.fiable ? 'Con orden de Facturación' : '',
+      /* Con el taller y los repuestos aparte, cuánto es de cada uno (de sus órdenes o lo escrito) */
+      (v => (v.r && v.t.valor > 0 && v.r.valor > 0 ? 'Taller ' + Money.format(v.t.valor) + ' · repuestos ' + Money.format(v.r.valor) : ''))(TallerRep.valores(m))];
+    const ordenes = [cods.length ? cods.slice(0, 2).join(', ') + (cods.length > 2 ? ' +' + (cods.length - 2) : '') + estOrd : ''].concat(demas).filter(Boolean);
+    const ordenesTodo = [cods.length ? cods.join(', ') + estOrd : ''].concat(demas).filter(Boolean);
+    /* Lo que falta: en la fila, en una palabra y en naranja; completo al pasar el cursor */
+    const falta = Pendiente.de(m);
+    const avisosTodo = [c.ajenas.length ? c.ajenas.map(o => o.codigo).join(', ') + ' ahora es de otro vehículo' : '', c.faltan ? 'La orden ya no está' : '']
+      .concat(falta.map(k => Pendiente.NOMBRE[k])).filter(Boolean);
+    const avisos = [c.ajenas.length ? 'Orden de otro vehículo' : '', c.faltan ? 'Orden borrada' : ''].concat([...new Set(falta.map(k => Pendiente.LADO[k]))]).filter(Boolean);
+    /* El correctivo cerrado también abre el caso, resumido (Juan, 05/11/2026); su «Editar todo» lleva a la vista completa */
+    return '<tr class="row-click' + cls + '" data-act="' + (enTaller || !prev ? 'anotarAvance' : 'editarMant') + '" data-m="' + attr(m.id) + '" title="' +
+        (enTaller ? 'Clic para ver el caso y anotar lo que se va haciendo' : prev ? 'Clic para ver o corregir el arreglo'
+          : 'Clic para ver el arreglo; «Editar todo» abre la vista completa') + '" data-mid="' + attr(m.id) + '">' +
+      /* Un programado: el día de la cita, cuánto falta y la hora */
+      '<td class="nowrap">' + esc(Fecha.num(m.fecha)) + (progr ? '<div class="dias' + (Programado.vencido(m) ? ' d-warn' : '') + '">' +
+          esc([Programado.falta(m.fecha), Programado.hora(Programado.de(m).h)].filter(Boolean).join(' · ') + (Programado.vencido(m) ? ' · no ha ingresado' : '')) + '</div>'
+        : '<div class="dias">' + esc(Fecha.hace(m.fecha)) + '</div>') + '</td>' +
+      '<td class="m-uni" data-act="verVehiculo" data-u="' + attr(u.id) + '" title="Ver el vehículo, su conductor y su remolque">' +
+        UI.unidadCelda(u, (cd => '<span class="who-c' + (cd ? '' : ' sin') + '">' + Icon('user', '', 11) + esc(cd ? cd.nombre : 'Sin conductor') + '</span>')(Q.conductorDe(u)),
+          MantRemolque.junto(m)) + '</td>' +
+      '<td>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + Periodicos.fila(m) + '</td>' +
+      '<td title="' + attr([m.falla ? 'Qué pasó: ' + m.falla : Avances.titulo(m), como, m.lectura, partes.join(', ')].concat(novs).filter(Boolean).join('\n')) + '">' +
+        '<div class="m-trab m-que">' + esc(que) + '</div>' + (abajo ? '<div class="dias m-1l m-trab">' + esc(abajo) + '</div>' : '') + '</td>' +
+      /* Si el de repuestos es el taller de su OS, «Pasarlo al taller» (ver RepTaller) */
+      '<td>' + (pt => '<div class="m-2l" title="' + attr(UI.provTxt(m) + (pt ? '\n' + RepTaller.txt(pt) : '')) + '">' + Cubre.tallerTxt(m) + '</div>' + Cubre.bajoTaller(m) +
+        (pt ? RepTaller.fila(m, pt) : ''))(RepTaller.de(m)) + '</td>' +
+      '<td class="num"' + (ordenesTodo.length || avisosTodo.length ? ' title="' + attr(ordenesTodo.concat(avisosTodo).join('\n')) + '"' : '') + '>' +
+        /* El que no se paga desde Flota: en gris, en vez del valor (ver Cubre) */
+        (Cubre.de(m) ? Cubre.celda(m, c) : (c.valor ? Money.format(c.valor) : m.oc ? '<span class="txt-3">' + esc(m.oc) + '</span>' : '—') +
+        (ordenes.length ? '<div class="dias m-1l m-val">' + esc(ordenes.join(' · ')) + '</div>' : '')) +
+        (avisos.length ? '<div class="dias d-warn m-1l m-val">' + esc(avisos.join(' · ')) + '</div>' : '') + '</td>' +
+      '<td><div class="m-pila"><div class="flex aic g6">' + UI.clip(m, 12) +
+        (m.fotos ? '<span class="chip" title="Fotos del taller">' + Icon('image', '', 12) + m.fotos + '</span>' : '') + '</div>' +
+        '<button class="btn btn-sm" data-act="' + (prev ? 'pdfPreventivo' : 'pdfCorrectivo') + '" data-m="' + attr(m.id) + '" title="' +
+          (prev ? 'El PDF del preventivo' : 'El PDF del arreglo, con sus fotos') + '">' + Icon('pdf', '', 12) + 'Ver PDF</button></div></td>' +
+      '<td><div class="m-pila">' + (progr ? UI.pill('violet', 'Programado') +
+        '<button class="btn btn-sm" data-act="ingresoArreglo" data-m="' + attr(m.id) + '" title="El vehículo llegó al taller">' + Icon('check', '', 12) + 'Ingresó</button>'
+        : enTaller ? (m.espera ? UI.pill('warn', 'Esperando repuestos') : UI.pill('bad', 'En taller')) +
+        '<button class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '" title="La unidad salió del taller">' + Icon('check', '', 12) + 'Terminar</button>'
+        /* Cerrado, sin «Editar»: la fila lo abre (Juan, 05/11/2026: «está de más») */
+        : UI.pill('nr', 'Cerrado')) + '</div></td></tr>';
+  }
+};
+
+/* Buscador de Taller SINUGRAVAS (Juan, 23/11/2026: «un buscador universal… que me permita buscar ya sea escribiendo la placa del carro,
+   volqueta, escribiendo taller, escribiendo qué pasó de forma muy descuidada, y que me busque las relaciones enseguida y me vaya mostrando
+   qué fila es la que coincide más con mi búsqueda, o las palabras que sí tienen en común»).
+   · Busca en todos los mantenimientos, de todos los meses y con cualquier filtro, y en el registro manual: la placa, el vehículo y su
+     conductor, el número, la fecha, qué pasó y lo que se hizo, los avances, lo que muestran las fotos, los documentos, los componentes,
+     las partes y las llantas, el taller y los repuestos, las órdenes con sus artículos, el pago y el valor.
+   · Perdona tildes y mayúsculas, letras que suenan igual (b y v; s, c y z; ll e y; la h…) y una o dos letras de más, de menos, cambiadas
+     o de lugar. Una palabra a medio escribir también sirve («fren» encuentra «frenos»).
+   · Primero los que tienen todas las palabras; después, los que tienen algunas. En cada grupo, los que más se parecen y, en un empate, el
+     más reciente. Una palabra que sale en casi todos (como «2026») no basta para que salga uno, si hay otras palabras.
+   · Las palabras que coinciden se resaltan. Si lo que coincide no se ve en la fila (un avance, una orden, una foto, el número), sale
+     debajo de «Qué pasó», en lugar de la segunda línea.
+   · Mientras se busca, las tarjetas, los avisos, los filtros y la tabla de siempre se esconden: solo se ve lo que se encontró. Se busca
+     mientras se escribe, sin volver a pintar la página (el cursor no se pierde) */
+const TallerBusca = {
+  MAX: 150,
+  /* Las palabras que no sirven para buscar */
+  VACIAS: new Set(('a al con de del el en es esa ese eso esta este esto fue hay la las le les lo los mas muy o para pero por que se sin ' +
+    'su sus un una unas unos y ya').split(' ')),
+  MESES: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+  _docs: null,
+  _foco: false,
+  _cursor: null,
+  _t: 0,
+  /* Sin tildes ni mayúsculas, los miles sin punto («450.000» es 450000) y solo letras y números */
+  norm: s => sinTildes(s).replace(/(\d)[.,](?=\d{3}(?!\d))/g, '$1').replace(/[^a-z0-9]+/g, ' ').trim(),
+  /* Los números, sin los ceros de adelante: «0215» es 215 */
+  pal: w => (/^\d+$/.test(w) ? w.replace(/^0+(?=\d)/, '') : w),
+  clave(p) { return this.pal(this.norm(p)); },
+  /* Cómo suena, para perdonar la ortografía: b y v, s, c y z, qu y k, gue y ge, ge y je, ll e y, la h y las letras dobles */
+  suena: w => w.replace(/h/g, '').replace(/v/g, 'b').replace(/z/g, 's').replace(/c([ei])/g, 's$1').replace(/qu/g, 'k').replace(/c/g, 'k')
+    .replace(/gu([ei])/g, 'g$1').replace(/g([ei])/g, 'j$1').replace(/ll/g, 'y').replace(/y$/, 'i').replace(/(.)\1+/g, '$1'),
+  /* Cuántas letras de más, de menos, cambiadas o de lugar hay entre dos palabras; deja de contar al pasar de «max» */
+  dist(a, b, max) {
+    if (Math.abs(a.length - b.length) > max) return max + 1;
+    let pp = null, p = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      const c = [i];
+      let menor = i;
+      for (let j = 1; j <= b.length; j++) {
+        let v = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        if (pp && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, pp[j - 2] + 1);
+        c[j] = v;
+        if (v < menor) menor = v;
+      }
+      if (menor > max) return max + 1;
+      pp = p;
+      p = c;
+    }
+    return p[b.length];
+  },
+  /* Qué tanto se parece una palabra de la búsqueda (q) a una del mantenimiento (w, que suena como f): 1 si es la misma; menos si empieza
+     igual, suena igual, la contiene o tiene una o dos letras distintas; 0 si no se parece. Los números, solo iguales, por el comienzo o,
+     de cuatro cifras o más, dentro. Lo que se juntó sin espacios (junto: «lkk116», «oc64126»), solo igual o por el comienzo: si no,
+     «2026» saldría dentro de «OC-620-26» */
+  peso(q, w, f, junto) {
+    const t = q.t;
+    if (w === t) return 1;
+    if (t.length >= 3 && w.startsWith(t)) return 0.85;
+    if (junto) return 0;
+    if (w.length >= 4 && t.startsWith(w)) return 0.8;
+    if (/\d/.test(t)) return t.length >= 4 && w.includes(t) ? 0.6 : 0;
+    if (t.length >= 3 && q.f === f) return 0.8;
+    if (t.length >= 4 && w.includes(t)) return 0.6;
+    if (t.length >= 4 && !/\d/.test(w)) {
+      const max = t.length >= 7 ? 2 : 1;
+      if (this.dist(q.f, f, max) <= max) return 0.55;
+    }
+    return 0;
+  },
+  /* Lo que se busca: las palabras que sirven, sin repetir, con cómo suenan */
+  consulta(q) {
+    const vistas = new Set();
+    return this.norm(q).split(' ').map(w => this.pal(w))
+      .filter(w => w && (w.length > 1 || /\d/.test(w)) && !this.VACIAS.has(w) && !vistas.has(w) && vistas.add(w))
+      .map(t => ({ t, f: this.suena(t) }));
+  },
+  activo() { return this.consulta(UIState.tallerQ || '').length > 0; },
+  /* «22/11/2026 noviembre 2026», para encontrarlo por el día o por el mes */
+  fechaTxt(f) {
+    const d = f ? Fecha.parse(f) : null;
+    return d && !isNaN(d) ? Fecha.num(f) + ' ' + this.MESES[d.getMonth()] + ' ' + d.getFullYear() : '';
+  },
+  vehiculo: u => (u ? [UI.placaTxt(u), TIPOS[u.tipo] ? TIPOS[u.tipo].nombre : '', u.clase, u.marca, u.linea, u.modelo, u.alias].filter(Boolean).join(' · ') : ''),
+  /* Dónde se busca en un mantenimiento: { k: qué es, t: el texto, juntar: lo que también se busca escrito sin espacios (la placa, el
+     número y los códigos de las órdenes) } */
+  deArreglo(m) {
+    const u = Q.unidad(m.unidad), cd = u && Q.conductorDe(u), prev = m.tipo === 'preventivo', c = Compras.deArreglo(m), k = Cubre.de(m);
+    const t = Q.provDe(m), r = m.repMismo ? null : Q.repDe(m), partes = u ? (m.partes || []).map(x => Plano.nombre(u, x)) : [];
+    return [['Fecha', this.fechaTxt(m.fecha)], ['Vehículo', this.vehiculo(u), u ? [UI.placaTxt(u)] : []], ['Conductor', cd ? cd.nombre : ''],
+      ['Número', m.numero || '', m.numero ? [m.numero] : []], ['Tipo', [prev ? 'Preventivo' : 'Correctivo'].concat(m.periodicos || []).join(' · ')],
+      ['Estado', m.estado === 'taller' ? (m.espera ? 'Esperando repuestos' : 'En el taller') : m.estado === 'programado' ? 'Programado' : 'Cerrado'],
+      ['Qué pasó', m.falla || ''], [prev ? 'Servicio' : 'Se hizo', m.trabajo || ''], ['Lectura', m.lectura || ''], ['Partes', partes.join(', ')],
+      ['Componentes', Comp.texto(Comp.de(m))], ['Llantas', Llantas.nombres(Llantas.deArreglo(m))],
+      ['Novedad', (m.novedades || []).map(n => n.t).join(' · ')],
+      ['Taller', t ? [t.nombre, t.nit].filter(x => x && x !== '—').join(' · ') : ''], ['Repuestos', r ? [r.nombre, r.nit].filter(x => x && x !== '—').join(' · ') : ''],
+      ['Pago', k ? [Cubre.TIPOS[k].boton, m.cubreNota, m.cubreQuien, k === 'conductor' ? Cubre.conductorTxt(m) : '', +m.cubreValor > 0 ? Money.format(+m.cubreValor) : '']
+        .filter(x => x && x !== '—').join(' · ') : ''],
+      ['Valor', c.valor ? Money.format(c.valor) : '']]
+      .concat(Avances.de(m).map(n => ['Avance ' + Fecha.num(n.f).slice(0, 5), n.t || '']))
+      .concat((m.fotosData || []).filter(x => x.txt).map(x => ['Foto', x.txt]))
+      .concat(Adjuntos.de(m).map(a => ['Documento', a.nombre || '']))
+      .concat(c.esta.map(o => [o.codigo, [o.codigo, Compras.TIPOS[o.tipo] || '', o.proveedor, o.concepto].concat(o.items.map(i => i.descripcion))
+        .filter(Boolean).join(' · '), [o.codigo]]))
+      .filter(x => x[1]).map(x => ({ k: x[0], t: String(x[1]), juntar: (x[2] || []).filter(Boolean) }));
+  },
+  /* Lo mismo en una línea del registro manual */
+  deManual(x) {
+    const u = x.unidad && Q.unidad(x.unidad);
+    return [['Fecha', this.fechaTxt(x.fecha)], ['Vehículo', u ? this.vehiculo(u) : [x.placa, x.placa_excel].filter(Boolean).join(' · '), [u ? UI.placaTxt(u) : x.placa || '']],
+      ['Tipo', [x.tipo, Historico.ETIQUETA].filter(Boolean).join(' · ')], ['Qué se hizo', x.trabajo || ''], ['Falla', x.falla || ''], ['Parte', x.parte || ''],
+      ['Repuestos', x.repuestos || ''], ['Proveedor', Historico.prov(x)], ['Valor', x.valor ? Money.format(x.valor) : ''], ['Factura', x.factura || ''],
+      ['Nota', x.nota || '']]
+      .filter(y => y[1]).map(y => ({ k: y[0], t: String(y[1]), juntar: (y[2] || []).filter(Boolean) }));
+  },
+  /* Las palabras de cada mantenimiento, con cómo suenan y en qué partes salen. Se arman la primera vez que se busca y se vuelven a armar
+     cuando se pinta otra vez la página (llegó algo nuevo) */
+  indice() {
+    if (this._docs) return this._docs;
+    const doc = (campos, base) => {
+      const toks = new Map();
+      campos.forEach((c, k) => {
+        const poner = (w, partes) => {
+          if (!w || (w.length < 2 && !/\d/.test(w))) return;
+          let v = toks.get(w);
+          if (!v) { v = { f: this.suena(w), c: new Set(), partes }; toks.set(w, v); }
+          v.c.add(k);
+        };
+        this.norm(c.t).split(' ').forEach(w => poner(this.pal(w)));
+        c.juntar.forEach(j => { const n = this.norm(j); if (n.includes(' ')) poner(n.replace(/ /g, ''), n.split(' ').map(w => this.pal(w))); });
+      });
+      return Object.assign(base, { campos, toks });
+    };
+    this._docs = Datos.mantenimientos.map(m => doc(this.deArreglo(m), { m, fecha: m.fecha || '' }))
+      .concat(Historico.lista.map(x => doc(this.deManual(x), { x, fecha: x.fecha || '' })));
+    return this._docs;
+  },
+  /* Cada mantenimiento que tiene alguna de las palabras: cuántas tiene (n), qué tanto se parecen y en cuántas partes salen (s), qué palabras suyas coinciden
+     (marcas) y, por cada palabra buscada, en qué partes salió (porQ) */
+  buscar(ts) {
+    const docs = this.indice(), memo = ts.map(() => new Map()), res = [];
+    docs.forEach(d => {
+      let n = 0, s = 0;
+      const marcas = new Set(), porQ = ts.map((q, i) => {
+        let mejor = 0;
+        const campos = new Set(), suyas = new Set();
+        d.toks.forEach((v, w) => {
+          const k = v.partes ? '#' + w : w;
+          let p = memo[i].get(k);
+          if (p === undefined) { p = this.peso(q, w, v.f, Boolean(v.partes)); memo[i].set(k, p); }
+          if (!p) return;
+          if (p > mejor) mejor = p;
+          v.c.forEach(c => campos.add(c));
+          suyas.add(w);
+          (v.partes || []).forEach(x => suyas.add(x));
+        });
+        /* La que sale en más partes (qué pasó, los componentes, los avances, las órdenes…) se parece más que la que solo está en el
+           nombre del taller */
+        if (mejor) { n++; s += mejor + 0.08 * Math.min(campos.size - 1, 5); suyas.forEach(w => marcas.add(w)); }
+        return { campos, suyas };
+      });
+      if (n) res.push({ d, n, s, marcas, porQ });
+    });
+    /* La palabra que sale en casi todos no basta sola, si se buscó otra que no */
+    const comun = ts.map((q, i) => docs.length > 20 && res.filter(x => x.porQ[i].suyas.size).length > docs.length * 0.4);
+    const fuertes = comun.some(c => !c);
+    const lista = res.filter(x => !fuertes || x.porQ.some((p, i) => !comun[i] && p.suyas.size))
+      .sort((a, b) => b.n - a.n || b.s - a.s || b.d.fecha.localeCompare(a.d.fecha));
+    return { lista, todas: lista.filter(x => x.n === ts.length).length };
+  },
+  /* La caja del buscador */
+  caja() {
+    return '<label class="fbusca tb-q" title="Busca en todos los mantenimientos, de todos los meses, y en el ' + attr(Historico.ETIQUETA.toLowerCase()) + '">' +
+      Icon('search', '', 15) + '<input id="tallerQ" type="search" placeholder="Buscar en todos los mantenimientos: placa, volqueta, taller, repuesto, qué pasó…" ' +
+      'autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Buscar en todos los mantenimientos" value="' + attr(UIState.tallerQ || '') + '"></label>';
+  },
+  /* Antes de pintar la pestaña: si se estaba escribiendo en el buscador, y dónde, para seguir ahí mismo (ver poner). Las palabras se
+     vuelven a armar, por si algo cambió */
+  antes() {
+    const a = document.activeElement;
+    this._foco = Boolean(a && a.id === 'tallerQ');
+    this._cursor = this._foco ? a.selectionStart : null;
+    this._docs = null;
+  },
+  /* Después de pintar: se busca mientras se escribe; Esc borra */
+  poner() {
+    const inp = $('#tallerQ');
+    if (!inp) return;
+    inp.addEventListener('input', () => {
+      UIState.tallerQ = inp.value;
+      clearTimeout(this._t);
+      this._t = setTimeout(() => this.pintar(), 150);
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key !== 'Escape' || !inp.value) return;
+      e.preventDefault();
+      inp.value = '';
+      UIState.tallerQ = '';
+      this.pintar();
+    });
+    if (this._foco) {
+      inp.focus();
+      const n = Math.min(this._cursor == null ? inp.value.length : this._cursor, inp.value.length);
+      try { inp.setSelectionRange(n, n); } catch (e) { /* algunos navegadores no lo dejan en type=search */ }
+    }
+    this._foco = false;
+    if (this.activo()) this.pintar();
+  },
+  /* Lo que se encontró, en lugar de las tarjetas, los avisos, los filtros y la tabla de siempre */
+  pintar() {
+    const caja = $('#tallerRes'), normal = $('#tallerNormal');
+    if (!caja || !normal) return;
+    const q = UIState.tallerQ || '', ts = this.consulta(q), busca = ts.length > 0, mes = $('.tb-arriba .tk-mes');
+    normal.classList.toggle('hidden', busca);
+    caja.classList.toggle('hidden', !busca);
+    if (mes) mes.classList.toggle('hidden', busca);
+    if (!busca) { caja.innerHTML = ''; return; }
+    const r = this.buscar(ts), l = r.lista.slice(0, this.MAX), qq = esc(q.trim().replace(/\s+/g, ' '));
+    let parte = false;
+    const filas = l.map((x, i) => {
+      const sep = ts.length > 1 && x.n < ts.length && !parte;
+      if (sep) parte = true;
+      return (sep ? '<tr class="hx-sep"><td colspan="8">' + Icon('search', '', 13) + 'Con <b>algunas</b> de las palabras</td></tr>' : '') +
+        (x.d.m ? TallerFila.html(x.d.m, '') : Historico.filaTaller(x.d.x)).replace('<tr ', '<tr data-b="' + i + '" ');
+    }).join('');
+    caja.innerHTML = '<div class="tb-res-h"><span>' + (r.lista.length ? '<b>' + r.lista.length + '</b> ' + (r.lista.length === 1 ? 'coincide' : 'coinciden') +
+        ' con «' + qq + '»' + (ts.length > 1 ? ' · ' + (r.todas ? r.todas + ' con todas las palabras' : 'ninguno con todas las palabras') : '') +
+        '. Primero los que más se parecen.' : 'Nada coincide con «' + qq + '».') + '</span><span class="link" data-act="tallerQLimpiar">Quitar la búsqueda</span></div>' +
+      '<div class="card">' + (l.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant tbl-busca"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Qué pasó</th>' +
+          '<th>Taller y repuestos</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' + filas + '</tbody></table></div>' +
+          (r.lista.length > l.length ? '<div class="tb-mas">Se ven los ' + l.length + ' que más se parecen. Escriba algo más para encontrar el que busca.</div>' : '')
+        : UI.empty('search', 'Nada coincide', 'Pruebe con otra palabra: la placa, el taller, la parte o lo que pasó.')) + '</div>';
+    $$('tr[data-b]', caja).forEach(tr => { const x = l[+tr.dataset.b]; this.marcar(tr, x.marcas); this.donde(tr, x); });
+  },
+  /* Resalta las palabras que coinciden en lo que se ve de la fila (no en los botones ni en lo que sale al pasar el mouse) */
+  marcar(el, set) {
+    if (!set.size) return;
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), nodos = [], re = /(\d{1,3}(?:[.,]\d{3})+|[0-9A-Za-zÀ-ÖØ-öø-ÿ]+)/;
+    while (w.nextNode()) nodos.push(w.currentNode);
+    nodos.forEach(nd => {
+      if (!nd.nodeValue.trim() || nd.parentElement.closest('button, mark')) return;
+      const partes = nd.nodeValue.split(re);
+      if (!partes.some((p, i) => i % 2 && set.has(this.clave(p)))) return;
+      const fr = document.createDocumentFragment();
+      partes.forEach((p, i) => {
+        if (!p) return;
+        if (i % 2 && set.has(this.clave(p))) { const mk = document.createElement('mark'); mk.textContent = p; fr.appendChild(mk); }
+        else fr.appendChild(document.createTextNode(p));
+      });
+      nd.replaceWith(fr);
+    });
+  },
+  /* Si alguna palabra coincide en algo que no se ve en la fila (un avance, una orden, una foto, el número…), lo que dice, debajo de «Qué
+     pasó» y en lugar de la segunda línea: la parte que más de esas palabras tenga, desde la primera que coincide (la columna es angosta:
+     así se alcanza a ver). Completo, al pasar el mouse */
+  donde(tr, x) {
+    const vistas = new Set($$('mark', tr).map(mk => this.clave(mk.textContent)));
+    const ocultas = x.porQ.map((p, i) => i).filter(i => x.porQ[i].suyas.size && ![...x.porQ[i].suyas].some(w => vistas.has(w)));
+    if (!ocultas.length) return;
+    let mejor = -1, cuantas = 0;
+    x.d.campos.forEach((c, k) => { const n = ocultas.filter(i => x.porQ[i].campos.has(k)).length; if (n > cuantas) { cuantas = n; mejor = k; } });
+    const td = tr.children[3];
+    if (mejor < 0 || !td) return;
+    const c = x.d.campos[mejor], suyas = new Set();
+    ocultas.forEach(i => x.porQ[i].suyas.forEach(w => suyas.add(w)));
+    let ln = td.querySelector('.dias');
+    if (!ln) { ln = document.createElement('div'); td.appendChild(ln); }
+    ln.className = 'dias m-1l m-trab tb-donde';
+    ln.innerHTML = '<b>' + esc(c.k) + ':</b> ' + esc(this.extracto(c.t, suyas));
+    ln.title = c.k + ': ' + c.t;
+    this.marcar(ln, suyas);
+  },
+  extracto(t, suyas) {
+    t = String(t || '').replace(/\s+/g, ' ').trim();
+    const re = /(\d{1,3}(?:[.,]\d{3})+|[0-9A-Za-zÀ-ÖØ-öø-ÿ]+)/g;
+    let m, i = -1;
+    while ((m = re.exec(t))) { if (suyas.has(this.clave(m[1]))) { i = m.index; break; } }
+    return i > 12 ? '…' + t.slice(i) : t;
+  }
+};
+
 Object.assign(Vistas, {
   /* -------------------------------------------------------- Mantenimientos
-     Dos pestañas: por vehículo (cada uno con su plano) y el historial. Con
-     una unidad («mantenimientos/<id>»), el plano de esa unidad. */
+     Cuatro pestañas, en el orden que pidió Juan el 23/11/2026: Taller
+     SINUGRAVAS (la tabla de todos los arreglos, con su buscador), Novedades,
+     Periódicos y Por vehículo (cada uno con su plano). Con una unidad
+     («mantenimientos/<id>»), el plano de esa unidad. */
   mantenimientos(id) {
     if (id) {
       const u = Q.unidad(id);
@@ -13887,7 +14362,8 @@ Object.assign(Vistas, {
     /* «Novedades», con cuántas faltan por atender (Juan, 04/11/2026) */
     Novedades.pedir();
     const nPend = Novedades.listo() ? NovLista.pendientes().length : 0, nPer = Periodicos.faltanTodos();
-    const tabs = '<div class="tabs">' + [['vehiculos', 'Por vehículo', 'truck'], ['novedades', 'Novedades', 'warn'], ['historial', 'Taller SINUGRAVAS', 'tool'], ['periodicos', 'Periódicos', 'calendar']].map(t => '<div class="tab tab-ic' +
+    /* El orden (Juan, 23/11/2026): «taller SINUGRAVAS… de segundo… novedades. De tercero, periódicos. Y de cuarto, por vehículo» */
+    const tabs = '<div class="tabs">' + [['historial', 'Taller SINUGRAVAS', 'tool'], ['novedades', 'Novedades', 'warn'], ['periodicos', 'Periódicos', 'calendar'], ['vehiculos', 'Por vehículo', 'truck']].map(t => '<div class="tab tab-ic' +
       (UIState.mantTab === t[0] ? ' active' : '') + '" data-act="tabMant" data-v="' + t[0] + '">' + Icon(t[2], '', 14) + t[1] +
       (t[0] === 'novedades' && nPend ? '<span class="tb-count">' + nPend + '</span>' : '') +
       /* Los que faltan este periodo, de todos los periódicos (ver Periodicos) */
@@ -13898,6 +14374,9 @@ Object.assign(Vistas, {
     if (UIState.mantTab !== 'historial') return { titulo: 'Mantenimientos', sub: 'Por vehículo, con el plano de cada uno', html: head + tabs + Plano.vistaFlota(),
       despues: () => Plano.buscador() };
     const f = UIState.mant;
+    /* El buscador: si se estaba escribiendo, y si hay algo buscado (ver TallerBusca) */
+    TallerBusca.antes();
+    const busca = TallerBusca.activo();
     /* El día más nuevo arriba y, en un mismo día, primero lo que sigue en el taller, después lo programado y al final lo que ya salió
        (Juan, 10/11/2026: «el que está en el taller me lo deja de último en lugar de ponérmelo de primero»); en cada grupo, la hora de
        entrada (o de la cita) más tarde primero y, si no, el último que se registró */
@@ -13944,10 +14423,13 @@ Object.assign(Vistas, {
       mesesK.push(Fecha.iso(d).slice(0, 7));
     }
     const html = head + tabs +
-      /* El mes de las tarjetas */
-      '<div class="tk-mes"><label for="tkMes">Las tarjetas muestran</label><select class="inp" id="tkMes">' +
+      /* Arriba, el buscador (Juan, 23/11/2026) y el mes de las tarjetas */
+      '<div class="tb-arriba">' + TallerBusca.caja() +
+      '<div class="tk-mes' + (busca ? ' hidden' : '') + '"><label for="tkMes">Las tarjetas muestran</label><select class="inp" id="tkMes">' +
         mesesK.map(k => '<option value="' + k + '"' + (k === mesK ? ' selected' : '') + '>' + esc(Fecha.mes(Fecha.parse(k + '-01'))) + (k === mesHoy ? ' · este mes' : '') + '</option>').join('') +
-      '</select></div>' +
+      '</select></div></div>' +
+      /* Lo de siempre: las tarjetas, los avisos, los filtros y la tabla. Mientras se busca, se esconde */
+      '<div id="tallerNormal"' + (busca ? ' class="hidden"' : '') + '>' +
       '<div class="grid g4 mb16 mant-kpis mant-kpis-h">' +
         UI.kpi({ label: esHoy ? 'Preventivos del mes' : 'Preventivos de ' + mesTxtK, valor: prevK.length + prevX.length, icono: 'tool', color: 'var(--info-500)',
           meta: 'Cambios de aceite y otros servicios' + conManual(prevX.length), act: 'filtroMant', v: 'preventivo' }) +
@@ -13990,72 +14472,14 @@ Object.assign(Vistas, {
         '</div>' : '') +
       '<div class="card">' + (lista.length || xs.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Qué pasó</th><th>Taller y repuestos</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
         /* El camión y su remolque, juntos y unidos por una línea (ver MantRemolque.pares) */
-        (par => par.l.map(m => {
-          const u = Q.unidad(m.unidad), prev = m.tipo === 'preventivo', c = Compras.deArreglo(m);
-          /* Todas las filas del mismo alto (Juan, 04/11/2026): cada dato en uno o
-             dos renglones, y completo al pasar el mouse. El clic en la fila abre
-             el arreglo: «Anotar avance» si sigue en el taller, «Editar» si ya
-             se cerró. La unidad abre su ficha corta (ver Ventanas.vehiculo) */
-          const enTaller = m.estado === 'taller' || m.estado === 'programado', progr = m.estado === 'programado', partes = (m.partes || []).map(x => Plano.nombre(u, x));
-          const novs = (m.novedades || []).map(n => 'Novedad: ' + n.t + ' · ' + (/^m:/.test(n.i) ? 'registrada a mano' : 'preoperacional del ' + Fecha.corta(n.f)));
-          const trab = [m.lectura, partes.join(', '), novs.length === 1 ? 'novedad: ' + m.novedades[0].t : novs.length ? novs.length + ' novedades' : ''].filter(Boolean).join(' · ');
-          /* Con qué entró (Juan, 10/11/2026: «el texto con el que ingresa el vehículo al taller… para uno tener noción viendo las filas»):
-             arriba lo que pasó; debajo, cómo va (en el taller con sus avances, programado o lo que se hizo) con lo demás. El preventivo, su
-             servicio; los de antes, sin «¿Qué pasó?», como siempre */
-          const nAv = (m.notas || []).length, avTxt = nAv ? nAv + (nAv === 1 ? ' avance' : ' avances') : '';
-          const como = !m.falla ? '' : progr ? ['Programado', avTxt].filter(Boolean).join(' · ') : m.estado === 'taller' ? 'En el taller · ' + (avTxt || 'sin avances todavía')
-            : m.trabajo ? 'Se hizo: ' + m.trabajo : ['Reparación', avTxt].filter(Boolean).join(' · ');
-          const que = m.falla || Avances.titulo(m), abajo = [como, trab].filter(Boolean).join(' · ');
-          /* Lo que cuenta (ver Compras): sus órdenes de Facturación cuando ya
-             son gasto; si no, su valor. Debajo, sus órdenes y lo que falta */
-          /* Las órdenes: dos a la vista y «+N»; todas al pasar el cursor (Juan, 08/11/2026: «solamente mostrar dos órdenes ahí») */
-          const cods = c.esta.map(o => o.codigo), estOrd = c.esta.length && !c.deOrden ? ' · ' + ((Compras.ESTADOS[c.esta[0].estado] || [])[1] || 'sin contar todavía').toLowerCase() : '';
-          const demas = [c.ids.length && !c.fiable ? 'Con orden de Facturación' : '',
-            /* Con el taller y los repuestos aparte, cuánto es de cada uno (de sus órdenes o lo escrito) */
-            (v => (v.r && v.t.valor > 0 && v.r.valor > 0 ? 'Taller ' + Money.format(v.t.valor) + ' · repuestos ' + Money.format(v.r.valor) : ''))(TallerRep.valores(m))];
-          const ordenes = [cods.length ? cods.slice(0, 2).join(', ') + (cods.length > 2 ? ' +' + (cods.length - 2) : '') + estOrd : ''].concat(demas).filter(Boolean);
-          const ordenesTodo = [cods.length ? cods.join(', ') + estOrd : ''].concat(demas).filter(Boolean);
-          /* Lo que falta: en la fila, en una palabra y en naranja; completo al pasar el cursor */
-          const falta = Pendiente.de(m);
-          const avisosTodo = [c.ajenas.length ? c.ajenas.map(o => o.codigo).join(', ') + ' ahora es de otro vehículo' : '', c.faltan ? 'La orden ya no está' : '']
-            .concat(falta.map(k => Pendiente.NOMBRE[k])).filter(Boolean);
-          const avisos = [c.ajenas.length ? 'Orden de otro vehículo' : '', c.faltan ? 'Orden borrada' : ''].concat([...new Set(falta.map(k => Pendiente.LADO[k]))]).filter(Boolean);
-          /* El correctivo cerrado también abre el caso, resumido (Juan, 05/11/2026); su «Editar todo» lleva a la vista completa */
-          return '<tr class="row-click' + (par.cls.get(m.id) || '') + '" data-act="' + (enTaller || !prev ? 'anotarAvance' : 'editarMant') + '" data-m="' + attr(m.id) + '" title="' +
-              (enTaller ? 'Clic para ver el caso y anotar lo que se va haciendo' : prev ? 'Clic para ver o corregir el arreglo'
-                : 'Clic para ver el arreglo; «Editar todo» abre la vista completa') + '" data-mid="' + attr(m.id) + '">' +
-            /* Un programado: el día de la cita, cuánto falta y la hora */
-            '<td class="nowrap">' + esc(Fecha.num(m.fecha)) + (progr ? '<div class="dias' + (Programado.vencido(m) ? ' d-warn' : '') + '">' +
-                esc([Programado.falta(m.fecha), Programado.hora(Programado.de(m).h)].filter(Boolean).join(' · ') + (Programado.vencido(m) ? ' · no ha ingresado' : '')) + '</div>'
-              : '<div class="dias">' + esc(Fecha.hace(m.fecha)) + '</div>') + '</td>' +
-            '<td class="m-uni" data-act="verVehiculo" data-u="' + attr(u.id) + '" title="Ver el vehículo, su conductor y su remolque">' +
-              UI.unidadCelda(u, (cd => '<span class="who-c' + (cd ? '' : ' sin') + '">' + Icon('user', '', 11) + esc(cd ? cd.nombre : 'Sin conductor') + '</span>')(Q.conductorDe(u)),
-                MantRemolque.junto(m)) + '</td>' +
-            '<td>' + UI.pill(prev ? 'info' : 'warn', prev ? 'Preventivo' : 'Correctivo') + Periodicos.fila(m) + '</td>' +
-            '<td title="' + attr([m.falla ? 'Qué pasó: ' + m.falla : Avances.titulo(m), como, m.lectura, partes.join(', ')].concat(novs).filter(Boolean).join('\n')) + '">' +
-              '<div class="m-trab m-que">' + esc(que) + '</div>' + (abajo ? '<div class="dias m-1l m-trab">' + esc(abajo) + '</div>' : '') + '</td>' +
-            /* Si el de repuestos es el taller de su OS, «Pasarlo al taller» (ver RepTaller) */
-            '<td>' + (pt => '<div class="m-2l" title="' + attr(UI.provTxt(m) + (pt ? '\n' + RepTaller.txt(pt) : '')) + '">' + Cubre.tallerTxt(m) + '</div>' + Cubre.bajoTaller(m) +
-              (pt ? RepTaller.fila(m, pt) : ''))(RepTaller.de(m)) + '</td>' +
-            '<td class="num"' + (ordenesTodo.length || avisosTodo.length ? ' title="' + attr(ordenesTodo.concat(avisosTodo).join('\n')) + '"' : '') + '>' +
-              /* El que no se paga desde Flota: en gris, en vez del valor (ver Cubre) */
-              (Cubre.de(m) ? Cubre.celda(m, c) : (c.valor ? Money.format(c.valor) : m.oc ? '<span class="txt-3">' + esc(m.oc) + '</span>' : '—') +
-              (ordenes.length ? '<div class="dias m-1l m-val">' + esc(ordenes.join(' · ')) + '</div>' : '')) +
-              (avisos.length ? '<div class="dias d-warn m-1l m-val">' + esc(avisos.join(' · ')) + '</div>' : '') + '</td>' +
-            '<td><div class="m-pila"><div class="flex aic g6">' + UI.clip(m, 12) +
-              (m.fotos ? '<span class="chip" title="Fotos del taller">' + Icon('image', '', 12) + m.fotos + '</span>' : '') + '</div>' +
-              '<button class="btn btn-sm" data-act="' + (prev ? 'pdfPreventivo' : 'pdfCorrectivo') + '" data-m="' + attr(m.id) + '" title="' +
-                (prev ? 'El PDF del preventivo' : 'El PDF del arreglo, con sus fotos') + '">' + Icon('pdf', '', 12) + 'Ver PDF</button></div></td>' +
-            '<td><div class="m-pila">' + (progr ? UI.pill('violet', 'Programado') +
-              '<button class="btn btn-sm" data-act="ingresoArreglo" data-m="' + attr(m.id) + '" title="El vehículo llegó al taller">' + Icon('check', '', 12) + 'Ingresó</button>'
-              : enTaller ? (m.espera ? UI.pill('warn', 'Esperando repuestos') : UI.pill('bad', 'En taller')) +
-              '<button class="btn btn-sm" data-act="terminarArreglo" data-m="' + attr(m.id) + '" title="La unidad salió del taller">' + Icon('check', '', 12) + 'Terminar</button>'
-              /* Cerrado, sin «Editar»: la fila lo abre (Juan, 05/11/2026: «está de más») */
-              : UI.pill('nr', 'Cerrado')) + '</div></td></tr>';
-        }).join(''))(MantRemolque.pares(lista)) + Historico.filasTaller(xs) + '</tbody></table></div>' : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.')) + '</div>';
+        (par => par.l.map(m => TallerFila.html(m, par.cls.get(m.id) || '')).join(''))(MantRemolque.pares(lista)) + Historico.filasTaller(xs) +
+          '</tbody></table></div>' : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.')) + '</div>' +
+      /* Mientras se busca, lo de arriba se esconde y aquí sale lo que se encontró (ver TallerBusca) */
+      '</div><div id="tallerRes"' + (busca ? '' : ' class="hidden"') + '></div>';
     return { titulo: 'Mantenimientos', sub: 'Preventivos y correctivos', html,
       /* Desde «Abiertas» de Novedades: el caso, resaltado un momento (ver Acciones.irCaso) */
       despues: () => {
+        TallerBusca.poner();
         const sm = $('#tkMes');
         if (sm) sm.addEventListener('change', () => { UIState.tallerMes = sm.value === hoyISO.slice(0, 7) ? '' : sm.value; Router.pintar(true); });
         const id = UIState.resaltar, tr = id && $('.tbl-mant tr[data-mid="' + id + '"]');
@@ -15846,26 +16270,27 @@ Object.assign(Ventanas, {
   /* Eliminar un mantenimiento (Juan, 05/11/2026: «a veces hago muchas pruebas y
      necesito eliminar ciertas filas que no son reales»): el botón va en el
      caso y en «Editar», no en la tabla; se confirma diciendo qué se borra y
-     qué no (ver Borrar.mantenimiento) */
+     qué no (ver Borrar.mantenimiento). Si tiene órdenes de Facturación, el
+     recuadro con ellas y la casilla para anularlas allá (ver EliminarOrdenes) */
   botonEliminar: r => '<button class="btn c-del" data-act="eliminarMant" data-m="' + attr(r.id) + '" title="Eliminarlo, por ejemplo si era una prueba">' +
     Icon('trash', '', 14) + 'Eliminar</button>',
   eliminarMant(r) {
-    const u = Q.unidad(r.unidad), prev = r.tipo === 'preventivo', c = Compras.deArreglo(r), aceite = u && prev ? EditarPreventivo.cambio(u, r) : null;
+    const u = Q.unidad(r.unidad), prev = r.tipo === 'preventivo', aceite = u && prev ? EditarPreventivo.cambio(u, r) : null;
     const n = (k, uno, varios) => (k ? k + ' ' + (k === 1 ? uno : varios) : '');
     const con = [n((r.notas || []).length, 'avance', 'avances'), n((r.fotosData || []).length, 'foto', 'fotos'), n(Adjuntos.de(r).length, 'adjunto', 'adjuntos')].filter(Boolean);
     const y = l => (l.length > 1 ? l.slice(0, -1).join(', ') + ' y ' + l[l.length - 1] : l[0] || '');
-    const pasa = [(r.ordenes || []).length ? 'Sus órdenes de Facturación' + (c.esta.length ? ' (' + esc(c.esta.map(o => o.codigo).join(', ')) + ')' : '') +
-        ' no se borran: quedan libres para otro mantenimiento.' : '',
-      (r.novedades || []).length ? (r.novedades.length === 1 ? 'La novedad que atendía vuelve' : 'Las ' + r.novedades.length + ' novedades que atendía vuelven') + ' a «Sin atender».' : '',
+    /* Las órdenes de Facturación van aparte, en su recuadro (ver EliminarOrdenes) */
+    const pasa = [(r.novedades || []).length ? (r.novedades.length === 1 ? 'La novedad que atendía vuelve' : 'Las ' + r.novedades.length + ' novedades que atendía vuelven') + ' a «Sin atender».' : '',
       aceite ? 'Era un cambio de aceite: el último cambio de ' + esc(UI.placaTxt(u)) + ' vuelve a ser el anterior.' : ''].filter(Boolean);
-    Modal.abrir({
+    const m = Modal.abrir({
       titulo: prev ? 'Eliminar este preventivo' : 'Eliminar este arreglo', sinFoco: true,
       sub: esc([r.numero, u ? UI.placaTxt(u) : '', 'del ' + Fecha.num(r.fecha)].filter(Boolean).join(' · ')),
       cuerpo: '<p class="el-p">Se borra' + (con.length ? ' junto con ' + esc(y(con)) : '') + '. <b>No se puede deshacer.</b></p>' +
-        (pasa.length ? '<ul class="el-l">' + pasa.map(x => '<li>' + x + '</li>').join('') + '</ul>' : '') + MantRemolque.eliminarTambien(r),
+        (pasa.length ? '<ul class="el-l">' + pasa.map(x => '<li>' + x + '</li>').join('') + '</ul>' : '') + MantRemolque.eliminarTambien(r) + '<div id="elOc"></div>',
       pie: '<button class="btn" data-act="cerrarModal">Cancelar</button><button class="btn btn-danger" data-act="confirmarEliminarMant" data-m="' + attr(r.id) + '">' +
         Icon('trash', '', 14) + 'Eliminar</button>'
     });
+    EliminarOrdenes.poner(m, r);
   },
 
   /* Un proveedor o taller que no está (Juan, 03/11/2026): queda en la lista de
@@ -16576,11 +17001,21 @@ Object.assign(Acciones, {
   filtroMant(el) {
     UIState.mant = el.dataset.v;
     UIState.mantTab = 'historial';
+    UIState.tallerQ = '';
     const r = Router.actual();
     if (r.vista === 'mantenimientos' && !r.id) Router.pintar(true); else Router.ir('mantenimientos');
   },
   /* Mantenimientos por vehículo y el plano de cada unidad */
   tabMant(el) { UIState.mantTab = el.dataset.v; Router.pintar(true); },
+  /* «Quitar la búsqueda» de Taller SINUGRAVAS (ver TallerBusca) */
+  tallerQLimpiar() {
+    UIState.tallerQ = '';
+    const i = $('#tallerQ');
+    if (!i) return;
+    i.value = '';
+    TallerBusca.pintar();
+    i.focus();
+  },
   mantTipo(el) { UIState.mantTipo = el.dataset.v; Router.pintar(true); },
   planoParte(el) {
     const st = UIState.plano, p = el.dataset.p;
@@ -16633,7 +17068,7 @@ Object.assign(Acciones, {
   irCaso(el) {
     const m = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     if (!m) return;
-    Object.assign(UIState, { mantTab: 'historial', mant: m.estado === 'taller' ? 'taller' : m.estado === 'programado' ? 'programado' : 'todos', resaltar: m.id });
+    Object.assign(UIState, { mantTab: 'historial', mant: m.estado === 'taller' ? 'taller' : m.estado === 'programado' ? 'programado' : 'todos', resaltar: m.id, tallerQ: '' });
     Router.pintar(true);
   },
   filtroNov(el) { UIState.novF = el.dataset.v; Router.pintar(true); },
@@ -17087,17 +17522,44 @@ Object.assign(Acciones, {
   },
   /* Eliminar un mantenimiento (ver Ventanas.eliminarMant y Borrar.mantenimiento) */
   eliminarMant(el) { const r = Datos.mantenimientos.find(x => x.id === el.dataset.m); if (r) Ventanas.eliminarMant(r); },
-  confirmarEliminarMant(el) {
-    const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
+  async confirmarEliminarMant(el) {
+    const bd = el.closest('.modal-bd'), r = Datos.mantenimientos.find(x => x.id === el.dataset.m), u = r && Q.unidad(r.unidad);
     if (!r) { Modal.cerrarTodo(); return; }
+    if (bd && bd._eliminando) return;
     /* Con «Eliminar también …» marcado, se va también el otro ingreso (ver MantRemolque) */
-    const tb = $('#elTambien', el.closest('.modal-bd')), o = tb && tb.checked ? MantRemolque.otro(r) : null, ou = o && Q.unidad(o.unidad);
+    const tb = bd && $('#elTambien', bd), o = tb && tb.checked ? MantRemolque.otro(r) : null, ou = o && Q.unidad(o.unidad);
+    /* Primero se anulan en Facturación las órdenes que esperan cotización, si la casilla está marcada (ver EliminarOrdenes). Si no se
+       puede, no se elimina nada y se dice por qué: así no queda el arreglo borrado con sus órdenes vivas, ni al revés */
+    const an = bd && $('#elAnular', bd), anular = an && an.checked ? EliminarOrdenes.de(o ? [r, o] : [r]).filter(x => EliminarOrdenes.anulable(x.o)) : [];
+    let anuladas = [];
+    if (anular.length) {
+      bd._eliminando = true;
+      const antes = el.innerHTML, cerrar = $$('[data-act="cerrarModal"]', bd);
+      el.disabled = true;
+      el.textContent = 'Anulando en Facturación…';
+      cerrar.forEach(b => { b.disabled = true; });
+      $('#elOcErr', bd).innerHTML = '';
+      try { anuladas = await EliminarOrdenes.anular(anular); } catch (e) {
+        bd._eliminando = false;
+        el.disabled = false;
+        el.innerHTML = antes;
+        cerrar.forEach(b => { b.disabled = false; });
+        $('#elOcErr', bd).innerHTML = '<div class="alert a-err mt12">' + Icon('warn') + '<div>' + EliminarOrdenes.error(e) + ' <b>No se eliminó nada.</b> ' +
+          'Si quiere eliminarlo de todos modos, desmarque «Anular también en Facturación»: ' + (anular.length === 1 ? 'la orden se queda allá como está.' : 'las órdenes se quedan allá como están.') +
+          '</div></div>';
+        return;
+      }
+      /* La lista de Facturación, ya sin las anuladas */
+      Compras.traer(true).then(c => { if (c && Sincro.seguro()) Router.pintar(true); }).catch(() => {});
+    }
     if (o) Borrar.mantenimiento(o.id);
     Borrar.mantenimiento(r.id);
     Modal.cerrarTodo();
     Toast.show('Se eliminó ' + (r.tipo === 'preventivo' ? 'el preventivo' : 'el arreglo') + (r.numero ? ' <b>' + esc(r.numero) + '</b>' : '') +
       (u ? ' de <b>' + esc(UI.placaTxt(u)) + '</b>' : '') + ' del ' + esc(Fecha.num(r.fecha)) + '.' +
-      (ou ? ' También el de <b>' + esc(UI.placaTxt(ou)) + '</b>' + (o.numero ? ' (' + esc(o.numero) + ')' : '') + '.' : ''));
+      (ou ? ' También el de <b>' + esc(UI.placaTxt(ou)) + '</b>' + (o.numero ? ' (' + esc(o.numero) + ')' : '') + '.' : '') +
+      (anuladas.length ? '<br>En Facturación ' + (anuladas.length === 1 ? 'quedó anulada la ' : 'quedaron anuladas ') +
+        EliminarOrdenes.y(anuladas.map(c => (anuladas.length > 1 ? 'la ' : '') + '<b>' + esc(c) + '</b>')) + '.' : ''));
     Router.pintar(true);
   },
   /* Corregir un mantenimiento ya guardado: el mismo formulario de su tipo (ver EditarArreglo y EditarPreventivo) */
@@ -26910,6 +27372,8 @@ document.addEventListener('click', e => {
   if (ir) {
     e.preventDefault();
     Modal.cerrarTodo();
+    /* «Mantenimientos» del menú abre siempre en Taller SINUGRAVAS, sin lo que se haya buscado (Juan, 23/11/2026) */
+    if (ir.dataset.ir === 'mantenimientos' && ir.classList.contains('sb-item')) Object.assign(UIState, { mantTab: 'historial', tallerQ: '' });
     Router.ir(ir.dataset.ir);
     return;
   }
