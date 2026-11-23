@@ -2365,10 +2365,11 @@ span.chip-adj{color:var(--text-3)}
 .cb-form .cs-pago{margin-top:8px}
 .cb-form .zchip.on{background:var(--brand-50);border-color:var(--brand-400);color:var(--brand-700);font-weight:600}
 html[data-theme="dark"] .cb-form .zchip.on{background:var(--accent-soft);color:var(--brand-300)}
-.cb-tarjeta #mcTB,.cb-tarjeta #mcRC,.cb-tarjeta #mcTot,.cb-tarjeta #mcTh,.cb-garantia #mcRC,.cb-garantia #mcTot,.cb-garantia #mcTh,
-.cb-garantia #mcMismo,.cb-garantia #mcTB .tr-vf,.cb-garantia #mcTB .tr-of{display:none}
+.cb-tarjeta #mcRC,.cb-tarjeta #mcTot,.cb-tarjeta #mcTh,.cb-tarjeta #mcMismo,.cb-tarjeta #mcTB .tr-vf,.cb-tarjeta #mcTB .tr-of,
+.cb-garantia #mcRC,.cb-garantia #mcTot,.cb-garantia #mcTh,.cb-garantia #mcMismo,.cb-garantia #mcTB .tr-vf,.cb-garantia #mcTB .tr-of{display:none}
 /* Lo pagó el conductor (22/11/2026; ver Cubre): quién, cuánto y si ya se le devolvió */
 .cs-pago .cs-dos{display:grid;grid-template-columns:minmax(0,1fr) 130px;gap:8px}
+.cs-pago .cs-dos.cs-uno{grid-template-columns:minmax(0,200px)}
 .cs-pago .cs-g{display:flex;justify-content:flex-end;margin-top:8px}
 .cs-pago .cs-solo{max-width:200px}
 .cs-dev{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
@@ -10322,9 +10323,11 @@ const Pendiente = {
    (Juan, 22/11/2026), en r.cubreValor, pero es solo informativo. «Otro» (Juan, 23/11/2026) es para lo que no sea ninguno de los
    tres: como la tarjeta, y además qué pasó con el pago, escrito (r.cubreNota). Lo que se anota es solo informativo: esos pagos los llevan en otro Excel que después se suma a los gastos
    de los vehículos, así que aquí no suma en ningún gasto. Se marca en el caso (Ventanas.caso: al tocar el botón se abre una ventanita
-   para el valor) y en «Editar todo» (Ventanas.correctivo) */
+   para el valor) y en «Editar todo» (Ventanas.correctivo). El taller se queda al marcar cualquiera (Juan, 23/11/2026: «puede que el
+   taller sí yo lo tenga guardado… pero en la modalidad de pago fue que el mecánico vino hacia acá»): el taller dice quién lo arregló
+   y el botón, cómo se pagó */
 const Cubre = {
-  /* quien: sin taller; en su lugar, quién lo arregló (escrito, si quiere) */
+  /* quien: pregunta quién lo arregló (escrito, si quiere), si el arreglo no tiene taller (ver pideQuien) */
   TIPOS: {
     tarjeta: { boton: 'Lo pagó la tarjeta', corto: 'Tarjeta', icono: 'tarjeta', linea: 'lo lleva Contabilidad', quien: true,
       txt: 'Lo lleva Contabilidad. El valor que se anote aquí es solo informativo: no suma en ningún gasto. No se pide taller ni orden.' },
@@ -10341,8 +10344,10 @@ const Cubre = {
   VALOR_FORM: { tarjeta: '#mcCbTv', garantia: '#mcCbGv', conductor: '#mcCbCv', otro: '#mcCbOv' },
   /* 'tarjeta', 'garantia', 'conductor', 'otro' o '' (un preventivo no la lleva) */
   de: m => (m && m.tipo !== 'preventivo' && Cubre.TIPOS[m.cubre] ? m.cubre : ''),
-  /* La tarjeta, el conductor y «Otro»: sin taller */
-  sinTaller: k => Boolean(k && Cubre.TIPOS[k] && Cubre.TIPOS[k].quien),
+  /* La tarjeta, el conductor y «Otro»: preguntan quién lo arregló (cb-tarjeta en «Editar todo») */
+  conQuien: k => Boolean(k && Cubre.TIPOS[k] && Cubre.TIPOS[k].quien),
+  /* En un arreglo: si tiene taller, no se pregunta (el taller lo dice), salvo que ya se hubiera escrito */
+  pideQuien(r, k) { return this.conQuien(k) && (!Q.provDe(r) || Boolean(r.cubreQuien)); },
   titulo(k) { return this.TIPOS[k].titulo || this.TIPOS[k].boton; },
   lista: l => (l.length > 1 ? l.slice(0, -1).join(', ') + ' y ' + l[l.length - 1] : l[0] || ''),
   /* El arreglo de la garantía */
@@ -10392,8 +10397,8 @@ const Cubre = {
     return this.chip(m, 11) + '<div class="dias m-1l m-val' + (this.porDevolver(m) ? ' d-warn' : '') + '">' + esc(this.linea(m)) + '</div>' +
       (c.esta.length ? '<div class="dias d-warn m-1l m-val">Tiene ' + esc(c.esta.map(o => o.codigo).join(', ')) + '</div>' : '');
   },
-  /* La columna del taller: con la tarjeta o el conductor y sin taller, quién lo arregló, si se escribió */
-  sinRegistrar(m) { return this.sinTaller(this.de(m)) && Boolean(m.cubreQuien) && UI.provTxt(m) === '—'; },
+  /* La columna del taller: el taller o, con la tarjeta, el conductor u «Otro» y sin taller, quién lo arregló, si se escribió */
+  sinRegistrar(m) { return this.conQuien(this.de(m)) && Boolean(m.cubreQuien) && UI.provTxt(m) === '—'; },
   tallerTxt(m) { return esc(this.sinRegistrar(m) ? m.cubreQuien : UI.provTxt(m)); },
   bajoTaller(m) { return this.sinRegistrar(m) ? '<div class="dias m-1l">sin registrar</div>' : ''; },
   /* En el caso, debajo del taller */
@@ -10418,10 +10423,11 @@ const Cubre = {
         ', y su valor cuenta en el gasto. Si sí lleva orden, toque «Quitar».</div></div>' : '') +
       '<span class="link fs12" data-act="casoCubreQuitar" data-m="' + id + '">Quitar: sí lleva orden</span></div>';
   },
-  /* En el caso, marcado: cuánto se pagó (solo informativo) y, con la tarjeta o el conductor, quién lo arregló, con un solo Guardar
-     apagado sin cambios. Con el conductor, además, quién pagó (al marcarlo, el del vehículo) y, abajo, si ya se le devolvió */
+  /* En el caso, marcado: cuánto se pagó (solo informativo) y, con la tarjeta, el conductor u «Otro» y sin taller, quién lo arregló,
+     con un solo Guardar apagado sin cambios. Con el conductor, además, quién pagó (al marcarlo, el del vehículo) y, abajo, si ya se le
+     devolvió */
   casoCampos(r, k) {
-    const id = attr(r.id), con = k === 'conductor', q = this.sinTaller(k);
+    const id = attr(r.id), con = k === 'conductor', q = this.pideQuien(r, k);
     const valor = '<div class="field' + (con || q ? '' : ' cs-solo') + '"><label for="csCv">' + this.VALOR[k] + '</label><input class="inp" id="csCv" inputmode="numeric" ' +
       'autocomplete="off" placeholder="' + (k === 'garantia' ? 'Si no se pagó, vacío' : 'Ej.: 35.000') + '" value="' + attr(Money.campo(+r.cubreValor > 0 ? r.cubreValor : null)) + '"></div>';
     const quien = '<div class="field"><label for="csCq">¿Quién lo arregló? <span class="txt-3">(si quiere)</span></label>' +
@@ -10429,7 +10435,7 @@ const Cubre = {
     const nota = k !== 'otro' ? '' : '<div class="field"><label for="csCn">¿Qué pasó con el pago?</label><input class="inp" id="csCn" maxlength="200" placeholder="' +
       'Ej.: el mecánico vino por el dinero a la oficina" value="' + attr(r.cubreNota || '') + '"></div>';
     return nota + (con ? '<div class="cs-dos"><div class="field"><label for="csCc">¿Qué conductor?</label><select class="inp" id="csCc">' + this.conductores(r.cubreConductor || '') +
-        '</select></div>' + valor + '</div>' + quien : q ? '<div class="cs-dos">' + quien + valor + '</div>' : valor) +
+        '</select></div>' + valor + '</div>' + (q ? quien : '') : q ? '<div class="cs-dos">' + quien + valor + '</div>' : valor) +
       '<div class="cs-g"><button type="button" class="btn btn-sm" data-act="casoCubreCond" data-m="' + id + '" disabled>' + Icon('save', '', 13) + 'Guardar</button></div>' +
       (con ? this.casoDevolucion(r) : '');
   },
@@ -10441,17 +10447,18 @@ const Cubre = {
         : '<span class="chip chip-falta">' + Icon('clock', '', 11) + 'Por devolver</span>' +
           '<button type="button" class="btn btn-sm" data-act="casoCubreDevuelto" data-m="' + id + '">' + Icon('check', '', 13) + 'Ya se le devolvió</button>') + '</div>';
   },
-  /* La ventanita al tocar uno de los tres (Juan, 22/11/2026): cuánto se pagó, solo informativo, y lo de cada uno. Si el arreglo tenía
-     algo que con la marca no va, se avisa ahí mismo que se quita */
+  /* La ventanita al tocar uno de los botones (Juan, 22/11/2026): cuánto se pagó, solo informativo, y lo de cada uno. Si el arreglo
+     tiene taller, dice que se queda (Juan, 23/11/2026); si tenía algo que con la marca no va, avisa ahí mismo que se quita */
   ventana(r, k, quita) {
-    const con = k === 'conductor';
+    const con = k === 'conductor', t = Q.provDe(r);
     return '<p class="txt-2" style="font-size:13px;line-height:1.5;margin:0 0 12px">' + esc(this.TIPOS[k].txt) + '</p>' +
+      (t ? '<p class="txt-2 cb-queda" style="font-size:13px;line-height:1.5;margin:-4px 0 12px">El taller <b>' + esc(t.nombre) + '</b> se queda en el arreglo.</p>' : '') +
       (k === 'otro' ? '<div class="field"><label for="cbVn">¿Qué pasó con el pago?</label><input class="inp" id="cbVn" maxlength="200" placeholder="' +
         'Ej.: el mecánico vino por el dinero a la oficina" value="' + attr(r.cubreNota || '') + '"></div>' : '') +
       (con ? '<div class="field"><label for="cbVc">¿Qué conductor?</label><select class="inp" id="cbVc">' + this.conductores(r.cubreConductor || this.delVehiculo(r)) + '</select></div>' : '') +
       '<div class="field"><label for="cbVv">' + this.VALOR[k] + '</label><input class="inp" id="cbVv" inputmode="numeric" autocomplete="off" placeholder="' +
         (k === 'garantia' ? 'Si no se pagó nada, déjelo vacío' : 'Ej.: 35.000') + '" value="' + attr(Money.campo(+r.cubreValor > 0 ? r.cubreValor : null)) + '"></div>' +
-      (this.sinTaller(k) ? '<div class="field"><label for="cbVq">¿Quién lo arregló? <span class="txt-3">(si quiere)</span></label>' +
+      (this.pideQuien(r, k) ? '<div class="field"><label for="cbVq">¿Quién lo arregló? <span class="txt-3">(si quiere)</span></label>' +
         '<input class="inp" id="cbVq" maxlength="120" placeholder="Ej.: un mecánico de la zona" value="' + attr(r.cubreQuien || '') + '"></div>' : '') +
       (quita.length ? '<div class="alert a-warn mb0">' + Icon('warn') + '<div>Este arreglo tiene ' + esc(this.lista(quita)) + '. Con «' + esc(this.TIPOS[k].boton) +
         '» no van aquí, para no contarlos dos veces: se quitan.</div></div>' : '');
@@ -10500,21 +10507,20 @@ const Cubre = {
     return this.mismoTaller(o, r) ? '<div class="txt-3 fs12 mt8">La cubre <b>' + esc(t.nombre) + '</b>, el taller de ese arreglo.</div>'
       : '<div class="txt-3 fs12 mt8">Ese arreglo lo hizo <b>' + esc(t.nombre) + '</b>. <span class="link" data-act="casoGarantiaTaller" data-m="' + attr(r.id) + '">Ponerlo de taller</span></div>';
   },
-  /* Lo que tiene y se quita al marcarlo, para no contarlo dos veces */
-  habia(r, k) {
-    const t = Q.provDe(r), rep = r.repMismo ? null : Q.repDe(r), v = TallerRep.valores(r).total, os = Compras.deArreglo(r).esta;
-    return [this.sinTaller(k) && t ? 'el taller ' + t.nombre : '', rep ? 'los repuestos de ' + rep.nombre : '', v > 0 ? 'el valor de ' + Money.format(v) : '',
-      os.length ? os.map(o => o.codigo).join(', ') : ''].filter(Boolean);
+  /* Lo que tiene y se quita al marcarlo, para no contarlo dos veces. El taller se queda (Juan, 23/11/2026) */
+  habia(r) {
+    const rep = r.repMismo ? null : Q.repDe(r), v = TallerRep.valores(r).total, os = Compras.deArreglo(r).esta;
+    return [rep ? 'los repuestos de ' + rep.nombre : '', v > 0 ? 'el valor de ' + Money.format(v) : '', os.length ? os.map(o => o.codigo).join(', ') : '']
+      .filter(Boolean);
   },
-  limpiar(r, k) {
-    if (this.sinTaller(k)) ProvFact.poner(r, null);
+  limpiar(r) {
     ProvFact.ponerRep(r, null, false);
     ['valor', 'valorTaller', 'valorRep', 'aMano'].forEach(x => { delete r[x]; });
     Compras.ponerOrdenes(r, []);
   },
   marcar(r, k) {
     r.cubre = k;
-    if (!this.sinTaller(k)) delete r.cubreQuien;
+    if (!this.conQuien(k)) delete r.cubreQuien;
     if (k !== 'garantia') delete r.garantiaDe;
     if (k !== 'otro') delete r.cubreNota;
     if (k !== 'conductor') this.sinConductor(r);
@@ -10555,7 +10561,7 @@ const Cubre = {
     return [['Pago', v ? 'Garantía' : 'Garantía: sin costo'], ['Garantía de', o ? (o.numero || 'Otro arreglo') + ' del ' + Fecha.num(o.fecha) : 'Sin escoger']]
       .concat(v ? [['Se pagó', v]] : []);
   },
-  quienPdf(d) { return this.sinTaller(this.de(d)) && d.cubreQuien ? d.cubreQuien + ' (sin registrar)' : '—'; },
+  quienPdf(d) { return this.conQuien(this.de(d)) && d.cubreQuien ? d.cubreQuien + ' (sin registrar)' : '—'; },
   excel(m) {
     const k = this.de(m), o = k === 'garantia' && this.origen(m);
     return k === 'tarjeta' ? 'Lo pagó la tarjeta: el valor lo lleva Contabilidad' + this.valorTxt(m) + (m.cubreQuien ? ' · Lo arregló: ' + m.cubreQuien : '')
@@ -10569,8 +10575,9 @@ const Cubre = {
     return '<div class="cs-pago mb12"><div class="cs-pago-t">' + Icon(this.TIPOS[k].icono, '', 14) + esc(this.titulo(k)) + '</div><div class="txt-3 fs12">' +
       esc(this.TIPOS[k].txt) + ' Se cambia en el caso o en «Editar todo».</div></div>';
   },
-  /* «Editar todo» (Ventanas.correctivo): los tres botones encima del taller; con uno, lo que no va se esconde (cb-tarjeta: sin taller,
-     con la tarjeta o el conductor; cb-garantia) */
+  /* «Editar todo» (Ventanas.correctivo): los botones encima del taller; con uno, lo que no va se esconde: el valor, la OS y los
+     repuestos (cb-garantia; cb-tarjeta, con la tarjeta, el conductor u «Otro», que además preguntan quién lo arregló). El taller se ve
+     y se queda (Juan, 23/11/2026) */
   form() {
     const b = k => '<button type="button" class="zchip" data-cb="' + k + '" aria-pressed="false">' + Icon(this.TIPOS[k].icono, '', 13) + esc(this.TIPOS[k].boton) + '</button>';
     const caja = (k, id, mas) => '<div class="cs-pago hidden" id="' + id + '"><div class="cs-pago-t">' + Icon(this.TIPOS[k].icono, '', 14) + esc(this.titulo(k)) + '</div>' +
@@ -10632,7 +10639,7 @@ const Cubre = {
     $('#mcCbG', m).classList.toggle('hidden', k !== 'garantia');
     $('#mcCbC', m).classList.toggle('hidden', k !== 'conductor');
     $('#mcCbO', m).classList.toggle('hidden', k !== 'otro');
-    m.classList.toggle('cb-tarjeta', this.sinTaller(k));
+    m.classList.toggle('cb-tarjeta', this.conQuien(k));
     m.classList.toggle('cb-garantia', k === 'garantia');
     if (k === 'garantia') this.opcionesForm(m);
     if (k === 'conductor') this.conductoresForm(m);
@@ -10661,21 +10668,26 @@ const Cubre = {
   avisoForm(m) {
     const a = $('#mcCbA', m), k = m._cubre || '';
     const r0 = m._editar ? Datos.mantenimientos.find(x => x.id === m._editar) : null, tr = k ? TallerRep.leer(m, 'mc', r0) : null;
-    const quita = !k ? [] : [this.sinTaller(k) && tr.prov ? 'el taller ' + tr.prov.nombre : '', tr.rep ? 'los repuestos de ' + tr.rep.nombre : '',
-      tr.valor > 0 ? 'el valor de ' + Money.format(tr.valor) : '',
+    const quita = !k ? [] : [tr.rep ? 'los repuestos de ' + tr.rep.nombre : '', tr.valor > 0 ? 'el valor de ' + Money.format(tr.valor) : '',
       tr.ordenes.length ? (tr.ordenes.length === 1 ? 'la orden marcada' : 'las ' + tr.ordenes.length + ' órdenes marcadas') : ''].filter(Boolean);
+    /* Con taller, «¿Quién lo arregló?» no se pregunta, salvo que ya tenga algo escrito (ver pideQuien) */
+    ['#mcCbQ', '#mcCbCq', '#mcCbOq'].forEach(s => {
+      const x = $(s, m), f = x.closest('.field'), no = Boolean(tr && tr.prov) && !x.value.trim();
+      f.classList.toggle('hidden', no);
+      if (f.parentElement.classList.contains('cs-dos')) f.parentElement.classList.toggle('cs-uno', no);
+    });
     a.classList.toggle('hidden', !quita.length);
     a.innerHTML = quita.length ? Icon('warn') + '<div>Al guardar se ' + (quita.length > 1 ? 'quitan ' : 'quita ') + esc(this.lista(quita)) + ': con «' +
       esc(this.TIPOS[k].boton) + '» no van aquí, para no contarlos dos veces.</div>' : '';
   },
-  /* Lo que lee «Editar todo» (ver Leer.correctivo): con la marca, sin órdenes, valor ni repuestos; con la tarjeta, sin taller */
+  /* Lo que lee «Editar todo» (ver Leer.correctivo): con la marca, sin órdenes, valor ni repuestos; el taller se queda (Juan, 23/11/2026) */
   leer(m, tr) {
     const k = m._cubre || '';
-    return !k ? tr : Object.assign({}, tr, { prov: this.sinTaller(k) ? null : tr.prov, rep: null, repMismo: false, valorTaller: 0, valorRep: 0, valor: 0, aMano: null, ordenes: [] });
+    return !k ? tr : Object.assign({}, tr, { rep: null, repMismo: false, valorTaller: 0, valorRep: 0, valor: 0, aMano: null, ordenes: [] });
   },
   datosForm(m) {
     const k = m._cubre || '', con = k === 'conductor', q = $(con ? '#mcCbCq' : k === 'otro' ? '#mcCbOq' : '#mcCbQ', m), s = $('#mcCbD', m), dev = con && $('#mcCbCd', m).checked;
-    return { cubre: k, cubreQuien: this.sinTaller(k) && q ? q.value.trim().replace(/\s+/g, ' ') : '', garantiaDe: k === 'garantia' && s ? s.value || '' : '',
+    return { cubre: k, cubreQuien: this.conQuien(k) && q ? q.value.trim().replace(/\s+/g, ' ') : '', garantiaDe: k === 'garantia' && s ? s.value || '' : '',
       cubreConductor: con ? $('#mcCbCc', m).value || '' : '', cubreValor: k ? Money.leer($(this.VALOR_FORM[k], m).value) || 0 : 0,
       cubreDevuelto: dev ? $('#mcCbCf', m).value || hoyISO : '', cubreNota: k === 'otro' ? $('#mcCbOn', m).value.trim().replace(/\s+/g, ' ') : '' };
   },
@@ -10684,7 +10696,7 @@ const Cubre = {
     const k = this.TIPOS[d.cubre] ? d.cubre : '';
     if (!k) { this.quitar(r); return; }
     r.cubre = k;
-    if (this.sinTaller(k) && d.cubreQuien) r.cubreQuien = d.cubreQuien; else delete r.cubreQuien;
+    if (this.conQuien(k) && d.cubreQuien) r.cubreQuien = d.cubreQuien; else delete r.cubreQuien;
     if (k === 'garantia' && d.garantiaDe) r.garantiaDe = d.garantiaDe; else delete r.garantiaDe;
     if (k === 'otro' && d.cubreNota) r.cubreNota = d.cubreNota; else delete r.cubreNota;
     if (d.cubreValor > 0) r.cubreValor = d.cubreValor; else delete r.cubreValor;
@@ -16924,7 +16936,7 @@ Object.assign(Acciones, {
     Router.pintar(true);
   },
   /* El arreglo que no se paga desde Flota (ver Cubre), desde el caso: la ventanita para anotar cuánto se pagó (Juan, 22/11/2026). Si
-     tiene algo que con la marca no va (el valor, los repuestos o, con la tarjeta o el conductor, el taller), ahí mismo dice que se quita */
+     tiene algo que con la marca no va (el valor, los repuestos o las órdenes), ahí mismo dice que se quita; el taller se queda */
   casoCubre(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), k = el.dataset.k;
     if (!r || !Cubre.TIPOS[k]) return;
@@ -16943,7 +16955,7 @@ Object.assign(Acciones, {
     const quita = Cubre.habia(r, k), aqui = el.closest('.modal-bd'), d = aqui && !aqui._pintarCaso && $('#cbVv', aqui) ? Cubre.leerVentana(aqui) : null;
     Cubre.marcar(r, k);
     /* Lo de la ventanita: cuánto se pagó y, según el botón, el conductor o quién lo arregló */
-    if (d) Cubre.ponerCaso(r, { c: k === 'conductor' ? d.c : '', v: d.v, q: Cubre.sinTaller(k) ? d.q : '', n: k === 'otro' ? d.n : '' });
+    if (d) Cubre.ponerCaso(r, { c: k === 'conductor' ? d.c : '', v: d.v, q: Cubre.conQuien(k) ? d.q : '', n: k === 'otro' ? d.n : '' });
     if (aqui && !aqui._pintarCaso) Modal.cerrar(aqui);
     const m = $$('#modals .modal-bd').filter(x => x._pintarCaso).pop();
     if (m) m._pintarCaso();
