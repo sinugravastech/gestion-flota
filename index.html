@@ -23871,12 +23871,28 @@ const Router = {
    dibujadas en un lienzo, como «Copiar imagen», y juntas en un PDF. Lo impreso va solo en el azul de la marca y en azules muy claros,
    sin recuadros llenos, porque se suele imprimir en blanco y negro.
    · Hoja 1: los números de la semana (con la semana anterior al lado), los viajes por día, el peso por tipo de operación y cada camión.
-   · Hoja 2: los tiempos (las esperas para cargar y descargar, el cargue, el viaje y el descargue), dónde más se espera para cargar, las
-     rutas, lo que hay que revisar (lo que no se hizo, lo que no tiene peso y la mayor diferencia de peso) y la firma del responsable.
-   Usa lo mismo que «Histórico» y «Liquidar semana» (Rutas.suma, grupos y medir), así los números son los mismos */
+   · Hoja 2: los tiempos (las esperas para cargar y descargar, el cargue, el viaje y el descargue), cada uno con de qué estado a qué
+     estado se mide, cuántos viajes tienen las dos horas, entre cuánto y cuánto y cuál fue el más largo (Juan, 24/11/2026: «me gustaría
+     que estuvieran como un poquito más desglosados»); dónde más se espera para cargar, las rutas, lo que hay que revisar (lo que no se
+     hizo, lo que no tiene peso, la mayor diferencia de peso y las horas que parecen mal puestas) y la firma del responsable.
+   · Hoja 3 (y las que hagan falta): «Tiempos de cada viaje», una barra por viaje con sus partes, de la llegada al sitio a «Hecho».
+   Usa lo mismo que «Histórico» y «Liquidar semana» (Rutas.suma, grupos y medir), así los números son los mismos.
+   La calidad (Juan, 24/11/2026: «ponla en la máxima calidad que se pueda… esto no se almacena»): las hojas se dibujan a 5 veces y el PDF
+   las lleva sin pérdida (ver Rutas.pdfDeLienzos) */
 const InformeRutas = {
   W: 816, H: 1056, M: 48,
+  /* A cuántas veces se dibuja: 5 es unos 480 puntos por pulgada en la hoja carta */
+  K: 5,
   C: { az: '#2a52ad', osc: '#1b3474', claro: '#edf1fb', claro2: '#d5def5', linea: '#dde4ea', t1: '#161d24', t2: '#4e5d6b', t3: '#6b7c8c' },
+  /* Las partes de cada viaje en «Tiempos de cada viaje», cada una de un color (Juan, 24/11/2026: «manejar el mismo color azul con
+     diferentes tonos es muy enredado. Así que utiliza colores diferentes para cada uno»): las esperas en naranja, el cargue y el
+     descargue en verde aguamarina, el viaje en azul y, ya cargado sin salir, en gris (tiempo quieto). Son los tres primeros colores de
+     la paleta comprobada para quien confunde colores (dataviz: se distinguen de a dos, también uno al lado del otro); cada parte lleva
+     escrito lo que duró, así se lee también en blanco y negro. Por el estado con que empieza cada parte */
+  PARTE: { sitio: 'esp', cargando: 'trab', carg: 'sal', ruta: 'viaje', destino: 'esp', desc: 'trab' },
+  TONO: { esp: '#eb6834', trab: '#1baf7a', viaje: '#2a78d6', sal: '#c3cad2' },
+  /* Los tiempos que se miden, en el orden del viaje */
+  TK: ['espC', 'cargue', 'viaje', 'espD', 'descargue'],
 
   /* ---- Los datos de la semana ---- */
   datos(l) {
@@ -23896,13 +23912,35 @@ const InformeRutas = {
       const l2 = [...c.entries()].sort((a, b) => b[1] - a[1]);
       return l2.length ? R.cortoNombre(l2[0][0]) + (l2.length > 1 ? ' y ' + (l2.length - 1) + (l2.length === 2 ? ' más' : ' más') : '') : 'Sin conductor';
     };
+    /* Cada tiempo: el promedio, cuántos viajes lo tienen, el más corto y el más largo (con su viaje) y la mitad (para ver lo raro) */
+    const tiempos = this.TK.map(k => {
+      const ys = ms.filter(x => x[k] != null).sort((a, b) => a[k] - b[k]);
+      if (!ys.length) return { k, x: null };
+      return { k, x: { p: Math.round(ys.reduce((a, y) => a + y[k], 0) / ys.length), n: ys.length, min: ys[0][k], max: ys[ys.length - 1][k], vMax: ys[ys.length - 1].v,
+        med: ys[Math.floor((ys.length - 1) / 2)][k] } };
+    });
+    /* Lo que parece una hora mal puesta: mucho más largo que la mitad de los otros (tres veces y más de tres horas) o más de 16 horas */
+    const raro = (k, m) => { const t = tiempos.find(z => z.k === k); return m > 960 || Boolean(t && t.x && t.x.n >= 3 && m > Math.max(180, 3 * t.x.med)); };
+    /* Cada viaje con sus horas, en partes: de un estado con hora al siguiente con hora */
+    const min = t => Math.round(Fecha.parse(t.f) / 6e4) + R.hmin(t.h);
+    const conHoras = h.map(v => {
+      const ti = v.tiempos || {}, ks = R.TI.filter(k => ti[k] && ti[k].f && ti[k].h), partes = [];
+      let desorden = false;
+      for (let i = 1; i < ks.length; i++) {
+        const a = min(ti[ks[i - 1]]), b = min(ti[ks[i]]);
+        if (b < a) { desorden = true; continue; }
+        partes.push({ de: ks[i - 1], a: ks[i], m: b - a });
+      }
+      const malos = this.TK.filter(k => { const m = R.medir(v, k); return m != null && raro(k, m); }).map(k => ({ k, m: R.medir(v, k) }));
+      return { v, partes, total: partes.reduce((a, p) => a + p.m, 0), desorden, malos };
+    }).filter(x => x.partes.length);
     return {
-      l, vs, h, s: R.suma(vs), sa: R.suma(ant), antN: ant.length, liq: R.liquidada(l),
+      l, vs, h, s: R.suma(vs), sa: R.suma(ant), antN: ant.length, liq: R.liquidada(l), conHoras,
       dias: R.fechas(l).map(f => ({ f, n: h.filter(v => v.fecha === f).length, no: vs.filter(v => v.fecha === f && v.estado === 'no').length })),
       tipos: R.grupos(vs, 'tipo'), camiones: R.grupos(vs, 'camion').map(x => Object.assign(x, { cond: conductorDe(x.xs.filter(v => v.estado !== 'no')) })),
       rutas: R.grupos(vs, 'ruta'),
       nCam: new Set(h.map(v => v.unidad)).size, nCond: new Set(h.map(v => (R.conductor(v) || {}).id).filter(Boolean)).size,
-      tiempos: ['espC', 'cargue', 'viaje', 'espD', 'descargue'].map(k => ({ k, x: prom(k) })),
+      tiempos,
       sitios: [...g.entries()].map(([k, xs]) => ({ k, p: Math.round(xs.reduce((a, b) => a + b, 0) / xs.length), n: xs.length })).sort((a, b) => b.p - a.p),
       no: vs.filter(v => v.estado === 'no'), sinPeso: h.filter(v => v.pesoReal == null),
       dif: h.filter(v => v.pesoReal != null && v.ton != null).map(v => ({ v, d: v.pesoReal - v.ton })).sort((a, b) => Math.abs(b.d) - Math.abs(a.d))[0] || null
@@ -23911,14 +23949,22 @@ const InformeRutas = {
 
   /* ---- Para dibujar ---- */
   lienzo() {
-    const k = 3, c = document.createElement('canvas');
-    c.width = this.W * k;
-    c.height = this.H * k;
-    const g = c.getContext('2d');
-    g.scale(k, k);
-    g.fillStyle = '#fff';
-    g.fillRect(0, 0, this.W, this.H);
-    return { c, g };
+    for (const k of [this.K, 3]) {
+      const c = document.createElement('canvas');
+      c.width = this.W * k;
+      c.height = this.H * k;
+      const g = c.getContext('2d');
+      if (!g) continue;
+      g.scale(k, k);
+      g.fillStyle = '#fff';
+      g.fillRect(0, 0, this.W, this.H);
+      /* Si el navegador no alcanzó a dar el lienzo, queda en blanco por dentro: se prueba con el siguiente */
+      if (k > 3 && g.getImageData(c.width - 1, c.height - 1, 1, 1).data[3] !== 255) continue;
+      /* La hoja carta en puntos, para el PDF (ver Rutas.pdfDeLienzos) */
+      c.pt = [612, 792];
+      return { c, g };
+    }
+    throw new Error('el navegador no dio dónde dibujar el informe');
   },
   letra(g, peso, tam) { g.font = peso + ' ' + tam + 'px ' + Rutas.IMG.letra; },
   txt(g, s, x, y, color, peso, tam, alinear) {
@@ -23996,6 +24042,33 @@ const InformeRutas = {
       .forEach((r, i) => this.txt(g, r, x + 12, y + 66 + i * 13, C.t3, '400', 10));
     if (cambio) this.txt(g, this.corta(g, cambio, w - 24, '600', 10), x + 12, y + h - 11, C.az, '600', 10);
   },
+  /* Los tiempos, desglosados (Juan, 24/11/2026: «esas fichas como que no dicen mucho»): una fila por tiempo, con de qué estado a qué
+     estado se mide, el promedio, cuántos viajes de la semana tienen las dos horas, el más corto y el más largo con su viaje. Devuelve
+     dónde termina */
+  tablaTiempos(g, y, d) {
+    const C = this.C, R = Rutas, M = this.M, W = this.W, nom = e => R.ESTADOS[e][0];
+    const dia = v => R.DIAS[(Fecha.parse(v.fecha).getDay() + 6) % 7].slice(0, 3).toLowerCase() + ' ' + +v.fecha.slice(8);
+    const cols = [[M, 'Tiempo', 'left'], [M + 300, 'Promedio', 'right'], [M + 392, 'Viajes', 'right'], [M + 476, 'Más corto', 'right'], [W - M, 'Más largo, y cuál viaje', 'right']];
+    cols.forEach(c => this.txt(g, c[1].toUpperCase(), c[0], y, C.t2, '600', 9, c[2]));
+    y += 8;
+    g.fillStyle = C.linea;
+    g.fillRect(M, y, W - 2 * M, 1);
+    d.tiempos.forEach(t => {
+      const md = R.MED[t.k], x = t.x;
+      y += 30;
+      this.txt(g, md.n, M, y - 12, C.t1, '600', 11);
+      this.txt(g, 'De «' + nom(md.a) + '» a «' + nom(md.b) + '»', M, y, C.t3, '400', 9.5);
+      this.txt(g, x ? R.durTxt(x.p) : '—', M + 300, y - 6, C.t1, '700', 12.5, 'right');
+      this.txt(g, x ? x.n + ' de ' + d.h.length : '0 de ' + d.h.length, M + 392, y - 6, C.t2, '400', 10.5, 'right');
+      this.txt(g, x && x.n > 1 ? R.durTxt(x.min) : '—', M + 476, y - 6, C.t2, '400', 10.5, 'right');
+      this.txt(g, x ? R.durTxt(x.max) + ' · ' + R.placa(x.vMax.unidad) + ', ' + dia(x.vMax) : 'Ningún viaje tiene las dos horas', W - M, y - 6, x ? C.t1 : C.t3, '400', 10.5, 'right');
+      g.fillStyle = C.linea;
+      g.fillRect(M, y + 7, W - 2 * M, 0.6);
+    });
+    return y + 7;
+  },
+  /* «1 h 47», «35 min»: para dentro de las barras */
+  durCorta: m => (m >= 60 ? Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + String(m % 60).padStart(2, '0') : '') : m + ' min'),
   /* Lo de abajo de cada hoja */
   pie(g, hoja, total) {
     const C = this.C, y = this.H - 30;
@@ -24028,7 +24101,7 @@ const InformeRutas = {
   },
 
   /* ---- Hoja 1 ---- */
-  hoja1(d) {
+  hoja1(d, total) {
     const { c, g } = this.lienzo(), C = this.C, M = this.M, W = this.W, R = Rutas, s = d.s, sa = d.sa;
     let y = this.cabeza(g, d) + 18;
     /* Los números de la semana */
@@ -24047,7 +24120,7 @@ const InformeRutas = {
     this.porTipo(g, M + mitad + 28, y, mitad, d);
     y += alto + 34;
     this.porCamion(g, M, y, W - 2 * M, d);
-    this.pie(g, 1, 2);
+    this.pie(g, 1, total);
     return c;
   },
   porDia(g, x, y, w, h, d) {
@@ -24117,22 +24190,16 @@ const InformeRutas = {
   },
 
   /* ---- Hoja 2 ---- */
-  hoja2(d) {
+  hoja2(d, total) {
     const { c, g } = this.lienzo(), C = this.C, M = this.M, W = this.W, R = Rutas;
     let y = this.cabeza(g, d, true) + 34;
     /* Los tiempos */
-    this.seccion(g, M, y, W - 2 * M, 'Tiempos de los viajes', 'el promedio de los viajes que tienen las dos horas');
-    y += 20;
-    const gap = 10, cw = (W - 2 * M - gap * 4) / 5, ch = 86;
-    d.tiempos.forEach((t, i) => {
-      const x = M + i * (cw + gap);
-      this.cuadro(g, x, y, cw, ch, R.MED[t.k].n, t.x ? R.durTxt(t.x.p) : '—', '', t.x ? [R.pl(t.x.n, 'viaje', 'viajes'), 'La más larga: ' + R.durTxt(t.x.max)] : ['Sin viajes con', 'las dos horas'], '');
-    });
-    y += ch + 34;
+    this.seccion(g, M, y, W - 2 * M, 'Tiempos de los viajes', 'el promedio de los viajes que tienen las dos horas' + (d.conHoras.length ? '; cada viaje, en la hoja 3' : ''));
+    y = this.tablaTiempos(g, y + 26, d) + 30;
     /* Dónde más se espera para cargar */
     this.seccion(g, M, y, W - 2 * M, 'Dónde más se espera para cargar', 'el promedio por sitio de cargue');
     y += 30;
-    const sit = d.sitios.slice(0, 6), maxS = Math.max(1, ...sit.map(z => z.p)), x1 = M + 200, x2 = W - M - 150;
+    const sit = d.sitios.slice(0, 5), maxS = Math.max(1, ...sit.map(z => z.p)), x1 = M + 200, x2 = W - M - 150;
     if (!sit.length) { this.txt(g, 'Ningún viaje tiene todavía las horas de llegar al sitio y de empezar a cargar.', M, y, C.t3, '400', 10.5); y += 20; }
     sit.forEach(z => {
       this.txt(g, this.corta(g, z.k, 190, '600', 11), M, y + 3, C.t1, '600', 11);
@@ -24153,7 +24220,7 @@ const InformeRutas = {
     y += 8;
     g.fillStyle = C.linea;
     g.fillRect(M, y, W - 2 * M, 1);
-    const rs = d.rutas.slice(0, 8);
+    const rs = d.rutas.slice(0, 6);
     rs.forEach(z => {
       const r = R.ruta(z.k) || {};
       y += 20;
@@ -24176,19 +24243,101 @@ const InformeRutas = {
       d.sinPeso.slice(0, 4).map(v => R.placa(v.unidad) + ' el ' + R.diaSem(v.fecha).toLowerCase() + ' ' + R.dia(v.fecha)).join(', ') + (d.sinPeso.length > 4 ? ' y ' + (d.sinPeso.length - 4) + ' más' : '') + '.');
     if (d.dif && Math.abs(d.dif.d) >= 0.5) lista.push('La mayor diferencia de peso: ' + R.placa(d.dif.v.unidad) + ' el ' + R.diaSem(d.dif.v.fecha).toLowerCase() + ' ' + R.dia(d.dif.v.fecha) + ', ' +
       R.difTxt(d.dif.d) + ' frente a lo programado (' + R.tonTxt(d.dif.v.ton) + ').');
+    /* Las horas que parecen mal puestas (Juan, 24/11/2026): se corrigen abriendo la ficha del viaje */
+    d.conHoras.filter(x => x.malos.length || x.desorden).slice(0, 3).forEach(x => {
+      const v = x.v, cu = R.diaSem(v.fecha).toLowerCase() + ' ' + R.dia(v.fecha) + ' · ' + R.placa(v.unidad) + ' · ' + R.nombre(R.ruta(v.ruta));
+      lista.push('Horas para revisar: ' + cu + ': ' + (x.desorden ? 'las horas de los estados están en desorden' : x.malos.map(z => R.MED[z.k].n.toLowerCase() + ' de ' + R.durTxt(z.m)).join(' y ')) +
+        '. Abra la ficha del viaje y corrija la hora.');
+    });
     if (!lista.length) lista.push('Nada: todos los viajes se hicieron y tienen su peso.');
     this.letra(g, '400', 10.5);
-    lista.slice(0, 6).forEach(t => {
+    /* Lo que quepa antes de la firma; si no cabe todo, cuántas cosas más hay */
+    for (let i = 0; i < lista.length; i++) {
+      this.letra(g, '400', 10.5);
+      const t = lista[i], rs = Rutas.renglones(g, t, W - 2 * M - 14, 2);
+      /* La firma empieza 24 más abajo y mide 110: hasta ahí, sin tocar el pie */
+      if (y + rs.length * 14 + 6 > this.H - 202) { this.txt(g, 'y ' + Rutas.pl(lista.length - i, 'cosa más para revisar', 'cosas más para revisar'), M + 14, y, C.t3, '400', 10); y += 18; break; }
       g.fillStyle = C.az;
       g.beginPath();
       g.arc(M + 4, y - 4, 2.2, 0, Math.PI * 2);
       g.fill();
-      Rutas.renglones(g, t, W - 2 * M - 14, 2).forEach((r, i) => this.txt(g, r, M + 14, y + i * 14, C.t1, '400', 10.5));
-      y += Rutas.renglones(g, t, W - 2 * M - 14, 2).length * 14 + 6;
-    });
+      this.letra(g, '400', 10.5);
+      rs.forEach((r, j) => this.txt(g, r, M + 14, y + j * 14, C.t1, '400', 10.5));
+      y += rs.length * 14 + 6;
+    }
     /* La firma del responsable de flota, como en los demás documentos */
     this.firma(g, Math.max(y + 24, this.H - 190));
-    this.pie(g, 2, 2);
+    this.pie(g, 2, total);
+    return c;
+  },
+  /* ---- Hoja 3 (y las que hagan falta): «Tiempos de cada viaje». Cada viaje con horas en un renglón: el día, el camión y la ruta; la
+     barra con sus partes, de largo según lo que duró cada una (la escala es la misma para todos); y lo que duró, de la primera hora a
+     la última. Lo que parece mal puesto, con «Revisar» ---- */
+  FILA: 23,
+  filasPorHoja(y0) { return Math.floor((this.H - 70 - y0) / this.FILA); },
+  hojaTiempos(d, filas, hoja, total, primera) {
+    const { c, g } = this.lienzo(), C = this.C, M = this.M, W = this.W, R = Rutas;
+    let y = this.cabeza(g, d, true) + 34;
+    this.seccion(g, M, y, W - 2 * M, 'Tiempos de cada viaje' + (primera ? '' : ' (sigue)'), 'de la llegada al sitio de cargue a «Hecho», con la hora de cada estado');
+    y += 22;
+    /* La leyenda, en una línea */
+    let lx = M;
+    [['esp', 'Esperas (para cargar y para descargar)'], ['trab', 'Cargue y descargue'], ['viaje', 'Viaje'], ['sal', 'Cargado, sin salir']].forEach(([t, txt]) => {
+      Rutas.caja(g, lx, y - 8, 18, 9, 2);
+      g.fillStyle = this.TONO[t];
+      g.fill();
+      this.txt(g, txt, lx + 24, y, C.t2, '400', 9.5);
+      lx += 24 + this.ancho(g, txt, '400', 9.5) + 18;
+    });
+    y += 12;
+    const x0 = M + 232, x1 = W - M - 76, todos = d.conHoras.map(z => z.total).sort((a, b) => a - b);
+    /* La escala: la del viaje más largo, sin dejar que uno con horas mal puestas aplaste a los demás */
+    const p90 = todos[Math.floor((todos.length - 1) * 0.9)] || 60, escala = Math.max(60, Math.min(todos[todos.length - 1] || 60, Math.max(8 * 60, p90 * 1.3)));
+    /* Las horas de referencia: cada 2 horas (cada hora si la escala es corta) */
+    const paso = escala > 12 * 60 ? 240 : escala > 6 * 60 ? 120 : 60;
+    for (let m = 0; m <= escala; m += paso) {
+      const xx = x0 + (x1 - x0) * m / escala;
+      g.fillStyle = C.linea;
+      g.fillRect(Math.round(xx), y + 4, 1, filas.length * this.FILA + 2);
+      this.txt(g, m / 60 + ' h', xx, y, C.t3, '400', 8.5, 'center');
+    }
+    y += 6;
+    filas.forEach(z => {
+      const v = z.v, r = R.ruta(v.ruta), dia = R.DIAS[(Fecha.parse(v.fecha).getDay() + 6) % 7].slice(0, 3) + ' ' + +v.fecha.slice(8);
+      const raro = z.malos.length || z.desorden;
+      this.txt(g, dia + ' · ' + R.placa(v.unidad), M, y + 10, C.t1, '600', 9.5);
+      this.txt(g, this.corta(g, R.nombre(r), 222, '400', 8.5), M, y + 20, C.t3, '400', 8.5);
+      /* La pista y las partes */
+      Rutas.caja(g, x0, y + 6, x1 - x0, 11, 3);
+      g.fillStyle = '#f6f8fd';
+      g.fill();
+      let xx = x0, corte = false;
+      z.partes.forEach(p => {
+        let w = (x1 - x0) * p.m / escala;
+        if (xx + w > x1) { w = x1 - xx; corte = true; }
+        if (w <= 0) return;
+        const t = this.PARTE[p.de] || 'sal';
+        g.fillStyle = this.TONO[t];
+        g.fillRect(xx, y + 6, w, 11);
+        const et = this.durCorta(p.m);
+        /* Dentro de los colores, en blanco; en el gris, en negro */
+        if (w >= this.ancho(g, et, '600', 8) + 8) this.txt(g, et, xx + w / 2, y + 14.5, t === 'sal' ? C.t1 : '#fff', '600', 8, 'center');
+        xx += w + 0;
+        /* Una raya blanca entre parte y parte */
+        g.fillStyle = '#fff';
+        g.fillRect(xx - 1, y + 6, 1, 11);
+      });
+      /* Si no cupo (horas mal puestas), una marca al final */
+      if (corte) { g.fillStyle = '#fff'; g.fillRect(x1 - 7, y + 4, 2, 15); g.fillRect(x1 - 3, y + 4, 2, 15); }
+      this.txt(g, R.durTxt(z.total), W - M, y + 10, raro ? C.osc : C.t1, '600', 9.5, 'right');
+      if (raro) this.txt(g, 'Revisar las horas', W - M, y + 20, C.osc, '600', 8, 'right');
+      y += this.FILA;
+    });
+    if (hoja === total) {
+      const sin = d.h.length - d.conHoras.length;
+      if (sin) { y += 16; this.txt(g, R.pl(sin, 'viaje no tiene', 'viajes no tienen') + ' horas para medir: ni el conductor ni la ficha las marcaron.', M, y, C.t3, '400', 9.5); }
+    }
+    this.pie(g, hoja, total);
     return c;
   },
   firma(g, y) {
@@ -24214,7 +24363,11 @@ const InformeRutas = {
     await Rutas.imagenesListas(d.vs);
     await Firma.traer().catch(() => false);
     await this.firmaLista();
-    return [this.hoja1(d), this.hoja2(d)];
+    /* Las hojas de «Tiempos de cada viaje»: las que hagan falta para todos los viajes con horas, en orden de día y hora */
+    const filas = d.conHoras.slice().sort((a, b) => a.v.fecha.localeCompare(b.v.fecha) || Rutas.enOrden(a.v, b.v)), fph = this.filasPorHoja(155), grupos = [];
+    for (let i = 0; i < filas.length; i += fph) grupos.push(filas.slice(i, i + fph));
+    const total = 2 + grupos.length;
+    return [this.hoja1(d, total), this.hoja2(d, total)].concat(grupos.map((f, i) => this.hojaTiempos(d, f, 3 + i, total, i === 0)));
   }
 };
 
@@ -25591,27 +25744,30 @@ const Rutas = {
       Toast.show('No se pudo armar el PDF: ' + esc(e.message) + '.', 'err');
     }
   },
-  /* Un PDF con una hoja por lienzo, cada una con su imagen en JPEG y del tamaño de ella (el ancho en px / 4, en puntos). Se arma aquí
-     mismo, sin librerías. El de los conductores tiene una hoja y sale igual que antes; el informe de la semana, dos (ver InformeRutas) */
-  async pdfDeLienzos(cs, titulo) {
-    const jpgs = await Promise.all(cs.map(c => new Promise((ok, mal) => c.toBlob(x => (x ? ok(x) : mal(new Error('no se pudo armar la imagen'))), 'image/jpeg', 0.95))
-      .then(x => x.arrayBuffer()).then(x => new Uint8Array(x))));
+  /* Un PDF con una hoja por lienzo, cada una con su imagen. Se arma aquí mismo, sin librerías.
+     · La imagen va en JPEG al 95 % o, con { sinPerdida: true }, sin pérdida (ver imagenPdf).
+     · Cada hoja mide lo que diga su lienzo (c.pt, en puntos) o, si no lo dice, lo que la imagen (el ancho en px / 4).
+     El de los conductores tiene una hoja, en JPEG, y sale igual que antes; el informe de la semana, sin pérdida (ver InformeRutas) */
+  async pdfDeLienzos(cs, titulo, op) {
+    const sinPerdida = Boolean(op && op.sinPerdida), imgs = [];
+    /* De una en una, para no tener en la memoria todas a la vez */
+    for (const c of cs) imgs.push(await this.imagenPdf(c, sinPerdida));
     const enc = new TextEncoder(), partes = [], pos = [], info = 3 + 3 * cs.length;
     let n = 0;
     const poner = x => { const y = typeof x === 'string' ? enc.encode(x) : x; partes.push(y); n += y.length; };
     const obj = (i, cuerpo) => { pos[i] = n; poner(i + ' 0 obj\n' + cuerpo + '\nendobj\n'); };
     const texto = s => sinTildes(String(s || '')).replace(/[^\x20-\x7E]/g, '').replace(/([()\\])/g, '\\$1');
-    poner('%PDF-1.4\n%âãÏÓ\n');
+    poner('%PDF-1.4\n%\u00e2\u00e3\u00cf\u00d3\n');
     obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
     obj(2, '<< /Type /Pages /Kids [' + cs.map((c, i) => (3 + 3 * i) + ' 0 R').join(' ') + '] /Count ' + cs.length + ' >>');
     /* Cada hoja: la hoja (p), su imagen (p + 1) y lo que la dibuja (p + 2) */
     cs.forEach((c, i) => {
-      const p = 3 + 3 * i, pw = (c.width / 4).toFixed(2), ph = (c.height / 4).toFixed(2), jpg = jpgs[i];
+      const p = 3 + 3 * i, pt = c.pt || [c.width / 4, c.height / 4], pw = (+pt[0]).toFixed(2), ph = (+pt[1]).toFixed(2), im = imgs[i];
       obj(p, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pw + ' ' + ph + '] /Resources << /XObject << /Im0 ' + (p + 1) + ' 0 R >> >> /Contents ' + (p + 2) + ' 0 R >>');
       pos[p + 1] = n;
       poner((p + 1) + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + c.width + ' /Height ' + c.height +
-        ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpg.length + ' >>\nstream\n');
-      poner(jpg);
+        ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter ' + im.filtro + ' /Length ' + im.datos.length + ' >>\nstream\n');
+      poner(im.datos);
       poner('\nendstream\nendobj\n');
       const dibujo = 'q ' + pw + ' 0 0 ' + ph + ' 0 0 cm /Im0 Do Q';
       obj(p + 2, '<< /Length ' + dibujo.length + ' >>\nstream\n' + dibujo + '\nendstream');
@@ -25623,13 +25779,28 @@ const Rutas = {
     return new Blob(partes, { type: 'application/pdf' });
   },
   pdfDeLienzo(c, titulo) { return this.pdfDeLienzos([c], titulo); },
+  /* La imagen de una hoja para el PDF. Sin pérdida (Juan, 24/11/2026: «ponla en la máxima calidad que se pueda»): los píxeles en RGB,
+     comprimidos aquí mismo como los pide el PDF (FlateDecode). Si el navegador no sabe comprimir, o no le alcanza la memoria, en JPEG */
+  async imagenPdf(c, sinPerdida) {
+    if (sinPerdida && typeof CompressionStream === 'function') {
+      try {
+        const px = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, rgb = new Uint8Array(c.width * c.height * 3);
+        for (let i = 0, j = 0; i < px.length; i += 4, j += 3) { rgb[j] = px[i]; rgb[j + 1] = px[i + 1]; rgb[j + 2] = px[i + 2]; }
+        const z = await new Response(new Blob([rgb]).stream().pipeThrough(new CompressionStream('deflate'))).arrayBuffer();
+        return { datos: new Uint8Array(z), filtro: '/FlateDecode' };
+      } catch (e) { /* va en JPEG */ }
+    }
+    const b = await new Promise((ok, mal) => c.toBlob(x => (x ? ok(x) : mal(new Error('no se pudo armar la imagen'))), 'image/jpeg', 0.95));
+    return { datos: new Uint8Array(await b.arrayBuffer()), filtro: '/DCTDecode' };
+  },
   /* «del 16 al 22 nov», «del 30 nov al 6 dic» */
   semanaCorta(l) {
     const d = this.mas(l, 6), m = f => this.MES[+f.slice(5, 7) - 1];
     return 'del ' + +l.slice(8) + (l.slice(5, 7) !== d.slice(5, 7) ? ' ' + m(l) : '') + ' al ' + +d.slice(8) + ' ' + m(d);
   },
   /* ---- El informe de la semana para el gerente (Juan, 24/11/2026: «un botoncito como para descargar algún tipo de informe… en PDF,
-     bastante gráfico»): las dos hojas de InformeRutas en un PDF que se descarga de una vez, como el de los conductores ---- */
+     bastante gráfico»): las hojas de InformeRutas en un PDF que se descarga de una vez, como el de los conductores, en la máxima calidad
+     (no se guarda: se arma cada vez) ---- */
   async informe(l, el) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(l || '') || this._informando) return;
     const vs = this.deSemana(l);
@@ -25640,7 +25811,7 @@ const Rutas = {
     const nombre = 'Informe de rutas - semana ' + this.semanaAño(l) + '.pdf';
     try {
       const hojas = await InformeRutas.paginas(l);
-      const blob = await this.pdfDeLienzos(hojas, 'Informe semanal de rutas - Semana ' + this.semanaAño(l));
+      const blob = await this.pdfDeLienzos(hojas, 'Informe semanal de rutas - Semana ' + this.semanaAño(l), { sinPerdida: true });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = nombre;
