@@ -5978,6 +5978,8 @@ const Modal = {
   cerrar(el) {
     const bd = el && el.closest ? el.closest('.modal-bd') : $$('#modals .modal-bd').pop();
     if (bd) bd.remove();
+    /* Lo que una ventana avisa al cerrarse (ver HacerOrden.alCerrarPrev) */
+    if (bd && bd._alCerrar) bd._alCerrar();
   },
   cerrarTodo() { $$('#modals .modal-bd').forEach(b => b.remove()); },
   abierto() { return $$('#modals .modal-bd').length > 0; }
@@ -15629,6 +15631,8 @@ Object.assign(Ventanas, {
         '<div class="field" style="max-width:300px"><label>Valor</label><input class="inp" id="mpV" inputmode="numeric" placeholder="Ej.: 850.000"' +
           (r0 && r0.valor ? ' value="' + attr(r0.valor.toLocaleString('es-CO')) + '"' : '') + '><div class="hint" id="mpVn"></div></div>' +
         '<div class="field"><label>Órdenes de Facturación <span class="txt-3">(si tiene)</span></label><div class="oc-lista" id="mpO"></div>' +
+          /* Hacer la OS o la OC aquí mismo, como en el caso (Juan, 24/11/2026; ver HacerOrden.botonesPrev) */
+          HacerOrden.botonesPrev() +
           '<div class="hint">Márquela si el preventivo tiene orden. El valor de arriba cuenta hasta que la orden pase a contabilidad; desde ahí cuenta la orden.</div></div>' +
         '<div class="field"><label>¿Qué partes tocó? <span class="txt-3">(opcional)</span></label><div class="reg-sel" id="mcSel"></div>' +
           '<div class="hint">Si las marca, este preventivo también sale en el plano de la unidad.</div></div>' +
@@ -15701,9 +15705,10 @@ Object.assign(Ventanas, {
     /* El proveedor, desde la orden que se marque (ver ProvOrden) */
     const provOrden = poner => ProvOrden.aplicar($('#mpP', m), $('#mpPn', m), ValorOrden.de([$('#mpO', m)]), poner);
     $('#mpO', m).addEventListener('change', () => provOrden(true));
+    $('#mpO', m).addEventListener('change', () => HacerOrden.botonPrev(m));
     $('#mpP', m).addEventListener('change', () => provOrden(false));
     $('#mpP', m)._alCrear = () => provOrden(false);
-    $('#mpO', m)._alPintar = () => { valorOrden(); provOrden(false); };
+    $('#mpO', m)._alPintar = () => { HacerOrden.alPintarPrev(m); valorOrden(); provOrden(false); };
     ProvFact.traer().then(() => { if (document.body.contains(m)) provOrden(false); });
     valorOrden();
     /* El remolque que entra con el camión: se abre también su preventivo (ver MantRemolque) */
@@ -15713,6 +15718,8 @@ Object.assign(Ventanas, {
       remolque();
     }
     if (r0) EditarPreventivo.vigilar(m, r0);
+    /* Si la orden que se hizo aquí no quedó relacionada al cerrar, se avisa (ver HacerOrden.alCerrarPrev) */
+    m._alCerrar = () => HacerOrden.alCerrarPrev(m);
   },
 
   /* Una lectura del kilometraje o del horómetro escrita a mano (la de cada
@@ -27303,6 +27310,72 @@ const HacerOrden = {
     return '<div class="hor-b">' + Object.keys(this.TIPOS).map((t, i) => '<button type="button" class="btn btn-sm' + (!i && !conOS ? ' btn-primary' : '') +
       '" data-act="hacerOrden" data-m="' + attr(r.id) + '" data-t="' + t + '">' + Icon('plus', '', 13) + 'Hacer la ' + this.TIPOS[t].sigla + '</button>').join('') + '</div>';
   },
+  /* En la ventana del preventivo (Juan, 24/11/2026: «cuando escojo el taller del proveedor, no se me abre para yo poder crear la orden de
+     servicio ahí mismo… tal cual como hicimos en mantenimiento correctivo»), debajo de sus órdenes. Como el preventivo todavía no está
+     guardado, la orden se hace y queda marcada en su lista: se relaciona al guardarlo. Va a nombre del vehículo del preventivo; con el
+     remolque, el camión («la orden de servicio queda asociada siempre con la placa del vehículo, no con el remolque») */
+  botonesPrev() {
+    return '<div class="hor-b" id="mpHo">' + Object.keys(this.TIPOS).map((t, i) => '<button type="button" class="btn btn-sm' + (!i ? ' btn-primary' : '') +
+      '" data-act="hacerOrdenPrev" data-t="' + t + '">' + Icon('plus', '', 13) + 'Hacer la ' + this.TIPOS[t].sigla + '</button>').join('') + '</div>';
+  },
+  /* Lo del preventivo que necesita la orden, como si fuera el arreglo: su ventana, el vehículo, la fecha, lo que se hizo y el remolque que
+     entró con él (el escogido o, al corregirlo, el enlazado) */
+  dePrev(f) {
+    const u = Q.unidad(($('#mpU', f) || {}).value);
+    if (!u) return null;
+    const r0 = f._editar ? Datos.mantenimientos.find(x => x.id === f._editar) : null, s = r0 ? MantRemolque.suyo(r0) : null;
+    return { id: '', form: f, tipo: 'preventivo', unidad: u.id, fecha: $('#mpF', f).value || hoyISO, trabajo: $('#mpT', f).value,
+      rem: MantRemolque.leer(f, 'mp') || (s && s.rem ? s.u.id : null) };
+  },
+  notaPrev(r, u) {
+    const q = r.rem ? Q.unidad(r.rem) : null;
+    return (q ? ', con la placa del camión, <b>' + esc(UI.placaTxt(u)) + '</b>, no la del remolque ' + esc(UI.placaTxt(q)) : '') +
+      '. Aquí queda marcada en el preventivo y se relaciona al guardarlo.';
+  },
+  /* «Hacer la OS» resaltado mientras el preventivo no tenga una marcada, como en el caso */
+  botonPrev(f) {
+    const os = ValorOrden.de([$('#mpO', f)]).some(o => o.tipo === 'SERVICIO');
+    $$('#mpHo .btn', f).forEach(b => b.classList.toggle('btn-primary', b.dataset.t === 'SERVICIO' && !os));
+  },
+  /* Cada vez que se pinta su lista: la que se acaba de hacer, marcada (si todavía no llegaba, cuando llegue) */
+  alPintarPrev(f) {
+    const caja = $('#mpO', f), id = caja && caja._marcarHecha, inp = id ? $$('input', caja).find(i => i.value === id) : null;
+    if (inp) {
+      caja._marcarHecha = null;
+      if (!inp.checked) { inp.checked = true; inp.dispatchEvent(new Event('change', { bubbles: true })); }
+      const l = inp.closest('label');
+      if (l) l.scrollIntoView({ block: 'nearest' });
+    }
+    this.botonPrev(f);
+  },
+  /* Ya creada en Facturación: a la lista del preventivo, marcada */
+  hechaPrev(m, r, u, res, llego) {
+    const f = r.form, sigue = Boolean(f && document.body.contains(f));
+    if (document.body.contains(m)) Modal.cerrar(m);
+    const o = Compras.porId(res.orden_id), cod = (o && o.codigo) || res.codigo || 'la orden';
+    if (sigue) {
+      (f._hechas = f._hechas || []).push({ id: res.orden_id, cod, placa: UI.placaTxt(u) });
+      const caja = $('#mpO', f);
+      caja._marcarHecha = res.orden_id;
+      if (caja._pintar) caja._pintar(true);
+    }
+    Toast.show('Quedó la <b>' + esc(cod) + '</b> en Facturación, a nombre de <b>' + esc(UI.placaTxt(u)) + '</b>' +
+      (sigue ? ', y quedó marcada en el preventivo: se relaciona al guardarlo.' : '. No quedó relacionada: la ventana del preventivo ya no estaba abierta.') +
+      (res.ya_estaba ? '<br>Se fue la señal, pero no salió repetida: es la misma.' : '') +
+      (llego ? '' : '<br>Todavía no llega en la lista de Facturación: se marca sola cuando llegue.') +
+      (res.iva_incluido ? '' : '<br>Ojo: Facturación le sumó el IVA encima de lo que escribió, porque todavía no tiene su SQL 217. ' +
+        'Corríjala allá con «ya incluido en los precios».'), res.iva_incluido && sigue ? undefined : 'warn');
+  },
+  /* Al cerrar el preventivo: la que se hizo desde él y no quedó en ningún mantenimiento (no se guardó, o se desmarcó) sigue en Facturación */
+  alCerrarPrev(f) {
+    const l = (f._hechas || []).filter(h => !Datos.mantenimientos.some(x => (x.ordenes || []).includes(h.id)));
+    if (!l.length) return;
+    const una = l.length === 1, cods = l.map(h => h.cod), placas = Array.from(new Set(l.map(h => h.placa)));
+    Toast.show((una ? 'La <b>' + esc(cods[0]) + '</b> quedó' : 'Las <b>' + esc(cods.slice(0, -1).join(', ') + ' y ' + cods[cods.length - 1]) + '</b> quedaron') +
+      ' en Facturación sin relacionar con ningún mantenimiento. ' + (una ? 'Sale libre' : 'Salen libres') + ' en «Órdenes de Facturación» de <b>' +
+      esc(placas.join(', ')) + '</b>, para marcar' + (una ? 'la' : 'las') + ' después. Si no ' + (una ? 'la' : 'las') + ' necesita, anúle' + (una ? 'la' : 'las') +
+      ' en Facturación.', 'warn');
+  },
   llave() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
     const b = crypto.getRandomValues(new Uint8Array(16));
@@ -27313,6 +27386,8 @@ const HacerOrden = {
   },
   /* Qué se pide: el periódico, si la entrada es de uno (ver Periodicos); si no, lo primero de «¿Qué pasó?»; si no, los componentes */
   que(r) {
+    /* En el preventivo, lo primero de «¿Qué se hizo?» */
+    if (r.form) return String(String(r.trabajo || '').replace(/\s+/g, ' ').trim().split(/[.!?;]\s/)[0].replace(/[\s.!?;:,]+$/, '') || 'Mantenimiento preventivo').slice(0, 90);
     const per = (r.periodicos || [])[0];
     const f = String(r.falla || '').replace(/\s+/g, ' ').trim().split(/[.!?;]\s/)[0].replace(/[\s.!?;:,]+$/, '');
     const comps = (r.componentes || (r.componente ? [r.componente] : [])).filter(Boolean).join(', ');
@@ -27321,11 +27396,13 @@ const HacerOrden = {
   /* El proveedor que se propone, de la lista de Facturación: el taller del caso para la OS; para la OC, quien puso los repuestos (el
      taller, si fue el mismo) */
   propuesto(r, t) {
-    const v = t === 'SERVICIO' || r.repMismo ? ProvFact.valor(r) : ProvFact.valor(r, true);
+    /* En el preventivo, el proveedor que tenga escogido, para la OS y para la OC */
+    const v = r.form ? $('#mpP', r.form).value : t === 'SERVICIO' || r.repMismo ? ProvFact.valor(r) : ProvFact.valor(r, true);
     const x = v.startsWith('f:') ? ProvFact.porId(v.slice(2)) : null;
     return x && x.activo ? 'f:' + x.id : '';
   },
   pista(r, t, v) {
+    if (r.form && v && v === this.propuesto(r, t)) return 'El proveedor del preventivo. Se puede cambiar.';
     if (v && v === this.propuesto(r, t)) return t === 'SERVICIO' ? 'El taller del caso. Se puede cambiar.'
       : r.repMismo ? 'El taller del caso, que también puso los repuestos. Se puede cambiar.' : 'Quien puso los repuestos en el caso. Se puede cambiar.';
     return v ? '' : (t === 'SERVICIO' ? 'Escoja el taller.' : 'Escoja quién vende los repuestos.') + ' Si no está, «+ Agregar uno nuevo…».';
@@ -27358,7 +27435,7 @@ const HacerOrden = {
     if (!u) return;
     const que = this.que(r);
     const m = Modal.abrir({
-      titulo: 'Hacer la orden en Facturación', sub: esc([r.numero, UI.placaTxt(u), u.clase].filter(Boolean).join(' · ')), sinFoco: true, ancho: 'm-hoja',
+      titulo: 'Hacer la orden en Facturación', sub: esc([r.form ? 'Preventivo' : r.numero, UI.placaTxt(u), u.clase].filter(Boolean).join(' · ')), sinFoco: true, ancho: 'm-hoja',
       cuerpo: '<div class="field"><label>¿Qué orden?</label><div class="hor-tipo" id="hoT">' + Object.keys(this.TIPOS).map(k =>
           '<button type="button" class="zchip" data-v="' + k + '" aria-pressed="false"></button>').join('') + '</div></div>' +
         '<div class="field"><label>Proveedor</label><select class="inp" id="hoP"><option value="">Escoja el proveedor</option>' +
@@ -27370,11 +27447,13 @@ const HacerOrden = {
           '<input class="inp" id="hoN" autocomplete="off" placeholder="Ej.: la cotización está en el caso"></div>' +
         '<div id="hoAviso"></div>' +
         '<div class="hor-nota">' + Icon('info', '', 13) + '<span>La orden se crea de una vez en Facturación, a nombre suyo, en «Esperando cotización» y con el ' +
-          'número que siga. Aquí queda relacionada enseguida. Lo demás lo cambia allá.</span></div>',
+          'número que siga' + (r.form ? this.notaPrev(r, u) : '. Aquí queda relacionada enseguida.') + ' Lo demás lo cambia allá.</span></div>',
       pie: '<button type="button" class="btn" data-act="cerrarModal">Cancelar</button><button type="button" class="btn btn-primary" data-act="hacerOrdenSi" disabled>' +
         Icon('send', '', 14) + '<span id="hoBt"></span></button>'
     });
     m._r = r.id;
+    /* Desde la ventana del preventivo (ver dePrev) */
+    m._prev = r.form ? r : null;
     m._caso = caso || null;
     m._llave = this.llave();
     const s = $('#hoP', m);
@@ -27394,7 +27473,8 @@ const HacerOrden = {
       const tot = d.items.reduce((s, i) => s + (i.cantidad || 1) * (i.valor_unitario || 0), 0);
       $('#hoAn', m).textContent = 'El valor de cada uno, con el IVA incluido: Facturación saca el IVA de ahí, como con «ya incluido en los precios».' +
         (tot > 0 ? ' Total de la orden: ' + Money.format(tot) + '.' : '') +
-        (d.items.length && !d.items.some(i => i.valor_unitario > 0) ? ' Sin valor, el caso queda «por completar» hasta que la orden tenga sus valores.' : '');
+        (d.items.length && !d.items.some(i => i.valor_unitario > 0) ? (r.form ? ' Sin valor, el del preventivo sale cuando la orden tenga sus valores.'
+          : ' Sin valor, el caso queda «por completar» hasta que la orden tenga sus valores.') : '');
       $('[data-act="hacerOrdenSi"]', m).disabled = Boolean(m._creando) || !d.x || !d.items.length;
     };
     const tipo = k => {
@@ -27455,7 +27535,7 @@ const HacerOrden = {
   },
   async crear(r, u, d, llave) {
     /* iva_incluido: los valores ya traen el IVA (SQL 217 de Facturación) */
-    const p = { llave, tipo: d.tipo, flota_id: u.id, proveedor_id: d.x.id, items: d.items, arreglo: r.numero || '', iva_incluido: true };
+    const p = { llave, tipo: d.tipo, flota_id: u.id, proveedor_id: d.x.id, items: d.items, arreglo: r.numero || (r.form ? 'Preventivo del ' + Fecha.num(r.fecha) : ''), iva_incluido: true };
     if (d.nota) p.nota = d.nota;
     const res = await Nube.pedir('rpc/facturacion_crear_orden_desde_flota', { method: 'POST', publico: true, body: JSON.stringify({ p }) });
     const o = Array.isArray(res) ? res[0] : res;
@@ -27498,6 +27578,11 @@ Object.assign(Acciones, {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     if (r) HacerOrden.abrir(r, el.dataset.t === 'COMPRA' ? 'COMPRA' : 'SERVICIO', el.closest('.modal-bd'));
   },
+  /* Desde la ventana del preventivo, antes de guardarlo (ver HacerOrden.dePrev) */
+  hacerOrdenPrev(el) {
+    const f = el.closest('.modal-bd'), r = f && HacerOrden.dePrev(f);
+    if (r) HacerOrden.abrir(r, el.dataset.t === 'COMPRA' ? 'COMPRA' : 'SERVICIO', null);
+  },
   async copiarOrden(el) {
     const o = Compras.porId(el.dataset.o);
     if (!o) return;
@@ -27506,7 +27591,7 @@ Object.assign(Acciones, {
     else Toast.show('El navegador no dejó copiarlo. Selecciónelo aquí y cópielo:' + ver, 'warn');
   },
   async hacerOrdenSi(el) {
-    const m = el.closest('.modal-bd'), r = m && Datos.mantenimientos.find(x => x.id === m._r), u = r && Q.unidad(r.unidad);
+    const m = el.closest('.modal-bd'), r = m && (m._prev || Datos.mantenimientos.find(x => x.id === m._r)), u = r && Q.unidad(r.unidad);
     if (!u || el.disabled || m._creando) return;
     const d = HacerOrden.leer(m);
     if (!d.x || !d.items.length) return;
@@ -27523,8 +27608,10 @@ Object.assign(Acciones, {
       $('#hoAviso', m).innerHTML = '<div class="alert a-err mt12">' + Icon('warn') + '<div>' + HacerOrden.error(e) + '</div></div>';
       return;
     }
-    bt.textContent = 'Relacionándola…';
+    bt.textContent = m._prev ? 'Trayéndola…' : 'Relacionándola…';
     const llego = await HacerOrden.traerCon(res.orden_id).catch(() => false);
+    /* Desde el preventivo: queda marcada en su lista, sin guardar nada todavía */
+    if (m._prev) { HacerOrden.hechaPrev(m, r, u, res, llego); return; }
     HacerOrden.relacionar(r, res.orden_id, d);
     if (document.body.contains(m)) Modal.cerrar(m);
     if (m._caso && document.body.contains(m._caso) && m._caso._pintarCaso) m._caso._pintarCaso();
