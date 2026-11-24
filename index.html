@@ -756,6 +756,15 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 .tk-mes .inp{width:auto;min-width:200px}
 /* Rutas → Histórico: «Informe PDF» y «Ver la semana» en la misma fila (ver Rutas.historico) */
 .rt-ht td.tr .btn + .btn{margin-left:6px}
+/* Rutas → Histórico: el interruptor de la hoja «Tiempos de cada viaje» del informe (ver Rutas.historico) */
+.rt-sw{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-2);cursor:pointer;user-select:none;white-space:nowrap}
+.rt-sw input{appearance:none;-webkit-appearance:none;margin:0;width:32px;height:18px;flex:0 0 auto;border-radius:9px;background:var(--border-strong);
+  position:relative;cursor:pointer;transition:background var(--t-fast)}
+.rt-sw input::before{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);
+  transition:transform var(--t-fast)}
+.rt-sw input:checked{background:var(--accent)}
+.rt-sw input:checked::before{transform:translateX(14px)}
+.rt-sw input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* Taller SINUGRAVAS: arriba, el buscador y el mes de las tarjetas (ver TallerBusca) */
 .tb-arriba{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;margin:-2px 0 12px}
 .tb-arriba .tk-mes{margin:0 0 0 auto}
@@ -23875,7 +23884,9 @@ const Router = {
      estado se mide, cuántos viajes tienen las dos horas, entre cuánto y cuánto y cuál fue el más largo (Juan, 24/11/2026: «me gustaría
      que estuvieran como un poquito más desglosados»); dónde más se espera para cargar, las rutas, lo que hay que revisar (lo que no se
      hizo, lo que no tiene peso, la mayor diferencia de peso y las horas que parecen mal puestas) y la firma del responsable.
-   · Hoja 3 (y las que hagan falta): «Tiempos de cada viaje», una barra por viaje con sus partes, de la llegada al sitio a «Hecho».
+   · Hoja 3 (y las que hagan falta): «Tiempos de cada viaje», una barra por viaje con sus partes, de la llegada al sitio a «Hecho». Solo
+     con el interruptor del Histórico prendido (Juan, 24/11/2026: lo que muestra depende de que las horas se marquen bien, y todavía las
+     marca él, no los conductores); de entrada, apagado.
    Usa lo mismo que «Histórico» y «Liquidar semana» (Rutas.suma, grupos y medir), así los números son los mismos.
    La calidad (Juan, 24/11/2026: «ponla en la máxima calidad que se pueda… esto no se almacena»): las hojas se dibujan a 5 veces y el PDF
    las lleva sin pérdida (ver Rutas.pdfDeLienzos) */
@@ -24194,7 +24205,7 @@ const InformeRutas = {
     const { c, g } = this.lienzo(), C = this.C, M = this.M, W = this.W, R = Rutas;
     let y = this.cabeza(g, d, true) + 34;
     /* Los tiempos */
-    this.seccion(g, M, y, W - 2 * M, 'Tiempos de los viajes', 'el promedio de los viajes que tienen las dos horas' + (d.conHoras.length ? '; cada viaje, en la hoja 3' : ''));
+    this.seccion(g, M, y, W - 2 * M, 'Tiempos de los viajes', 'el promedio de los viajes que tienen las dos horas' + (d.hojaT ? '; cada viaje, en la hoja 3' : ''));
     y = this.tablaTiempos(g, y + 26, d) + 30;
     /* Dónde más se espera para cargar */
     this.seccion(g, M, y, W - 2 * M, 'Dónde más se espera para cargar', 'el promedio por sitio de cargue');
@@ -24357,14 +24368,16 @@ const InformeRutas = {
     if (!u) { this._firma = null; return Promise.resolve(); }
     return new Promise(ok => { const im = new Image(); im.onload = () => { this._firma = im; ok(); }; im.onerror = () => { this._firma = null; ok(); }; im.src = u; });
   },
-  async paginas(l) {
+  /* op.tiempos: con la hoja «Tiempos de cada viaje» (el interruptor del Histórico, ver Rutas.informe) */
+  async paginas(l, op) {
     const d = this.datos(l);
+    d.hojaT = Boolean(op && op.tiempos) && d.conHoras.length > 0;
     await Rutas.logoListo();
     await Rutas.imagenesListas(d.vs);
     await Firma.traer().catch(() => false);
     await this.firmaLista();
     /* Las hojas de «Tiempos de cada viaje»: las que hagan falta para todos los viajes con horas, en orden de día y hora */
-    const filas = d.conHoras.slice().sort((a, b) => a.v.fecha.localeCompare(b.v.fecha) || Rutas.enOrden(a.v, b.v)), fph = this.filasPorHoja(155), grupos = [];
+    const filas = d.hojaT ? d.conHoras.slice().sort((a, b) => a.v.fecha.localeCompare(b.v.fecha) || Rutas.enOrden(a.v, b.v)) : [], fph = this.filasPorHoja(155), grupos = [];
     for (let i = 0; i < filas.length; i += fph) grupos.push(filas.slice(i, i + fph));
     const total = 2 + grupos.length;
     return [this.hoja1(d, total), this.hoja2(d, total)].concat(grupos.map((f, i) => this.hojaTiempos(d, f, 3 + i, total, i === 0)));
@@ -25552,6 +25565,9 @@ const Rutas = {
         '</option>').join('') + '</optgroup></select>';
     /* Arriba, el informe de la última semana liquidada para el gerente (Juan, 24/11/2026; ver Rutas.informe) */
     const bar = '<div class="toolbar rt-tool"><label class="rt-hper" for="rtHMes">Período</label>' + sel + '<span class="tb-sp"></span>' +
+      /* El interruptor de la hoja «Tiempos de cada viaje» (Juan, 24/11/2026): vale para los dos botones del informe */
+      (ls.length ? '<label class="rt-sw" title="Agrega al informe la hoja «Tiempos de cada viaje», con cada viaje por partes. Apagado, el informe sale con las hojas 1 y 2">' +
+        '<input type="checkbox" data-act="rtInfTiempos"' + (Prefs.get('rutasInfTiempos') === true ? ' checked' : '') + '>Tiempos de cada viaje</label>' : '') +
       (ls.length ? '<button type="button" class="btn btn-primary" data-act="rtInforme" data-v="' + ls[0] + '" title="El informe de la última semana liquidada, para el gerente, en PDF">' +
         Icon('pdf', '', 14) + 'Informe semana ' + esc(this.semanaCorta(ls[0])) + '</button>' : '') +
       '<button type="button" class="btn" data-act="rtHExcel"' + (vs.length ? '' : ' disabled') + ' title="Los viajes liquidados del período, con sus resúmenes, en un Excel">' +
@@ -25810,7 +25826,7 @@ const Rutas = {
     if (el) { el.disabled = true; el.textContent = 'Armando el informe…'; }
     const nombre = 'Informe de rutas - semana ' + this.semanaAño(l) + '.pdf';
     try {
-      const hojas = await InformeRutas.paginas(l);
+      const hojas = await InformeRutas.paginas(l, { tiempos: Prefs.get('rutasInfTiempos') === true });
       const blob = await this.pdfDeLienzos(hojas, 'Informe semanal de rutas - Semana ' + this.semanaAño(l), { sinPerdida: true });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -27917,6 +27933,11 @@ Object.assign(Acciones, {
   rtHExcel(el) { if (!el.disabled) Rutas.hExcel(); },
   /* El informe de la semana para el gerente, en PDF (ver Rutas.informe e InformeRutas) */
   rtInforme(el) { if (!el.disabled) Rutas.informe(el.dataset.v, el); },
+  /* El interruptor de la hoja «Tiempos de cada viaje» del informe: se acuerda en este equipo */
+  rtInfTiempos(el) {
+    Prefs.set('rutasInfTiempos', el.checked);
+    Toast.show(el.checked ? 'El informe va a llevar también la hoja <b>Tiempos de cada viaje</b>.' : 'El informe sale con las hojas 1 y 2, sin <b>Tiempos de cada viaje</b>.');
+  },
   rtIrSemana(el) {
     UIState.rutas.tab = 'semana';
     UIState.rutas.semana = el.dataset.v === Rutas.lunes(hoyISO) ? null : el.dataset.v;
