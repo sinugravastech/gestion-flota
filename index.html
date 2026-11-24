@@ -754,6 +754,8 @@ html[data-theme="dark"] .dias.d-warn{color:var(--warn-500)}
 /* Taller SINUGRAVAS: el mes de las tarjetas */
 .tk-mes{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:-2px 0 10px;font-size:12.5px;color:var(--text-2)}
 .tk-mes .inp{width:auto;min-width:200px}
+/* Rutas → Histórico: «Informe PDF» y «Ver la semana» en la misma fila (ver Rutas.historico) */
+.rt-ht td.tr .btn + .btn{margin-left:6px}
 /* Taller SINUGRAVAS: arriba, el buscador y el mes de las tarjetas (ver TallerBusca) */
 .tb-arriba{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;margin:-2px 0 12px}
 .tb-arriba .tk-mes{margin:0 0 0 auto}
@@ -23864,6 +23866,358 @@ const Router = {
   }
 };
 
+/* El informe semanal de Rutas para el gerente (Juan, 24/11/2026: «un botoncito como para descargar algún tipo de informe… en PDF,
+   bastante gráfico… que yo se le pueda pasar al gerente cada semana cuando ya terminan todos los recorridos»). Dos hojas carta
+   dibujadas en un lienzo, como «Copiar imagen», y juntas en un PDF. Lo impreso va solo en el azul de la marca y en azules muy claros,
+   sin recuadros llenos, porque se suele imprimir en blanco y negro.
+   · Hoja 1: los números de la semana (con la semana anterior al lado), los viajes por día, el peso por tipo de operación y cada camión.
+   · Hoja 2: los tiempos (las esperas para cargar y descargar, el cargue, el viaje y el descargue), dónde más se espera para cargar, las
+     rutas, lo que hay que revisar (lo que no se hizo, lo que no tiene peso y la mayor diferencia de peso) y la firma del responsable.
+   Usa lo mismo que «Histórico» y «Liquidar semana» (Rutas.suma, grupos y medir), así los números son los mismos */
+const InformeRutas = {
+  W: 816, H: 1056, M: 48,
+  C: { az: '#2a52ad', osc: '#1b3474', claro: '#edf1fb', claro2: '#d5def5', linea: '#dde4ea', t1: '#161d24', t2: '#4e5d6b', t3: '#6b7c8c' },
+
+  /* ---- Los datos de la semana ---- */
+  datos(l) {
+    const R = Rutas, vs = R.deSemana(l).sort((a, b) => a.fecha.localeCompare(b.fecha) || R.enOrden(a, b)), h = vs.filter(v => v.estado !== 'no');
+    const ant = R.deSemana(R.mas(l, -7));
+    const ms = h.map(v => { const o = { v }; Object.keys(R.MED).forEach(k => { o[k] = R.medir(v, k); }); return o; });
+    const prom = k => {
+      const ys = ms.filter(x => x[k] != null);
+      return ys.length ? { p: Math.round(ys.reduce((a, y) => a + y[k], 0) / ys.length), n: ys.length, max: Math.max(...ys.map(y => y[k])) } : null;
+    };
+    const g = new Map();
+    ms.filter(x => x.espC != null).forEach(x => { const o = (R.ruta(x.v.ruta) || {}).origen || 'Sin sitio'; if (!g.has(o)) g.set(o, []); g.get(o).push(x.espC); });
+    /* El conductor de cada camión esa semana: el que más viajes hizo en él */
+    const conductorDe = xs => {
+      const c = new Map();
+      xs.forEach(v => { const x = R.conductor(v); if (x) c.set(x.nombre, (c.get(x.nombre) || 0) + 1); });
+      const l2 = [...c.entries()].sort((a, b) => b[1] - a[1]);
+      return l2.length ? R.cortoNombre(l2[0][0]) + (l2.length > 1 ? ' y ' + (l2.length - 1) + (l2.length === 2 ? ' más' : ' más') : '') : 'Sin conductor';
+    };
+    return {
+      l, vs, h, s: R.suma(vs), sa: R.suma(ant), antN: ant.length, liq: R.liquidada(l),
+      dias: R.fechas(l).map(f => ({ f, n: h.filter(v => v.fecha === f).length, no: vs.filter(v => v.fecha === f && v.estado === 'no').length })),
+      tipos: R.grupos(vs, 'tipo'), camiones: R.grupos(vs, 'camion').map(x => Object.assign(x, { cond: conductorDe(x.xs.filter(v => v.estado !== 'no')) })),
+      rutas: R.grupos(vs, 'ruta'),
+      nCam: new Set(h.map(v => v.unidad)).size, nCond: new Set(h.map(v => (R.conductor(v) || {}).id).filter(Boolean)).size,
+      tiempos: ['espC', 'cargue', 'viaje', 'espD', 'descargue'].map(k => ({ k, x: prom(k) })),
+      sitios: [...g.entries()].map(([k, xs]) => ({ k, p: Math.round(xs.reduce((a, b) => a + b, 0) / xs.length), n: xs.length })).sort((a, b) => b.p - a.p),
+      no: vs.filter(v => v.estado === 'no'), sinPeso: h.filter(v => v.pesoReal == null),
+      dif: h.filter(v => v.pesoReal != null && v.ton != null).map(v => ({ v, d: v.pesoReal - v.ton })).sort((a, b) => Math.abs(b.d) - Math.abs(a.d))[0] || null
+    };
+  },
+
+  /* ---- Para dibujar ---- */
+  lienzo() {
+    const k = 3, c = document.createElement('canvas');
+    c.width = this.W * k;
+    c.height = this.H * k;
+    const g = c.getContext('2d');
+    g.scale(k, k);
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, this.W, this.H);
+    return { c, g };
+  },
+  letra(g, peso, tam) { g.font = peso + ' ' + tam + 'px ' + Rutas.IMG.letra; },
+  txt(g, s, x, y, color, peso, tam, alinear) {
+    this.letra(g, peso, tam);
+    g.fillStyle = color;
+    g.textAlign = alinear || 'left';
+    g.fillText(s, x, y);
+    g.textAlign = 'left';
+  },
+  ancho(g, s, peso, tam) { this.letra(g, peso, tam); return g.measureText(s).width; },
+  corta(g, s, w, peso, tam) {
+    this.letra(g, peso, tam);
+    s = String(s || '');
+    if (g.measureText(s).width <= w) return s;
+    while (s.length > 1 && g.measureText(s + '…').width > w) s = s.slice(0, -1);
+    return s.trimEnd() + '…';
+  },
+  /* Una barra que crece desde la izquierda, con la punta redondeada y la base recta; y una columna que crece desde abajo */
+  barra(g, x, y, w, h, color) {
+    if (w <= 0) return;
+    const r = Math.min(4, w, h / 2);
+    g.fillStyle = color;
+    g.beginPath();
+    g.moveTo(x, y);
+    g.lineTo(x + w - r, y);
+    g.quadraticCurveTo(x + w, y, x + w, y + r);
+    g.lineTo(x + w, y + h - r);
+    g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    g.lineTo(x, y + h);
+    g.closePath();
+    g.fill();
+  },
+  columna(g, x, base, w, h, color) {
+    if (h <= 0) return;
+    const r = Math.min(4, h, w / 2);
+    g.fillStyle = color;
+    g.beginPath();
+    g.moveTo(x, base);
+    g.lineTo(x, base - h + r);
+    g.quadraticCurveTo(x, base - h, x + r, base - h);
+    g.lineTo(x + w - r, base - h);
+    g.quadraticCurveTo(x + w, base - h, x + w, base - h + r);
+    g.lineTo(x + w, base);
+    g.closePath();
+    g.fill();
+  },
+  /* El título de una parte: en azul oscuro, con una raya azul clara debajo (sin relleno) */
+  seccion(g, x, y, w, titulo, sub) {
+    const C = this.C;
+    this.txt(g, titulo, x, y, C.osc, '700', 14);
+    if (sub) this.txt(g, sub, x + this.ancho(g, titulo, '700', 14) + 10, y, C.t3, '400', 10.5);
+    g.fillStyle = C.claro2;
+    g.fillRect(x, y + 7, w, 1);
+  },
+  /* Frente a la semana pasada, corto para que quepa en el cuadro: «▲ 12,4 % más que la pasada», «▼ 2 viajes menos que la pasada» */
+  cambio(a, b, como) {
+    if (!b) return '';
+    const d = a - b, p = Math.round(d / b * 1000) / 10;
+    if (!d || (como !== 'n' && !p)) return '= igual que la semana pasada';
+    return (d > 0 ? '▲ ' : '▼ ') + (como === 'n' ? Math.abs(d) + ' ' + (Math.abs(d) === 1 ? 'viaje' : 'viajes') : Math.abs(p).toLocaleString('es-CO') + ' %') +
+      ' ' + (d > 0 ? 'más' : 'menos') + ' que la pasada';
+  },
+  /* Un número grande en su cuadro, con lo que es arriba, lo que dice debajo y el cambio frente a la semana anterior */
+  cuadro(g, x, y, w, h, label, valor, unidad, meta, cambio) {
+    const C = this.C;
+    Rutas.caja(g, x + 0.5, y + 0.5, w - 1, h - 1, 10);
+    g.strokeStyle = C.claro2;
+    g.lineWidth = 1;
+    g.stroke();
+    this.txt(g, label.toUpperCase(), x + 12, y + 21, C.t2, '600', 9.5);
+    this.txt(g, valor, x + 12, y + 48, C.t1, '600', 22);
+    if (unidad) this.txt(g, unidad, x + 14 + this.ancho(g, valor, '600', 22), y + 48, C.t2, '400', 12);
+    this.letra(g, '400', 10);
+    (Array.isArray(meta) ? meta.map(r => this.corta(g, r, w - 24, '400', 10)) : Rutas.renglones(g, meta, w - 24, 2))
+      .forEach((r, i) => this.txt(g, r, x + 12, y + 66 + i * 13, C.t3, '400', 10));
+    if (cambio) this.txt(g, this.corta(g, cambio, w - 24, '600', 10), x + 12, y + h - 11, C.az, '600', 10);
+  },
+  /* Lo de abajo de cada hoja */
+  pie(g, hoja, total) {
+    const C = this.C, y = this.H - 30;
+    g.fillStyle = C.linea;
+    g.fillRect(this.M, y - 14, this.W - 2 * this.M, 1);
+    this.txt(g, 'Generado por el Sistema de Gestión de Flota de SINUGRAVAS S.A.S. · ' + Rutas.cuando(new Date().toISOString()), this.M, y, C.t3, '400', 9.5);
+    this.txt(g, 'Hoja ' + hoja + ' de ' + total, this.W - this.M, y, C.t3, '400', 9.5, 'right');
+  },
+  /* Arriba: el logo, el título y la semana. En la segunda hoja, más pequeño */
+  cabeza(g, d, chica) {
+    const C = this.C, M = this.M, img = Rutas._logo, h = chica ? 26 : 42, y0 = chica ? 36 : 38;
+    let x = M;
+    if (img && img.naturalWidth) { const w = h * img.naturalWidth / img.naturalHeight; g.drawImage(img, M, y0, w, h); x += w + 18; }
+    g.fillStyle = C.linea;
+    g.fillRect(x - 9, y0 + 3, 1, h - 6);
+    const sem = 'Semana ' + Rutas.semanaAño(d.l);
+    if (chica) {
+      this.txt(g, 'Informe semanal de rutas', x, y0 + 18, C.osc, '700', 13);
+      this.txt(g, sem, x + this.ancho(g, 'Informe semanal de rutas', '700', 13) + 10, y0 + 18, C.t2, '400', 11.5);
+    } else {
+      this.txt(g, 'Informe semanal de rutas', x, y0 + 21, C.osc, '700', 21);
+      this.txt(g, sem, x, y0 + 40, C.t2, '400', 13);
+      if (d.liq) this.txt(g, 'Liquidada el ' + Rutas.cuando(d.liq.f), this.W - M, y0 + 21, C.t3, '400', 10.5, 'right');
+      this.txt(g, Rutas.pl(d.nCam, 'camión', 'camiones') + ' · ' + Rutas.pl(d.nCond, 'conductor', 'conductores'), this.W - M, y0 + 40, C.t3, '400', 10.5, 'right');
+    }
+    const yr = chica ? 74 : 96;
+    g.fillStyle = C.az;
+    g.fillRect(M, yr, this.W - 2 * M, 1.5);
+    return yr;
+  },
+
+  /* ---- Hoja 1 ---- */
+  hoja1(d) {
+    const { c, g } = this.lienzo(), C = this.C, M = this.M, W = this.W, R = Rutas, s = d.s, sa = d.sa;
+    let y = this.cabeza(g, d) + 18;
+    /* Los números de la semana */
+    const cs = [['Viajes hechos', String(s.n), '', 'De ' + (s.n + s.no) + ' programados' + (s.no ? ' · ' + (s.no === 1 ? '1 no se hizo' : s.no + ' no se hicieron') : ''), this.cambio(s.n, sa.n, 'n')],
+      ['Peso real', s.conPeso ? R.miles(R.kg(s.real)) : '—', s.conPeso ? 'kg' : '', s.conPeso ? R.pl(s.conPeso, 'viaje con peso de báscula', 'viajes con peso de báscula') : 'Sin peso de báscula todavía',
+        sa.conPeso && s.conPeso ? this.cambio(s.real, sa.real) : ''],
+      ['Valor de la semana', s.conValor ? Money.compacto(s.valor) : '—', '', s.conValor ? Money.format(s.valor) + (R.valorNota(s) ? ' · ' + R.valorNota(s) : '') : 'Sus rutas no tienen valor',
+        sa.conValor && s.conValor ? this.cambio(s.valor, sa.valor) : '']];
+    if (s.fruta) cs.push(['Racimos', s.conRac ? R.miles(s.rac) : '—', '', R.racNota(s), sa.conRac && s.conRac ? this.cambio(s.rac, sa.rac) : '']);
+    const gap = 10, cw = (W - 2 * M - gap * (cs.length - 1)) / cs.length, ch = 104;
+    cs.forEach((x, i) => this.cuadro(g, M + i * (cw + gap), y, cw, ch, x[0], x[1], x[2], x[3], x[4]));
+    y += ch + 30;
+    /* Los viajes por día (columnas) y el peso por tipo (barras), lado a lado */
+    const mitad = (W - 2 * M - 28) / 2, alto = Math.max(196, this.porTipoAlto(d));
+    this.porDia(g, M, y, mitad, 196, d);
+    this.porTipo(g, M + mitad + 28, y, mitad, d);
+    y += alto + 34;
+    this.porCamion(g, M, y, W - 2 * M, d);
+    this.pie(g, 1, 2);
+    return c;
+  },
+  porDia(g, x, y, w, h, d) {
+    const C = this.C, R = Rutas;
+    this.seccion(g, x, y, w, 'Viajes por día');
+    const top = y + 34, base = y + h - 30, max = Math.max(1, ...d.dias.map(z => z.n)), tope = Math.max(2, Math.ceil(max / 2) * 2), eje = 22;
+    /* Las rayas de fondo, finas: 0, la mitad y el tope */
+    [0, tope / 2, tope].forEach(t => {
+      const yy = base - (base - top) * t / tope;
+      g.fillStyle = C.linea;
+      g.fillRect(x + eje, Math.round(yy) + 0.5, w - eje, 1);
+      this.txt(g, String(t), x + eje - 6, yy + 3.5, C.t3, '400', 9, 'right');
+    });
+    const slot = (w - eje) / 7, cw = Math.min(24, slot * 0.46);
+    d.dias.forEach((z, i) => {
+      const cx = x + eje + slot * i + slot / 2, hh = (base - top) * z.n / tope;
+      this.columna(g, cx - cw / 2, base, cw, hh, C.az);
+      if (z.n) this.txt(g, String(z.n), cx, base - hh - 5, C.t1, '600', 10.5, 'center');
+      this.txt(g, R.DIAS[i].slice(0, 3) + ' ' + +z.f.slice(8), cx, base + 15, C.t2, '400', 9.5, 'center');
+      if (z.no) this.txt(g, z.no === 1 ? '1 no se hizo' : z.no + ' no se hicieron', cx, base + 27, C.t3, '400', 8, 'center');
+    });
+  },
+  /* Cada tipo con su barra; con más de cuatro, más juntos. Lo que mide la parte, para que lo de abajo empiece después */
+  tipoPaso: d => (d.tipos.length > 5 ? 40 : d.tipos.length > 4 ? 44 : 47),
+  porTipoAlto(d) { return 34 + (Math.min(6, d.tipos.length) - 1) * this.tipoPaso(d) + 30; },
+  porTipo(g, x, y, w, d) {
+    const C = this.C, R = Rutas, paso = this.tipoPaso(d);
+    this.seccion(g, x, y, w, 'Peso por tipo de operación');
+    const max = Math.max(1, ...d.tipos.map(t => t.real || t.ton));
+    let yy = y + 34;
+    d.tipos.slice(0, 6).forEach(t => {
+      const ic = (R._iconos || new Map()).get(t.k), val = t.conPeso ? R.kgTxt(t.real) : R.tonTxt(t.ton) + ' programadas';
+      let tx = x;
+      if (ic) { g.drawImage(ic, x, yy - 11, 14, 14); tx += 19; }
+      this.txt(g, this.corta(g, t.k, w * 0.55, '600', 11.5), tx, yy, C.t1, '600', 11.5);
+      this.txt(g, val, x + w, yy, C.t1, '600', 11, 'right');
+      Rutas.caja(g, x, yy + 6, w, 8, 4);
+      g.fillStyle = C.claro;
+      g.fill();
+      this.barra(g, x, yy + 6, w * (t.real || t.ton) / max, 8, C.az);
+      this.txt(g, R.pl(t.n, 'viaje', 'viajes') + (t.conValor ? ' · ' + Money.compacto(t.valor) : '') + (t.sinPeso ? ' · ' + t.sinPeso + ' sin peso' : ''), x, yy + 27, C.t3, '400', 9.5);
+      yy += paso;
+    });
+  },
+  porCamion(g, x, y, w, d) {
+    const C = this.C, R = Rutas;
+    this.seccion(g, x, y, w, 'Por camión', 'del que más viajes hizo al que menos');
+    const max = Math.max(1, ...d.camiones.map(z => z.n)), x1 = x + 190, x2 = x + w - 196;
+    /* Los que caben antes del pie; si no caben todos, el último renglón dice cuántos faltan */
+    const cabe = Math.floor((this.H - 74 - (y + 22)) / 40), van = d.camiones.length > cabe ? cabe - 1 : d.camiones.length;
+    let yy = y + 22;
+    d.camiones.slice(0, van).forEach(z => {
+      const u = Q.unidad(z.k);
+      if (u) R.dibFoto(g, u, x, yy, 44, 30);
+      this.txt(g, R.placa(z.k), x + 54, yy + 13, C.t1, '700', 12);
+      if (u && Q.tercero(u)) this.txt(g, 'Tercero', x + 60 + this.ancho(g, R.placa(z.k), '700', 12), yy + 13, C.t3, '400', 9.5);
+      this.txt(g, this.corta(g, z.cond, 124, '400', 10), x + 54, yy + 27, C.t3, '400', 10);
+      Rutas.caja(g, x1, yy + 11, x2 - x1, 8, 4);
+      g.fillStyle = C.claro;
+      g.fill();
+      this.barra(g, x1, yy + 11, (x2 - x1) * z.n / max, 8, C.az);
+      this.txt(g, R.pl(z.n, 'viaje', 'viajes'), x + w, yy + 13, C.t1, '600', 11.5, 'right');
+      this.txt(g, [z.conPeso ? R.kgTxt(z.real) : '', z.conValor ? Money.compacto(z.valor) : ''].filter(Boolean).join(' · ') || '—', x + w, yy + 27, C.t3, '400', 10, 'right');
+      yy += 40;
+    });
+    if (d.camiones.length > van) this.txt(g, 'y ' + R.pl(d.camiones.length - van, 'camión más', 'camiones más') + ', en el Excel del histórico', x, yy + 8, C.t3, '400', 10);
+  },
+
+  /* ---- Hoja 2 ---- */
+  hoja2(d) {
+    const { c, g } = this.lienzo(), C = this.C, M = this.M, W = this.W, R = Rutas;
+    let y = this.cabeza(g, d, true) + 34;
+    /* Los tiempos */
+    this.seccion(g, M, y, W - 2 * M, 'Tiempos de los viajes', 'el promedio de los viajes que tienen las dos horas');
+    y += 20;
+    const gap = 10, cw = (W - 2 * M - gap * 4) / 5, ch = 86;
+    d.tiempos.forEach((t, i) => {
+      const x = M + i * (cw + gap);
+      this.cuadro(g, x, y, cw, ch, R.MED[t.k].n, t.x ? R.durTxt(t.x.p) : '—', '', t.x ? [R.pl(t.x.n, 'viaje', 'viajes'), 'La más larga: ' + R.durTxt(t.x.max)] : ['Sin viajes con', 'las dos horas'], '');
+    });
+    y += ch + 34;
+    /* Dónde más se espera para cargar */
+    this.seccion(g, M, y, W - 2 * M, 'Dónde más se espera para cargar', 'el promedio por sitio de cargue');
+    y += 30;
+    const sit = d.sitios.slice(0, 6), maxS = Math.max(1, ...sit.map(z => z.p)), x1 = M + 200, x2 = W - M - 150;
+    if (!sit.length) { this.txt(g, 'Ningún viaje tiene todavía las horas de llegar al sitio y de empezar a cargar.', M, y, C.t3, '400', 10.5); y += 20; }
+    sit.forEach(z => {
+      this.txt(g, this.corta(g, z.k, 190, '600', 11), M, y + 3, C.t1, '600', 11);
+      Rutas.caja(g, x1, y - 5, x2 - x1, 8, 4);
+      g.fillStyle = C.claro;
+      g.fill();
+      this.barra(g, x1, y - 5, (x2 - x1) * z.p / maxS, 8, C.az);
+      this.txt(g, R.durTxt(z.p), W - M - 52, y + 3, C.t1, '600', 11, 'right');
+      this.txt(g, R.pl(z.n, 'viaje', 'viajes'), W - M, y + 3, C.t3, '400', 10, 'right');
+      y += 26;
+    });
+    y += 20;
+    /* Las rutas */
+    this.seccion(g, M, y, W - 2 * M, 'Por ruta', 'de la que más viajes tuvo a la que menos');
+    y += 26;
+    const cols = [[M, 'Ruta', 'left'], [M + 330, 'Tipo', 'left'], [W - M - 210, 'Viajes', 'right'], [W - M - 100, 'Peso real', 'right'], [W - M, 'Valor', 'right']];
+    cols.forEach(cx => this.txt(g, cx[1].toUpperCase(), cx[0], y, C.t2, '600', 9, cx[2]));
+    y += 8;
+    g.fillStyle = C.linea;
+    g.fillRect(M, y, W - 2 * M, 1);
+    const rs = d.rutas.slice(0, 8);
+    rs.forEach(z => {
+      const r = R.ruta(z.k) || {};
+      y += 20;
+      this.txt(g, this.corta(g, R.nombre(r) + (r.cliente ? ' · ' + r.cliente : ''), 318, '400', 10.5), M, y, C.t1, '400', 10.5);
+      this.txt(g, this.corta(g, r.tipo || '', 150, '400', 10.5), M + 330, y, C.t2, '400', 10.5);
+      this.txt(g, String(z.n), W - M - 210, y, C.t1, '600', 10.5, 'right');
+      this.txt(g, z.conPeso ? R.kgTxt(z.real) : '—', W - M - 100, y, C.t1, '400', 10.5, 'right');
+      this.txt(g, z.conValor ? Money.format(z.valor) : '—', W - M, y, C.t1, '400', 10.5, 'right');
+      g.fillStyle = C.linea;
+      g.fillRect(M, y + 7, W - 2 * M, 0.6);
+    });
+    if (d.rutas.length > rs.length) { y += 18; this.txt(g, 'y ' + R.pl(d.rutas.length - rs.length, 'ruta más', 'rutas más') + ', en el Excel del histórico', M, y, C.t3, '400', 10); }
+    y += 36;
+    /* Para revisar */
+    this.seccion(g, M, y, W - 2 * M, 'Para revisar');
+    y += 24;
+    const lista = [];
+    d.no.forEach(v => lista.push('No se hizo: ' + R.diaSem(v.fecha).toLowerCase() + ' ' + R.dia(v.fecha) + ' · ' + R.placa(v.unidad) + ' · ' + R.nombre(R.ruta(v.ruta)) + (v.nota ? ' — ' + v.nota : '')));
+    if (d.sinPeso.length) lista.push(R.pl(d.sinPeso.length, 'viaje sin el peso de la báscula', 'viajes sin el peso de la báscula') + ': ' +
+      d.sinPeso.slice(0, 4).map(v => R.placa(v.unidad) + ' el ' + R.diaSem(v.fecha).toLowerCase() + ' ' + R.dia(v.fecha)).join(', ') + (d.sinPeso.length > 4 ? ' y ' + (d.sinPeso.length - 4) + ' más' : '') + '.');
+    if (d.dif && Math.abs(d.dif.d) >= 0.5) lista.push('La mayor diferencia de peso: ' + R.placa(d.dif.v.unidad) + ' el ' + R.diaSem(d.dif.v.fecha).toLowerCase() + ' ' + R.dia(d.dif.v.fecha) + ', ' +
+      R.difTxt(d.dif.d) + ' frente a lo programado (' + R.tonTxt(d.dif.v.ton) + ').');
+    if (!lista.length) lista.push('Nada: todos los viajes se hicieron y tienen su peso.');
+    this.letra(g, '400', 10.5);
+    lista.slice(0, 6).forEach(t => {
+      g.fillStyle = C.az;
+      g.beginPath();
+      g.arc(M + 4, y - 4, 2.2, 0, Math.PI * 2);
+      g.fill();
+      Rutas.renglones(g, t, W - 2 * M - 14, 2).forEach((r, i) => this.txt(g, r, M + 14, y + i * 14, C.t1, '400', 10.5));
+      y += Rutas.renglones(g, t, W - 2 * M - 14, 2).length * 14 + 6;
+    });
+    /* La firma del responsable de flota, como en los demás documentos */
+    this.firma(g, Math.max(y + 24, this.H - 190));
+    this.pie(g, 2, 2);
+    return c;
+  },
+  firma(g, y) {
+    const C = this.C, r = Firma.datos(), im = this._firma, cx = this.W / 2, w = 240;
+    if (im && im.naturalWidth && r.nombre) { const h = 54, fw = Math.min(w, h * im.naturalWidth / im.naturalHeight); g.drawImage(im, cx - fw / 2, y, fw, h); }
+    g.fillStyle = C.t1;
+    g.fillRect(cx - w / 2, y + 60, w, 1);
+    if (r.nombre) {
+      this.txt(g, r.nombre, cx, y + 76, C.t1, '700', 11, 'center');
+      this.txt(g, [r.cedula ? 'C.C. ' + r.cedula : '', r.profesion].filter(Boolean).join(' · '), cx, y + 90, C.t2, '400', 10, 'center');
+      this.txt(g, 'Responsable de flota', cx, y + 104, C.t3, '400', 10, 'center');
+    } else this.txt(g, 'Responsable de flota', cx, y + 76, C.t1, '700', 11, 'center');
+  },
+  /* La firma, si ya está en este equipo */
+  firmaLista() {
+    const u = Firma.url();
+    if (!u) { this._firma = null; return Promise.resolve(); }
+    return new Promise(ok => { const im = new Image(); im.onload = () => { this._firma = im; ok(); }; im.onerror = () => { this._firma = null; ok(); }; im.src = u; });
+  },
+  async paginas(l) {
+    const d = this.datos(l);
+    await Rutas.logoListo();
+    await Rutas.imagenesListas(d.vs);
+    await Firma.traer().catch(() => false);
+    await this.firmaLista();
+    return [this.hoja1(d), this.hoja2(d)];
+  }
+};
+
 /* ==========================================================================
    §R  RUTAS — la programación semanal de los viajes (Juan, 04/11/2026), para
        reemplazar el Excel del cronograma: el maestro de rutas (las 16 del
@@ -25043,7 +25397,10 @@ const Rutas = {
         ((st.hMes || mesHoy) === m ? ' selected' : '') + '>' + esc(Fecha.mes(Fecha.parse(m + '-01'))) + (m === mesHoy ? ' · este mes' : '') + '</option>').join('') +
       '</optgroup><optgroup label="Más tiempo">' + Plano.PERIODOS.map(o => '<option value="' + o[0] + '"' + (st.hMes === o[0] ? ' selected' : '') + '>' + esc(o[1]) +
         '</option>').join('') + '</optgroup></select>';
+    /* Arriba, el informe de la última semana liquidada para el gerente (Juan, 24/11/2026; ver Rutas.informe) */
     const bar = '<div class="toolbar rt-tool"><label class="rt-hper" for="rtHMes">Período</label>' + sel + '<span class="tb-sp"></span>' +
+      (ls.length ? '<button type="button" class="btn btn-primary" data-act="rtInforme" data-v="' + ls[0] + '" title="El informe de la última semana liquidada, para el gerente, en PDF">' +
+        Icon('pdf', '', 14) + 'Informe semana ' + esc(this.semanaCorta(ls[0])) + '</button>' : '') +
       '<button type="button" class="btn" data-act="rtHExcel"' + (vs.length ? '' : ' disabled') + ' title="Los viajes liquidados del período, con sus resúmenes, en un Excel">' +
         Icon('download', '', 14) + 'Descargar en Excel</button></div>';
     if (!ls.length) return '<div class="rt-hpag">' + bar + '<div class="card">' + UI.empty('list', 'Todavía no hay semanas liquidadas',
@@ -25079,7 +25436,9 @@ const Rutas = {
         return '<tr><td><b>' + esc('Semana ' + this.semanaTxt(l)) + '</b>' + (parte ? '<div class="dias">Solo sus días ' + esc(per.txt) + '</div>' : '') + '</td>' +
           '<td class="nowrap">' + esc(lq.f ? this.cuando(lq.f) : '—') + '</td><td class="num">' + x.n + '</td><td class="num nowrap">' + esc(this.tonTxt(x.ton)) + '</td>' +
           '<td class="num nowrap">' + (x.conPeso ? esc(this.kgTxt(x.real)) : '—') + '</td><td class="num">' + (x.sinPeso ? '<span class="rt-sinp">' + x.sinPeso + '</span>' : '—') +
-          '</td><td class="num nowrap">' + this.valorCelda(x) + '</td><td class="tr"><button type="button" class="btn btn-sm" data-act="rtIrSemana" data-v="' + l + '">' + Icon('calendar', '', 12) + 'Ver la semana</button></td></tr>';
+          '</td><td class="num nowrap">' + this.valorCelda(x) + '</td><td class="tr nowrap"><button type="button" class="btn btn-sm btn-primary" data-act="rtInforme" data-v="' + l + '" ' +
+            'title="El informe de esta semana, para el gerente, en PDF">' + Icon('pdf', '', 12) + 'Informe PDF</button>' +
+            '<button type="button" class="btn btn-sm" data-act="rtIrSemana" data-v="' + l + '">' + Icon('calendar', '', 12) + 'Ver la semana</button></td></tr>';
       }).join('') + '</tbody></table></div>' : UI.empty('calendar', 'No hay semanas liquidadas ' + esc(per.txt), 'Escoja otro período arriba.'), { flush: true });
     return '<div class="rt-hpag">' + bar + kpis + (vs.length ? '<div class="grid g2 mb16">' + tabla('tipo', 'Por tipo de operación', 'Tipo') +
       tabla('camion', 'Por camión', 'Camión') + tabla('conductor', 'Por conductor', 'Conductor') + tabla('ruta', 'Por ruta', 'Ruta') + '</div>' : '') +
@@ -25232,31 +25591,70 @@ const Rutas = {
       Toast.show('No se pudo armar el PDF: ' + esc(e.message) + '.', 'err');
     }
   },
-  /* Un PDF de una sola hoja con la imagen en JPEG, del tamaño de ella. Se arma aquí mismo, sin librerías */
-  async pdfDeLienzo(c, titulo) {
-    const b = await new Promise((ok, mal) => c.toBlob(x => (x ? ok(x) : mal(new Error('no se pudo armar la imagen'))), 'image/jpeg', 0.95));
-    const jpg = new Uint8Array(await b.arrayBuffer()), pw = (c.width / 4).toFixed(2), ph = (c.height / 4).toFixed(2);
-    const enc = new TextEncoder(), partes = [], pos = [];
+  /* Un PDF con una hoja por lienzo, cada una con su imagen en JPEG y del tamaño de ella (el ancho en px / 4, en puntos). Se arma aquí
+     mismo, sin librerías. El de los conductores tiene una hoja y sale igual que antes; el informe de la semana, dos (ver InformeRutas) */
+  async pdfDeLienzos(cs, titulo) {
+    const jpgs = await Promise.all(cs.map(c => new Promise((ok, mal) => c.toBlob(x => (x ? ok(x) : mal(new Error('no se pudo armar la imagen'))), 'image/jpeg', 0.95))
+      .then(x => x.arrayBuffer()).then(x => new Uint8Array(x))));
+    const enc = new TextEncoder(), partes = [], pos = [], info = 3 + 3 * cs.length;
     let n = 0;
     const poner = x => { const y = typeof x === 'string' ? enc.encode(x) : x; partes.push(y); n += y.length; };
     const obj = (i, cuerpo) => { pos[i] = n; poner(i + ' 0 obj\n' + cuerpo + '\nendobj\n'); };
     const texto = s => sinTildes(String(s || '')).replace(/[^\x20-\x7E]/g, '').replace(/([()\\])/g, '\\$1');
-    poner('%PDF-1.4\n%\u00e2\u00e3\u00cf\u00d3\n');
+    poner('%PDF-1.4\n%âãÏÓ\n');
     obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
-    obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
-    obj(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pw + ' ' + ph + '] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
-    pos[4] = n;
-    poner('4 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + c.width + ' /Height ' + c.height +
-      ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpg.length + ' >>\nstream\n');
-    poner(jpg);
-    poner('\nendstream\nendobj\n');
-    const dibujo = 'q ' + pw + ' 0 0 ' + ph + ' 0 0 cm /Im0 Do Q';
-    obj(5, '<< /Length ' + dibujo.length + ' >>\nstream\n' + dibujo + '\nendstream');
-    obj(6, '<< /Title (' + texto(titulo) + ') /Producer (SINUGRAVAS - Sistema de Gestion de Flota) >>');
+    obj(2, '<< /Type /Pages /Kids [' + cs.map((c, i) => (3 + 3 * i) + ' 0 R').join(' ') + '] /Count ' + cs.length + ' >>');
+    /* Cada hoja: la hoja (p), su imagen (p + 1) y lo que la dibuja (p + 2) */
+    cs.forEach((c, i) => {
+      const p = 3 + 3 * i, pw = (c.width / 4).toFixed(2), ph = (c.height / 4).toFixed(2), jpg = jpgs[i];
+      obj(p, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pw + ' ' + ph + '] /Resources << /XObject << /Im0 ' + (p + 1) + ' 0 R >> >> /Contents ' + (p + 2) + ' 0 R >>');
+      pos[p + 1] = n;
+      poner((p + 1) + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + c.width + ' /Height ' + c.height +
+        ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpg.length + ' >>\nstream\n');
+      poner(jpg);
+      poner('\nendstream\nendobj\n');
+      const dibujo = 'q ' + pw + ' 0 0 ' + ph + ' 0 0 cm /Im0 Do Q';
+      obj(p + 2, '<< /Length ' + dibujo.length + ' >>\nstream\n' + dibujo + '\nendstream');
+    });
+    obj(info, '<< /Title (' + texto(titulo) + ') /Producer (SINUGRAVAS - Sistema de Gestion de Flota) >>');
     const xref = n;
-    poner('xref\n0 7\n0000000000 65535 f \n' + [1, 2, 3, 4, 5, 6].map(i => String(pos[i]).padStart(10, '0') + ' 00000 n \n').join('') +
-      'trailer\n<< /Size 7 /Root 1 0 R /Info 6 0 R >>\nstartxref\n' + xref + '\n%%EOF\n');
+    poner('xref\n0 ' + (info + 1) + '\n0000000000 65535 f \n' + Array.from({ length: info }, (_, k) => String(pos[k + 1]).padStart(10, '0') + ' 00000 n \n').join('') +
+      'trailer\n<< /Size ' + (info + 1) + ' /Root 1 0 R /Info ' + info + ' 0 R >>\nstartxref\n' + xref + '\n%%EOF\n');
     return new Blob(partes, { type: 'application/pdf' });
+  },
+  pdfDeLienzo(c, titulo) { return this.pdfDeLienzos([c], titulo); },
+  /* «del 16 al 22 nov», «del 30 nov al 6 dic» */
+  semanaCorta(l) {
+    const d = this.mas(l, 6), m = f => this.MES[+f.slice(5, 7) - 1];
+    return 'del ' + +l.slice(8) + (l.slice(5, 7) !== d.slice(5, 7) ? ' ' + m(l) : '') + ' al ' + +d.slice(8) + ' ' + m(d);
+  },
+  /* ---- El informe de la semana para el gerente (Juan, 24/11/2026: «un botoncito como para descargar algún tipo de informe… en PDF,
+     bastante gráfico»): las dos hojas de InformeRutas en un PDF que se descarga de una vez, como el de los conductores ---- */
+  async informe(l, el) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(l || '') || this._informando) return;
+    const vs = this.deSemana(l);
+    if (!vs.length) { Toast.show('La semana ' + esc(this.semanaTxt(l)) + ' no tiene viajes para el informe.', 'warn'); return; }
+    this._informando = true;
+    const antes = el ? el.innerHTML : '';
+    if (el) { el.disabled = true; el.textContent = 'Armando el informe…'; }
+    const nombre = 'Informe de rutas - semana ' + this.semanaAño(l) + '.pdf';
+    try {
+      const hojas = await InformeRutas.paginas(l);
+      const blob = await this.pdfDeLienzos(hojas, 'Informe semanal de rutas - Semana ' + this.semanaAño(l));
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = nombre;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+      Toast.show('Informe descargado: <b>' + esc(nombre) + '</b>, con ' + esc(this.pl(hojas.length, 'hoja', 'hojas')) + '. Listo para mandárselo al gerente.');
+    } catch (e) {
+      Toast.show('No se pudo armar el informe: ' + esc(e.message) + '.', 'err');
+    } finally {
+      this._informando = false;
+      if (el && document.body.contains(el)) { el.disabled = false; el.innerHTML = antes; }
+    }
   },
 
   /* ---- La imagen para pegar en los grupos (Juan, 04/11/2026: «botones que me
@@ -27346,6 +27744,8 @@ Object.assign(Acciones, {
   rtReabrir() { Rutas.reabrir(); },
   rtReabrirSi() { Rutas.reabrirSi(); },
   rtHExcel(el) { if (!el.disabled) Rutas.hExcel(); },
+  /* El informe de la semana para el gerente, en PDF (ver Rutas.informe e InformeRutas) */
+  rtInforme(el) { if (!el.disabled) Rutas.informe(el.dataset.v, el); },
   rtIrSemana(el) {
     UIState.rutas.tab = 'semana';
     UIState.rutas.semana = el.dataset.v === Rutas.lunes(hoyISO) ? null : el.dataset.v;
