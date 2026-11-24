@@ -14539,6 +14539,9 @@ Object.assign(Vistas, {
           : e.k === 'bad' ? '<span class="tx-bad">Ya le tocaba</span>' : '<span class="txt-3 fs12">' + (e.faltan != null ? 'Sin promedio diario' : '—') + '</span>') + '</td>' +
         '<td>' + UI.pill(e.k, e.txt) + '</td>' +
         '<td class="tr nowrap"><button class="btn btn-sm" data-act="cambioAceite" data-u="' + u.id + '">' + Icon('gota', '', 12) + 'Cambio</button> ' +
+          /* La lectura de esta unidad, sin escogerla en la lista (Juan, 24/11/2026; ver Ventanas.lectura) */
+          '<button class="btn btn-sm" data-act="nuevaLectura" data-u="' + u.id + '" title="' + attr('Registrar ' + (u.tipo === 'maquinaria' ? 'el horómetro' : 'el kilometraje') +
+            ' de ' + UI.placaTxt(u)) + '">' + Icon('medidor', '', 12) + 'Lectura</button> ' +
           '<button class="btn btn-sm btn-ghost btn-icon" data-act="editarAceite" data-u="' + u.id + '" title="Frecuencia y último cambio" aria-label="Ajustar el control de ' +
           attr(UI.placaTxt(u)) + '">' + Icon('edit', '', 13) + '</button></td></tr>';
     };
@@ -15738,6 +15741,9 @@ Object.assign(Ventanas, {
     $('#lcU', m).addEventListener('change', pintar);
     $('#lcV', m).addEventListener('input', () => { $('#lcAviso', m).innerHTML = ''; m._aviso = false; });
     pintar();
+    /* Desde el botón «Lectura» de su fila en Cambios de aceite (Juan, 24/11/2026), la unidad ya va escogida: el cursor de una vez en la
+       lectura (la ventana pone el cursor en lo primero, la unidad) */
+    if (o.u) setTimeout(() => { const v = $('#lcV', m); if (v && document.body.contains(m)) v.focus(); }, 60);
   },
 
   /* La frecuencia y el último cambio de una unidad. El último cambio se
