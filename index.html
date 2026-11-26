@@ -2261,6 +2261,22 @@ html[data-theme="dark"] .rt-real{color:var(--ok-500)}
 /* Rutas en el celular (Juan, 26/11/2026; ver RutasCel): de pie, el aviso para girarlo; acostado, la semana completa de lado a lado y la
    bandeja debajo. En el computador nada cambia */
 .rt-girar{display:none}
+/* Los botones − y + del tablero (Juan, 26/11/2026; ver RutasCel.zoom) */
+.rt-zoom{display:inline-flex;align-items:center;gap:1px;padding:2px;border:1px solid var(--border);border-radius:9px;background:var(--surface)}
+.rt-zoom .btn{width:28px;height:28px;padding:0;border:0;background:transparent;box-shadow:none}
+.rt-zoom .btn:hover:not(:disabled){background:var(--surface-2)}
+.rt-zoom .btn:disabled{opacity:.35;cursor:default}
+.rt-zoom-n{all:unset;box-sizing:border-box;min-width:50px;padding:4px 6px;border-radius:6px;text-align:center;font-size:12.5px;font-weight:600;color:var(--text-2);
+  cursor:pointer;font-variant-numeric:tabular-nums}
+.rt-zoom-n:hover{background:var(--surface-2);color:var(--text)}
+.rt-zoom-n:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* En el celular, de pie o acostado: flotando abajo a la derecha, siempre a la mano */
+@media (max-width:760px), (orientation:landscape) and (max-height:520px) and (max-width:1024px){
+  .rt-zoom{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:30;border-color:var(--border-strong);
+    box-shadow:0 8px 22px rgba(16,24,40,.18),0 2px 6px rgba(16,24,40,.08)}
+  .rt-zoom .btn{width:38px;height:36px}
+  .rt-zoom-n{min-width:56px;font-size:13px}
+}
 @media (orientation:portrait) and (max-width:760px){
   .rt-girar{display:flex;align-items:center;gap:9px;margin:0 0 10px;padding:9px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent);
     font-size:12.5px;font-weight:600}
@@ -3650,6 +3666,7 @@ const Icon = (() => {
   const P = {
     dashboard: '<path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
+    menos: '<path d="M5 12h14"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>',
     externo: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>',
     pesos: '<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
@@ -25269,7 +25286,7 @@ const Rutas = {
         /* Liquidar (Juan, 08/11/2026: «liquidación de cronograma»): con el resumen de la semana; liquidada, se cierra y se puede reabrir */
         (liq ? '' : '<button type="button" class="btn" data-act="rtLiquidar" title="Cierra la semana con lo que se hizo: los viajes quedan «Hecho» y ya no se mueven">' +
           Icon('lock', '', 14) + 'Liquidar semana</button>') + '</div>' + (liq ? this.liqBanda(l, liq) : '') +
-      '<div class="rt-cab"><h2 class="rt-titulo">' + esc(this.titulo()) + '</h2>' + this.verHtml() + '</div>' +
+      '<div class="rt-cab"><h2 class="rt-titulo">' + esc(this.titulo()) + '</h2>' + (vista === 'dia' ? '' : RutasCel.control()) + this.verHtml() + '</div>' +
       (UIState.rutas.ver && !UIState.rutas.ver.length ? '<div class="card">' + UI.empty('ruta', 'No hay ningún tipo escogido', 'Marque los tipos de operación que quiere ver.') + '</div>'
         : vista === 'dia' ? this.porDia(l) : this.tablero(l)) + this.leyenda();
   },
@@ -26522,13 +26539,48 @@ const Rutas = {
 const RutasCel = {
   ACOSTADO: '(orientation: landscape) and (max-height: 520px) and (max-width: 1024px)',
   acostado() { return matchMedia(this.ACOSTADO).matches; },
+  /* Los botones − y + (Juan, 26/11/2026: «botoncitos de más y menos para uno hacer zoom… tanto para el PC como para el [celular]… la
+     vista actual… para computador se mantenga… cada vez que recargue la página se restablece»). Lo escogido (zoomU) vale para el
+     tablero de la semana, se queda al cambiar de semana y se pierde al recargar o al voltear el celular */
+  PASOS: [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5],
+  zoomU: null,
+  /* El de entrada: acostado, lo que cabe de lado a lado; si no, 100 % */
+  base(t) {
+    if (!this.acostado()) return 1;
+    const z = (t.parentElement.clientWidth - 1) / t.scrollWidth;
+    return z < 0.995 ? Math.max(0.4, Math.floor(z * 1000) / 1000) : 1;
+  },
   ajustar() {
     $$('.rt-wrap > .rt-tab').forEach(t => {
       t.style.zoom = '';
-      if (!this.acostado()) return;
-      const w = t.parentElement, z = (w.clientWidth - 1) / t.scrollWidth;
-      if (z < 0.995) t.style.zoom = String(Math.max(0.4, Math.floor(z * 1000) / 1000));
+      const z = this.zoomU != null && t.closest('#rtZona') ? this.zoomU : this.base(t);
+      if (Math.abs(z - 1) > 0.004) t.style.zoom = String(z);
     });
+    this.pintarZoom();
+  },
+  actual() { const t = $('#rtZona .rt-tab'); return t ? parseFloat(t.style.zoom) || 1 : 1; },
+  control() {
+    return '<div class="rt-zoom" role="group" aria-label="Tamaño del tablero">' +
+      '<button type="button" class="btn btn-sm btn-icon" data-act="rtZoom" data-v="-1" title="Más pequeño, para ver la semana en general" aria-label="Más pequeño">' +
+        Icon('menos', '', 15) + '</button>' +
+      '<button type="button" class="rt-zoom-n" id="rtZoomN" data-act="rtZoom" data-v="0" title="Volver al tamaño de entrada">100 %</button>' +
+      '<button type="button" class="btn btn-sm btn-icon" data-act="rtZoom" data-v="1" title="Más grande" aria-label="Más grande">' + Icon('plus', '', 15) + '</button></div>';
+  },
+  pintarZoom() {
+    const n = $('#rtZoomN');
+    if (!n) return;
+    const z = this.actual(), c = n.parentElement;
+    n.textContent = Math.round(z * 100) + ' %';
+    $('[data-v="-1"]', c).disabled = z <= this.PASOS[0] + 0.004;
+    $('[data-v="1"]', c).disabled = z >= this.PASOS[this.PASOS.length - 1] - 0.004;
+  },
+  /* d: -1 más pequeño, 1 más grande, 0 el de entrada */
+  zoom(d) {
+    const z = this.actual();
+    if (!d) this.zoomU = null;
+    else if (d < 0) { const p = this.PASOS.filter(x => x < z - 0.004); this.zoomU = p.length ? p[p.length - 1] : this.PASOS[0]; }
+    else { const p = this.PASOS.filter(x => x > z + 0.004); this.zoomU = p.length ? p[0] : this.PASOS[this.PASOS.length - 1]; }
+    this.ajustar();
   },
   /* El tablero arriba, debajo de la barra de arriba */
   subir() {
@@ -26545,6 +26597,8 @@ const RutasCel = {
       this._t = setTimeout(() => {
         if (Router.actual().vista !== 'rutas') return;
         const ahora = this.acostado();
+        /* Al voltear el celular, el tamaño de entrada de esa posición */
+        if (ahora !== antes) this.zoomU = null;
         this.ajustar();
         if (ahora && !antes) this.subir();
         antes = ahora;
@@ -26552,6 +26606,9 @@ const RutasCel = {
     });
   }
 };
+Object.assign(Acciones, {
+  rtZoom(el) { RutasCel.zoom(+el.dataset.v || 0); }
+});
 Vistas.rutas = () => Rutas.vista();
 /* ==========================================================================
    §VC  VENCIMIENTOS Y GARANTÍAS (Juan, 13/11/2026: «en las alertas necesito que pongas lo que es cambio de baterías… un apartado más
