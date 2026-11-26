@@ -24,7 +24,7 @@
   --dang-50:#fdecec;--dang-500:#c8372d;--dang-700:#93261e;
   --info-50:#e8f1fd;--info-500:#2563c9;--info-700:#1a4894;
   --violet-500:#6d4aca; --violet-50:#f0ecfb;
-  /* En sitio (turquesa) y Descargando (rosado), los estados de Rutas (11/11/2026) */
+  /* Esperando cargue (turquesa) y En punto de descargue (rosado), los estados de Rutas (11/11/2026; los nombres, del 26/11/2026) */
   --teal-50:#e2f5f2; --teal-500:#0f8f86; --teal-700:#0b6660; --rosa-50:#fbe9f3; --rosa-500:#c0418a; --rosa-700:#93295f;
   --bg:var(--ink-100); --surface:#fff; --surface-2:var(--ink-50); --surface-3:var(--ink-100);
   --border:var(--ink-200); --border-strong:var(--ink-300);
@@ -778,6 +778,46 @@ html[data-theme="dark"] .tbl-busca mark{background:rgba(250,204,21,.32);color:va
 .tbl-busca .tb-donde b{font-weight:650;color:var(--text-2)}
 .tb-mas{padding:10px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--text-3)}
 @media(max-width:860px){.fbusca.tb-q{flex-basis:100%;max-width:none}.fbusca.tb-q input{font-size:16px}.tb-arriba .tk-mes{margin-left:0}}
+/* La barra del buscador con los filtros a la derecha (Juan, 26/11/2026; ver TallerFiltro) */
+.fbusca.tq-bar{flex:1 1 600px;max-width:760px;height:40px;align-items:stretch;position:relative;overflow:visible;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.tq-bar .tq-in{display:flex;align-items:center;flex:1 1 auto;min-width:150px;cursor:text}
+.tq-bar .tq-in > svg{flex:0 0 auto;margin:0 8px 0 12px;color:var(--text-3)}
+.tq-bar .tq-in input{font-size:13.5px}
+.tq-bar .tq-seg{position:relative;display:flex;align-items:center;gap:7px;flex:0 0 auto;max-width:240px;padding:0 13px;border:0;border-left:1px solid var(--border);
+  background:transparent;font:inherit;font-size:13px;color:var(--text-2);cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.tq-bar .tq-seg .tq-t{overflow:hidden;text-overflow:ellipsis}
+.tq-bar .tq-seg:last-child{border-radius:0 9px 9px 0}
+.tq-bar .tq-seg:hover{background:var(--surface-2);color:var(--text)}
+.tq-bar .tq-seg > svg{flex:0 0 auto;color:var(--text-3)}
+.tq-bar .tq-seg .tq-ch{opacity:.7}
+.tq-bar .tq-seg.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.tq-bar .tq-seg.on > svg{color:var(--accent)}
+.tq-bar .tq-seg select{position:absolute;inset:0;width:100%;height:100%;max-width:none;padding:0;border:0;opacity:0;cursor:pointer;font-size:16px}
+.tq-pop{position:absolute;top:calc(100% + 8px);right:0;width:318px;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 14px 34px rgba(16,24,40,.16),0 2px 6px rgba(16,24,40,.06);z-index:40;font-size:13px;cursor:default}
+.tq-pop .tq-tt{padding:6px 10px 4px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}
+.tq-pop .tq-op{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:8px 10px;border:0;border-radius:8px;background:transparent;
+  font:inherit;color:var(--text);cursor:pointer;text-align:left}
+.tq-pop .tq-op span{color:var(--text-3);font-size:12px}
+.tq-pop button.tq-op:hover{background:var(--surface-2)}
+.tq-pop .tq-op.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.tq-pop .tq-op.on span{color:var(--accent)}
+.tq-pop .tq-r{margin-top:6px;padding:8px 2px 2px;border-top:1px solid var(--border)}
+.tq-pop .tq-rt{cursor:default}
+.tq-pop .tq-rg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 6px 0}
+.tq-pop .tq-rg label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--text-3)}
+.tq-pop .tq-rg .inp{height:36px;font-size:13px}
+/* Dentro de la barra, «.fbusca input» las dejaría sin ancho ni borde: vuelven a ser como .inp */
+.fbusca .tq-pop input.inp{flex:none;width:100%;height:36px;padding:0 8px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--surface);font-size:13px;color:var(--text)}
+.fbusca .tq-pop input.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.tq-pop .tq-b{display:flex;justify-content:space-between;align-items:center;margin:10px 6px 4px}
+.tb-fn{display:flex;align-items:center;gap:10px;margin-left:14px;font-size:12.5px;color:var(--text-2);white-space:nowrap}
+.tb-fn b{color:var(--text);font-weight:650}
+.tb-res-a{display:flex;gap:16px}
+@media(max-width:860px){.fbusca.tq-bar{flex:1 1 100%;max-width:none;height:auto;flex-wrap:wrap}
+  .tq-bar .tq-in{flex:1 1 100%;height:44px;border-bottom:1px solid var(--border)}.tq-bar .tq-in input{font-size:16px}
+  .tq-bar .tq-seg{flex:1 1 50%;max-width:none;height:42px;justify-content:center}.tq-bar .tq-in + .tq-seg{border-left:0;border-radius:0 0 0 9px}
+  .tq-bar .tq-seg:last-child{border-radius:0 0 9px 0}.tq-pop{left:0;right:0;width:auto}.tb-fn{margin-left:0;flex-basis:100%;white-space:normal;padding-top:6px}}
 /* Los componentes deducidos del texto del registro manual (ver Historico.comps): con borde punteado, para que no parezcan escritos */
 .ctag.ded{background:transparent;border:1px dashed var(--border-strong);color:var(--text-2);font-weight:500;padding:1px 9px}
 .hx-ded{font-size:11px;color:var(--text-3);font-style:italic}
@@ -2162,7 +2202,8 @@ html[data-theme="dark"] .rt-real{color:var(--ok-500)}
 .rt-fija .inp:disabled{background:var(--surface-3);color:var(--text-3);border-color:var(--border);cursor:not-allowed}
 /* Los nueve estados (Juan, 11/11/2026): no caben en una fila; van en dos, cada uno con su borde; en el celular, de a tres */
 #rtE{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;border:0;overflow:visible;background:none}
-#rtE button{border:1px solid var(--border-strong);border-radius:var(--radius-sm);justify-content:center;padding:0 6px}
+#rtE button{border:1px solid var(--border-strong);border-radius:var(--radius-sm);justify-content:center;padding:4px 6px;height:auto;min-height:31px;
+  white-space:normal;line-height:1.2;text-align:center}
 #rtE button.on{border-color:var(--accent)}
 @media (max-width:600px){#rtE{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}}
 .rt-fija #rtE button:disabled{cursor:not-allowed}
@@ -2217,6 +2258,24 @@ html[data-theme="dark"] .rt-real{color:var(--ok-500)}
 .rt-band-mas{justify-content:center}
 .rt-band-av{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--warn-500);font-weight:600}
 .rt-band-v{writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;color:var(--text-3);letter-spacing:.05em;text-transform:uppercase;margin-top:6px}
+/* Rutas en el celular (Juan, 26/11/2026; ver RutasCel): de pie, el aviso para girarlo; acostado, la semana completa de lado a lado y la
+   bandeja debajo. En el computador nada cambia */
+.rt-girar{display:none}
+@media (orientation:portrait) and (max-width:760px){
+  .rt-girar{display:flex;align-items:center;gap:9px;margin:0 0 10px;padding:9px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent);
+    font-size:12.5px;font-weight:600}
+  .rt-girar svg{flex:0 0 auto;transform:rotate(90deg)}
+}
+@media (orientation:landscape) and (max-height:520px) and (max-width:1024px){
+  .rt-zona{flex-direction:column;align-items:stretch}
+  .rt-tab{grid-template-columns:118px repeat(7,minmax(130px,1fr));min-width:1028px}
+  .rt-u .thumb{display:none}
+  .rt-band,.rt-band.chica{position:static;width:auto;flex-basis:auto;max-height:none}
+  .rt-band.chica{align-items:stretch}
+  .rt-band.chica .rt-band-h{flex-direction:row}
+  .rt-band.chica .rt-band-h .btn{margin-left:auto}
+  .rt-band-v{display:none}
+}
 /* En el celular la bandeja va debajo del tablero; en el computador nada cambia */
 @media (max-width:760px){
   .rt-zona{flex-direction:column;align-items:stretch}
@@ -13611,6 +13670,8 @@ Object.assign(UIState, { mant: 'todos', insp: 'todas', oc: 'todas',
   mantTab: 'historial', mantTipo: 'todos',
   /* Lo que se escribió en el buscador de Taller SINUGRAVAS (ver TallerBusca) */
   tallerQ: '',
+  /* Los filtros de la barra del buscador (ver TallerFiltro): el vehículo, desde y hasta («aaaa-mm-dd») y el rápido de fechas escogido */
+  tallerU: '', tallerD: '', tallerH: '', tallerFP: '',
   /* Taller SINUGRAVAS: si los números de los botones cuentan también el registro manual; al entrar, apagado (Juan, 07/11/2026) */
   tallerX: false,
   /* Proveedores → «Del registro manual»: si se ven también los ya revisados (al entrar, escondidos) */
@@ -14098,6 +14159,135 @@ const TallerFila = {
      debajo de «Qué pasó», en lugar de la segunda línea.
    · Mientras se busca, las tarjetas, los avisos, los filtros y la tabla de siempre se esconden: solo se ve lo que se encontró. Se busca
      mientras se escribe, sin volver a pintar la página (el cursor no se pierde) */
+/* Los filtros de Taller SINUGRAVAS, en la misma barra del buscador (Juan, 26/11/2026: «al lado del campo para buscar… filtros básicos…
+   de la fecha tal… Vehículo tal… si busco arreglo de motor y selecciono la placa tal, entonces solamente van a aparecer cosas
+   relacionadas con esa placa»; y de la primera maqueta: «no debajo del buscador, sino a la derecha»). Valen para la tabla, sus números,
+   el registro manual y lo que se busca; las tarjetas de arriba siguen con su mes y los avisos son de todo */
+const TallerFiltro = {
+  MES: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
+  MESL: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+  RAPIDOS: [['', 'Todas las fechas'], ['mes', 'Este mes'], ['pasado', 'El mes pasado'], ['tres', 'Los últimos 3 meses'], ['anio', 'Este año']],
+  rango(k) {
+    const y = HOY.getFullYear(), mo = HOY.getMonth(), iso = d => Fecha.iso(d);
+    if (k === 'mes') return [iso(new Date(y, mo, 1)), hoyISO];
+    if (k === 'pasado') return [iso(new Date(y, mo - 1, 1)), iso(new Date(y, mo, 0))];
+    if (k === 'tres') return [iso(new Date(y, mo - 2, 1)), hoyISO];
+    if (k === 'anio') return [iso(new Date(y, 0, 1)), hoyISO];
+    return ['', ''];
+  },
+  activo: () => Boolean(UIState.tallerU || UIState.tallerD || UIState.tallerH),
+  fechas: () => Boolean(UIState.tallerD || UIState.tallerH),
+  /* Si una entrada pasa: la de Flota por su vehículo; la del registro manual por su vehículo o, si no lo tiene, por la placa */
+  pasa(uid, placa, f) {
+    const U = UIState.tallerU, D = UIState.tallerD, H = UIState.tallerH;
+    if (U && uid !== U) {
+      const u = Q.unidad(U), k = t => String(t || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (uid || !u || !k(placa) || k(placa) !== k(u.placa)) return false;
+    }
+    if (D && (!f || f < D)) return false;
+    if (H && (!f || f > H)) return false;
+    return true;
+  },
+  m(m) { return this.pasa(m.unidad, '', m.fecha); },
+  x(x) { return this.pasa(x.unidad || '', x.placa || x.placa_excel || '', x.fecha || ''); },
+  corto(t) { const d = Fecha.parse(t); return d.getDate() + ' ' + this.MES[d.getMonth()] + ' ' + d.getFullYear(); },
+  largo(t) { const d = Fecha.parse(t); return d.getDate() + ' de ' + this.MESL[d.getMonth()] + ' de ' + d.getFullYear(); },
+  /* El rápido que coincide con las fechas puestas (hoy puede ser otro día que cuando se escogió) */
+  rapido() {
+    const r = this.RAPIDOS.find(x => x[0] && x[0] === UIState.tallerFP);
+    if (!r) return null;
+    const [d, h] = this.rango(r[0]);
+    return d === UIState.tallerD && h === UIState.tallerH ? r : null;
+  },
+  /* En el botón: «Este mes» o «1 – 26 nov 2026» */
+  fechasTxt() {
+    const D = UIState.tallerD, H = UIState.tallerH, r = this.rapido();
+    if (!D && !H) return 'Todas las fechas';
+    if (r) return r[1];
+    if (D && H) {
+      const a = Fecha.parse(D), b = Fecha.parse(H);
+      if (a.getFullYear() !== b.getFullYear()) return this.corto(D) + ' – ' + this.corto(H);
+      return (a.getMonth() === b.getMonth() ? a.getDate() : a.getDate() + ' ' + this.MES[a.getMonth()]) + ' – ' + this.corto(H);
+    }
+    return D ? 'Desde el ' + this.corto(D) : 'Hasta el ' + this.corto(H);
+  },
+  /* «JYN 162, del 1 al 26 de noviembre de 2026», para los avisos (en HTML) */
+  resumen() {
+    const u = UIState.tallerU && Q.unidad(UIState.tallerU), D = UIState.tallerD, H = UIState.tallerH;
+    let f = '';
+    if (D && H) {
+      const a = Fecha.parse(D), b = Fecha.parse(H);
+      f = a.getFullYear() !== b.getFullYear() ? 'del ' + this.largo(D) + ' al ' + this.largo(H)
+        : 'del ' + a.getDate() + (a.getMonth() === b.getMonth() ? '' : ' de ' + this.MESL[a.getMonth()]) + ' al ' + this.largo(H);
+    } else if (D) f = 'desde el ' + this.largo(D);
+    else if (H) f = 'hasta el ' + this.largo(H);
+    return [u ? '<b>' + esc(UI.placaTxt(u)) + '</b>' : '', esc(f)].filter(Boolean).join(', ');
+  },
+  /* La barra: la búsqueda (entrada) con el vehículo y las fechas a la derecha */
+  barra(entrada) {
+    const U = UIState.tallerU, u = U && Q.unidad(U), us = Datos.unidades.slice().sort((a, b) => UI.placaTxt(a).localeCompare(UI.placaTxt(b)));
+    return '<div class="fbusca tb-q tq-bar">' + entrada +
+      '<span class="tq-seg' + (u ? ' on' : '') + '" title="Solo los de un vehículo">' + Icon('truck', '', 15) + '<span class="tq-t">' +
+        esc(u ? UI.placaTxt(u) : 'Todos los vehículos') + '</span>' + Icon('chevD', 'tq-ch', 13) +
+        '<select id="tqU" aria-label="Vehículo"><option value="">Todos los vehículos</option>' + us.map(x => '<option value="' + attr(x.id) + '"' +
+          (x.id === U ? ' selected' : '') + '>' + esc(UI.placaTxt(x) + (x.clase ? ' · ' + x.clase : '')) + '</option>').join('') + '</select></span>' +
+      '<button type="button" class="tq-seg' + (this.fechas() ? ' on' : '') + '" id="tqF" data-act="tallerFechas" aria-haspopup="dialog" aria-expanded="false" ' +
+        'title="Solo los de unas fechas">' + Icon('calendar', '', 15) + '<span class="tq-t">' + esc(this.fechasTxt()) + '</span>' + Icon('chevD', 'tq-ch', 13) + '</button></div>';
+  },
+  /* Después de pintar: el vehículo, al escogerlo */
+  alPintar() {
+    const sl = $('#tqU');
+    if (sl) sl.addEventListener('change', () => { UIState.tallerU = sl.value; this.cerrarFechas(); Router.pintar(true); });
+  },
+  /* El recuadro de las fechas: los rápidos y «Entre fechas» */
+  abrirFechas(b) {
+    const bar = b.closest('.tq-bar');
+    if (!bar) return;
+    if ($('.tq-pop', bar)) { this.cerrarFechas(); return; }
+    const D = UIState.tallerD, H = UIState.tallerH, r = this.rapido();
+    const pista = k => {
+      const [d, h] = this.rango(k);
+      if (!d) return '';
+      const a = Fecha.parse(d), z = Fecha.parse(h);
+      return k === 'anio' ? String(a.getFullYear()) : k === 'tres' ? this.MES[a.getMonth()] + ' – ' + this.MES[z.getMonth()] : this.MES[a.getMonth()] + ' ' + a.getFullYear();
+    };
+    const on = k => (k ? Boolean(r && r[0] === k) : !this.fechas());
+    bar.insertAdjacentHTML('beforeend', '<div class="tq-pop" role="dialog" aria-label="Fechas"><div class="tq-tt">Fechas</div>' +
+      this.RAPIDOS.map(x => '<button type="button" class="tq-op' + (on(x[0]) ? ' on' : '') + '" data-act="tallerFechaRapida" data-k="' + x[0] + '">' + esc(x[1]) +
+        '<span>' + esc(pista(x[0])) + '</span></button>').join('') +
+      '<div class="tq-r"><div class="tq-op tq-rt' + (this.fechas() && !r ? ' on' : '') + '">Entre fechas<span>' + (this.fechas() && !r ? esc(this.fechasTxt()) : '') + '</span></div>' +
+        '<div class="tq-rg"><label>Desde<input class="inp" type="date" id="tqD" value="' + attr(D) + '"></label>' +
+        '<label>Hasta<input class="inp" type="date" id="tqH" value="' + attr(H) + '"></label></div>' +
+        '<div class="tq-b">' + (this.fechas() ? '<span class="link fs12" data-act="tallerFechaRapida" data-k="">Quitar las fechas</span>' : '<span></span>') +
+        '<button type="button" class="btn btn-primary btn-sm" data-act="tallerFechasSi">Aplicar</button></div></div></div>');
+    b.setAttribute('aria-expanded', 'true');
+    /* Se cierra al hacer clic afuera o con Esc */
+    this._fuera = e => { if (!e.target.closest('.tq-pop') && !e.target.closest('#tqF')) this.cerrarFechas(); };
+    this._esc = e => { if (e.key === 'Escape') { e.stopPropagation(); this.cerrarFechas(); } };
+    setTimeout(() => {
+      document.addEventListener('mousedown', this._fuera);
+      document.addEventListener('keydown', this._esc, true);
+    });
+  },
+  cerrarFechas() {
+    $$('.tq-pop').forEach(p => p.remove());
+    const b = $('#tqF');
+    if (b) b.setAttribute('aria-expanded', 'false');
+    if (this._fuera) document.removeEventListener('mousedown', this._fuera);
+    if (this._esc) document.removeEventListener('keydown', this._esc, true);
+    this._fuera = this._esc = null;
+  },
+  ponerFechas(k, d, h) {
+    Object.assign(UIState, { tallerFP: k || '', tallerD: d || '', tallerH: h || '' });
+    this.cerrarFechas();
+    Router.pintar(true);
+  },
+  quitar() {
+    Object.assign(UIState, { tallerU: '', tallerD: '', tallerH: '', tallerFP: '' });
+    this.cerrarFechas();
+  }
+};
+
 const TallerBusca = {
   MAX: 150,
   /* Las palabras que no sirven para buscar */
@@ -14256,9 +14446,10 @@ const TallerBusca = {
   },
   /* La caja del buscador */
   caja() {
-    return '<label class="fbusca tb-q" title="Busca en todos los mantenimientos, de todos los meses, y en el ' + attr(Historico.ETIQUETA.toLowerCase()) + '">' +
-      Icon('search', '', 15) + '<input id="tallerQ" type="search" placeholder="Buscar en todos los mantenimientos: placa, volqueta, taller, repuesto, qué pasó…" ' +
-      'autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Buscar en todos los mantenimientos" value="' + attr(UIState.tallerQ || '') + '"></label>';
+    /* Con el vehículo y las fechas a la derecha (ver TallerFiltro) */
+    return TallerFiltro.barra('<label class="tq-in" title="Busca en todos los mantenimientos, de todos los meses, y en el ' + attr(Historico.ETIQUETA.toLowerCase()) + '">' +
+      Icon('search', '', 15) + '<input id="tallerQ" type="search" placeholder="Buscar: placa, volqueta, taller, repuesto, qué pasó…" ' +
+      'autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Buscar en todos los mantenimientos" value="' + attr(UIState.tallerQ || '') + '"></label>');
   },
   /* Antes de pintar la pestaña: si se estaba escribiendo en el buscador, y dónde, para seguir ahí mismo (ver poner). Las palabras se
      vuelven a armar, por si algo cambió */
@@ -14301,7 +14492,11 @@ const TallerBusca = {
     caja.classList.toggle('hidden', !busca);
     if (mes) mes.classList.toggle('hidden', busca);
     if (!busca) { caja.innerHTML = ''; return; }
-    const r = this.buscar(ts), l = r.lista.slice(0, this.MAX), qq = esc(q.trim().replace(/\s+/g, ' '));
+    /* Con los filtros de la barra, solo lo de ese vehículo y esas fechas (ver TallerFiltro) */
+    const r0 = this.buscar(ts), fil = TallerFiltro.activo();
+    const r = fil ? { lista: r0.lista.filter(x => (x.d.m ? TallerFiltro.m(x.d.m) : TallerFiltro.x(x.d.x))) } : r0;
+    if (fil) r.todas = r.lista.filter(x => x.n === ts.length).length;
+    const l = r.lista.slice(0, this.MAX), qq = esc(q.trim().replace(/\s+/g, ' ')), en = fil ? ' en ' + TallerFiltro.resumen() : '';
     let parte = false;
     const filas = l.map((x, i) => {
       const sep = ts.length > 1 && x.n < ts.length && !parte;
@@ -14310,12 +14505,15 @@ const TallerBusca = {
         (x.d.m ? TallerFila.html(x.d.m, '') : Historico.filaTaller(x.d.x)).replace('<tr ', '<tr data-b="' + i + '" ');
     }).join('');
     caja.innerHTML = '<div class="tb-res-h"><span>' + (r.lista.length ? '<b>' + r.lista.length + '</b> ' + (r.lista.length === 1 ? 'coincide' : 'coinciden') +
-        ' con «' + qq + '»' + (ts.length > 1 ? ' · ' + (r.todas ? r.todas + ' con todas las palabras' : 'ninguno con todas las palabras') : '') +
-        '. Primero los que más se parecen.' : 'Nada coincide con «' + qq + '».') + '</span><span class="link" data-act="tallerQLimpiar">Quitar la búsqueda</span></div>' +
+        ' con «' + qq + '»' + en + (ts.length > 1 ? ' · ' + (r.todas ? r.todas + ' con todas las palabras' : 'ninguno con todas las palabras') : '') +
+        '. Primero los que más se parecen.' : 'Nada coincide con «' + qq + '»' + en + '.') +
+        (fil && r0.lista.length > r.lista.length ? ' Sin los filtros: ' + r0.lista.length + '.' : '') + '</span><span class="tb-res-a">' +
+        (fil ? '<span class="link" data-act="tallerFiltrosQuitar">Quitar filtros</span>' : '') + '<span class="link" data-act="tallerQLimpiar">Quitar la búsqueda</span></span></div>' +
       '<div class="card">' + (l.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant tbl-busca"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Qué pasó</th>' +
           '<th>Taller y repuestos</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' + filas + '</tbody></table></div>' +
           (r.lista.length > l.length ? '<div class="tb-mas">Se ven los ' + l.length + ' que más se parecen. Escriba algo más para encontrar el que busca.</div>' : '')
-        : UI.empty('search', 'Nada coincide', 'Pruebe con otra palabra: la placa, el taller, la parte o lo que pasó.')) + '</div>';
+        : UI.empty('search', 'Nada coincide', fil ? 'Pruebe con otra palabra, o quite los filtros del vehículo o de las fechas.'
+          : 'Pruebe con otra palabra: la placa, el taller, la parte o lo que pasó.')) + '</div>';
     $$('tr[data-b]', caja).forEach(tr => { const x = l[+tr.dataset.b]; this.marcar(tr, x.marcas); this.donde(tr, x); });
   },
   /* Resalta las palabras que coinciden en lo que se ve de la fila (no en los botones ni en lo que sale al pasar el mouse) */
@@ -14408,20 +14606,25 @@ Object.assign(Vistas, {
       (b.ts || 0) - (a.ts || 0));
     const taller = todos.filter(m => m.estado === 'taller'), prog = todos.filter(m => m.estado === 'programado'), vencidos = prog.filter(Programado.vencido);
     const sinOrden = todos.filter(m => Compras.malas(m)), pend = todos.filter(m => Pendiente.de(m).length);
-    const lista = todos.filter(m => f === 'todos' || (f === 'taller' || f === 'programado' ? m.estado === f : f === 'pendientes' ? Pendiente.de(m).length : m.tipo === f));
+    /* Con los filtros de la barra (ver TallerFiltro): la tabla, sus números y el registro manual; las tarjetas y los avisos, de todo */
+    const fil = TallerFiltro.activo(), vis = fil ? todos.filter(m => TallerFiltro.m(m)) : todos;
+    const deF = m => f === 'todos' || (f === 'taller' || f === 'programado' ? m.estado === f : f === 'pendientes' ? Pendiente.de(m).length : m.tipo === f);
+    const lista = vis.filter(deF);
     /* Debajo, el registro manual (ver Historico.filasTaller): en Todos, y en Preventivos o Correctivos las de ese tipo */
     Historico.pedir();
-    const xs = (f === 'todos' ? Historico.lista.slice() : f === 'preventivo' || f === 'correctivo' ? Historico.lista.filter(x => String(x.tipo || '').toLowerCase() === f) : [])
+    const xsT = (f === 'todos' ? Historico.lista.slice() : f === 'preventivo' || f === 'correctivo' ? Historico.lista.filter(x => String(x.tipo || '').toLowerCase() === f) : [])
       .sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')) || String(b.id).localeCompare(String(a.id)));
+    const xs = fil ? xsT.filter(x => TallerFiltro.x(x)) : xsT;
     /* Con la casilla (UIState.tallerX), los números cuentan también el registro manual: todas en Todos y las de su tipo en Preventivos
        y Correctivos; En taller, Programados y Sin valor u orden no cambian, porque esas líneas ya se cerraron y tienen valor */
     const conX = UIState.tallerX && Historico.lista.length > 0, xs0 = conX ? Historico.lista : [];
-    const deTipo = k => xs0.filter(x => String(x.tipo || '').toLowerCase() === k).length, nP = deTipo('preventivo'), nC = deTipo('correctivo');
-    const segs = [['todos', 'Todos', todos.length, xs0.length], ['preventivo', 'Preventivos', todos.filter(m => m.tipo === 'preventivo').length, nP],
-      ['correctivo', 'Correctivos', todos.filter(m => m.tipo === 'correctivo').length, nC], ['taller', 'En taller', taller.length, 0],
-      ['programado', 'Programados', prog.length, 0], ['pendientes', 'Sin valor u orden', pend.length, 0]];
+    const xs0f = fil ? xs0.filter(x => TallerFiltro.x(x)) : xs0;
+    const deTipo = k => xs0f.filter(x => String(x.tipo || '').toLowerCase() === k).length, nP = deTipo('preventivo'), nC = deTipo('correctivo');
+    const segs = [['todos', 'Todos', vis.length, xs0f.length], ['preventivo', 'Preventivos', vis.filter(m => m.tipo === 'preventivo').length, nP],
+      ['correctivo', 'Correctivos', vis.filter(m => m.tipo === 'correctivo').length, nC], ['taller', 'En taller', vis.filter(m => m.estado === 'taller').length, 0],
+      ['programado', 'Programados', vis.filter(m => m.estado === 'programado').length, 0], ['pendientes', 'Sin valor u orden', vis.filter(m => Pendiente.de(m).length).length, 0]];
     /* Los otros tipos del registro manual (llantas, lavado…), que solo van en Todos */
-    const otros = Object.entries(xs0.reduce((o, x) => { const k = String(x.tipo || 'sin tipo').toLowerCase(); if (k !== 'preventivo' && k !== 'correctivo') o[k] = (o[k] || 0) + 1; return o; }, {}))
+    const otros = Object.entries(xs0f.reduce((o, x) => { const k = String(x.tipo || 'sin tipo').toLowerCase(); if (k !== 'preventivo' && k !== 'correctivo') o[k] = (o[k] || 0) + 1; return o; }, {}))
       .sort((a, b) => b[1] - a[1]);
     /* Las tarjetas de arriba, del mes que se escoja (Juan, 07/11/2026: «por defecto siempre va a estar el mes actual, pero que permita a
        uno escoger qué mes muestra»), y con la casilla también el registro manual. «En el taller» es el de ahora en el mes en curso; en
@@ -14486,23 +14689,28 @@ Object.assign(Vistas, {
       '<div class="toolbar"><div class="seg">' + segs.map(s => '<button class="' + (f === s[0] ? 'on' : '') + '" data-act="filtroMant" data-v="' + s[0] + '"' +
           (s[3] ? ' title="' + attr(s[2] + ' en Flota y ' + s[3] + ' del ' + Historico.ETIQUETA.toLowerCase()) + '"' : '') + '>' + s[1] +
         '<span class="seg-n">' + (s[2] + s[3]) + '</span></button>').join('') + '</div>' +
+        /* Cuántos se ven con los filtros (ver TallerFiltro) */
+        (fil ? '<span class="tb-fn"><span>Se ven <b>' + (lista.length + xs.length) + '</b> de ' + (todos.filter(deF).length + xsT.length) + ' por los filtros</span>' +
+          '<span class="link" data-act="tallerFiltrosQuitar">Quitar filtros</span></span>' : '') +
         (Historico.lista.length ? '<span class="tb-sp"></span><label class="flex aic g8 txt-2" style="cursor:pointer;font-size:12.5px">' +
           '<input type="checkbox" data-act="tallerConManual"' + (UIState.tallerX ? ' checked' : '') + '>Contar también el ' + esc(Historico.ETIQUETA.toLowerCase()) + '</label>' : '') +
         '</div>' +
-      (conX ? '<div class="txt-3 fs12 mb12">' + esc('Los números cuentan también el ' + Historico.ETIQUETA.toLowerCase() + ': ' + xs0.length +
-        (xs0.length === 1 ? ' línea' : ' líneas') + ', ' + nP + (nP === 1 ? ' preventivo, ' : ' preventivos, ') + nC + (nC === 1 ? ' correctivo' : ' correctivos') +
+      (conX ? '<div class="txt-3 fs12 mb12">' + esc('Los números cuentan también el ' + Historico.ETIQUETA.toLowerCase() + ': ' + xs0f.length +
+        (xs0f.length === 1 ? ' línea' : ' líneas') + ', ' + nP + (nP === 1 ? ' preventivo, ' : ' preventivos, ') + nC + (nC === 1 ? ' correctivo' : ' correctivos') +
         (otros.length ? ' y ' + otros.reduce((s, o) => s + o[1], 0) + ' de otro tipo (' + otros.map(o => o[0] + ' ' + o[1]).join(', ') + '), que solo van en Todos' : '') + '.') +
         '</div>' : '') +
       '<div class="card">' + (lista.length || xs.length ? '<div class="tbl-wrap"><table class="tbl tbl-mant"><thead><tr><th>Fecha</th><th>Unidad</th><th>Tipo</th><th>Qué pasó</th><th>Taller y repuestos</th><th class="num">Valor</th><th>Soporte</th><th>Estado</th></tr></thead><tbody>' +
         /* El camión y su remolque, juntos y unidos por una línea (ver MantRemolque.pares) */
         (par => par.l.map(m => TallerFila.html(m, par.cls.get(m.id) || '')).join(''))(MantRemolque.pares(lista)) + Historico.filasTaller(xs) +
-          '</tbody></table></div>' : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.')) + '</div>' +
+          '</tbody></table></div>' : (fil ? UI.empty('tool', 'Nada con esos filtros', 'Pruebe con otro vehículo u otras fechas, o quite los filtros.')
+          : UI.empty('tool', 'Nada que mostrar', 'No hay mantenimientos con ese filtro.'))) + '</div>' +
       /* Mientras se busca, lo de arriba se esconde y aquí sale lo que se encontró (ver TallerBusca) */
       '</div><div id="tallerRes"' + (busca ? '' : ' class="hidden"') + '></div>';
     return { titulo: 'Mantenimientos', sub: 'Preventivos y correctivos', html,
       /* Desde «Abiertas» de Novedades: el caso, resaltado un momento (ver Acciones.irCaso) */
       despues: () => {
         TallerBusca.poner();
+        TallerFiltro.alPintar();
         const sm = $('#tkMes');
         if (sm) sm.addEventListener('change', () => { UIState.tallerMes = sm.value === hoyISO.slice(0, 7) ? '' : sm.value; Router.pintar(true); });
         const id = UIState.resaltar, tr = id && $('.tbl-mant tr[data-mid="' + id + '"]');
@@ -17048,6 +17256,17 @@ Object.assign(Acciones, {
   },
   /* Mantenimientos por vehículo y el plano de cada unidad */
   tabMant(el) { UIState.mantTab = el.dataset.v; Router.pintar(true); },
+  /* Los filtros de la barra (ver TallerFiltro) */
+  tallerFechas(el) { TallerFiltro.abrirFechas(el); },
+  tallerFechaRapida(el) { const k = el.dataset.k || '', [d, h] = TallerFiltro.rango(k); TallerFiltro.ponerFechas(k, d, h); },
+  tallerFechasSi(el) {
+    const p = el.closest('.tq-pop');
+    let d = $('#tqD', p).value, h = $('#tqH', p).value;
+    /* Si quedaron al revés, se voltean */
+    if (d && h && d > h) [d, h] = [h, d];
+    TallerFiltro.ponerFechas('', d, h);
+  },
+  tallerFiltrosQuitar() { TallerFiltro.quitar(); Router.pintar(true); },
   /* «Quitar la búsqueda» de Taller SINUGRAVAS (ver TallerBusca) */
   tallerQLimpiar() {
     UIState.tallerQ = '';
@@ -17109,7 +17328,7 @@ Object.assign(Acciones, {
   irCaso(el) {
     const m = Datos.mantenimientos.find(x => x.id === el.dataset.m);
     if (!m) return;
-    Object.assign(UIState, { mantTab: 'historial', mant: m.estado === 'taller' ? 'taller' : m.estado === 'programado' ? 'programado' : 'todos', resaltar: m.id, tallerQ: '' });
+    Object.assign(UIState, { mantTab: 'historial', mant: m.estado === 'taller' ? 'taller' : m.estado === 'programado' ? 'programado' : 'todos', resaltar: m.id, tallerQ: '', tallerU: '', tallerD: '', tallerH: '', tallerFP: '' });
     Router.pintar(true);
   },
   filtroNov(el) { UIState.novF = el.dataset.v; Router.pintar(true); },
@@ -21633,14 +21852,15 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
 
   /* Los estados, en el orden de Rutas; cada uno con su botón (lo que dice el conductor) */
   const ORDEN = ['prog', 'sitio', 'cargando', 'carg', 'ruta', 'destino', 'desc', 'hecho'];
-  const NOMBRE = { prog: 'Programado', sitio: 'En sitio', cargando: 'Cargando', carg: 'Cargado', ruta: 'En ruta', destino: 'En destino', desc: 'Descargando', hecho: 'Hecho' };
+  const NOMBRE = { prog: 'Programado', sitio: 'Esperando cargue', cargando: 'En punto de cargue', carg: 'Cargado', ruta: 'En ruta', destino: 'Esperando descargue',
+    desc: 'En punto de descargue', hecho: 'Hecho' };
   const BOT = {
     sitio: ['Llegué a cargar', 'Toque apenas llegue al sitio de cargue', 'pin'],
-    cargando: ['Empezaron a cargar', 'Toque cuando le empiecen a cargar', 'upload'],
+    cargando: ['Estoy en el punto de cargue', 'Toque cuando quede en el punto de cargue', 'upload'],
     carg: ['Ya cargué', 'Toque cuando terminen de cargar', 'caja'],
     ruta: ['Salí a ruta', 'Toque al salir hacia el descargue', 'truck'],
     destino: ['Llegué a descargar', 'Toque apenas llegue al sitio de descargue', 'pin'],
-    desc: ['Empezaron a descargar', 'Toque cuando le empiecen a descargar', 'download'],
+    desc: ['Estoy en el punto de descargue', 'Toque cuando quede en el punto de descargue', 'download'],
     hecho: ['Ya descargué', 'Toque cuando terminen de descargar', 'check'],
     regreso: ['Voy de regreso', '', 'regreso'],
     parqueo: ['Parqueé el carro', '', 'parqueo'],
@@ -21992,12 +22212,12 @@ h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; }
     const t = v.tiempos || {}, e = v.estado, h = k => (t[k] && t[k].h ? t[k].h : '');
     const x = (a, b) => { const m = entre(v, a, b); return m == null ? '' : durTxt(m); };
     if (e === 'prog') return 'Programado para ' + esc(cuandoTxt(v.fecha)) + ' a las <b>' + esc(v.hora || '—') + '</b>';
-    if (e === 'sitio') return '<b>En sitio</b>' + (h('sitio') ? ' desde las ' + h('sitio') : '') + ' · esperando para cargar';
-    if (e === 'cargando') return '<b>Cargando</b>' + (h('cargando') ? ' desde las ' + h('cargando') : '') + (x('sitio', 'cargando') ? ' · esperó ' + x('sitio', 'cargando') : '');
+    if (e === 'sitio') return '<b>Esperando cargue</b>' + (h('sitio') ? ' desde las ' + h('sitio') : '');
+    if (e === 'cargando') return '<b>En punto de cargue</b>' + (h('cargando') ? ' desde las ' + h('cargando') : '') + (x('sitio', 'cargando') ? ' · esperó ' + x('sitio', 'cargando') : '');
     if (e === 'carg') return '<b>Cargado</b>' + (h('carg') ? ' a las ' + h('carg') : '') + (x('cargando', 'carg') ? ' · cargó en ' + x('cargando', 'carg') : '');
     if (e === 'ruta') return '<b>En ruta</b>' + (h('ruta') ? ' desde las ' + h('ruta') : '');
-    if (e === 'destino') return '<b>En destino</b>' + (h('destino') ? ' desde las ' + h('destino') : '') + (x('ruta', 'destino') ? ' · el viaje duró ' + x('ruta', 'destino') : '');
-    if (e === 'desc') return '<b>Descargando</b>' + (h('desc') ? ' desde las ' + h('desc') : '') + (x('destino', 'desc') ? ' · esperó ' + x('destino', 'desc') : '');
+    if (e === 'destino') return '<b>Esperando descargue</b>' + (h('destino') ? ' desde las ' + h('destino') : '') + (x('ruta', 'destino') ? ' · el viaje duró ' + x('ruta', 'destino') : '');
+    if (e === 'desc') return '<b>En punto de descargue</b>' + (h('desc') ? ' desde las ' + h('desc') : '') + (x('destino', 'desc') ? ' · esperó ' + x('destino', 'desc') : '');
     return '<b>Hecho</b>' + (h('hecho') ? ' a las ' + h('hecho') : '');
   }
   function marcas(v) {
@@ -24432,10 +24652,11 @@ const Rutas = {
      Catálogo: verde (fruta de palma), café (almendra), ámbar (aceite),
      turquesa (fertilizante), morado (nutricomplemento) y los siguientes */
   COLORES: ['#2f9e5b', '#a8692b', '#d99a1e', '#1c96a4', '#8a5ac2', '#d0566c', '#4f6bd8', '#7a8a2e', '#c2569e', '#5a7a8c'],
-  /* Los estados del viaje, en su orden (Juan, 11/11/2026; SQL 033, 034 y 035): «En sitio», cuando llega a cargar; «Cargando», cuando
-     empieza el cargue; «En destino», cuando llega a donde descarga. «No se hizo» va en gris y no sale en lo de los conductores */
-  ESTADOS: { prog: ['Programado', 'info'], sitio: ['En sitio', 'teal'], cargando: ['Cargando', 'violet'], carg: ['Cargado', 'violet'], ruta: ['En ruta', 'warn'],
-    destino: ['En destino', 'teal'], desc: ['Descargando', 'rosa'], hecho: ['Hecho', 'ok'], no: ['No se hizo', 'nr'] },
+  /* Los estados del viaje, en su orden (Juan, 11/11/2026; SQL 033, 034 y 035). Los nombres (Juan, 26/11/2026): primero «Esperando…»,
+     cuando llega a la extractora o a la finca y espera turno, y después «En punto de…», cuando ya está donde lo cargan o lo descargan.
+     Las claves no cambian. «No se hizo» va en gris y no sale en lo de los conductores */
+  ESTADOS: { prog: ['Programado', 'info'], sitio: ['Esperando cargue', 'teal'], cargando: ['En punto de cargue', 'violet'], carg: ['Cargado', 'violet'],
+    ruta: ['En ruta', 'warn'], destino: ['Esperando descargue', 'teal'], desc: ['En punto de descargue', 'rosa'], hecho: ['Hecho', 'ok'], no: ['No se hizo', 'nr'] },
   DIAS: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
   MES: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
   /* Lo último que se hizo, para «Deshacer»: viajes nuevos (copia), cómo
@@ -24717,8 +24938,8 @@ const Rutas = {
 
   /* ---- La app de los conductores (Juan, 12/11/2026: «el conductor debería ir informando el estado de su ruta»): cada uno marca desde
      su celular (ver §G y el SQL 036). Lo que marca llega solo, con su hora; lo suyo lleva «c» (la versión del viaje en que llegó) ---- */
-  APP_TXT: { sitio: 'llegó a cargar', cargando: 'empezaron a cargarlo', carg: 'ya cargó', ruta: 'salió a ruta', destino: 'llegó a descargar',
-    desc: 'empezaron a descargarlo', hecho: 'ya descargó' },
+  APP_TXT: { sitio: 'llegó a cargar', cargando: 'quedó en el punto de cargue', carg: 'ya cargó', ruta: 'salió a ruta', destino: 'llegó a descargar',
+    desc: 'quedó en el punto de descargue', hecho: 'ya descargó' },
   /* En el título de la ficha: lo que llegó del celular */
   appTit(v) {
     const ti = v.tiempos || {}, ks = this.TI.filter(k => ti[k] && ti[k].c), n = (v.notasC || []).length, q = (v.tiquetes || []).length;
@@ -24819,10 +25040,10 @@ const Rutas = {
   },
   leyenda() {
     return '<div class="rt-ley">' + this.tipos().map(t => '<span>' + this.punto(t) + esc(t) + '</span>').join('') +
-      '<span class="rt-ley-sep"></span><span>' + Icon('clock', '', 11) + 'En sitio: llegó a cargar</span><span>' + Icon('upload', '', 11) + 'Cargando</span>' +
-      '<span>' + Icon('caja', '', 11) + 'Cargado</span><span>' + Icon('truck', '', 11) + 'En ruta</span><span>' + Icon('pin', '', 11) + 'En destino: llegó a descargar</span>' +
-      '<span>' + Icon('download', '', 11) + 'Descargando</span><span>' + Icon('check', '', 11) + 'Hecho</span>' +
-      '<span>' + Icon('clock', '', 11) + 'En la ficha, desde qué hora espera y, ya cargando, cuánto esperó</span>' +
+      '<span class="rt-ley-sep"></span><span>' + Icon('clock', '', 11) + 'Esperando cargue</span><span>' + Icon('upload', '', 11) + 'En punto de cargue</span>' +
+      '<span>' + Icon('caja', '', 11) + 'Cargado</span><span>' + Icon('truck', '', 11) + 'En ruta</span><span>' + Icon('pin', '', 11) + 'Esperando descargue</span>' +
+      '<span>' + Icon('download', '', 11) + 'En punto de descargue</span><span>' + Icon('check', '', 11) + 'Hecho</span>' +
+      '<span>' + Icon('clock', '', 11) + 'En la ficha, desde qué hora espera y, ya en el punto de cargue, cuánto esperó</span>' +
       '<span>' + Icon('movil', '', 11) + 'Lo marcó el conductor desde su celular</span>' +
       '<span>' + Icon('x', '', 11) + 'No se hizo: en gris, y no sale en la imagen ni en el PDF</span>' +
       '<span>' + Icon('warn', '', 11) + 'Revisar antes de salir</span><span><i class="rt-real">' + Icon('check', '', 11) + 'kg</i>Peso real de la báscula</span>' +
@@ -24841,7 +25062,8 @@ const Rutas = {
     const todos = cams.concat([...ocupados].map(id => Q.unidad(id)).filter(u => u && !cams.includes(u)));
     const us = todos.filter(u => con.has(u.id)).concat(todos.filter(u => !con.has(u.id)));
     if (!us.length) return '<div class="card">' + UI.empty('truck', 'No hay vehículos de carga', 'Los camiones salen aquí cuando estén registrados en Flota.') + '</div>';
-    return '<div class="rt-zona" id="rtZona"><div class="rt-wrap"><div class="rt-tab"><div class="rt-h rt-hu">Camión</div>' +
+    return '<div class="rt-girar">' + Icon('movil', '', 16) + '<span>Gire el celular para ver la semana completa.</span></div>' +
+      '<div class="rt-zona" id="rtZona"><div class="rt-wrap"><div class="rt-tab"><div class="rt-h rt-hu">Camión</div>' +
       fs.map(f => '<div class="rt-h' + (f === hoyISO ? ' hoy' : '') + '"><b>' + this.diaSem(f) + '</b><span>' + this.dia(f) + (f === hoyISO ? ' · hoy' : '') + '</span></div>').join('') +
       us.map(u => {
         /* Debajo de la placa, el conductor asignado al camión en Flota (Juan, 13/11/2026); el de cada viaje sale en su ficha */
@@ -25025,8 +25247,9 @@ const Rutas = {
     return '<div class="kpis4 kpis5 mb16">' +
         UI.kpi({ label: 'Viajes de la semana', valor: vs.length, icono: 'calendar', meta: esc('Semana ' + this.semanaTxt(l)) + (nb ? ' · ' + nb + ' por programar' : '') }) +
         UI.kpi({ label: 'Hechos', valor: n('hecho') + '<small> de ' + vs.length + '</small>', icono: 'check', color: 'var(--ok-500)',
-          meta: [n('sitio') ? n('sitio') + ' en sitio' : '', n('cargando') ? n('cargando') + ' cargando' : '', n('carg') ? n('carg') + (n('carg') === 1 ? ' cargado' : ' cargados') : '',
-            n('ruta') ? n('ruta') + ' en ruta' : '', n('destino') ? n('destino') + ' en destino' : '', n('desc') ? n('desc') + ' descargando' : '',
+          meta: [n('sitio') ? n('sitio') + ' esperando cargue' : '', n('cargando') ? n('cargando') + ' en punto de cargue' : '',
+            n('carg') ? n('carg') + (n('carg') === 1 ? ' cargado' : ' cargados') : '',
+            n('ruta') ? n('ruta') + ' en ruta' : '', n('destino') ? n('destino') + ' esperando descargue' : '', n('desc') ? n('desc') + ' en punto de descargue' : '',
             n('no') ? n('no') + ' no se ' + (n('no') === 1 ? 'hizo' : 'hicieron') : ''].filter(Boolean).join(' · ') ||
             'Se marcan en la ventana de cada viaje' }) +
         UI.kpi({ label: 'Toneladas programadas', valor: ton.toLocaleString('es-CO'), icono: 'truck', meta: lista ? esc(lista.charAt(0).toUpperCase() + lista.slice(1)) : 'Sin viajes esta semana' }) +
@@ -25094,7 +25317,7 @@ const Rutas = {
       (t[0] === 'rutas' ? '<span class="tb-count">' + Datos.rutas.filter(r => r.activa !== false).length + '</span>' : '') +
       (t[0] === 'app' && this.rcPendientes() ? '<span class="tb-count rc-tb" title="Tiquetes por revisar">' + this.rcPendientes() + '</span>' : '') + '</div>').join('') + '</div>';
     return { titulo, sub, html: head + tabs + (s.tab === 'rutas' ? this.maestro() : s.tab === 'historico' ? this.historico() : s.tab === 'app' ? this.rcHtml() : this.semanaHtml()),
-      despues: () => { this.arrastre(); this.rcDespues(); } };
+      despues: () => { this.arrastre(); this.rcDespues(); RutasCel.alPintar(); } };
   },
 
   /* ---- La ventana de un viaje: todo lo suyo, lo que hay que revisar y su
@@ -25311,7 +25534,7 @@ const Rutas = {
         '»: revise las horas.</span></div>';
       return;
     }
-    const t = x.tiempos[est], va = { sitio: 'Esperando para cargar', cargando: 'Cargando', destino: 'Esperando para descargar', desc: 'Descargando' }[est];
+    const t = x.tiempos[est], va = { sitio: 'Esperando cargue', cargando: 'En punto de cargue', destino: 'Esperando descargue', desc: 'En punto de descargue' }[est];
     const lleva = t && t.h && t.f === hoyISO && this.hmin(ahora()) >= this.hmin(t.h) ? ' (' + this.durTxt(this.hmin(ahora()) - this.hmin(t.h)) + ')' : '';
     el.innerHTML = this.medidas(x).map(y => '<div>' + Icon(this.MED[y.k].ic, '', 12) + '<span>' + esc(y.txt).replace(this.durTxt(y.m), '<b>' + this.durTxt(y.m) + '</b>') +
         '.</span></div>').join('') + (va && t && t.h ? '<div>' + Icon('clock', '', 12) + '<span>' + esc(va + ' desde las ' + t.h + lleva) + '.</span></div>' : '');
@@ -25694,8 +25917,8 @@ const Rutas = {
       ['Valor ($)', 14, 'pesos'], ['Tiquete', 30], ['Nota', 36],
       ['Liquidada el', 12, 'fecha'],
       /* Las horas de cada estado y los tiempos (Juan, 11/11/2026), al final: las columnas de los resúmenes no se mueven */
-      ['En sitio', 16, 'fechaHora'], ['Cargando', 16, 'fechaHora'], ['Cargado', 16, 'fechaHora'], ['En ruta', 16, 'fechaHora'], ['En destino', 16, 'fechaHora'],
-      ['Descargando', 16, 'fechaHora'], ['Hecho (hora)', 16, 'fechaHora']].concat(Object.keys(this.MED).map(k => [this.MED[k].n, 13, 'duracion']));
+      ['Esperando cargue', 18, 'fechaHora'], ['En punto de cargue', 19, 'fechaHora'], ['Cargado', 16, 'fechaHora'], ['En ruta', 16, 'fechaHora'],
+      ['Esperando descargue', 20, 'fechaHora'], ['En punto de descargue', 21, 'fechaHora'], ['Hecho (hora)', 16, 'fechaHora']].concat(Object.keys(this.MED).map(k => [this.MED[k].n, 13, 'duracion']));
     const dia = f => (f ? Fecha.iso(new Date(f)) : '');
     const filas = vs.map((v, k) => {
       const i = k + 2, r = this.ruta(v.ruta) || {}, u = Q.unidad(v.unidad), c = this.conductor(v), lq = Config.rutasLiq[this.lunes(v.fecha)] || {};
@@ -25756,7 +25979,7 @@ const Rutas = {
       ['Semanas: lo mismo por cada semana liquidada. Una semana que cae en dos meses sale en cada mes con sus días.'], [''], ['Lo que hay que saber', 'cab'],
       ['El peso real es el de la báscula, escrito en cada viaje, en kilos. Lo programado va en toneladas. La diferencia, en kilos, es el peso real menos lo programado, solo en los viajes que tienen los dos.'],
       ['Los racimos son los de la fruta, escritos en cada viaje junto al peso de báscula. «Kg por racimo» es el peso real entre los racimos, en los viajes que tienen los dos.'],
-      ['Las horas de cada estado (En sitio, Cargando, Cargado, En ruta, En destino, Descargando y Hecho) son las que se pusieron en Flota al marcarlo. Los tiempos van al final, en horas y minutos, solo en los viajes que tienen sus dos horas: la espera para cargar (de En sitio a Cargando), el cargue (de Cargando a Cargado), el total en el sitio de cargue (de En sitio a Cargado), el viaje (de En ruta a En destino), la espera para descargar (de En destino a Descargando), el descargue (de Descargando a Hecho) y el total en el destino (de En destino a Hecho).'],
+      ['Las horas de cada estado (Esperando cargue, En punto de cargue, Cargado, En ruta, Esperando descargue, En punto de descargue y Hecho) son las que se pusieron en Flota al marcarlo. Los tiempos van al final, en horas y minutos, solo en los viajes que tienen sus dos horas: la espera para cargar (de Esperando cargue a En punto de cargue), el cargue (de En punto de cargue a Cargado), el total en el sitio de cargue (de Esperando cargue a Cargado), el viaje (de En ruta a Esperando descargue), la espera para descargar (de Esperando descargue a En punto de descargue), el descargue (de En punto de descargue a Hecho) y el total en el destino (de Esperando descargue a Hecho).'],
       ['El valor es lo que pagan por cada viaje: el de su ruta ese día o el escrito en el viaje. «Valor por» dice cómo se paga y «Tarifa», cuánto. Por tonelada, la columna Valor multiplica la tarifa por el peso real; si el viaje no lo tiene, por las toneladas programadas (estimado). Los «No se hizo» no tienen valor.'],
       ['Los tiquetes no van en el Excel: la columna Tiquete dice cuál tiene cada viaje, y se ven en Flota, abriendo el viaje.'],
       ['Es una foto del momento: lo que se corrija aquí no vuelve a Flota. Las correcciones se hacen en Flota.']];
@@ -26291,6 +26514,42 @@ const Rutas = {
     Router.pintar(true);
     Toast.show(r.activa ? 'La ruta <b>' + esc(this.nombre(r)) + '</b> está activa otra vez: sale para programar.'
       : 'La ruta <b>' + esc(this.nombre(r)) + '</b> quedó inactiva: ya no sale para programar. Los viajes que la usaron la conservan.');
+  }
+};
+/* Rutas en el celular acostado (Juan, 26/11/2026: «uno pueda… voltear el celular y que cambie la orientación y que se vea completito»).
+   Con la pantalla acostada y bajita (la del celular), cada tablero (.rt-wrap > .rt-tab) se achica con zoom hasta caber de lado a lado;
+   al voltearlo, el tablero sube a la vista. En el computador no aplica (ver el CSS de .rt-girar) */
+const RutasCel = {
+  ACOSTADO: '(orientation: landscape) and (max-height: 520px) and (max-width: 1024px)',
+  acostado() { return matchMedia(this.ACOSTADO).matches; },
+  ajustar() {
+    $$('.rt-wrap > .rt-tab').forEach(t => {
+      t.style.zoom = '';
+      if (!this.acostado()) return;
+      const w = t.parentElement, z = (w.clientWidth - 1) / t.scrollWidth;
+      if (z < 0.995) t.style.zoom = String(Math.max(0.4, Math.floor(z * 1000) / 1000));
+    });
+  },
+  /* El tablero arriba, debajo de la barra de arriba */
+  subir() {
+    const w = $('.rt-wrap'), tb = $('.topbar');
+    if (w) window.scrollTo({ top: Math.max(0, w.getBoundingClientRect().top + window.scrollY - (tb ? tb.offsetHeight : 0) - 6), behavior: 'smooth' });
+  },
+  alPintar() {
+    this.ajustar();
+    if (this._puesto) return;
+    this._puesto = true;
+    let antes = this.acostado();
+    addEventListener('resize', () => {
+      clearTimeout(this._t);
+      this._t = setTimeout(() => {
+        if (Router.actual().vista !== 'rutas') return;
+        const ahora = this.acostado();
+        this.ajustar();
+        if (ahora && !antes) this.subir();
+        antes = ahora;
+      }, 150);
+    });
   }
 };
 Vistas.rutas = () => Rutas.vista();
@@ -27177,6 +27436,27 @@ const Periodicos = {
     const c = this.ajustes(m._periodico);
     setTimeout(() => Toast.show('Quedó como <b>' + esc(m._periodico) + '</b> de ' + esc(this.perLargo(c, this.periodo(c, r.fecha))) + ' en Periódicos.'), 400);
   },
+  /* El preventivo del camión y el de su remolque llevan el mismo periódico, si el periódico es de ese tipo de vehículo (Juan, 26/11/2026:
+     «esa partecita de engrase general solamente me sale debajo… del preventivo de la unidad, no… del remolque. Y sería bueno que
+     saliera»). Solo entre preventivos enlazados (ver MantRemolque): en el correctivo cada uno es su arreglo */
+  pareja(r, p) {
+    const o = r && r.tipo === 'preventivo' ? MantRemolque.otro(r) : null, u = o && Q.unidad(o.unidad);
+    return o && o.tipo === 'preventivo' && u && this.ajustes(p).tipos.includes(u.tipo) ? o : null;
+  },
+  marcar(r, p) {
+    [r, this.pareja(r, p)].filter(Boolean).forEach(x => { x.periodicos = (x.periodicos || []).filter(y => Catalogo.clave(y) !== Catalogo.clave(p)).concat([p]); });
+  },
+  desmarcar(r, p) {
+    [r, this.pareja(r, p)].filter(Boolean).forEach(x => {
+      x.periodicos = (x.periodicos || []).filter(y => Catalogo.clave(y) !== Catalogo.clave(p));
+      if (!x.periodicos.length) delete x.periodicos;
+    });
+  },
+  /* « También el del remolque S06205.» o «… del camión JYN 162.», para los avisos */
+  parejaTxt(r, p) {
+    const o = this.pareja(r, p), u = o && Q.unidad(o.unidad);
+    return u ? ' También el de' + (u.tipo === 'remolque' ? 'l remolque ' : 'l camión ') + '<b>' + esc(UI.placaTxt(u)) + '</b>.' : '';
+  },
   /* «Registrar el preventivo» (Juan, 26/11/2026: «los engrases son mantenimientos preventivos»; ver Ventanas.preventivo y perAbrir) */
   provDe(p, u) { const ult = this.ultima(p, u && u.id) || this.ultima(p); return ult ? ProvFact.valor(ult) : ''; },
   avisoPrev(o) {
@@ -27195,11 +27475,9 @@ const Periodicos = {
      unidad y del remolque) */
   alGuardarPrev(r, x, m) {
     if (!m || !m._periodico) return;
-    const p = m._periodico, c = this.ajustes(p), ux = x ? Q.unidad(x.unidad) : null, conRem = Boolean(ux && this.unidades(p).some(u => u.id === ux.id));
-    r.periodicos = [p];
-    if (conRem) x.periodicos = [p];
-    setTimeout(() => Toast.show('Quedó como <b>' + esc(p) + '</b> de ' + esc(this.perLargo(c, this.periodo(c, r.fecha))) + ' en Periódicos' +
-      (conRem ? ', también el del remolque <b>' + esc(UI.placaTxt(ux)) + '</b>.' : '.')), 400);
+    const p = m._periodico, c = this.ajustes(p), tambien = this.parejaTxt(r, p);
+    this.marcar(r, p);
+    setTimeout(() => Toast.show('Quedó como <b>' + esc(p) + '</b> de ' + esc(this.perLargo(c, this.periodo(c, r.fecha))) + ' en Periódicos.' + tambien), 400);
   },
   /* ---- Catálogo: cada cuánto, a qué vehículos y el componente que lo reconoce ---- */
   catExtras(l, v, i, puede) {
@@ -27254,19 +27532,21 @@ Object.assign(Acciones, {
   perRelacionar(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), p = Periodicos.actual();
     if (!r || !p) return;
-    r.periodicos = (r.periodicos || []).filter(x => Catalogo.clave(x) !== Catalogo.clave(p)).concat([p]);
+    /* Y el del remolque (o el del camión) que entró con él (ver Periodicos.pareja) */
+    const tambien = Periodicos.parejaTxt(r, p);
+    Periodicos.marcar(r, p);
     const c = Periodicos.ajustes(p);
     Modal.cerrar(el.closest('.modal-bd'));
-    Toast.show('Listo: <b>' + esc(r.numero || 'la entrada') + '</b> quedó como ' + esc(p) + ' de ' + esc(Periodicos.perLargo(c, Periodicos.periodo(c, r.fecha))) + '.');
+    Toast.show('Listo: <b>' + esc(r.numero || 'la entrada') + '</b> quedó como ' + esc(p) + ' de ' + esc(Periodicos.perLargo(c, Periodicos.periodo(c, r.fecha))) + '.' + tambien);
     Router.pintar(true);
   },
   perQuitar(el) {
     const r = Datos.mantenimientos.find(x => x.id === el.dataset.m), p = Periodicos.actual();
     if (!r || !p) return;
-    r.periodicos = (r.periodicos || []).filter(x => Catalogo.clave(x) !== Catalogo.clave(p));
-    if (!r.periodicos.length) delete r.periodicos;
+    const tambien = Periodicos.parejaTxt(r, p);
+    Periodicos.desmarcar(r, p);
     Modal.cerrar(el.closest('.modal-bd'));
-    Toast.show('Listo: <b>' + esc(r.numero || 'la entrada') + '</b> ya no cuenta como ' + esc(p) + '. Sigue en el taller como estaba.');
+    Toast.show('Listo: <b>' + esc(r.numero || 'la entrada') + '</b> ya no cuenta como ' + esc(p) + '. Sigue en el taller como estaba.' + tambien);
     Router.pintar(true);
   },
   perVer(el) {
@@ -27322,7 +27602,7 @@ Object.assign(Acciones, {
   perTodas() {
     const p = Periodicos.actual(), c = Periodicos.ajustes(p), l = Periodicos.sugeridas(p, Periodicos.periodos(c), Periodicos.unidades(p));
     if (!l.length) return;
-    l.forEach(r => { r.periodicos = (r.periodicos || []).filter(x => Catalogo.clave(x) !== Catalogo.clave(p)).concat([p]); });
+    l.forEach(r => Periodicos.marcar(r, p));
     Toast.show('Listo: ' + (l.length === 1 ? 'una entrada al taller quedó' : l.length + ' entradas al taller quedaron') + ' como ' + esc(p) + '.');
     Router.pintar(true);
   },
@@ -27731,8 +28011,8 @@ Object.assign(Rutas, {
     fd.addEventListener('scroll', () => { this._rcScroll = fd.scrollTop; }, { passive: true });
   },
   RC_QUE: {
-    sitio: ['Llegó a cargar', 'clock'], cargando: ['Empezaron a cargar', 'upload'], carg: ['Ya cargó', 'caja'], ruta: ['Salió a ruta', 'truck'],
-    destino: ['Llegó a descargar', 'pin'], desc: ['Empezaron a descargar', 'download'], hecho: ['Ya descargó', 'check'],
+    sitio: ['Llegó a cargar', 'clock'], cargando: ['Quedó en el punto de cargue', 'upload'], carg: ['Ya cargó', 'caja'], ruta: ['Salió a ruta', 'truck'],
+    destino: ['Llegó a descargar', 'pin'], desc: ['Quedó en el punto de descargue', 'download'], hecho: ['Ya descargó', 'check'],
     regreso: ['Va de regreso', 'back'], parqueo: ['Parqueó el carro', 'lock'], nota: ['Anotó', 'lapiz'], tiquete: ['Subió el tiquete', 'ticket']
   },
   /* La hora y el día en Colombia de una marca de tiempo */
@@ -28104,7 +28384,10 @@ document.addEventListener('click', e => {
     e.preventDefault();
     Modal.cerrarTodo();
     /* «Mantenimientos» del menú abre siempre en Taller SINUGRAVAS, sin lo que se haya buscado (Juan, 23/11/2026) */
-    if (ir.dataset.ir === 'mantenimientos' && ir.classList.contains('sb-item')) Object.assign(UIState, { mantTab: 'historial', tallerQ: '' });
+    if (ir.dataset.ir === 'mantenimientos' && ir.classList.contains('sb-item')) {
+      Object.assign(UIState, { mantTab: 'historial', tallerQ: '' });
+      TallerFiltro.quitar();
+    }
     Router.ir(ir.dataset.ir);
     return;
   }
