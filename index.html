@@ -11054,9 +11054,13 @@ const MantRemolque = {
     });
     return { l, cls };
   },
+  /* En el preventivo del camión, marcada de entrada (Juan, 26/11/2026: «se elimina solo la unidad y me queda el remolque ahí. Necesito que
+     también se vaya con su remolque»): el del remolque va con él, sin orden y sin valor. Desde el del remolque, o en el correctivo (cada
+     uno con su arreglo), sin marcar, como antes */
   eliminarTambien(r) {
-    const s = this.suyo(r);
-    return s ? '<label class="el-tambien"><input type="checkbox" id="elTambien">Eliminar también el ingreso ' + (s.rem ? 'del remolque ' : 'del camión ') +
+    const s = this.suyo(r), prev = r.tipo === 'preventivo';
+    return s ? '<label class="el-tambien"><input type="checkbox" id="elTambien"' + (prev && s.rem ? ' checked' : '') + '>Eliminar también ' +
+      (prev ? 'el preventivo ' : 'el ingreso ') + (s.rem ? 'del remolque ' : 'del camión ') +
       esc(UI.placaTxt(s.u)) + (s.o.numero ? ' (' + esc(s.o.numero) + ')' : '') + '</label>' : '';
   }
 };
@@ -15609,31 +15613,37 @@ Object.assign(Ventanas, {
     if (o.editar && !u0) return;
     /* Desde «Abrir caso» (pestaña Novedades): la novedad que atiende */
     const un = !r0 && o.nov ? Q.unidad(o.u) : null, nov = un ? Novedades.de(un).find(x => x.i === o.nov) : null;
+    /* Desde Periódicos (Juan, 26/11/2026: «los engrases son mantenimientos preventivos»): el vehículo de la celda, la fecha del periodo, el
+       periódico en «¿Qué se hizo?» y el último proveedor de ese periódico; al guardar queda relacionado (ver Periodicos.alGuardarPrev) */
+    const upe = !r0 && !nov && o.periodico ? Q.unidad(o.u) : null, per = upe ? o.periodico : null;
+    const provIni = () => (r0 ? ProvFact.valor(r0) : (upe && Periodicos.provDe(per.p, upe)) || ProvFact.ultimoPreventivo());
     const m = Modal.abrir({
-      titulo: r0 ? 'Editar preventivo · ' + UI.placaTxt(u0) : nov ? 'Abrir caso · ' + UI.placaTxt(un) : 'Mantenimiento preventivo',
+      titulo: r0 ? 'Editar preventivo · ' + UI.placaTxt(u0) : nov ? 'Abrir caso · ' + UI.placaTxt(un) : upe ? 'Mantenimiento preventivo · ' + UI.placaTxt(upe)
+        : 'Mantenimiento preventivo',
       sub: r0 ? esc([u0.clase, UI.nombre(u0)].filter(Boolean).join(' · ')) : nov ? 'Preventivo: queda en «Taller SINUGRAVAS»'
-        : 'Cambio de aceite o servicio, con el PDF de Navitrans y las fotos', ancho: 'm-hoja',
+        : upe ? esc([upe.clase, UI.nombre(upe)].filter(Boolean).join(' · ')) : 'Cambio de aceite o servicio, con el PDF de Navitrans y las fotos', ancho: 'm-hoja',
       cuerpo:
         (r0 ? MantRemolque.banda(r0) : '') +
+        (r0 ? Periodicos.cuentaPrev(r0) : per ? Periodicos.avisoPrev(per) : '') +
         (nov ? '<div class="alert a-info mb12">' + Icon('checkSquare') + '<div><b>Atiende una novedad</b>' +
           esc((nov.num ? nov.num + ' ' : '') + nov.texto + (nov.manual ? '' : ' · ' + nov.resp) + (nov.nota ? ' · «' + nov.nota + '»' : '') + ' · ' +
             (nov.manual ? 'registrada a mano ' + (nov.fecha === hoyISO ? 'hoy' : 'el ' + Fecha.corta(nov.fecha))
               : 'preoperacional ' + (nov.fecha === hoyISO ? 'de hoy' : 'del ' + Fecha.corta(nov.fecha)))) +
           '<br>Al guardar, la novedad pasa a «Abiertas».</div></div>' : '') +
         /* Al corregirlo, o desde una novedad, la unidad no se cambia: va en el título */
-        '<div class="row"><div class="field' + (r0 || nov ? ' hidden' : '') + '"><label>Unidad</label><select class="inp" id="mpU">' + Opc.unidades(r0 ? u0.id : o.u) + '</select></div>' +
-        '<div class="field"><label>Fecha</label><input class="inp" type="date" id="mpF" value="' + attr(r0 ? r0.fecha : hoyISO) + '"></div>' +
+        '<div class="row"><div class="field' + (r0 || nov || upe ? ' hidden' : '') + '"><label>Unidad</label><select class="inp" id="mpU">' + Opc.unidades(r0 ? u0.id : o.u) + '</select></div>' +
+        '<div class="field"><label>Fecha</label><input class="inp" type="date" id="mpF" value="' + attr(r0 ? r0.fecha : per ? per.f : hoyISO) + '"></div>' +
         /* La hora (Juan, 10/11/2026: «no tengo campo para poner la hora»), como la de entrada del correctivo */
         '<div class="field" id="mpHC"><label>Hora</label><input class="inp" type="time" id="mpH" value="' + attr(r0 ? r0.horaEntrada || '' : ahora()) + '"></div></div>' +
         (r0 ? '' : MantRemolque.html('mp')) +
         '<div class="row"><div class="field"><label>Proveedor</label><select class="inp" id="mpP"><option value="">Sin proveedor</option>' +
-          ProvFact.opciones(r0 ? ProvFact.valor(r0) : ProvFact.ultimoPreventivo()) + ProvFact.opcionNuevo() + '</select>' +
+          ProvFact.opciones(provIni()) + ProvFact.opcionNuevo() + '</select>' +
           '<div class="hint prov-nota" id="mpPn"></div></div>' +
         '<div class="field"><label>Kilometraje u horómetro</label><input class="inp" id="mpL" placeholder="Ej.: 183.500 km"' + (r0 ? ' value="' + attr(r0.lectura || '') + '"' : '') + '>' +
           '<div class="hint">En un cambio de aceite, desde aquí se cuenta el próximo.</div></div></div>' +
         /* Con espacio para describirlo (Juan, 03/11/2026: «una que otra vez el mantenimiento preventivo se puede alargar») */
         '<div class="field"><label>¿Qué se hizo?</label><textarea class="inp" id="mpT" rows="3" placeholder="Ej.: cambio de aceite y filtros, engrase general">' +
-          esc(r0 ? r0.trabajo || '' : nov ? '' : 'Cambio de aceite y filtros') + '</textarea></div>' +
+          esc(r0 ? r0.trabajo || '' : nov ? '' : per ? per.p : 'Cambio de aceite y filtros') + '</textarea></div>' +
         '<div class="field" style="max-width:300px"><label>Valor</label><input class="inp" id="mpV" inputmode="numeric" placeholder="Ej.: 850.000"' +
           (r0 && r0.valor ? ' value="' + attr(r0.valor.toLocaleString('es-CO')) + '"' : '') + '><div class="hint" id="mpVn"></div></div>' +
         '<div class="field"><label>Órdenes de Facturación <span class="txt-3">(si tiene)</span></label><div class="oc-lista" id="mpO"></div>' +
@@ -15679,7 +15689,7 @@ Object.assign(Ventanas, {
     /* El PDF que ya tiene: si se sube otro, lo reemplaza */
     if (r0 && r0.adjuntoId) $('#mpDzF', m).innerHTML = '<div class="dz-file">' + UI.file(r0.adjunto, r0.adjuntoId) +
       '<span class="txt-3 fs11">El que tiene ahora. Para cambiarlo, suba el nuevo arriba.</span></div>';
-    ProvFact.alAbrir(m, 'mpP', () => (r0 ? ProvFact.valor(r0) : ProvFact.ultimoPreventivo()));
+    ProvFact.alAbrir(m, 'mpP', provIni);
     ProvFact.listas(m, ['mpP']);
     /* Se propone la última lectura de la unidad, mientras no se escriba otra */
     let propuesta = '';
@@ -15693,6 +15703,7 @@ Object.assign(Ventanas, {
     if (!r0) proponer();
     /* Las partes, de la unidad escogida */
     m._casoNovs = nov ? [nov] : [];
+    m._periodico = per ? per.p : null;
     const partes = () => { PlanoForm.poner(m, Q.unidad($('#mpU', m).value), r0 ? { partes: (r0.partes || []).map(x => x.k) } : nov && nov.parte ? { partes: [nov.parte] } : null);
       PlanoForm.pintar(m); };
     $('#mpU', m).addEventListener('change', partes);
@@ -17926,6 +17937,8 @@ Object.assign(Acciones, {
     /* Y el preventivo del remolque, enlazado (ver MantRemolque) */
     const rem = MantRemolque.leer(m, 'mp'), x = rem && Q.unidad(rem) ? MantRemolque.crear(r, rem) : null;
     if (x) Datos.mantenimientos.push(x);
+    /* Abierto desde Periódicos: queda relacionado (ver Periodicos.alGuardarPrev) */
+    Periodicos.alGuardarPrev(r, x, m);
     /* Si fue un cambio de aceite, su kilometraje u horómetro es el nuevo punto
        de partida para el próximo */
     const n = Leer.pesos(lectura), reinicia = Aceite.aplica(u) && n && /aceite/i.test(trabajo);
@@ -27106,7 +27119,7 @@ const Periodicos = {
           Icon('check', '', 13) + 'Relacionar</button>', e.s)).join('')
         : '<div class="txt-3 fs12 mt8">' + esc(UI.placaTxt(u)) + ' no tiene ' + (h.length ? 'otras entradas' : 'entradas') + ' al taller ' + ese + '.</div>') +
       '<div class="hint mt12">¿No está? Ábrala desde aquí: sale con el vehículo, la fecha, «' + esc(c.comp) + '» y el último taller que lo hizo.</div>' +
-      '<div class="flex g8 mt8" style="flex-wrap:wrap"><button type="button" class="btn btn-sm" data-act="perAbrir"' + dat + '>' + Icon('plus', '', 13) + 'Abrir la entrada al taller</button>' +
+      '<div class="flex g8 mt8" style="flex-wrap:wrap"><button type="button" class="btn btn-sm" data-act="perAbrir"' + dat + '>' + Icon('plus', '', 13) + 'Registrar el preventivo</button>' +
         '<button type="button" class="btn btn-sm btn-ghost" data-act="perMano">' + Icon('check', '', 13) + 'Se hizo sin entrada al taller</button></div>' +
       '<div class="per-mano hidden" id="perMano"><div class="grid g2"><div class="field"><label for="perManoF">¿Qué día?</label><input class="inp" type="date" id="perManoF" min="' + per.ini +
         '" max="' + (per.fin < hoyISO ? per.fin : hoyISO) + '" value="' + this.fechaDe(per) + '"></div>' +
@@ -27163,6 +27176,30 @@ const Periodicos = {
     r.periodicos = [m._periodico];
     const c = this.ajustes(m._periodico);
     setTimeout(() => Toast.show('Quedó como <b>' + esc(m._periodico) + '</b> de ' + esc(this.perLargo(c, this.periodo(c, r.fecha))) + ' en Periódicos.'), 400);
+  },
+  /* «Registrar el preventivo» (Juan, 26/11/2026: «los engrases son mantenimientos preventivos»; ver Ventanas.preventivo y perAbrir) */
+  provDe(p, u) { const ult = this.ultima(p, u && u.id) || this.ultima(p); return ult ? ProvFact.valor(ult) : ''; },
+  avisoPrev(o) {
+    return '<div class="alert a-info mb12">' + Icon(this.icono(o.p)) + '<div>Al guardar, queda como <b>' + esc(o.p) + '</b>' + (o.txt ? ' de ' + esc(o.txt) : '') +
+      ' en Periódicos.</div></div>';
+  },
+  /* Al corregir uno que cuenta como periódico */
+  cuentaPrev(r) {
+    const l = r.periodicos || [];
+    if (!l.length) return '';
+    const c = this.ajustes(l[0]);
+    return '<div class="alert a-info mb12">' + Icon(this.icono(l[0])) + '<div>Cuenta como <b>' + esc(l.join(', ')) + '</b> de ' +
+      esc(this.perLargo(c, this.periodo(c, r.fecha))) + ' en Periódicos.</div></div>';
+  },
+  /* Al guardarlo: relacionado y, si entró el remolque y el periódico también es de los remolques, el suyo también (el engrase es de la
+     unidad y del remolque) */
+  alGuardarPrev(r, x, m) {
+    if (!m || !m._periodico) return;
+    const p = m._periodico, c = this.ajustes(p), ux = x ? Q.unidad(x.unidad) : null, conRem = Boolean(ux && this.unidades(p).some(u => u.id === ux.id));
+    r.periodicos = [p];
+    if (conRem) x.periodicos = [p];
+    setTimeout(() => Toast.show('Quedó como <b>' + esc(p) + '</b> de ' + esc(this.perLargo(c, this.periodo(c, r.fecha))) + ' en Periódicos' +
+      (conRem ? ', también el del remolque <b>' + esc(UI.placaTxt(ux)) + '</b>.' : '.')), 400);
   },
   /* ---- Catálogo: cada cuánto, a qué vehículos y el componente que lo reconoce ---- */
   catExtras(l, v, i, puede) {
@@ -27241,7 +27278,8 @@ Object.assign(Acciones, {
     const p = Periodicos.actual(), c = Periodicos.ajustes(p), per = Periodicos.periodos(c)[+el.dataset.i];
     if (!per) return;
     Modal.cerrar(el.closest('.modal-bd'));
-    Ventanas.correctivo({ u: el.dataset.u, fijo: true, periodico: { p, f: Periodicos.fechaDe(per), txt: Periodicos.perLargo(c, per) } });
+    /* El preventivo (Juan, 26/11/2026: «los engrases son mantenimientos preventivos»); antes, el correctivo */
+    Ventanas.preventivo({ u: el.dataset.u, periodico: { p, f: Periodicos.fechaDe(per), txt: Periodicos.perLargo(c, per) } });
   },
   perMano(el) {
     const b = $('#perMano', el.closest('.modal-bd'));
