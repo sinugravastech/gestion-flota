@@ -10942,8 +10942,14 @@ const MantRemolque = {
   },
   html(pre) {
     return '<div class="field hidden" id="' + pre + 'RemF"><label for="' + pre + 'Rem">Remolque <span class="txt-3">(si también entró)</span></label>' +
-      '<select class="inp" id="' + pre + 'Rem"></select><div class="hint">Escójalo solo si también entró: se abre su propio ingreso, con ' +
-      (pre === 'mc' ? 'la misma entrada, el taller y «¿Qué pasó?»' : 'la misma fecha y el mismo proveedor') + '. Su valor, sus órdenes y sus partes van en él.</div></div>';
+      '<select class="inp" id="' + pre + 'Rem"></select><div class="hint">' +
+      /* En el preventivo, sin orden y sin valor (Juan, 25/11/2026: «¿se asocia a ambos? ¿Eso quiere decir que me va a duplicar los
+         valores?»): la orden va con la placa del camión (ver HacerOrden.dePrev) */
+      (pre === 'mp' ? 'Escójalo si también entró, como en un engrase: se abre su propio preventivo, con la misma fecha y el mismo proveedor, sin orden y ' +
+        'sin valor. La OS y el valor quedan en el del camión, así no se suman dos veces.'
+        : 'Escójalo solo si también entró: se abre su propio ingreso, con ' +
+        (pre === 'mc' ? 'la misma entrada, el taller y «¿Qué pasó?»' : 'la misma fecha y el mismo proveedor') + '. Su valor, sus órdenes y sus partes van en él.') +
+      '</div></div>';
   },
   /* Con el camión escogido, la lista de remolques, con el suyo de primero. De entrada, «Sin remolque»: casi siempre entra solo el
      camión, y escogido de entrada abría el ingreso del remolque sin querer (Juan, 09/11/2026). En una volqueta sin remolque no sale */
@@ -17932,7 +17938,9 @@ Object.assign(Acciones, {
     Toast.show('Preventivo guardado en <b>' + esc(UI.placaTxt(u)) + '</b>.' + (a ? '<br>' + esc(Archivos.resumen(a)) : '') +
       (m._casoNovs.length ? '<br>La novedad pasó a «Abiertas»; el caso está en «Taller SINUGRAVAS».' : '') +
       (e && e.proximo ? '<br>Próximo cambio de aceite: ' + esc(Aceite.fmt(u, e.proximo)) + '.' : e ? '<br>Falta decir cada cuánto se le cambia el aceite.' : '') +
-      (x ? '<br>' + MantRemolque.aviso(x).replace('el ingreso del remolque', 'el preventivo del remolque') : ''));
+      /* Sin orden y sin valor, como dice debajo del remolque (Juan, 25/11/2026) */
+      (x ? '<br>También se abrió el preventivo del remolque <b>' + esc(UI.placaTxt(Q.unidad(x.unidad))) + '</b>, sin orden y sin valor: ' +
+        'la OS y el valor quedan en el del camión.' : ''));
     Router.pintar(true);
   },
   /* Cambios de aceite */
