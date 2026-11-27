@@ -1978,7 +1978,7 @@ html[data-theme="dark"] .vc-sin .zchip.on{background:var(--accent-soft);color:va
 .rt-v:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 /* El nombre de la ruta en dos renglones si no cabe (con la bandeja abierta los días quedan más angostos) */
 .rt-v b{font-size:11.5px;font-weight:650;color:var(--text);overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
-.rt-v span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2)}
+.rt-v span{display:flex;align-items:center;flex-wrap:wrap;gap:2px 5px;font-size:11px;color:var(--text-2)}
 .rt-v em{display:inline-flex;font-style:normal}
 .rt-v .rt-ei{margin-left:auto}
 .rt-v.e-hecho .rt-ei{color:var(--ok-500)}
@@ -2284,8 +2284,6 @@ html[data-theme="dark"] .rt-real{color:var(--ok-500)}
 }
 @media (orientation:landscape) and (max-height:520px) and (max-width:1024px){
   .rt-zona{flex-direction:column;align-items:stretch}
-  .rt-tab{grid-template-columns:118px repeat(7,minmax(130px,1fr));min-width:1028px}
-  .rt-u .thumb{display:none}
   .rt-band,.rt-band.chica{position:static;width:auto;flex-basis:auto;max-height:none}
   .rt-band.chica{align-items:stretch}
   .rt-band.chica .rt-band-h{flex-direction:row}
@@ -2295,8 +2293,6 @@ html[data-theme="dark"] .rt-real{color:var(--ok-500)}
 /* En el celular la bandeja va debajo del tablero; en el computador nada cambia */
 @media (max-width:760px){
   .rt-zona{flex-direction:column;align-items:stretch}
-  .rt-tab{grid-template-columns:118px repeat(7,minmax(140px,1fr));min-width:1098px}
-  .rt-u .thumb{display:none}
   .rt-band,.rt-band.chica{position:static;width:auto;flex-basis:auto;max-height:none}
   .rt-band.chica{align-items:stretch}
   .rt-band.chica .rt-band-h{flex-direction:row}
@@ -26542,7 +26538,8 @@ const RutasCel = {
   /* Los botones − y + (Juan, 26/11/2026: «botoncitos de más y menos para uno hacer zoom… tanto para el PC como para el [celular]… la
      vista actual… para computador se mantenga… cada vez que recargue la página se restablece»). Lo escogido (zoomU) vale para el
      tablero de la semana, se queda al cambiar de semana y se pierde al recargar o al voltear el celular */
-  PASOS: [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5],
+  /* Hasta 20 % (Juan, 26/11/2026: «no baja del 40%») */
+  PASOS: [0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5],
   zoomU: null,
   /* El de entrada: acostado, lo que cabe de lado a lado; si no, 100 % */
   base(t) {
